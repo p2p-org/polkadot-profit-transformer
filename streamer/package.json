@@ -1,0 +1,14 @@
+{
+  "name": "polkadot-streamer",
+  "version": "0.0.1",
+  "description": "Stream polkadot events to Kafka",
+  "main": "main.js",
+  "repository": "https://github.com/p2p-org/polkadot-streamer",
+  "author": "Vasiliy Shapovalov",
+  "license": "Apache 2.0",
+  "private": null,
+  "dependencies": {
+    "@polkadot/api": "^1.21.1",
+    "kafkajs": "^1.12.0"
+  }
+}
