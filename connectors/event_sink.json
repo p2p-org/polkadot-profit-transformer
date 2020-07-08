@@ -1,0 +1,17 @@
+{
+    "name": "event_sink",
+    "config": {
+      "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+      "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+      "value.converter": "io.confluent.connect.avro.AvroConverter",
+      "topics": "EVENT",
+      "connection.url": "jdbc:postgresql://db:5432/raw?user=sink&password=1234567890",
+      "dialect.name": "PostgreSqlDatabaseDialect",
+      "insert.mode": "INSERT",
+      "table.name.format": "event",
+      "pk.mode": "none",
+      "auto.create": true,
+      "auto.evolve": true,
+      "value.converter.schema.registry.url": "http://schema-registry:8081"
+    }
+  }

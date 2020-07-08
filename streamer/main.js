@@ -1,32 +1,35 @@
 // Import
-const { ApiPromise, WsProvider} = require('@polkadot/api');
+const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Kafka } = require('kafkajs');
 const config = require('./config.json');
-const util = require('util')
-
-const { GenericEvent } = require('@polkadot/types');
-
-
-function hex_to_string(metadata) {
-    return metadata.match(/.{1,2}/g).map(function(v){
-      return String.fromCharCode(parseInt(v, 16));
-    }).join('');
-  }
+const util = require('util');
+const { Client } = require('pg');
 
 
-// const kafka = new Kafka({
-//     clientId: 'polkadot-streamer',
-//     brokers: [config.kafka_uri]
-//   })
+const kafka = new Kafka({
+    clientId: 'polkadot-streamer',
+    brokers: [config.kafka_uri]
+})
 
-async function main () {
+async function main() {
     // Construct
     const wsProvider = new WsProvider(config.substrate_uri);
     const api = await ApiPromise.create({ provider: wsProvider });
-    // const producer = kafka.producer()
-    // await producer.connect()
+    const producer = kafka.producer()
+    await producer.connect()
 
-    async function process_block(height, blockHash=null) {
+    //TODO: configurable
+    const client = new Client({
+        user: 'sink',
+        host: 'db',
+        database: 'raw',
+        password: '1234567890',
+        port: 5432,
+    });
+
+    client.connect();
+
+    async function process_block(height, blockHash = null) {
         if (!blockHash) {
             blockHash = await api.rpc.chain.getBlockHash(height);
         }
@@ -52,12 +55,12 @@ async function main () {
                         "type": types[index].type,
                         "data": data.toString()
                     }
-                    );
-              });
-            
+                );
+            });
+
             block_event["data"] = event_data;
             block_events.push(block_event);
-          });
+        });
 
         const signedBlock = await api.rpc.chain.getBlock(blockHash);
         extrinsics = []
@@ -65,33 +68,49 @@ async function main () {
             extrinsics.push(ex.toString());
         });
         block_data = {
-            'block' : {
-                'header' : {
-                    'number' : signedBlock.block.header.number.toNumber(),
-                    'hash' : signedBlock.block.header.hash.toHex(),
-                    'stateRoot' : signedBlock.block.header.stateRoot.toHex(),
-                    'extrinsicsRoot' : signedBlock.block.header.extrinsicsRoot.toHex(),
-                    'parentHash' : signedBlock.block.header.parentHash.toHex(),
-                    'digest' : signedBlock.block.header.digest.toString()
+            'block': {
+                'header': {
+                    'number': signedBlock.block.header.number.toNumber(),
+                    'hash': signedBlock.block.header.hash.toHex(),
+                    'stateRoot': signedBlock.block.header.stateRoot.toHex(),
+                    'extrinsicsRoot': signedBlock.block.header.extrinsicsRoot.toHex(),
+                    'parentHash': signedBlock.block.header.parentHash.toHex(),
+                    'digest': signedBlock.block.header.digest.toString()
                 }
             },
-            'extrinsics' : [...extrinsics],
+            'extrinsics': [...extrinsics],
             'events': block_events
         }
-        console.log(util.inspect(block_data, false, null, true));
-        // await producer.send({
-        //     topic: 'event',
-        //     messages: [
-        //     {  'value': JSON.stringify(block_data) 
-        //     },
-        //     ],
-        // })
+        console.log(block_data.block.header.number, block_data.block.header.hash);
+
+        await producer.send({
+            topic: 'block_data',
+            messages: [
+                {
+                    'value': JSON.stringify(block_data)
+                },
+            ],
+        });
     }
+
+    var blockNumberFromDB = 0;
+
+    client
+        .query('SELECT max("NUMBER") FROM block')
+        .then(res => {
+            blockNumberFromDB=res.rows[0].max
+        })
+        .catch(err => {
+            console.error(err);
+        })
+        .finally(() => {
+            client.end();
+        });
 
     var lastHdr = await api.rpc.chain.getHeader()
     var lastBlockNumber = lastHdr.number.toNumber()
 
-    for (var i=1; i <= lastHdr.number.toNumber(); i++) {
+    for (var i = blockNumberFromDB; i <= lastHdr.number.toNumber(); i++) {
         await process_block(i);
         if (i == lastBlockNumber) {
             lastHdr = await api.rpc.chain.getHeader()
@@ -104,7 +123,7 @@ async function main () {
             return
         }
         process_block(i, lastHeader.hash)
-      });
+    });
 
 }
 
