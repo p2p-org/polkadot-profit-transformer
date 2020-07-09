@@ -5,6 +5,7 @@ CREATE TABLE block (
     "EXTRINSICS_ROOT" VARCHAR(66),
     "PARENT_HASH" VARCHAR(66),
     "DIGEST" text,
+    "CREATE_TIME" bigint,
     insert_time timestamp DEFAULT now() NOT NULL
 );
 
