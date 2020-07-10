@@ -48,14 +48,9 @@ async function main() {
                 "meta": event.meta.toJSON(),
             }
 
-            event_data = [];
+            event_data = new Map();
             event.data.forEach((data, index) => {
-                event_data.push(
-                    {
-                        "type": types[index].type,
-                        "data": data.toString()
-                    }
-                );
+                event_data[types[index].type] = data.toString();
             });
 
             block_event["data"] = event_data;
