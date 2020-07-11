@@ -90,10 +90,10 @@ async function main() {
 
     var blockNumberFromDB = 0;
 
-    client
-        .query('SELECT max("NUMBER") FROM block')
+    await client
+        .query('SELECT max("NUMBER") as last_number FROM block')
         .then(res => {
-            blockNumberFromDB=res.rows[0].max
+            blockNumberFromDB = res.rows[0].last_number;
         })
         .catch(err => {
             console.error(err);
@@ -105,7 +105,7 @@ async function main() {
     var lastHdr = await api.rpc.chain.getHeader()
     var lastBlockNumber = lastHdr.number.toNumber()
 
-    for (var i = blockNumberFromDB; i <= lastHdr.number.toNumber(); i++) {
+    for (var i = blockNumberFromDB+1; i <= lastHdr.number.toNumber(); i++) {
         await process_block(i);
         if (i == lastBlockNumber) {
             lastHdr = await api.rpc.chain.getHeader()
