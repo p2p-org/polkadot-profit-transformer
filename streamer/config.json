@@ -1,4 +1,11 @@
 {
     "kafka_uri" : "broker:9092",
-    "substrate_uri" : "ws://49.12.97.44:9944"
+    "substrate_uri" : "ws://49.12.97.44:9944",
+    "db": {
+        "user": "sink",
+        "host": "db",
+        "database": "raw",
+        "password": "1234567890",
+        "port": 5432
+    }
 }

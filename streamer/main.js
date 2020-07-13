@@ -20,11 +20,11 @@ async function main() {
 
     //TODO: configurable
     const client = new Client({
-        user: 'sink',
-        host: 'db',
-        database: 'raw',
-        password: '1234567890',
-        port: 5432,
+        user: config.db.user,
+        host: config.db.host,
+        database: config.db.database,
+        password: config.db.database,
+        port: config.db.port,
     });
 
     client.connect();
