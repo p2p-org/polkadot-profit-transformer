@@ -29,10 +29,26 @@ async function main() {
 
     client.connect();
 
+    let currentSpecVersion = api.createType('u32', -1);
+
+    async function updateMetaData(blockHash){
+        const runtimeVersion = await api.rpc.state.getRuntimeVersion(blockHash);
+        const newSpecVersion = runtimeVersion.specVersion;
+      
+        if (newSpecVersion.gt(currentSpecVersion)) {
+          console.log(`bumped spec version to ${newSpecVersion}, fetching new metadata`);
+          const rpcMeta = await api.rpc.state.getMetadata(blockHash);
+          currentSpecVersion = newSpecVersion;
+          api.registry.setMetadata(rpcMeta);
+        }
+      }
+
     async function process_block(height, blockHash = null) {
         if (!blockHash) {
             blockHash = await api.rpc.chain.getBlockHash(height);
         }
+
+        await updateMetaData(blockHash);
 
         block_events = [];
 

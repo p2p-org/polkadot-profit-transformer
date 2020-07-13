@@ -132,6 +132,8 @@
           KSQL_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
           KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
           KSQL_KSQL_CONNECT_URL: "http://connect:8083"
+          KSQL_KSQL_MAX_REQUEST_SIZE: 1000000000
+          KSQL_OPTS: "-Dmax.request.size=1000000000"
     
       ksqldb-cli:
         image: confluentinc/cp-ksqldb-cli:5.5.1
