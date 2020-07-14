@@ -23,7 +23,7 @@ async function main() {
         user: config.db.user,
         host: config.db.host,
         database: config.db.database,
-        password: config.db.database,
+        password: config.db.password,
         port: config.db.port,
     });
 
