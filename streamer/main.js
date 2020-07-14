@@ -122,7 +122,9 @@ async function main() {
     var lastBlockNumber = lastHdr.number.toNumber()
 
     for (var i = blockNumberFromDB+1; i <= lastHdr.number.toNumber(); i++) {
-        await process_block(i);
+        await process_block(i).catch((error) => {
+            console.log(`failed to process block #${i}:`, error);
+        });
         if (i == lastBlockNumber) {
             lastHdr = await api.rpc.chain.getHeader()
             lastBlockNumber = lastHdr.number.toNumber()
@@ -133,7 +135,9 @@ async function main() {
         if (lastHeader.number.toNumber() == lastBlockNumber) {
             return
         }
-        process_block(i, lastHeader.hash)
+        process_block(i).catch((error) => {
+            console.log(`failed to process block #${i}:`, error);
+        });
     });
 
 }
