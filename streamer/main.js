@@ -135,8 +135,8 @@ async function main() {
         if (lastHeader.number.toNumber() == lastBlockNumber) {
             return
         }
-        process_block(i).catch((error) => {
-            console.log(`failed to process block #${i}:`, error);
+        process_block(lastHeader.number.toNumber()).catch((error) => {
+            console.log(`failed to process block #${lastHeader}:`, error);
         });
     });
 
