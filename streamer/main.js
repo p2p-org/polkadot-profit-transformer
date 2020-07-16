@@ -29,7 +29,7 @@ async function main() {
 
     client.connect();
 
-    let currentSpecVersion = api.createType('u32', -1);
+    let currentSpecVersion = api.createType('u32', 0);
 
     async function updateMetaData(blockHash){
         const runtimeVersion = await api.rpc.state.getRuntimeVersion(blockHash);
