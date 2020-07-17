@@ -1,4 +1,4 @@
-package test;
+package org.p2p.ksql.functions;
 
 import io.confluent.ksql.function.udf.Udf;
 import io.confluent.ksql.function.udf.UdfDescription;

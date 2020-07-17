@@ -21,4 +21,4 @@ curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" 
 curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" --data @connectors/extrinsic_sink.json http://localhost:8083/connectors
 curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" --data @connectors/balances_sink.json http://localhost:8083/connectors
 
-docker-compose up -d --build streamer
+docker-compose up -d --build streamer identity_enrichment

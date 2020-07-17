@@ -136,7 +136,7 @@
           KSQL_KSQL_MAX_REQUEST_SIZE: 1000000000
           KSQL_OPTS: "-Dmax.request.size=1000000000"
         volumes:
-          - ./test/target:/etc/ksqldb/ext
+          - ./udf/target:/etc/ksqldb/ext
     
       ksqldb-cli:
         image: confluentinc/cp-ksqldb-cli:5.5.1
@@ -193,6 +193,16 @@
           - zookeeper
           - broker
           - schema-registry
+          - db
+
+      identity_enrichment:
+        build: ./identity_enrichment
+        restart: always
+        depends_on:
+          - zookeeper
+          - broker
+          - schema-registry
+          - db
            
       db:
         build: "./db"

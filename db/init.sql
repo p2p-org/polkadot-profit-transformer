@@ -22,3 +22,13 @@ CREATE TABLE extrinsic (
     "EXTRINSIC" text,
     insert_time timestamp DEFAULT now() NOT NULL
 );
+
+CREATE TABLE account_identity (
+    account_id varchar(50) NOT NULL PRIMARY KEY,
+    display varchar(256),
+    legal varchar(256),
+    web varchar(256),
+    riot varchar(256),
+    email varchar(256),
+    twitter varchar(256)
+);

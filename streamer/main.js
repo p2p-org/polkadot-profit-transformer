@@ -18,7 +18,6 @@ async function main() {
     const producer = kafka.producer()
     await producer.connect()
 
-    //TODO: configurable
     const client = new Client({
         user: config.db.user,
         host: config.db.host,
@@ -131,7 +130,7 @@ async function main() {
         }
     }
 
-    await api.rpc.chain.subscribeNewHeads((lastHeader) => {
+    await api.rpc.chain.subscribeFinalizedHeads((lastHeader) => {
         if (lastHeader.number.toNumber() == lastBlockNumber) {
             return
         }
