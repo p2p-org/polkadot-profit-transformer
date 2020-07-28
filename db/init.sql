@@ -34,10 +34,23 @@ CREATE TABLE account_identity (
 );
 
 
+CREATE TABLE balances (
+    "BLOCK_NUMBER" INTEGER NOT NULL REFERENCES block("NUMBER") ON DELETE CASCADE,
+    "ACCOUNT_ID" TEXT,
+    "BALANCE" BIGINT,
+    "METHOD" TEXT,
+    "IS_VALIDATOR" BOOLEAN,
+    "CREATE_TIME" BIGINT
+);
+
+
 CREATE INDEX block_number_idx ON block ("NUMBER");
 
 CREATE INDEX event_block_number_idx ON event ("BLOCK_NUMBER");
 
 CREATE INDEX extrinsic_block_number_idx ON extrinsic ("BLOCK_NUMBER");
+
+CREATE INDEX balances_account_id_idx ON balances ("ACCOUNT_ID");
+CREATE INDEX balances_account_id_method_idx ON balances ("ACCOUNT_ID", "METHOD");
 
 CREATE INDEX account_identity_account_id_idx ON account_identity (account_id);
