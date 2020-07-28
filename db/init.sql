@@ -32,3 +32,12 @@ CREATE TABLE account_identity (
     email varchar(256),
     twitter varchar(256)
 );
+
+
+CREATE INDEX block_number_idx ON block ("NUMBER");
+
+CREATE INDEX event_block_number_idx ON event ("BLOCK_NUMBER");
+
+CREATE INDEX extrinsic_block_number_idx ON extrinsic ("BLOCK_NUMBER");
+
+CREATE INDEX account_identity_account_id_idx ON account_identity (account_id);
