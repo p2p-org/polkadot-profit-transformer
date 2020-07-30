@@ -19,4 +19,4 @@ def pytest_sessionfinish(session, exitstatus):
     print('\033[34m run status code:', exitstatus)
     passed_amount = sum(1 for result in session.results.values() if result.passed)
     failed_amount = sum(1 for result in session.results.values() if result.failed)
-    print(f'\033[34m there are {passed_amount} passed and {failed_amount} failed tests')
+    print('\033[34m there are {} passed and {} failed tests'.format(passed_amount, failed_amount))

@@ -1,0 +1,7 @@
+version: '3.5'
+services:
+  autotests:
+    image: autotests:latest
+    build:
+      context: ..
+      dockerfile: Dockerfile
