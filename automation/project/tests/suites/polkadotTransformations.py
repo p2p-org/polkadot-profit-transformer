@@ -5,6 +5,7 @@ from automation.project.tests.polkadotTransformations.transformerProfitEventsFil
     TransformerProfitEventsFilterTest
 from automation.project.tests.polkadotTransformations.transformerBlocksTest import TransformerBlocksTest
 from automation.project.tests.polkadotTransformations.transformerEventsTest import TransformerEventsTest
+from automation.project.tests.polkadotTransformations.transformerBalancesTest import TransformerBalancesTest
 
 
 def suite():
@@ -13,6 +14,7 @@ def suite():
     suite.addTest(TransformerEventsTest('test_transformer_events'))
     suite.addTest(TransformerExtrinsicsTest('test_transformer_extrinsics'))
     suite.addTest(TransformerProfitEventsFilterTest('test_transformer_profit_events_filter'))
+    suite.addTest(TransformerBalancesTest('test_transformer_balances'))
     return suite
 
 
