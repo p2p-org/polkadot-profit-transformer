@@ -3,5 +3,5 @@ services:
   autotests:
     image: autotests:latest
     build:
-      context: ..
+      context: .
       dockerfile: Dockerfile
