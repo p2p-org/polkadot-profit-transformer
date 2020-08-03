@@ -1,5 +1,5 @@
 import automation.project.utils as utils
-import automation.project.Paths as paths
+import automation.project.paths as paths
 
 
 class BaseTest:

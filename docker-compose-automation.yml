@@ -4,4 +4,4 @@ services:
     image: autotests:latest
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: automation/Dockerfile
