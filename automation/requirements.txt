@@ -1,0 +1,4 @@
+setuptools
+pytest==5.4.3
+colorlog==4.1.0
+teamcity-messages==1.28

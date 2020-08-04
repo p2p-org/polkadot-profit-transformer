@@ -1,0 +1,22 @@
+{
+  "inputs": [
+    {
+      "topic": "block_data",
+      "key": "0",
+      "timestamp": 0,
+      "value": {
+        "BLOCK": "{\"header\":{\"number\":1141,\"hash\":\"0xcad7a10d00a6b55adebe23bea7c1366917dbe8e8d8eecf1edba0e50499dcbaba\",\"stateRoot\":\"0xb7e7406e2768b90664f4c4a4a470817b1d052416589209ae8ac93e2318d56fc8\",\"extrinsicsRoot\":\"0x5d9ff68c8854ae7512b9088f22e298edb5e4ed03277c4aeb0f81bc2cbb0e64d6\",\"parentHash\":\"0x3039158d8275bd6f7b0a2fc6226dc6028279a3b83f8814dadd81d866358439a6\",\"digest\":\"{\\\"logs\\\":[{\\\"PreRuntime\\\":[1161969986,\\\"0x030000000010e3cc0f000000008ce4c1f4422211bee222d100a22ffa4d4497efdac30873174fbba697a69cee202fa3073b3a2c98b63d7b27830711f29179d2a62f9f8262b30a321f0c75e1f0084ff7dc0d5454a9c958063a54d264655eb6213b1195926557812adc5bb3d5cc0a\\\"]},{\\\"Seal\\\":[1161969986,\\\"0x1a6219badf0662a98efaee8fc612b328edc2a93852542b4c84521fd1c388aa3deb8767574de3a8ec9b638bee5a9cf84c4b55d7d53dcebfc5fc052f1e6a27b58e\\\"]}]}\"}}",
+        "EXTRINSICS": [
+          "{\"signature\":{\"signer\":\"111111111111111111111111111111111HC1\",\"signature\":{\"Ed25519\":\"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"},\"era\":{\"ImmortalEra\":\"0x00\"},\"nonce\":0,\"tip\":0},\"method\":{\"callIndex\":\"0x0300\",\"args\":{\"now\":1590514272000}}}",
+          "{\"signature\":{\"signer\":\"111111111111111111111111111111111HC1\",\"signature\":{\"Ed25519\":\"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"},\"era\":{\"ImmortalEra\":\"0x00\"},\"nonce\":0,\"tip\":0},\"method\":{\"callIndex\":\"0x0a00\",\"args\":{\"hint\":1138}}}",
+          "{\"signature\":{\"signer\":\"111111111111111111111111111111111HC1\",\"signature\":{\"Ed25519\":\"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"},\"era\":{\"ImmortalEra\":\"0x00\"},\"nonce\":0,\"tip\":0},\"method\":{\"callIndex\":\"0x1400\",\"args\":{\"heads\":[]}}}"
+        ],
+        "EVENTS": [
+          "{\"section\":\"system\",\"method\":\"ExtrinsicSuccess\",\"phase\":{\"ApplyExtrinsic\":0},\"meta\":{\"name\":\"ExtrinsicSuccess\",\"args\":[\"DispatchInfo\"],\"documentation\":[\" An extrinsic completed successfully. [info]\"]},\"data\":{\"DispatchInfo\":\"{\\\"weight\\\":158000000,\\\"class\\\":\\\"Mandatory\\\",\\\"paysFee\\\":\\\"Yes\\\"}\"}}",
+          "{\"section\":\"system\",\"method\":\"ExtrinsicSuccess\",\"phase\":{\"ApplyExtrinsic\":1},\"meta\":{\"name\":\"ExtrinsicSuccess\",\"args\":[\"DispatchInfo\"],\"documentation\":[\" An extrinsic completed successfully. [info]\"]},\"data\":{\"DispatchInfo\":\"{\\\"weight\\\":0,\\\"class\\\":\\\"Mandatory\\\",\\\"paysFee\\\":\\\"Yes\\\"}\"}}",
+          "{\"section\":\"system\",\"method\":\"ExtrinsicSuccess\",\"phase\":{\"ApplyExtrinsic\":2},\"meta\":{\"name\":\"ExtrinsicSuccess\",\"args\":[\"DispatchInfo\"],\"documentation\":[\" An extrinsic completed successfully. [info]\"]},\"data\":{\"DispatchInfo\":\"{\\\"weight\\\":1000000000,\\\"class\\\":\\\"Mandatory\\\",\\\"paysFee\\\":\\\"Yes\\\"}\"}}"
+        ]
+      }
+    }
+  ]
+}
