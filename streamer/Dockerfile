@@ -1,7 +1,15 @@
 FROM node:12-alpine
 
-ADD . .
+WORKDIR /ust/src/app
 
-RUN yarn install && yarn upgrade
+COPY ./src/package*.json ./
 
-ENTRYPOINT node main.js
+RUN npm install
+
+COPY ./src .
+
+COPY ./.env.dev .
+
+EXPOSE 8080
+
+ENTRYPOINT node main.js --sync --sub-fin-head
