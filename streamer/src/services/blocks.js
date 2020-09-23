@@ -98,6 +98,10 @@ class BlocksService {
             }
 
             blockHash = await polkadotConnector.rpc.chain.getBlockHash(height);
+
+            if (!blockHash) {
+                throw new Error('cannot get block hash');
+            }
         }
 
         await this.updateMetaData(blockHash);
@@ -126,6 +130,10 @@ class BlocksService {
         });
 
         const signedBlock = await polkadotConnector.rpc.chain.getBlock(blockHash);
+
+        if (!signedBlock) {
+            throw new Error('cannot get block');
+        }
 
         let extrinsics = []
 
@@ -160,6 +168,7 @@ class BlocksService {
             ],
         }).catch((error) => {
             this.app.log.error(`failed to push block: `, error);
+            throw new Error('cannot push block to Kafka');
         });
     }
 
@@ -217,9 +226,20 @@ class BlocksService {
             this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`);
 
             for (let i = startBlockNumber + 1; i <= lastBlockNumber; i++) {
-                await this.processBlock(i).catch((error) => {
-                    this.app.log.error(`failed to process block #${i}:`, error);
-                });
+                for (let attempts = 5; attempts > 0; attempts--) {
+                    let lastError = null
+                    await this.processBlock(i).catch((error) => {
+                        lastError = error
+                        this.app.log.error(`failed to process block #${i}:`, error)
+                    });
+
+                    if (!lastError) {
+                        break
+                    }
+
+                    await this.sleep(2000)
+                }
+
                 if (i == lastBlockNumber) {
                     lastBlockNumber = await this.getFinBlockNumber()
                 }
@@ -439,6 +459,17 @@ class BlocksService {
             this.app.log.error(`failed to execute trimAndUpdateToFinalized: ${err}`);
         }
         return {result: true}
+    }
+
+    /**
+     *
+     * @param {number} ms
+     * @returns {Promise<>}
+     */
+    async sleep(ms) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
     }
 
 }

@@ -5,11 +5,13 @@ dotenv.config({path: path.resolve(__dirname, '.env')});
 
 const environment = {
 
+    LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+
     // Api
     API_ADDR: process.env.API_ADDR || '0.0.0.0',
     API_PORT: process.env.API_PORT || '8080',
 
-    // Polkadot
+    // Node
     SUBSTRATE_URI: process.env.SUBSTRATE_URI,
 
     // Kafka

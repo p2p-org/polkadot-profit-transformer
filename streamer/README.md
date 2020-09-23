@@ -32,6 +32,7 @@ $ node main.js --sync-force --disable-rpc
 ### Environment variables 
 | Variable | Description | Default |
 | -- | -- | :--: |
+| `LOG_LEVEL` | One of `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent` | `"info"`|
 | `API_ADDR` | Api listening address | `"0.0.0.0"`|
 | `API_PORT` | Api listening port| `8080` |
 | `SUBSTRATE_URI` | Polkadot node connection url | none |
@@ -53,3 +54,7 @@ $ node main.js --sync-force --disable-rpc
 |`GET /status` | Get current status. Returns streamer status, synchronization status, difference between finalized head and head. |
 |`POST /delete` | Remove information about blocks by numbers. |
 |`GET /update_trim/{blockId}` | Trim blocks information, starting from number to finalized head. |
+
+### Swagger endpoint
+
+`http://{hostname}:8080/swagger/`

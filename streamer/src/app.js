@@ -1,6 +1,10 @@
 const Fastify = require('fastify');
 const {RunnerService} = require('./services/runner');
 
+const {
+    LOG_LEVEL
+} = require('./environment');
+
 const argv = require('yargs')
     .option('sync', {
         type: 'boolean',
@@ -29,7 +33,10 @@ const argv = require('yargs')
 const build = async () => {
     const fastify = Fastify({
         bodyLimit: 1048576 * 2,
-        logger: {prettyPrint: true}
+        logger: {
+            level: LOG_LEVEL,
+            prettyPrint: true
+        }
     });
 
     // plugins
