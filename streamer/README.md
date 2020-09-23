@@ -16,6 +16,8 @@ Application provides options for actualize data and HTTP API for operations with
 ## Detailed workflow
 [Pipeline specification](docs/SPECS.md)
 
+### CLI usage
+
 |  Option &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;| Description |
 | -- | -- |
 | `--sync` | Synchronize blocks from node, starting with the last one saved from database, up to finalized height block number. |
@@ -23,13 +25,12 @@ Application provides options for actualize data and HTTP API for operations with
 | `--sub-fin-head` | Subscribe to finalized headers stream. If this option used with `--sync` or `--sync-force`, consumer will start after synchronization process. |
 | `--disable-rpc`  | Do not run RESTful api. |
 
-### CLI usage
 * Required ENV vars definition
 * Handles ctrl+c (SIGINT) gracefully.
 
 Recommended execution
 ```bash
-$ node main.js --sync --sub-fin-head
+$ node main.js --sync --sub-fin-head 
 ```
 
 Run for updating all synchronized blocks
