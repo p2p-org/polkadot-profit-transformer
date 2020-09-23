@@ -8,8 +8,6 @@ RUN npm install
 
 COPY ./src .
 
-COPY ./.env.dev .
-
 EXPOSE 8080
 
 ENTRYPOINT node main.js --sync --sub-fin-head

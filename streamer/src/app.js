@@ -66,7 +66,6 @@ const build = async () => {
     return fastify;
 };
 
-// implement inversion of control to make the code testable
 module.exports = {
     build
 };
