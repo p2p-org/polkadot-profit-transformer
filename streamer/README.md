@@ -3,17 +3,18 @@
 * PostgreSQL version 9 or greater
 
 ## Getting started
-Streamer service provides streaming blocks from Polkadot node and sends data to the Kafka topic. 
+Streamer service provides extraction blocks and dependent events, extrinsics from Polkadot, Kusama nodes and stream data to the Kafka topics for processing. 
 When sent blocks count reached to finalized blocks, must run consumer for receiving finalized blocks updates. 
 Application provides options for actualize data and HTTP API for operations with synchronized blocks.
 
 ## Simple workflow
 
-1. Get blocks from genesis (height=0) up to finalized head block and stream to ksqlDB topics for processing
-2. Run consumer for process finalized head updates: for 
+1. Get blocks and dependent events, extrinsics from genesis (height=0) up to finalized head block and stream to ksqlDB topics for processing
+2. Run consumer for subscribe and process finalized head updates with  
+3. Run RESTful API for updating and status receiving operations
 
 ## Detailed workflow
-[Specifications](docs/SPECS.md)
+[Pipeline specification](docs/SPECS.md)
 
 |  Option &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;| Description |
 | -- | -- |
