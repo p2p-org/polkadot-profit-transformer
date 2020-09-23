@@ -84,3 +84,10 @@ const postTrimSchema = {
         500: errorResponse
     }
 };
+
+module.exports = {
+    getOneSchema,
+    getStatusSchema,
+    postDeleteBlocksSchema,
+    postTrimSchema
+}
