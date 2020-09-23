@@ -7,9 +7,16 @@ Streamer service provides streaming blocks from Polkadot node and sends data to 
 When sent blocks count reached to finalized blocks, must run consumer for receiving finalized blocks updates. 
 Application provides options for actualize data and HTTP API for operations with synchronized blocks.
 
+## Simple workflow
 
-| Option | Description |
-| :-- | -- |
+1. Get blocks from genesis (height=0) up to finalized head block and stream to ksqlDB topics for processing
+2. Run consumer for process finalized head updates: for 
+
+## Detailed workflow
+[Specifications](docs/SPECS.md)
+
+|  Option &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;| Description |
+| -- | -- |
 | `--sync` | Synchronize blocks from node, starting with the last one saved from database, up to finalized height block number. |
 | `--sync-force` | Synchronize blocks from node, starting with genesis, up to finalized height block number. All existing data will be updated. |
 | `--sub-fin-head` | Subscribe to finalized headers stream. If this option used with `--sync` or `--sync-force`, consumer will start after synchronization process. |
@@ -48,8 +55,8 @@ $ node main.js --sync-force --disable-rpc
 
 **IMPORTANT:** HTTP API doesn't require authorization and should be run in the internal network for security reasons. 
 
-| Method | Description |
-| :-- | -- |
+| Method &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;| Description |
+| -- | -- |
 |`GET /update/{blockId}` | Update information about block by number. |
 |`GET /status` | Get current status. Returns streamer status, synchronization status, difference between finalized head and head. |
 |`POST /delete` | Remove information about blocks by numbers. |
