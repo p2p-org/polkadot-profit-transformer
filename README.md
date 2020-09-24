@@ -2,7 +2,7 @@
 This framework provides extractions blocks and subscription to updates (with reorganization support) Polkadot and Kusama.
 
 ### Overview
-&nbsp; &nbsp;[@streamer](streamer) - The main service, provides extractions and consumer subscriptions operations for [ksqkDB pipelines](streamer/docs/SPECS.md)
+&nbsp; &nbsp;[@streamer](streamer) - The main service, provides extractions and consumer subscriptions operations for [ksqlDB pipelines](streamer/docs/SPECS.md)
 
 &nbsp; &nbsp;Additional modules:
 - [@automation](automation) - contains tests, coverages blocks information processing with defined topics from `transformer_queries.json`
