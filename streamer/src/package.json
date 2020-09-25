@@ -1,0 +1,38 @@
+{
+  "name": "polkadot-streamer",
+  "version": "0.0.2",
+  "description": "Stream polkadot blocks and events to Kafka",
+  "main": "main.js",
+  "repository": "",
+  "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika",
+  "license": "Apache 2.0",
+  "private": null,
+  "scripts": {
+    "start": "node --trace-warnings ./src/main.js",
+    "dev": "nodemon ./src/main.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@polkadot/api": "^1.33.*",
+    "@polkadot/rpc-core": "^1.33.*",
+    "@polkadot/types": "^1.33.*",
+    "async-mutex": "^0.2.4",
+    "dotenv": "^8.2.0",
+    "fastify": "^3.4.0",
+    "fastify-swagger": "^3.3.0",
+    "kafkajs": "^1.13.0",
+    "pg": "^8.3.3",
+    "pino-pretty": "^4.2.1",
+    "yargs": "^16.0.3"
+  },
+  "devDependencies": {
+    "eslint": "7.9.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.22.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.2.1",
+    "eslint-plugin-standard": "4.0.1",
+    "nodemon": "2.0.4"
+  }
+}

@@ -10,7 +10,7 @@
         environment:
           ZOOKEEPER_CLIENT_PORT: 2181
           ZOOKEEPER_TICK_TIME: 2000
-    
+
       broker:
         image: confluentinc/cp-server:5.5.1
         hostname: broker
@@ -39,7 +39,7 @@
           CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
           CONFLUENT_METRICS_ENABLE: 'true'
           CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
-    
+
       schema-registry:
         image: confluentinc/cp-schema-registry:5.5.1
         hostname: schema-registry
@@ -52,7 +52,7 @@
         environment:
           SCHEMA_REGISTRY_HOST_NAME: schema-registry
           SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
-    
+
       connect:
         image: cnfldemos/cp-server-connect-datagen:0.3.2-5.5.0
         hostname: connect
@@ -87,7 +87,7 @@
           CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
           CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
           CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
-    
+
       control-center:
         image: confluentinc/cp-enterprise-control-center:5.5.1
         hostname: control-center
@@ -112,7 +112,7 @@
           CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
           CONFLUENT_METRICS_TOPIC_REPLICATION: 1
           PORT: 9021
-    
+
       ksqldb-server:
         image: confluentinc/cp-ksqldb-server:5.5.1
         hostname: ksqldb-server
@@ -137,7 +137,7 @@
           KSQL_OPTS: "-Dmax.request.size=1000000000"
         volumes:
           - ./udf/target:/etc/ksqldb/ext
-    
+
       ksqldb-cli:
         image: confluentinc/cp-ksqldb-cli:5.5.1
         container_name: ksqldb-cli
@@ -147,7 +147,7 @@
           - ksqldb-server
         entrypoint: /bin/sh
         tty: true
-    
+
       ksql-datagen:
         image: confluentinc/ksqldb-examples:5.5.1
         hostname: ksql-datagen
@@ -169,7 +169,7 @@
           STREAMS_BOOTSTRAP_SERVERS: broker:29092
           STREAMS_SCHEMA_REGISTRY_HOST: schema-registry
           STREAMS_SCHEMA_REGISTRY_PORT: 8081
-    
+
       rest-proxy:
         image: confluentinc/cp-kafka-rest:5.5.1
         depends_on:
@@ -185,15 +185,25 @@
           KAFKA_REST_BOOTSTRAP_SERVERS: 'broker:29092'
           KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
           KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
-      
+
       streamer:
         build: ./streamer
         restart: always
+        ports:
+          - 8085:8080
         depends_on:
           - zookeeper
           - broker
           - schema-registry
           - db
+        environment:
+          LOG_LEVEL: 'error'
+          SUBSTRATE_URI: 'ws://49.12.97.44:9944'
+          KAFKA_URI: 'broker:9092'
+          DB_HOST: 'db'
+          DB_USER: '1234567890'
+          DB_NAME: 'raw'
+          DB_PORT: 5432
 
       identity_enrichment:
         build: ./identity_enrichment
@@ -203,7 +213,7 @@
           - broker
           - schema-registry
           - db
-           
+
       db:
         build: "./db"
         restart: always
