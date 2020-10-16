@@ -65,8 +65,6 @@ class BlocksService {
      */
     async updateOneBlock(blockNumber) {
 
-        const {polkadotConnector} = this.app;
-
         if (SyncStatus.isLocked()) {
             this.app.log.error(`failed execute "updateOneBlock": sync in process`);
             throw new Error("sync in process")
