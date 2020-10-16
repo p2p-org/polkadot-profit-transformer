@@ -196,14 +196,8 @@
           - broker
           - schema-registry
           - db
-        environment:
-          LOG_LEVEL: 'error'
-          SUBSTRATE_URI: 'ws://49.12.97.44:9944'
-          KAFKA_URI: 'broker:9092'
-          DB_HOST: 'db'
-          DB_USER: '1234567890'
-          DB_NAME: 'raw'
-          DB_PORT: 5432
+        env_file:
+          - docker/env/.streamer.env
 
       identity_enrichment:
         build: ./identity_enrichment
@@ -227,7 +221,5 @@
           - schema-registry
           - connect
           - ksqldb-server
-        environment:
-          POSTGRES_PASSWORD: 1234567890
-          POSTGRES_USER: sink
-          POSTGRES_DB: raw
+        env_file:
+          - docker/env/.postgres.env

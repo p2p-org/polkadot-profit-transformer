@@ -4,7 +4,7 @@
         "user": "sink",
         "host": "db",
         "database": "raw",
-        "password": "1234567890",
+        "password": "d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x",
         "port": 5432
     },
     "ksql_rest": {
