@@ -2,21 +2,22 @@
   "name": "polkadot-streamer",
   "version": "0.0.2",
   "description": "Stream polkadot blocks and events to Kafka",
-  "main": "main.js",
+  "main": "src/main.js",
   "repository": "",
   "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika",
   "license": "Apache 2.0",
   "private": null,
   "scripts": {
     "start": "node --trace-warnings ./src/main.js",
-    "dev": "nodemon ./src/main.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "dev": "node_modules/.bin/nodemon ./src/main.js",
+    "lint": "node_modules/.bin/eslint ./src/main.js",
+    "lint:fix": "node_modules/.bin/eslint . --fix"
   },
   "dependencies": {
-    "@polkadot/api": "^1.33.*",
-    "@polkadot/rpc-core": "^1.33.*",
-    "@polkadot/types": "^1.33.*",
+    "@polkadot/api": "^2.1.1",
+    "@polkadot/api-derive": "^2.1.1",
+    "@polkadot/rpc-core": "^2.1.1",
+    "@polkadot/types": "^2.1.1",
     "async-mutex": "^0.2.4",
     "dotenv": "^8.2.0",
     "fastify": "^3.4.0",
@@ -27,12 +28,16 @@
     "yargs": "^16.0.3"
   },
   "devDependencies": {
+    "babel-eslint": "^10.1.0",
     "eslint": "7.9.0",
+    "eslint-config-prettier": "^6.13.0",
     "eslint-config-standard": "14.1.1",
     "eslint-plugin-import": "2.22.0",
     "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.0.1",
-    "nodemon": "2.0.4"
+    "nodemon": "2.0.4",
+    "prettier": "^2.1.2"
   }
 }
