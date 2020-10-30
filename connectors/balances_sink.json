@@ -8,7 +8,7 @@
       "connection.url": "jdbc:postgresql://db:5432/raw?user=sink&password=d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x",
       "dialect.name": "PostgreSqlDatabaseDialect",
       "insert.mode": "INSERT",
-      "table.name.format": "balances",
+      "table.name.format": "dot_polka._balances",
       "pk.mode": "none",
       "auto.create": true,
       "auto.evolve": true,

@@ -69,6 +69,7 @@ const build = async () => {
         {
           optionSync: argv['sync-force'] ? false : argv.sync,
           optionSyncForce: argv['sync-force'],
+          optionSyncStartBlockNumber: argv.start,
           optionSubscribeFinHead: argv['sub-fin-head']
         },
         argv['sub-fin-head']
