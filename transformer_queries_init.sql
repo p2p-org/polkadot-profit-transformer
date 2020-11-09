@@ -3,7 +3,8 @@
 CREATE STREAM block_data (
     "block" VARCHAR,
     "extrinsics" ARRAY < VARCHAR >,
-    "events" ARRAY < VARCHAR >
+    "events" ARRAY < VARCHAR >,
+    "block_time" BIGINT
 ) WITH (
     kafka_topic = 'block_data',
     value_format = 'JSON'
@@ -41,7 +42,7 @@ INSERT INTO BLOCK SELECT
                       CAST(EXTRACTJSONFIELD(BLOCK_DATA."block", '$.header.era') AS INT) "era",
                       EXTRACTJSONFIELD(BLOCK_DATA."block", '$.header.last_log') "last_log",
                       EXTRACTJSONFIELD(BLOCK_DATA."block", '$.header.digest') "digest",
-                      CAST(EXTRACTJSONFIELD(BLOCK_DATA."extrinsics"[1], '$.method.args.now') AS BIGINT) "block_time"
+                      BLOCK_DATA."block_time" "block_time"
 FROM BLOCK_DATA BLOCK_DATA
 EMIT CHANGES;
 
@@ -133,6 +134,139 @@ INSERT INTO EXTRINSIC_EXTRACTION SELECT
     extractjsonfield(E."extrinsic", '$.extrinsic')  "extrinsic"
 FROM EXTRINSIC E
 EMIT CHANGES;
+
+-- session data
+
+CREATE STREAM session_data (
+    "session_id" INT,
+    "era" INT,
+    "block_end" BIGINT,
+    "validators" ARRAY < VARCHAR >,
+    "nominators" ARRAY < VARCHAR >,
+    "block_time" BIGINT
+) WITH (
+    kafka_topic = 'session_data',
+    value_format = 'JSON'
+);
+
+CREATE STREAM SESSION_END (
+    "id" INT,
+    "era" INT,
+    "block_end" BIGINT,
+    "block_time" BIGINT
+) WITH (
+    KAFKA_TOPIC='SESSION_END',
+    PARTITIONS=1,
+    REPLICAS=1,
+    VALUE_FORMAT='AVRO'
+);
+
+INSERT INTO SESSION_END SELECT
+                      SESSION_DATA."session_id" "id",
+                      SESSION_DATA."era" "era",
+                      SESSION_DATA."block_end" "block_end",
+                      (SESSION_DATA."block_time" / 1000) "block_time"
+FROM SESSION_DATA SESSION_DATA
+EMIT CHANGES;
+
+-- staking_validator
+
+CREATE STREAM staking_validator (
+    "session_id" INT,
+    "validator" STRING
+) WITH (
+    kafka_topic = 'STAKING_VALIDATOR',
+    PARTITIONS = 1,
+    VALUE_FORMAT = 'AVRO',
+    REPLICAS = 1
+);
+
+INSERT INTO staking_validator
+SELECT
+    SESSION_DATA."session_id" "session_id",
+    EXPLODE(SESSION_DATA."validators") AS "validator"
+FROM SESSION_DATA SESSION_DATA EMIT CHANGES;
+
+CREATE STREAM STAKING_VALIDATOR_EXTRACTION (
+    "session_id" INT,
+    "account_id" STRING,
+    "era" INT,
+    "is_enabled" BOOLEAN,
+    "total" STRING,
+    "own" STRING,
+    "reward_points" INT,
+    "reward_dest" STRING,
+    "reward_account_id" STRING,
+    "block_time" BIGINT
+) WITH (
+    KAFKA_TOPIC='STAKING_VALIDATOR_EXTRACTION',
+    PARTITIONS=1,
+    REPLICAS=1,
+    VALUE_FORMAT='AVRO'
+);
+
+INSERT INTO STAKING_VALIDATOR_EXTRACTION SELECT
+    E."session_id" "session_id",
+    extractjsonfield(E."validator", '$.account_id') "account_id",
+    CAST(extractjsonfield(E."validator", '$.era') AS INT) "era",
+    CAST(extractjsonfield(E."validator", '$.is_enabled') AS BOOLEAN) "is_enabled",
+    extractjsonfield(E."validator", '$.total') "total",
+    extractjsonfield(E."validator", '$.own') "own",
+    CAST(extractjsonfield(E."validator", '$.reward_points') AS INT) "reward_points",
+    extractjsonfield(E."validator", '$.reward_dest') "reward_dest",
+    extractjsonfield(E."validator", '$.reward_account_id') "reward_account_id",
+    (CAST(extractjsonfield(E."validator", '$.block_time') AS BIGINT) / 1000) "block_time"
+FROM STAKING_VALIDATOR E
+EMIT CHANGES;
+
+
+CREATE STREAM staking_nominator (
+    "session_id" INT,
+    "nominator" STRING
+) WITH (
+    kafka_topic = 'STAKING_NOMINATOR',
+    PARTITIONS = 1,
+    VALUE_FORMAT = 'AVRO',
+    REPLICAS = 1
+);
+
+INSERT INTO staking_nominator
+SELECT
+    SESSION_DATA."session_id" "session_id",
+    EXPLODE(SESSION_DATA."nominators") AS "nominator"
+FROM SESSION_DATA SESSION_DATA EMIT CHANGES;
+
+CREATE STREAM STAKING_NOMINATOR_EXTRACTION (
+    "session_id" INT,
+    "account_id" STRING,
+    "era" INT,
+    "validator" STRING,
+    "is_enabled" BOOLEAN,
+    "value" STRING,
+    "reward_dest" STRING,
+    "reward_account_id" STRING,
+    "block_time" BIGINT
+) WITH (
+    KAFKA_TOPIC='STAKING_NOMINATOR_EXTRACTION',
+    PARTITIONS=1,
+    REPLICAS=1,
+    VALUE_FORMAT='AVRO'
+);
+
+INSERT INTO STAKING_NOMINATOR_EXTRACTION SELECT
+    E."session_id" "session_id",
+    extractjsonfield(E."nominator", '$.account_id') "account_id",
+    CAST(extractjsonfield(E."nominator", '$.era') AS INT) "era",
+    extractjsonfield(E."nominator", '$.validator') "validator",
+    CAST(extractjsonfield(E."nominator", '$.is_enabled') AS BOOLEAN) "is_enabled",
+    extractjsonfield(E."nominator", '$.value') "value",
+    extractjsonfield(E."nominator", '$.reward_dest') "reward_dest",
+    extractjsonfield(E."nominator", '$.reward_account_id') "reward_account_id",
+    (CAST(extractjsonfield(E."nominator", '$.block_time') AS BIGINT) / 1000) "block_time"
+FROM STAKING_NOMINATOR E
+EMIT CHANGES;
+
+
 
 -- create_profit_events_filter_rules
 -- {"ksql":"CREATE TABLE profit_events_filter_rules (method VARCHAR) WITH (kafka_topic='profit_events_filter_rules', value_format='JSON', KEY='method');"}

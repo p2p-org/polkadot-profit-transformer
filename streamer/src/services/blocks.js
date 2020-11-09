@@ -92,6 +92,7 @@ class BlocksService {
    */
   async processBlock(height, blockHash = null) {
     const { polkadotConnector } = this.app
+    const { kafkaConnector } = this.app
 
     if (blockHash == null) {
       if (height == null) {
@@ -108,21 +109,152 @@ class BlocksService {
     // Check is this required
     // await this.updateMetaData(blockHash)
 
-    const [sessionId, blockEra, signedBlock, extHeader, events] = await Promise.all([
+    const [sessionId, blockEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
       polkadotConnector.query.session.currentIndex.at(blockHash),
       polkadotConnector.query.staking.currentEra.at(blockHash),
       polkadotConnector.rpc.chain.getBlock(blockHash),
       polkadotConnector.derive.chain.getHeader(blockHash),
+      polkadotConnector.query.timestamp.now.at(blockHash),
       polkadotConnector.query.system.events.at(blockHash)
     ])
 
-    let blockEvents = []
-    if (events.length) {
-      blockEvents = await this.processEvents(signedBlock.block.header.number, events)
-    }
-
     if (!signedBlock) {
       throw new Error('cannot get block')
+    }
+    let blockEvents = []
+
+    const processedEvents = await this.processEvents(signedBlock.block.header.number, events)
+    blockEvents = processedEvents.events
+
+    if (processedEvents.isNewSession) {
+      const sessionValidatorsData = []
+
+      const [erasRewardPointsRaw, enabledValidators, disabledValidators] = await Promise.all([
+        polkadotConnector.query.staking.erasRewardPoints(blockEra.toString()),
+        polkadotConnector.query.session.validators.at(blockHash),
+        polkadotConnector.query.session.disabledValidators.at(blockHash)
+      ])
+
+      const erasRewardPointsMap = {}
+
+      erasRewardPointsRaw.individual.forEach((rewardPoints, accountId) => {
+        erasRewardPointsMap[accountId.toString()] = rewardPoints.toNumber()
+      })
+
+      const stakers = []
+      await Promise.all(
+        enabledValidators.map(async (validator) => {
+          const enabledStakers = await polkadotConnector.query.staking.erasStakers(blockEra.toString(), validator)
+
+          // Only for active stakers
+          await Promise.all(
+            enabledStakers.others.map(async ({ who }, index) => {
+              const payee = await polkadotConnector.query.staking.payee(who)
+              if (payee) {
+                if (!payee.isAccount) {
+                  enabledStakers.others[index].reward_dest = payee.toString()
+                } else {
+                  enabledStakers.others[index].reward_dest = 'Account'
+                  enabledStakers.others[index].reward_account_id = payee.asAccount
+                }
+              }
+            })
+          )
+
+          enabledStakers.others.forEach((staker) => {
+            stakers.push({
+              session_id: sessionId.toNumber(),
+              account_id: staker.who.toString(),
+              era: parseInt(blockEra.toString(), 10),
+              validator: validator.toString(),
+              is_enabled: true,
+              value: staker.value.toString(),
+              block_time: blockTime.toNumber()
+            })
+          })
+
+          // TODO: Check for duplicates in nominators
+          // TODO: Load ledger data
+
+          let { validatorRewardDest, validatorRewardAccountId } = [null, null]
+          const validatorPayee = await polkadotConnector.query.staking.payee(validator)
+          if (validatorPayee) {
+            if (!validatorPayee.isAccount) {
+              validatorRewardDest = validatorPayee.toString()
+            } else {
+              validatorRewardDest = 'Account'
+              validatorRewardAccountId = validatorPayee.asAccount
+            }
+          }
+
+          sessionValidatorsData.push({
+            session_id: sessionId.toNumber(),
+            account_id: validator.toString(),
+            era: parseInt(blockEra.toString(), 10),
+            is_enabled: true,
+            total: enabledStakers.total.toString(),
+            own: enabledStakers.own.toString(),
+            reward_points: erasRewardPointsMap[validator.toString()] ? erasRewardPointsMap[validator.toString()] : 0,
+            reward_dest: validatorRewardDest,
+            reward_account_id: validatorRewardAccountId,
+            block_time: blockTime.toNumber()
+          })
+        })
+      )
+
+      await Promise.all(
+        disabledValidators.map(async (validator) => {
+          const disabledStakers = await polkadotConnector.query.staking.erasStakers(blockEra.toString(), validator)
+
+          disabledStakers.others.forEach((staker) => {
+            stakers.push({
+              session_id: sessionId.toNumber(),
+              account_id: staker.who.toString(),
+              era: parseInt(blockEra.toString(), 10),
+              validator: validator.toString(),
+              is_enabled: false,
+              value: staker.value.toString(),
+              block_time: blockTime.toNumber()
+            })
+          })
+
+          sessionValidatorsData.push({
+            session_id: sessionId.toNumber(),
+            account_id: validator.toString(),
+            era: parseInt(blockEra.toString(), 10),
+            is_enabled: false,
+            total: disabledStakers.total.toString(),
+            own: disabledStakers.own.toString(),
+            reward_points: 0,
+            block_time: blockTime.toNumber()
+          })
+        })
+      )
+
+      await kafkaConnector
+        .send({
+          topic: 'session_data',
+          messages: [
+            {
+              // key: blockData.block.header.number.toString(),
+              value: JSON.stringify({
+                session_id: sessionId.toNumber(),
+                era: parseInt(blockEra.toString(), 10),
+                block_end: signedBlock.block.header.number,
+                validators: sessionValidatorsData,
+                nominators: stakers,
+                block_time: blockTime.toNumber()
+              })
+            }
+          ]
+        })
+        .catch((error) => {
+          this.app.log.error(`failed to push session data: `, error)
+          throw new Error('cannot push session data to Kafka')
+        })
+
+      //  const rawIdentity = await polkadotConnector.query.identity.identityOf(validator);
+      //  console.log(validator.toString(), rawIdentity.toString())
     }
 
     const extrinsics = []
@@ -160,12 +292,11 @@ class BlocksService {
         }
       },
       extrinsics: [...extrinsics],
-      events: blockEvents
+      events: blockEvents,
+      block_time: blockTime.toNumber()
     }
 
     this.app.log.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
-
-    const { kafkaConnector } = this.app
 
     await kafkaConnector
       .send({
@@ -232,7 +363,7 @@ class BlocksService {
 
       this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
-      for (let i = startBlockNumber + 1; i <= lastBlockNumber; i++) {
+      for (let i = startBlockNumber + 1; i <= lastBlockNumber; i += 0) {
         for (let attempts = 5; attempts > 0; attempts--) {
           let lastError = null
           await this.processBlock(i).catch((error) => {
@@ -486,25 +617,22 @@ class BlocksService {
    *
    * @param {number} blockNumber
    * @param {Vec<EventRecord>} events
-   * @returns {Promise<Array<Object>>}
+   * @returns {Promise<Object>}
    */
   async processEvents(blockNumber, events) {
     const blockEvents = []
+    let isNewSession = false
     events.forEach((record, eventIndex) => {
       const { event, phase } = record
       const types = event.typeDef
 
       const eventData = []
 
-      /* if (event.section === 'session') {
-                if (event.method === 'NewSession') {
-                    console.log('new session')
-                }
-                //   console.log(event.data.toJSON())
-                //    console.log(event.data.toString())
-            } else if (event.section === 'staking') {
-
-            } */
+      if (event.section === 'session') {
+        if (event.method === 'NewSession') {
+          isNewSession = true
+        }
+      }
 
       if (event.data.length) {
         event.data.forEach((data, index) => {
@@ -524,7 +652,10 @@ class BlocksService {
         })
       }
     })
-    return blockEvents
+    return {
+      events: blockEvents,
+      isNewSession: isNewSession
+    }
   }
 
   /**
