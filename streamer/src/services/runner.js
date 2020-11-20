@@ -1,5 +1,6 @@
 const { ConsumerService } = require('./consumer')
 const { BlocksService } = require('./blocks')
+const { ValidatorsService } = require('./validators')
 
 /**
  * Provides cli operations
@@ -15,6 +16,9 @@ class RunnerService {
 
     /** @private */
     this.consumerService = new ConsumerService(app)
+
+    /** @private */
+    this.validatorsService = new ValidatorsService(app)
   }
 
   /**
@@ -23,6 +27,7 @@ class RunnerService {
    * @typedef {Object} SyncOptions
    * @property {boolean} optionSync
    * @property {boolean} optionSyncForce
+   * @property {boolean} optionSyncValidators
    * @property {number} optionSyncStartBlockNumber
    * @property {boolean} optionSubscribeFinHead
    */
@@ -35,14 +40,18 @@ class RunnerService {
    * @returns {Promise<void>}
    */
   async sync(options) {
-    if (options.optionSync) {
-      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-    } else if (options.optionSyncForce) {
-      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-    }
+    if (options.optionSyncValidators) {
+      await this.validatorsService.syncValidators(options.optionSyncStartBlockNumber)
+    } else {
+      if (options.optionSync) {
+        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+      } else if (options.optionSyncForce) {
+        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+      }
 
-    if (options.optionSubscribeFinHead) {
-      await this.consumerService.subscribeFinalizedHeads()
+      if (options.optionSubscribeFinHead) {
+        await this.consumerService.subscribeFinalizedHeads()
+      }
     }
   }
 }

@@ -188,15 +188,16 @@ SELECT
 FROM SESSION_DATA SESSION_DATA EMIT CHANGES;
 
 CREATE STREAM STAKING_VALIDATOR_EXTRACTION (
-    "session_id" INT,
-    "account_id" STRING,
     "era" INT,
+    "account_id" STRING,
     "is_enabled" BOOLEAN,
     "total" STRING,
     "own" STRING,
     "reward_points" INT,
     "reward_dest" STRING,
     "reward_account_id" STRING,
+    "nominators_count" INT,
+    "prefs" STRING,
     "block_time" BIGINT
 ) WITH (
     KAFKA_TOPIC='STAKING_VALIDATOR_EXTRACTION',
@@ -206,15 +207,16 @@ CREATE STREAM STAKING_VALIDATOR_EXTRACTION (
 );
 
 INSERT INTO STAKING_VALIDATOR_EXTRACTION SELECT
-    E."session_id" "session_id",
-    extractjsonfield(E."validator", '$.account_id') "account_id",
     CAST(extractjsonfield(E."validator", '$.era') AS INT) "era",
+    extractjsonfield(E."validator", '$.account_id') "account_id",
     CAST(extractjsonfield(E."validator", '$.is_enabled') AS BOOLEAN) "is_enabled",
     extractjsonfield(E."validator", '$.total') "total",
     extractjsonfield(E."validator", '$.own') "own",
     CAST(extractjsonfield(E."validator", '$.reward_points') AS INT) "reward_points",
     extractjsonfield(E."validator", '$.reward_dest') "reward_dest",
     extractjsonfield(E."validator", '$.reward_account_id') "reward_account_id",
+    CAST(extractjsonfield(E."validator", '$.nominators_count') AS INT) "nominators_count",
+    extractjsonfield(E."validator", '$.prefs') "prefs",
     (CAST(extractjsonfield(E."validator", '$.block_time') AS BIGINT) / 1000) "block_time"
 FROM STAKING_VALIDATOR E
 EMIT CHANGES;
@@ -237,11 +239,11 @@ SELECT
 FROM SESSION_DATA SESSION_DATA EMIT CHANGES;
 
 CREATE STREAM STAKING_NOMINATOR_EXTRACTION (
-    "session_id" INT,
-    "account_id" STRING,
     "era" INT,
+    "account_id" STRING,
     "validator" STRING,
     "is_enabled" BOOLEAN,
+    "is_clipped" BOOLEAN,
     "value" STRING,
     "reward_dest" STRING,
     "reward_account_id" STRING,
@@ -254,11 +256,11 @@ CREATE STREAM STAKING_NOMINATOR_EXTRACTION (
 );
 
 INSERT INTO STAKING_NOMINATOR_EXTRACTION SELECT
-    E."session_id" "session_id",
-    extractjsonfield(E."nominator", '$.account_id') "account_id",
     CAST(extractjsonfield(E."nominator", '$.era') AS INT) "era",
+    extractjsonfield(E."nominator", '$.account_id') "account_id",
     extractjsonfield(E."nominator", '$.validator') "validator",
     CAST(extractjsonfield(E."nominator", '$.is_enabled') AS BOOLEAN) "is_enabled",
+    CAST(extractjsonfield(E."nominator", '$.is_clipped') AS BOOLEAN) "is_clipped",
     extractjsonfield(E."nominator", '$.value') "value",
     extractjsonfield(E."nominator", '$.reward_dest') "reward_dest",
     extractjsonfield(E."nominator", '$.reward_account_id') "reward_account_id",

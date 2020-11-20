@@ -14,9 +14,14 @@ const argv = require('yargs')
     default: false,
     description: 'Run synchronization all blocks'
   })
+  .option('sync-stakers', {
+    type: 'boolean',
+    default: false,
+    description: 'Run synchronization stakers'
+  })
   .option('start', {
     type: 'number',
-    default: 0,
+    default: 1,
     description: 'Start synchronization from block number'
   })
   .option('sub-fin-head', {
@@ -69,6 +74,7 @@ const build = async () => {
         {
           optionSync: argv['sync-force'] ? false : argv.sync,
           optionSyncForce: argv['sync-force'],
+          optionSyncValidators: argv['sync-stakers'],
           optionSyncStartBlockNumber: argv.start,
           optionSubscribeFinHead: argv['sub-fin-head']
         },

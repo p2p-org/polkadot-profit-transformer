@@ -23,6 +23,8 @@ CREATE TABLE dot_polka.blocks (
 CREATE TABLE dot_polka.events (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
+    "session_id" INT,
+    "era" INT,
     "section" VARCHAR(50),
     "method" VARCHAR(50),
     "data" JSONB,
@@ -46,29 +48,31 @@ CREATE TABLE dot_polka.sessions (
 );
 
 CREATE TABLE dot_polka.validators (
-    "session_id" INT,
-    "account_id" VARCHAR(150),
     "era" INT,
+    "account_id" VARCHAR(150),
     "is_enabled" BOOL,
     "total" BIGINT,
     "own" BIGINT,
+    "nominators_count" INT,
     "reward_points" INT,
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
+    "prefs" JSONB,
     "block_time" TIMESTAMP,
-    PRIMARY KEY ("session_id", "account_id")
+    PRIMARY KEY ("era", "account_id")
 );
 
 CREATE TABLE dot_polka.nominators (
-    "account_id" VARCHAR(150) PRIMARY KEY,
-    "session_id" INT,
     "era" INT,
+    "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
     "is_enabled" BOOL,
+    "is_clipped" BOOL,
     "value" BIGINT,
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
-    "block_time" TIMESTAMP
+    "block_time" TIMESTAMP,
+    PRIMARY KEY ("era", "account_id")
 );
 
 
@@ -119,6 +123,8 @@ CREATE TABLE dot_polka._blocks (
 CREATE TABLE dot_polka._events (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
+    "session_id" INT,
+    "era" INT,
     "section" VARCHAR(30),
     "method" VARCHAR(30),
     "data" TEXT,
@@ -135,30 +141,29 @@ CREATE TABLE dot_polka._extrinsics (
 );
 
 CREATE TABLE dot_polka._validators (
-    "session_id" INT,
-    "account_id" VARCHAR(150),
     "era" INT,
+    "account_id" VARCHAR(150),
     "is_enabled" BOOL,
+    "is_clipped" BOOL,
     "total" TEXT,
     "own" TEXT,
     "reward_points" INT,
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
-    "block_time" BIGINT,
-    PRIMARY KEY ("session_id", "account_id")
+    "nominators_count" INT,
+    "prefs" TEXT,
+    "block_time" BIGINT
 );
 
 CREATE TABLE dot_polka._nominators (
-    "session_id" INT,
-    "account_id" VARCHAR(150),
     "era" INT,
+    "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
     "is_enabled" BOOL,
     "value" TEXT,
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
-    "block_time" BIGINT,
-    PRIMARY KEY ("session_id", "account_id")
+    "block_time" BIGINT
 );
 
 
@@ -248,12 +253,16 @@ $$
 BEGIN
     INSERT INTO dot_polka.events("id",
                                 "block_id",
+                                "session_id",
+                                "era",
                                 "section",
                                 "method",
                                 "data",
                                 "event")
     VALUES (NEW."id",
             NEW."block_id",
+            NEW."session_id",
+            NEW."era",
             NEW."section",
             NEW."method",
             NEW."data"::jsonb,
@@ -348,25 +357,27 @@ CREATE OR REPLACE FUNCTION dot_polka.sink_validators_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO dot_polka.validators("session_id",
+    INSERT INTO dot_polka.validators("era",
                                 "account_id",
-                                "era",
                                 "is_enabled",
                                 "total",
                                 "own",
                                 "reward_points",
                                 "reward_dest",
                                 "reward_account_id",
+                                "nominators_count",
+                                "prefs",
                                 "block_time")
-    VALUES (NEW."session_id",
+    VALUES (NEW."era",
             NEW."account_id",
-            NEW."era",
             NEW."is_enabled",
             NEW."total"::BIGINT,
             NEW."own"::BIGINT,
             NEW."reward_points",
             NEW."reward_dest",
             NEW."reward_account_id",
+            NEW."nominators_count",
+            NEW."prefs"::jsonb,
             to_timestamp(NEW."block_time"))
     ON CONFLICT DO NOTHING;
 
@@ -386,7 +397,7 @@ CREATE OR REPLACE FUNCTION dot_polka.sink_trim_validators_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM dot_polka._validators WHERE "session_id" = NEW."session_id"
+    DELETE FROM dot_polka._validators WHERE "era" = NEW."era"
         AND "account_id" = NEW."account_id";
     RETURN NEW;
 END;
@@ -406,20 +417,20 @@ CREATE OR REPLACE FUNCTION dot_polka.sink_nominators_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO dot_polka.nominators("session_id",
+    INSERT INTO dot_polka.nominators("era",
                                 "account_id",
-                                "era",
                                 "validator",
                                 "is_enabled",
+                                "is_clipped",
                                 "value",
                                 "reward_dest",
                                 "reward_account_id",
                                 "block_time")
-    VALUES (NEW."session_id",
+    VALUES (NEW."era",
             NEW."account_id",
-            NEW."era",
             NEW."validator",
             NEW."is_enabled",
+            NEW."is_clipped",
             NEW."value"::BIGINT,
             NEW."reward_dest",
             NEW."reward_account_id",
@@ -442,7 +453,7 @@ CREATE OR REPLACE FUNCTION dot_polka.sink_trim_nominators_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM dot_polka._nominators WHERE "session_id" = NEW."session_id"
+    DELETE FROM dot_polka._nominators WHERE "era" = NEW."era"
         AND "account_id" = NEW."account_id";
     RETURN NEW;
 END;
@@ -460,12 +471,14 @@ EXECUTE PROCEDURE dot_polka.sink_trim_nominators_after_insert();
 --  BI additions
 
 CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance TABLESPACE pg_default AS
-SELECT ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
-                                   e.method,
-                                   e.data,
-                                   b.id AS block_id,
-                                   b.era,
-                                   b.block_time
+SELECT
+           e.session_id,
+           e.era,
+           ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
+           e.method,
+           e.data,
+           b.id AS block_id,
+           b.block_time
 FROM dot_polka.events e
 JOIN dot_polka.blocks b ON b.id = e.block_id
 WHERE e.section::text = 'balances'::text
@@ -477,19 +490,19 @@ REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance;
 
 
 CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking AS
-SELECT ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
-								   CASE e.method WHEN 'Unbonded' THEN (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10000000000 * -1
-										  ELSE (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10000000000
-								   END AS balance,
-                                   e.method,
-                                   e.data,
-                                   b.id AS block_id,
-                                   b.era,
-                                   b.block_time
+SELECT
+           e.session_id,
+           e.era,
+            ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
+           e.method,
+           CASE WHEN e.method IN ('Unbonded', 'Slash', 'Withdrawn') THEN (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10^10 * -1
+                  ELSE (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10^10
+           END AS balance,
+           b.block_time
 FROM dot_polka.events e
 JOIN dot_polka.blocks b ON b.id = e.block_id
-WHERE e.section = 'staking'
-ORDER BY e.block_id DESC WITH NO DATA;
+WHERE e.section = 'staking' AND e.method IN ('Bonded', 'Reward', 'Slash', 'Unbonded', 'Withdrawn')
+ORDER BY e.block_id DESC WITH DATA;
 
 
 REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking;
