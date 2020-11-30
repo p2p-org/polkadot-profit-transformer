@@ -20,10 +20,10 @@
         ports:
           - "9092:9092"
         environment:
-          KAFKA_MAX_PARTITION_FETCH_MAX_BYTES: 1000000000
-          KAFKA_REPLICA_FETCH_MAX_BYTES: 1000000000
-          KAFKA_MESSAGE_MAX_BYTES: 1000000000
-          KAFKA_MAX_REQUEST_SIZE: 1000000000
+          KAFKA_MAX_PARTITION_FETCH_MAX_BYTES: 800000000
+          KAFKA_REPLICA_FETCH_MAX_BYTES: 100000000
+          KAFKA_MESSAGE_MAX_BYTES: 800000000
+          KAFKA_MAX_REQUEST_SIZE: 800000000
           KAFKA_BROKER_ID: 1
           KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
           KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
@@ -82,7 +82,7 @@
           CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
           CONNECT_ZOOKEEPER_CONNECT: 'zookeeper:2181'
           # CLASSPATH required due to CC-2422
-          CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-5.5.1.jar
+          CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-latest.jar
           CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
           CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
           CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
@@ -198,15 +198,19 @@
           - db
         env_file:
           - docker/env/.streamer.env
-
-      identity_enrichment:
-        build: ./identity_enrichment
+          -
+      enrichments_processor:
+        build: ./enrichments_processor
         restart: always
+        ports:
+          - 8086:8085
         depends_on:
           - zookeeper
           - broker
           - schema-registry
           - db
+        env_file:
+          - docker/env/.enrichments_processor.env
 
       db:
         build: "./db"

@@ -5,6 +5,12 @@ docker-compose exec broker kafka-topics --create --bootstrap-server localhost:90
 
 docker-compose exec broker kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic session_data
 
+docker-compose exec broker kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic validators_data
+
+docker-compose exec broker kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic nominators_data
+
+docker-compose exec broker kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic identity_enrichment_sink
+
 docker-compose up -d --build schema-registry connect control-center ksqldb-server ksqldb-cli ksql-datagen rest-proxy db
 
 echo "Starting ksql containers..."
@@ -22,5 +28,6 @@ curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" 
 curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" --data @connectors/sessions_extraction_sink.json http://localhost:8083/connectors
 curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" --data @connectors/validators_extraction_sink.json http://localhost:8083/connectors
 curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" --data @connectors/nominators_extraction_sink.json http://localhost:8083/connectors
+curl -X "POST" -H "Accept:application/json" -H "Content-Type: application/json" --data @connectors/identity_enrichment_sink.json http://localhost:8083/connectors
 
-docker-compose up -d --build streamer identity_enrichment
+docker-compose up -d --build streamer enrichments_processor

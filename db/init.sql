@@ -72,12 +72,13 @@ CREATE TABLE dot_polka.nominators (
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
     "block_time" TIMESTAMP,
-    PRIMARY KEY ("era", "account_id")
+    PRIMARY KEY ("era", "account_id", "validator")
 );
 
 
 CREATE TABLE dot_polka.account_identity (
     "account_id" varchar(50) PRIMARY KEY,
+    "block_id" BIGINT,
     "display" varchar(256),
     "legal" varchar(256),
     "web" varchar(256),
@@ -165,18 +166,6 @@ CREATE TABLE dot_polka._nominators (
     "reward_account_id" VARCHAR (150),
     "block_time" BIGINT
 );
-
-
-CREATE TABLE dot_polka._account_identity (
-    "account_id" varchar(50) PRIMARY KEY,
-    "display" varchar(256),
-    "legal" varchar(256),
-    "web" varchar(256),
-    "riot" varchar(256),
-    "email" varchar(256),
-    "twitter" varchar(256)
-);
-
 
 CREATE TABLE dot_polka._balances (
     "block_id" INTEGER NOT NULL,
@@ -505,4 +494,4 @@ WHERE e.section = 'staking' AND e.method IN ('Bonded', 'Reward', 'Slash', 'Unbon
 ORDER BY e.block_id DESC WITH DATA;
 
 
-REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking;
+асиб

@@ -1,0 +1,44 @@
+{
+  "name": "enrichments_processor",
+  "version": "0.0.1",
+  "description": "Process enrichments for substats to Kafka",
+  "main": "src/main.js",
+  "repository": "",
+  "author": "Dmitry Mandrika",
+  "license": "Apache 2.0",
+  "private": null,
+  "scripts": {
+    "start": "node --trace-warnings ./src/main.js",
+    "dev": "node_modules/.bin/nodemon ./src/main.js",
+    "lint": "node_modules/.bin/eslint ./src/main.js",
+    "lint:fix": "node_modules/.bin/eslint . --fix"
+  },
+  "dependencies": {
+    "@polkadot/api": "^2.6.1",
+    "@polkadot/api-derive": "^2.6.1",
+    "@polkadot/rpc-core": "^2.6.1",
+    "@polkadot/types": "^2.6.1",
+    "@polkadot/util": "^4.2.1",
+    "async-mutex": "^0.2.4",
+    "dotenv": "^8.2.0",
+    "fastify": "^3.8.0",
+    "fastify-swagger": "^3.5.0",
+    "kafkajs": "^1.13.0",
+    "pg": "^8.5.1",
+    "pino-pretty": "^4.2.1",
+    "yargs": "^16.1.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "7.9.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.22.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-promise": "4.2.1",
+    "eslint-plugin-standard": "4.0.1",
+    "nodemon": "2.0.4",
+    "prettier": "^2.1.2"
+  }
+}

@@ -27,10 +27,10 @@ class BlocksService {
     /** @type {u32} */
     this.currentSpecVersion = polkadotConnector.createType('u32', 0)
 
-    const { kafkaConnector } = this.app
+    const { kafkaProducer } = this.app
 
-    if (!kafkaConnector) {
-      throw new Error('cant get .kafkaConnector from fastify app.')
+    if (!kafkaProducer) {
+      throw new Error('cant get .kafkaProducer from fastify app.')
     }
 
     const { postgresConnector } = this.app
@@ -92,7 +92,7 @@ class BlocksService {
    */
   async processBlock(height, blockHash = null) {
     const { polkadotConnector } = this.app
-    const { kafkaConnector } = this.app
+    const { kafkaProducer } = this.app
 
     if (blockHash == null) {
       if (height == null) {
@@ -167,7 +167,7 @@ class BlocksService {
 
     this.app.log.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
 
-    await kafkaConnector
+    await kafkaProducer
       .send({
         topic: 'block_data',
         messages: [

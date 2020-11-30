@@ -27,10 +27,10 @@ class ValidatorsService {
     /** @type {u32} */
     this.currentSpecVersion = polkadotConnector.createType('u32', 0)
 
-    const { kafkaConnector } = this.app
+    const { kafkaProducer } = this.app
 
-    if (!kafkaConnector) {
-      throw new Error('cant get .kafkaConnector from fastify app.')
+    if (!kafkaProducer) {
+      throw new Error('cant get .kafkaProducer from fastify app.')
     }
 
     const { postgresConnector } = this.app
@@ -94,7 +94,7 @@ class ValidatorsService {
 
   async extractStakers(blockNumber) {
     const { polkadotConnector } = this.app
-    const { kafkaConnector } = this.app
+    const { kafkaProducer } = this.app
 
     const blockHash = await polkadotConnector.rpc.chain.getBlockHash(blockNumber)
 
@@ -121,7 +121,7 @@ class ValidatorsService {
       this.getValidators(blockHash, sessionId, blockTime, blockEra, false)
     ])
 
-    await kafkaConnector
+    await kafkaProducer
       .send({
         topic: 'session_data',
         messages: [
@@ -218,7 +218,7 @@ class ValidatorsService {
               session_id: sessionId.toNumber(),
               validator: validator.toString(),
               is_enabled: true,
-              is_clipped: !!isClipped,
+              is_clipped: !isClipped,
               value: staker.value.toString(),
               block_time: blockTime.toNumber()
             }
@@ -282,7 +282,6 @@ class ValidatorsService {
 
   async getNextEraBlockFromDB(blockEra) {
     const { postgresConnector } = this.app
-    console.log(`================> ${blockEra}`)
     let id = 0
     let era = 0
 

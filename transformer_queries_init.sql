@@ -50,6 +50,8 @@ EMIT CHANGES;
 
 CREATE STREAM event (
     "block_id" BIGINT,
+    "session_id" INT,
+    "era" INT,
     "event" STRING
 ) WITH (
     kafka_topic = 'EVENT',
@@ -61,6 +63,8 @@ CREATE STREAM event (
 INSERT INTO event
 SELECT
     CAST(extractjsonfield(BLOCK_DATA."block", '$.header.number') AS BIGINT) AS "block_id",
+    CAST(EXTRACTJSONFIELD(BLOCK_DATA."block", '$.header.session_id') AS INT) "session_id",
+    CAST(EXTRACTJSONFIELD(BLOCK_DATA."block", '$.header.era') AS INT) "era",
     EXPLODE(BLOCK_DATA."events") AS "event"
 
 FROM BLOCK_DATA BLOCK_DATA EMIT CHANGES;
@@ -70,6 +74,8 @@ FROM BLOCK_DATA BLOCK_DATA EMIT CHANGES;
 CREATE STREAM EVENT_EXTRACTION (
     "id" STRING,
     "block_id" BIGINT,
+    "session_id" INT,
+    "era" INT,
     "section" STRING,
     "method" STRING,
     "data" STRING,
@@ -84,6 +90,8 @@ CREATE STREAM EVENT_EXTRACTION (
 INSERT INTO EVENT_EXTRACTION SELECT
     extractjsonfield(E."event", '$.id') "id",
     E."block_id" "block_id",
+    E."session_id" "session_id",
+    E."era" "era",
     extractjsonfield(E."event", '$.section') "section",
     extractjsonfield(E."event", '$.method') "method",
     extractjsonfield(E."event", '$.data') "data",
@@ -269,6 +277,31 @@ FROM STAKING_NOMINATOR E
 EMIT CHANGES;
 
 
+CREATE STREAM ENRICHMENT_ACCOUNT_CHANGES (
+    "event_id" STRING,
+    "account_id" STRING,
+    "event" STRING,
+    "block_id" BIGINT
+) WITH (
+    KAFKA_TOPIC='ENRICHMENT_ACCOUNT_CHANGES',
+    PARTITIONS=1,
+    REPLICAS=1,
+    VALUE_FORMAT='JSON'
+);
+
+INSERT INTO ENRICHMENT_ACCOUNT_CHANGES SELECT
+    extractjsonfield(E."event", '$.id') "event_id",
+    extractjsonfield(E."event", '$.data[0].AccountId') "account_id",
+    extractjsonfield(E."event", '$.method') "event",
+    E."block_id" "block_id"
+FROM EVENT E
+WHERE
+    extractjsonfield(E."event", '$.section') = 'system'
+    AND (
+            extractjsonfield(E."event", '$.method') = 'NewAccount' OR
+            extractjsonfield(E."event", '$.method') = 'KilledAccount'
+        )
+EMIT CHANGES;
 
 -- create_profit_events_filter_rules
 -- {"ksql":"CREATE TABLE profit_events_filter_rules (method VARCHAR) WITH (kafka_topic='profit_events_filter_rules', value_format='JSON', KEY='method');"}
