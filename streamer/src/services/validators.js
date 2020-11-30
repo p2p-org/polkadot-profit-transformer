@@ -171,7 +171,7 @@ class ValidatorsService {
     if (activeValidators) {
       ;[validators, erasRewardPointsRaw] = await Promise.all([
         polkadotConnector.query.session.validators.at(blockHash),
-        polkadotConnector.query.staking.erasRewardPoints(blockEra.toString())
+        polkadotConnector.query.staking.erasRewardPoints.at(blockHash, blockEra)
       ])
 
       this.app.log.debug(
@@ -199,9 +199,9 @@ class ValidatorsService {
     for (const validator of validators) {
       try {
         const [prefs, stakers, stakersClipped] = await Promise.all([
-          await polkadotConnector.query.staking.erasValidatorPrefs(blockEra.toString(), validator.toString()),
-          await polkadotConnector.query.staking.erasStakers(blockEra.toString(), validator.toString()),
-          await polkadotConnector.query.staking.erasStakersClipped(blockEra.toString(), validator.toString())
+          await polkadotConnector.query.staking.erasValidatorPrefs.at(blockHash, blockEra.toString(), validator.toString()),
+          await polkadotConnector.query.staking.erasStakers.at(blockHash, blockEra.toString(), validator.toString()),
+          await polkadotConnector.query.staking.erasStakersClipped.at(blockHash, blockEra.toString(), validator.toString())
         ])
 
         this.app.log.debug(`[validators][getValidators] Loaded stakers: ${stakers.others.length} for validator "${validator.toString()}"`)
@@ -225,7 +225,7 @@ class ValidatorsService {
 
             // Only for active
             if (activeValidators) {
-              const payee = await polkadotConnector.query.staking.payee(staker.who.toString())
+              const payee = await polkadotConnector.query.staking.payee.at(blockHash, staker.who.toString())
               if (payee) {
                 if (!payee.isAccount) {
                   stakerEntry.reward_dest = payee.toString()
@@ -246,7 +246,7 @@ class ValidatorsService {
 
         let { validatorRewardDest, validatorRewardAccountId } = [null, null]
 
-        const validatorPayee = await polkadotConnector.query.staking.payee(validator.toString())
+        const validatorPayee = await polkadotConnector.query.staking.payee.at(blockHash, validator.toString())
         if (validatorPayee) {
           if (!validatorPayee.isAccount) {
             validatorRewardDest = validatorPayee.toString()

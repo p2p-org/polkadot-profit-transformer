@@ -1,4 +1,6 @@
 const { SyncStatus } = require('./index')
+const { ValidatorsService } = require('./validators')
+
 
 /** @type {BlockHash | string | Uint8Array} */
 let currentSpecVersion = null
@@ -50,6 +52,9 @@ class BlocksService {
         }
       })
     })
+
+    /** @private */
+    this.validatorsService = new ValidatorsService(app)
   }
 
   /**
@@ -126,6 +131,8 @@ class BlocksService {
     const processedEvents = await this.processEvents(signedBlock.block.header.number, events)
     blockEvents = processedEvents.events
 
+
+
     const extrinsics = []
 
     signedBlock.block.extrinsics.forEach((extrinsic, exIndex) => {
@@ -181,6 +188,10 @@ class BlocksService {
         this.app.log.error(`failed to push block: `, error)
         throw new Error('cannot push block to Kafka')
       })
+
+    if (processedEvents.isNewSession) {
+      this.validatorsService.extractStakers(signedBlock.block.header.number.toNumber())
+    }
   }
 
   /**
