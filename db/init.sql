@@ -493,5 +493,4 @@ JOIN dot_polka.blocks b ON b.id = e.block_id
 WHERE e.section = 'staking' AND e.method IN ('Bonded', 'Reward', 'Slash', 'Unbonded', 'Withdrawn')
 ORDER BY e.block_id DESC WITH DATA;
 
-
-асиб
+REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking;
