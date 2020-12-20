@@ -1,4 +1,5 @@
 const { hexToString } = require('@polkadot/util');
+const { KAFKA_PREFIX } = require('../environment')
 
 /**
  * Provides identity enrichment processing service
@@ -48,13 +49,13 @@ class IdentityProcessorService {
    */
   async process(entry) {
 
-    this.app.log.debug(`Process enrichment for entry`)
-
     switch (entry.event) {
         case 'NewAccount':
+            this.app.log.debug(`Process enrichment NewAccount`)
             await this.onNewAccount(entry)
             break
         case 'KilledAccount' :
+            this.app.log.debug(`Process enrichment KilledAccount`)
             await this.onKilledAccount(entry)
             break
         default:
@@ -73,16 +74,20 @@ class IdentityProcessorService {
   async onNewAccount(entry) {
         let identity = await this.getIdentity(entry.account_id)
         if (identity) {
-            console.log(identity.toString())
             await this.pushEnrichment(entry.event_id, {
                 account_id: entry.account_id,
-                block_id: entry.block_id,
+                created_at: entry.block_id,
                 display: hexToString(identity.value.info.display.asRaw.toHex()),
                 legal: hexToString(identity.value.info.legal.asRaw.toHex()),
                 web: hexToString(identity.value.info.web.asRaw.toHex()),
                 riot: hexToString(identity.value.info.riot.asRaw.toHex()),
                 email: hexToString(identity.value.info.email.asRaw.toHex()),
                 twitter: hexToString(identity.value.info.twitter.asRaw.toHex())
+            })
+        } else {
+            await this.pushEnrichment(entry.event_id, {
+                account_id: entry.account_id,
+                created_at: entry.block_id
             })
         }
   }
@@ -96,7 +101,10 @@ class IdentityProcessorService {
      * @returns {Promise<void>}
      */
     async onKilledAccount(entry) {
-
+        await this.pushEnrichment(entry.event_id, {
+            account_id: entry.account_id,
+            killed_at: entry.block_id
+        })
     }
 
   /**
@@ -104,18 +112,19 @@ class IdentityProcessorService {
    *
    * @private
    * @async
-   * @param {string} accountId - The block hash
+   * @param {string} accountId - The account id
    */
   async getIdentity(accountId) {
     const { polkadotConnector } = this.app
 
-    let identity = await polkadotConnector.query.identity.identityOf(accountId)
+    const identity = await polkadotConnector.query.identity.identityOf(accountId)
+
     if (identity.isEmpty) {
       let superAccount = await polkadotConnector.query.identity.superOf(accountId)
       if (superAccount.isEmpty) {
         return null
       }
-      return await this.getIdentity(superAccount.value[0].toString())
+      return await this.getIdentity(blockNumber, superAccount.value[0].toString())
     }
     return identity;
   }
@@ -147,7 +156,7 @@ class IdentityProcessorService {
 
     await kafkaProducer
         .send({
-          topic: 'identity_enrichment_sink',
+          topic: KAFKA_PREFIX + '_IDENTITY_ENRICHMENT_DATA',
           messages: [
             {
               key: key,

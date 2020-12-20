@@ -1,11 +1,11 @@
 const { Kafka } = require('kafkajs')
 const fastifyPlugin = require('fastify-plugin')
 
-const { KAFKA_URI } = require('../environment')
+const { APP_CLIENT_ID, KAFKA_URI } = require('../environment')
 
 const kafkaProducer = async (server, options = {}) => {
   const kafka = new Kafka({
-    clientId: 'mbelt-enrichments',
+    clientId: APP_CLIENT_ID,
     brokers: [KAFKA_URI]
   })
 

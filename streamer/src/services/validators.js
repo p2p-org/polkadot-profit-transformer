@@ -1,4 +1,4 @@
-const { BlocksService } = require('./blocks')
+const { KAFKA_PREFIX, DB_SCHEMA } = require('../environment')
 
 /** @type {BlockHash | string | Uint8Array} */
 let currentSpecVersion = null
@@ -41,12 +41,14 @@ class ValidatorsService {
 
     postgresConnector.connect((err, client, release) => {
       if (err) {
-        throw new Error('Error acquiring client')
+        this.app.log.error(`Error acquiring client: ${err.toString()}`)
+        throw new Error(`Error acquiring client`)
       }
       client.query('SELECT NOW()', (err, result) => {
         release()
         if (err) {
-          throw new Error('Error executing query ' + err.toString())
+          this.app.log.error(`Error executing query: ${err.toString()}`)
+          throw new Error(`Error executing query`)
         }
       })
     })
@@ -65,9 +67,11 @@ class ValidatorsService {
       blockNumber = res.id
       blockEra = res.era
 
-      const lastBlockEra = 200 // await this.blocksService.getFinBlockNumber()
+      const lastBlockEra = 300 // await this.blocksService.getFinBlockNumber()
 
       this.app.log.info(`Processing staker data from ${blockNumber} to head:`)
+
+      console.log(blockEra)
 
       while (blockEra <= lastBlockEra) {
         for (let attempts = 3; attempts > 0; attempts--) {
@@ -81,7 +85,6 @@ class ValidatorsService {
             const res = await this.getNextEraBlockFromDB(blockEra)
             blockNumber = res.id
             blockEra = res.era
-            console.log(res.era)
             break
           }
 
@@ -102,9 +105,10 @@ class ValidatorsService {
       throw new Error('cannot get block hash')
     }
 
-    // await this.updateMetaData(blockHash)
+    await this.updateMetaData(blockHash)
 
-    const [sessionId, blockEraRaw, blockTime] = await Promise.all([
+    const [currentEra, sessionId, blockEraRaw, blockTime] = await Promise.all([
+      polkadotConnector.query.staking.currentEra(),
       polkadotConnector.query.session.currentIndex.at(blockHash),
       polkadotConnector.query.staking.activeEra.at(blockHash),
       polkadotConnector.query.timestamp.now.at(blockHash)
@@ -116,6 +120,11 @@ class ValidatorsService {
 
     const blockEra = blockEraRaw.unwrap().index.toNumber()
 
+    const historyDepth = await polkadotConnector.query.staking.historyDepth.at(blockHash)
+    if (currentEra.unwrap().toNumber() - blockEra > historyDepth.toNumber()) {
+      this.app.log.warn(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
+    }
+
     const [stakersEnabled, stakersDisabled] = await Promise.all([
       this.getValidators(blockHash, sessionId, blockTime, blockEra),
       this.getValidators(blockHash, sessionId, blockTime, blockEra, false)
@@ -123,7 +132,22 @@ class ValidatorsService {
 
     await kafkaProducer
       .send({
-        topic: 'session_data',
+        topic: KAFKA_PREFIX + '_STAKING_ERAS_DATA',
+        messages: [
+          {
+            key: stakersEnabled.era_data.era.toString(),
+            value: JSON.stringify(stakersEnabled.era_data)
+          }
+        ]
+      })
+      .catch((error) => {
+        this.app.log.error(`failed to push era data: `, error)
+        throw new Error('cannot push session data to Kafka')
+      })
+
+    await kafkaProducer
+      .send({
+        topic: KAFKA_PREFIX + '_SESSION_DATA',
         messages: [
           {
             // key: blockData.block.header.number.toString(),
@@ -145,11 +169,12 @@ class ValidatorsService {
   }
 
   /**
-   * Validators and stekers options
+   * Validators and stakers options
    *
    * @typedef {Object} ValidatorsResult
    * @property {Array<Object>} validators
    * @property {Array<Object>} stakers
+   * @property {Object} era_data
    */
 
   /**
@@ -158,21 +183,44 @@ class ValidatorsService {
    * @param {number} blockEra
    * @returns {Promise<ValidatorsResult>}
    */
-  async getValidators(blockHash, sessionId, blockTime, blockEra, activeValidators = true) {
+  async getValidators(blockHash, sessionId, blockTime, blockEra, isOnlyActiveValidators = true) {
     const { polkadotConnector } = this.app
 
     const result = {
       validators: [],
-      stakers: []
+      stakers: [],
+      era_data: {
+        era: parseInt(blockEra.toString(), 10),
+        session_start: 0,
+        validators_active: 0,
+        nominators_active: 0,
+        total_reward: 0,
+        total_stake: 0,
+        total_reward_points: 0
+      }
+    }
+
+    if (isOnlyActiveValidators) {
+      const [sessionStart, totalStake, totalReward] = await Promise.all([
+        polkadotConnector.query.staking.erasStartSessionIndex.at(blockHash, blockEra),
+        polkadotConnector.query.staking.erasTotalStake.at(blockHash, blockEra),
+        polkadotConnector.query.staking.erasValidatorReward.at(blockHash, blockEra)
+      ])
+
+      result.era_data.session_start = parseInt(sessionStart.toString(), 10)
+      result.era_data.total_stake = totalStake.toString()
+      result.era_data.total_reward = !totalReward.isNone ? totalReward.unwrap().toBigInt() : 0
     }
 
     let { validators, erasRewardPointsRaw } = [[], []]
 
-    if (activeValidators) {
+    if (isOnlyActiveValidators) {
       ;[validators, erasRewardPointsRaw] = await Promise.all([
         polkadotConnector.query.session.validators.at(blockHash),
         polkadotConnector.query.staking.erasRewardPoints.at(blockHash, blockEra)
       ])
+
+      result.era_data.total_reward_points = parseInt(erasRewardPointsRaw.total.toString(), 10)
 
       this.app.log.debug(
         `[validators][getValidators] Loaded enabled validators: ${validators.length.toString()} for era "${blockEra.toString()}"`
@@ -184,15 +232,20 @@ class ValidatorsService {
       )
     }
 
+    // TODO: !!!! Check query.staking.ledger
     if (!validators.length) {
       return result
     }
 
     const erasRewardPointsMap = {}
-    if (activeValidators) {
+    if (isOnlyActiveValidators) {
       erasRewardPointsRaw.individual.forEach((rewardPoints, accountId) => {
         erasRewardPointsMap[accountId.toString()] = rewardPoints.toNumber()
       })
+    }
+
+    if (isOnlyActiveValidators) {
+      result.era_data.validators_active += validators.length
     }
 
     // erasValidatorReward
@@ -212,6 +265,9 @@ class ValidatorsService {
               return e.who.toString() === staker.who.toString()
             })
 
+            if (isOnlyActiveValidators) {
+              result.era_data.nominators_active++
+            }
             const stakerEntry = {
               account_id: staker.who.toString(),
               era: parseInt(blockEra.toString(), 10),
@@ -224,7 +280,7 @@ class ValidatorsService {
             }
 
             // Only for active
-            if (activeValidators) {
+            if (isOnlyActiveValidators) {
               const payee = await polkadotConnector.query.staking.payee.at(blockHash, staker.who.toString())
               if (payee) {
                 if (!payee.isAccount) {
@@ -262,7 +318,7 @@ class ValidatorsService {
           session_id: sessionId.toNumber(),
           account_id: validator.toString(),
           era: parseInt(blockEra.toString(), 10),
-          is_enabled: activeValidators,
+          is_enabled: isOnlyActiveValidators,
           total: stakers.total.toString(),
           own: stakers.own.toString(),
           nominators_count: stakers.others.length,
@@ -273,10 +329,20 @@ class ValidatorsService {
           block_time: blockTime.toNumber()
         })
       } catch (e) {
-        this.app.log.error(`[validators][getValidators] Cannot get validator data: ${validator.toString()} "${e.toString()}"`)
+        if (isOnlyActiveValidators) {
+          // eslint-disable-next-line max-len
+          this.app.log.error(
+            `[validators][getValidators(ACTIVE)] Cannot get validator data: account_id="${validator.toString()}" "${e.toString()}"`
+          )
+        } else {
+          // eslint-disable-next-line max-len
+          this.app.log.error(
+            `[validators][getValidators(DISABLED)] Cannot get validator data: account_id="${validator.toString()}" "${e.toString()}"`
+          )
+        }
       }
     }
-
+    console.log(result.era_data)
     return result
   }
 
@@ -287,7 +353,7 @@ class ValidatorsService {
 
     await postgresConnector
       .query({
-        text: 'SELECT "id", "era" FROM dot_polka.blocks WHERE "era" > $1 ORDER BY "id" ASC LIMIT 1',
+        text: `SELECT "id", "era" FROM ${DB_SCHEMA}.blocks WHERE "era" > $1 ORDER BY "id" ASC LIMIT 1`,
         values: [blockEra]
       })
       .then((res) => {

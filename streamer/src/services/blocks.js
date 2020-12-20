@@ -1,6 +1,6 @@
 const { SyncStatus } = require('./index')
 const { ValidatorsService } = require('./validators')
-
+const { KAFKA_PREFIX, DB_SCHEMA } = require('../environment')
 
 /** @type {BlockHash | string | Uint8Array} */
 let currentSpecVersion = null
@@ -43,12 +43,14 @@ class BlocksService {
 
     postgresConnector.connect((err, client, release) => {
       if (err) {
-        throw new Error('Error acquiring client')
+        this.app.log.error(`Error acquiring client: ${err.toString()}`)
+        throw new Error(`Error acquiring client`)
       }
       client.query('SELECT NOW()', (err, result) => {
         release()
         if (err) {
-          throw new Error('Error executing query ' + err.toString())
+          this.app.log.error(`Error executing query: ${err.toString()}`)
+          throw new Error(`Error executing query`)
         }
       })
     })
@@ -77,14 +79,6 @@ class BlocksService {
     })
     return true
   }
-
-  /* const chainType = await polkadotConnector.rpc.system.chainType()
-    const chainName = await polkadotConnector.rpc.system.name()
-    const nodeMethods = await polkadotConnector.rpc.rpc.methods()
-
-    console.log(chainType.toString()) // Live
-    console.log(chainName.toString()) //  Parity Polkadot
-    */
 
   /**
    * Update one block
@@ -131,8 +125,6 @@ class BlocksService {
     const processedEvents = await this.processEvents(signedBlock.block.header.number, events)
     blockEvents = processedEvents.events
 
-
-
     const extrinsics = []
 
     signedBlock.block.extrinsics.forEach((extrinsic, exIndex) => {
@@ -176,7 +168,7 @@ class BlocksService {
 
     await kafkaProducer
       .send({
-        topic: 'block_data',
+        topic: KAFKA_PREFIX + '_BLOCK_DATA',
         messages: [
           {
             key: blockData.block.header.number.toString(),
@@ -239,24 +231,27 @@ class BlocksService {
         startBlockNumber = await this.getLastProcessedBlock()
       }
 
+      if (!startBlockNumber) {
+        startBlockNumber = 1
+      }
+
       let lastBlockNumber = await this.getFinBlockNumber()
 
       this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
-      for (let i = startBlockNumber; i <= lastBlockNumber; i++) {
-        for (let attempts = 5; attempts > 0; attempts--) {
-          let lastError = null
-          await this.processBlock(i).catch((error) => {
-            lastError = error
-            this.app.log.error(`failed to process block #${i}: ${error}`)
-          })
-
-          if (!lastError) {
-            break
-          }
-
-          await this.sleep(2000)
-        }
+      for (let i = startBlockNumber; i <= lastBlockNumber; i += 10) {
+        await Promise.all([
+          this.runBlocksWorker(1, i),
+          this.runBlocksWorker(2, i + 1),
+          this.runBlocksWorker(3, i + 2),
+          this.runBlocksWorker(4, i + 3),
+          this.runBlocksWorker(5, i + 4),
+          this.runBlocksWorker(6, i + 5),
+          this.runBlocksWorker(7, i + 6),
+          this.runBlocksWorker(8, i + 7),
+          this.runBlocksWorker(9, i + 8),
+          this.runBlocksWorker(10, i + 9)
+        ])
 
         if (i === lastBlockNumber) {
           lastBlockNumber = await this.getFinBlockNumber()
@@ -266,6 +261,31 @@ class BlocksService {
       // Please read and understand the WARNING above before using this API.
       SyncStatus.release()
     }
+  }
+
+  /**
+   *
+   * @private
+   * @async
+   * @param workerId
+   * @param blockNumber
+   * @returns {Promise<boolean>}
+   */
+  async runBlocksWorker(workerId, blockNumber) {
+    for (let attempts = 5; attempts > 0; attempts--) {
+      let lastError = null
+      await this.processBlock(blockNumber).catch((error) => {
+        lastError = error
+        this.app.log.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
+      })
+
+      if (!lastError) {
+        return true
+      }
+
+      await this.sleep(2000)
+    }
+    return false
   }
 
   /**
@@ -281,7 +301,7 @@ class BlocksService {
     let blockNumberFromDB = 0
 
     await postgresConnector
-      .query('SELECT max("id") as last_number FROM dot_polka.blocks')
+      .query(`SELECT max("id") as last_number FROM ${DB_SCHEMA}.blocks`)
       .then((res) => {
         blockNumberFromDB = res.rows[0].last_number
       })
@@ -366,7 +386,7 @@ class BlocksService {
 
       client.query(
         {
-          text: 'DELETE FROM "dot_polka.blocks" WHERE "id" = ANY($1::int[])',
+          text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
           values: [blockNumbers]
         },
         (err, result) => {
@@ -379,22 +399,22 @@ class BlocksService {
       )
     })
 
-    for (const tbl of ['dot_polka.balances', 'dot_polka.events', 'dot_polka.extrinsics']) {
+    for (const tbl of ['balances', 'events', 'extrinsics']) {
       postgresConnector.connect((err, client, release) => {
         if (err) {
-          this.app.log.error(`failed to remove block from table "${tbl}": ${err}`)
+          this.app.log.error(`failed to remove block from table "${DB_SCHEMA}.${tbl}": ${err}`)
           throw new Error('cannot remove blocks')
         }
 
         client.query(
           {
-            text: `DELETE FROM "${tbl}" WHERE "block_id" = ANY($1::int[])`,
+            text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
             values: [blockNumbers]
           },
           (err, result) => {
             release()
             if (err) {
-              this.app.log.error(`failed to remove block from table "${tbl}": ${err}`)
+              this.app.log.error(`failed to remove block from table "${DB_SCHEMA}.${tbl}": ${err}`)
               throw new Error('cannot remove blocks')
             }
           }
@@ -423,7 +443,7 @@ class BlocksService {
 
       client.query(
         {
-          text: 'DELETE FROM "dot_polka.blocks" WHERE "id" >= $1::int',
+          text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" >= $1::int`,
           values: [startBlockNumber]
         },
         (err, result) => {
@@ -436,7 +456,7 @@ class BlocksService {
       )
     })
 
-    for (const tbl of ['dot_polka.balances', 'dot_polka.events', 'dot_polka.extrinsics']) {
+    for (const tbl of ['balances', 'events', 'extrinsics']) {
       postgresConnector.connect((err, client, release) => {
         if (err) {
           this.app.log.error(`failed to remove blocks from table "${tbl}": ${err}`)
@@ -445,7 +465,7 @@ class BlocksService {
 
         client.query(
           {
-            text: `DELETE FROM "${tbl}" WHERE "id" >= $1::int`,
+            text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "id" >= $1::int`,
             values: [startBlockNumber]
           },
           (err, result) => {
@@ -480,10 +500,6 @@ class BlocksService {
     }
     return { result: true }
   }
-
-
-
-
 
   /**
    *

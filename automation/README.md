@@ -21,13 +21,13 @@ Workflow
 3. Run `ksql-test-runner` utility with generated files 
 
 
-Extracted block data, contains block attributes, extrinsics and events data, sent to kafka topic `block_data`.  
+Extracted block data, contains block attributes, extrinsics and events data, sent to kafka topic `BLOCK_DATA`.  
 The test sections descriptions:  
 
-* `transformer_blocks_test` - positive covering `block` sinking stream: extracts data from main `block_data` stream and compare result extracted block data with selected block attributes, such as `block_number`, `hash`, `state_root` and others.  
-* `transformer_events_test` - positive covering `events` sinking stream: extracts data from main `block_data` stream and compare result extracted assigned block events with a selected block events, it's attributes. 
-This stream also split array data from `block_data` to separated entries.
+* `transformer_blocks_test` - positive covering `block` sinking stream: extracts data from main `BLOCK_DATA` stream and compare result extracted block data with selected block attributes, such as `block_number`, `hash`, `state_root` and others.  
+* `transformer_events_test` - positive covering `events` sinking stream: extracts data from main `BLOCK_DATA` stream and compare result extracted assigned block events with a selected block events, it's attributes. 
+This stream also split array data from `BLOCK_DATA` to separated entries.
 * `transformer_extrinsics_test` - positive covering the `extrinsics` sinking stream similar to `transformer_events_test`, but for extrinsics.
 * `transformer_profit_events_filter_test` - positive covering `profit_events_filter` stream. 
 Checks filtering selected profit events (Deposit and Reward) from events stream. Filtering rules setting up in `profit_events_filter_rules` table.
-* `transformer_balances_test` - positive covering `BALANCES` stream for checking correct relations with  account information and rewards, by joining with `block_data`.
+* `transformer_balances_test` - positive covering `BALANCES` stream for checking correct relations with  account information and rewards, by joining with `BLOCK_DATA`.

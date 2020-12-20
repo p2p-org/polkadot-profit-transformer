@@ -1,4 +1,5 @@
 const { IdentityProcessorService } = require('./identity_processor')
+const { KAFKA_PREFIX } = require('../environment')
 
 /**
  * Provides cli operations
@@ -17,7 +18,6 @@ class RunnerService {
 
     /** @private */
     this.identityProcessorService = new IdentityProcessorService(app)
-
   }
 
   async start() {
@@ -27,8 +27,9 @@ class RunnerService {
       eachMessage: async ({ topic, partition, message }) => {
         try {
           const entry = JSON.parse(message.value)
+
           switch (topic) {
-            case 'ENRICHMENT_ACCOUNT_CHANGES':
+            case KAFKA_PREFIX + '_ENRICHMENT_ACCOUNT_DATA':
               await this.identityProcessorService.process(entry)
               break
             default:

@@ -1,21 +1,21 @@
 const { Kafka } = require('kafkajs')
 const fastifyPlugin = require('fastify-plugin')
 
-const { KAFKA_URI } = require('../environment')
+const { APP_CLIENT_ID, KAFKA_PREFIX, KAFKA_URI } = require('../environment')
 
 const kafkaConsumer = async (server, options = {}) => {
   const kafka = new Kafka({
-    clientId: 'mbelt-enrichments',
+    clientId: APP_CLIENT_ID,
     brokers: [KAFKA_URI]
   })
 
   const consumer = kafka.consumer({
-    groupId: 'mbelt'
+    groupId: APP_CLIENT_ID
   })
   await consumer.connect()
 
   await consumer.subscribe({
-    topic: /enrichment_.*/i,
+    topic: new RegExp(KAFKA_PREFIX +'_ENRICHMENT_.*', 'i'),
     fromBeginning: true
   })
 

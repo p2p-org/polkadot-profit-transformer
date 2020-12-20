@@ -1,3 +1,4 @@
+const { ConfigService } = require('./config')
 const { ConsumerService } = require('./consumer')
 const { BlocksService } = require('./blocks')
 const { ValidatorsService } = require('./validators')
@@ -19,6 +20,9 @@ class RunnerService {
 
     /** @private */
     this.validatorsService = new ValidatorsService(app)
+
+    /** @private */
+    this.configService = new ConfigService(app)
   }
 
   /**
@@ -40,6 +44,9 @@ class RunnerService {
    * @returns {Promise<void>}
    */
   async sync(options) {
+
+    await this.configService.bootstrapConfig()
+
     if (options.optionSyncValidators) {
       await this.validatorsService.syncValidators(options.optionSyncStartBlockNumber)
     } else {

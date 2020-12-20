@@ -198,7 +198,7 @@
           - db
         env_file:
           - docker/env/.streamer.env
-          -
+
       enrichments_processor:
         build: ./enrichments_processor
         restart: always

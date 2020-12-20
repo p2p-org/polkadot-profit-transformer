@@ -1,12 +1,12 @@
-CREATE  SCHEMA IF NOT EXISTS dot_polka;
+CREATE SCHEMA IF NOT EXISTS dot_kusama;
 
 
-CREATE TABLE dot_polka._config (
+CREATE TABLE dot_kusama._config (
     "key" VARCHAR (100) PRIMARY KEY,
     "value" TEXT
 );
 
-CREATE TABLE dot_polka.blocks (
+CREATE TABLE dot_kusama.blocks (
     "id" BIGINT PRIMARY KEY,
     "hash" VARCHAR(66),
     "state_root" VARCHAR(66),
@@ -20,7 +20,7 @@ CREATE TABLE dot_polka.blocks (
     "block_time" TIMESTAMP
 );
 
-CREATE TABLE dot_polka.events (
+CREATE TABLE dot_kusama.events (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
     "session_id" INT,
@@ -31,7 +31,7 @@ CREATE TABLE dot_polka.events (
     "event" JSONB
 );
 
-CREATE TABLE dot_polka.extrinsics (
+CREATE TABLE dot_kusama.extrinsics (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
     "section" VARCHAR(50),
@@ -40,7 +40,7 @@ CREATE TABLE dot_polka.extrinsics (
     "extrinsic" JSONB
 );
 
-CREATE TABLE dot_polka.sessions (
+CREATE TABLE dot_kusama.sessions (
     "session_id" INT PRIMARY KEY ,
     "era" INT,
     "block_start" BIGINT,
@@ -48,9 +48,10 @@ CREATE TABLE dot_polka.sessions (
     "block_time" TIMESTAMP
 );
 
-CREATE TABLE dot_polka.eras (
-    "era" INT PRIMARY KEY,
+CREATE TABLE dot_kusama.eras (
+    "era" INT PRIMARY KEY ,
     "session_start" INT,
+    "session_end" INT,
     "validators_active" INT,
     "nominators_active" INT,
     "total_reward" BIGINT,
@@ -58,7 +59,7 @@ CREATE TABLE dot_polka.eras (
     "total_reward_points" INT
 );
 
-CREATE TABLE dot_polka.validators (
+CREATE TABLE dot_kusama.validators (
     "era" INT,
     "account_id" VARCHAR(150),
     "is_enabled" BOOL,
@@ -73,7 +74,7 @@ CREATE TABLE dot_polka.validators (
     PRIMARY KEY ("era", "account_id")
 );
 
-CREATE TABLE dot_polka.nominators (
+CREATE TABLE dot_kusama.nominators (
     "era" INT,
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
@@ -87,20 +88,19 @@ CREATE TABLE dot_polka.nominators (
 );
 
 
-CREATE TABLE dot_polka.account_identity (
+CREATE TABLE dot_kusama.account_identity (
     "account_id" varchar(50) PRIMARY KEY,
+    "block_id" BIGINT,
     "display" varchar(256),
     "legal" varchar(256),
     "web" varchar(256),
     "riot" varchar(256),
     "email" varchar(256),
-    "twitter" varchar(256),
-    "created_at" BIGINT,
-    "killed_at" BIGINT
+    "twitter" varchar(256)
 );
 
 
-CREATE TABLE dot_polka.balances (
+CREATE TABLE dot_kusama.balances (
     "block_id" INTEGER NOT NULL,
     "account_id" TEXT,
     "balance" DOUBLE PRECISION,
@@ -119,7 +119,7 @@ CREATE CAST (varchar as jsonb) WITH FUNCTION varchar_to_jsonb(varchar) AS IMPLIC
 
 -- Internal tables
 
-CREATE TABLE dot_polka._blocks (
+CREATE TABLE dot_kusama._blocks (
     "id" BIGINT PRIMARY KEY,
     "hash" VARCHAR(66),
     "state_root" VARCHAR(66),
@@ -133,7 +133,7 @@ CREATE TABLE dot_polka._blocks (
     "block_time" BIGINT
 );
 
-CREATE TABLE dot_polka._events (
+CREATE TABLE dot_kusama._events (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
     "session_id" INT,
@@ -144,7 +144,7 @@ CREATE TABLE dot_polka._events (
     "event" TEXT
 );
 
-CREATE TABLE dot_polka._extrinsics (
+CREATE TABLE dot_kusama._extrinsics (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
     "section" VARCHAR(50),
@@ -153,7 +153,7 @@ CREATE TABLE dot_polka._extrinsics (
     "extrinsic" TEXT
 );
 
-CREATE TABLE dot_polka._sessions (
+CREATE TABLE dot_kusama._sessions (
     "session_id" INT PRIMARY KEY ,
     "era" INT,
     "block_start" BIGINT,
@@ -161,17 +161,8 @@ CREATE TABLE dot_polka._sessions (
     "block_time" BIGINT
 );
 
-CREATE TABLE dot_polka._eras (
-    "era" INT PRIMARY KEY ,
-    "session_start" INT,
-    "validators_active" INT,
-    "nominators_active" INT,
-    "total_reward" BIGINT,
-    "total_stake" TEXT,
-    "total_reward_points" INT
-);
 
-CREATE TABLE dot_polka._validators (
+CREATE TABLE dot_kusama._validators (
     "era" INT,
     "account_id" VARCHAR(150),
     "is_enabled" BOOL,
@@ -186,7 +177,7 @@ CREATE TABLE dot_polka._validators (
     "block_time" BIGINT
 );
 
-CREATE TABLE dot_polka._nominators (
+CREATE TABLE dot_kusama._nominators (
     "era" INT,
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
@@ -197,7 +188,7 @@ CREATE TABLE dot_polka._nominators (
     "block_time" BIGINT
 );
 
-CREATE TABLE dot_polka._balances (
+CREATE TABLE dot_kusama._balances (
     "block_id" INTEGER NOT NULL,
     "account_id" TEXT,
     "balance" DOUBLE PRECISION,
@@ -208,11 +199,11 @@ CREATE TABLE dot_polka._balances (
 
 -- Blocks
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_blocks_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_blocks_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO dot_polka.blocks("id",
+    INSERT INTO dot_kusama.blocks("id",
                                 "hash",
                                 "state_root",
                                 "extrinsics_root",
@@ -244,15 +235,15 @@ $$
 
 CREATE TRIGGER trg_blocks_sink_upsert
     BEFORE INSERT
-    ON dot_polka._blocks
+    ON dot_kusama._blocks
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_blocks_insert();
+EXECUTE PROCEDURE dot_kusama.sink_blocks_insert();
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_blocks_after_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_trim_blocks_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM dot_polka._blocks WHERE "id" = NEW."id";
+    DELETE FROM dot_kusama._blocks WHERE "id" = NEW."id";
     RETURN NEW;
 END;
 $$
@@ -260,17 +251,17 @@ $$
 
 CREATE TRIGGER trg_blocks_sink_trim_after_upsert
     AFTER INSERT
-    ON dot_polka._blocks
+    ON dot_kusama._blocks
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_trim_blocks_after_insert();
+EXECUTE PROCEDURE dot_kusama.sink_trim_blocks_after_insert();
 
 -- Events
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_events_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_events_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO dot_polka.events("id",
+    INSERT INTO dot_kusama.events("id",
                                 "block_id",
                                 "session_id",
                                 "era",
@@ -296,15 +287,15 @@ $$
 
 CREATE TRIGGER trg_events_sink_upsert
     BEFORE INSERT
-    ON dot_polka._events
+    ON dot_kusama._events
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_events_insert();
+EXECUTE PROCEDURE dot_kusama.sink_events_insert();
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_events_after_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_trim_events_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM dot_polka._events WHERE "id" = NEW."id";
+    DELETE FROM dot_kusama._events WHERE "id" = NEW."id";
     RETURN NEW;
 END;
 $$
@@ -312,17 +303,17 @@ $$
 
 CREATE TRIGGER trg_events_sink_trim_after_upsert
     AFTER INSERT
-    ON dot_polka._events
+    ON dot_kusama._events
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_trim_events_after_insert();
+EXECUTE PROCEDURE dot_kusama.sink_trim_events_after_insert();
 
 -- Extrinsics
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_extrinsics_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_extrinsics_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO dot_polka.extrinsics("id",
+    INSERT INTO dot_kusama.extrinsics("id",
                                 "block_id",
                                 "section",
                                 "method",
@@ -344,15 +335,15 @@ $$
 
 CREATE TRIGGER trg_extrinsics_sink_upsert
     BEFORE INSERT
-    ON dot_polka._extrinsics
+    ON dot_kusama._extrinsics
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_extrinsics_insert();
+EXECUTE PROCEDURE dot_kusama.sink_extrinsics_insert();
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_extrinsics_after_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_trim_extrinsics_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM dot_polka._extrinsics WHERE "id" = NEW."id";
+    DELETE FROM dot_kusama._extrinsics WHERE "id" = NEW."id";
     RETURN NEW;
 END;
 $$
@@ -360,23 +351,23 @@ $$
 
 CREATE TRIGGER trg_extrinsics_sink_trim_after_upsert
     AFTER INSERT
-    ON dot_polka._extrinsics
+    ON dot_kusama._extrinsics
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_trim_extrinsics_after_insert();
+EXECUTE PROCEDURE dot_kusama.sink_trim_extrinsics_after_insert();
 
 
-CREATE INDEX dot_polka_balances_account_id_method_idx ON dot_polka.balances ("account_id", "method");
+CREATE INDEX dot_kusama_balances_account_id_method_idx ON dot_kusama.balances ("account_id", "method");
 
-CREATE INDEX dot_polka_account_identity_account_id_idx ON dot_polka.account_identity (account_id);
+CREATE INDEX dot_kusama_account_identity_account_id_idx ON dot_kusama.account_identity (account_id);
 
 -- Validators
 
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_validators_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_validators_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO dot_polka.validators("era",
+    INSERT INTO dot_kusama.validators("era",
                                 "account_id",
                                 "is_enabled",
                                 "total",
@@ -408,15 +399,15 @@ $$
 
 CREATE TRIGGER trg_validators_sink_upsert
     BEFORE INSERT
-    ON dot_polka._validators
+    ON dot_kusama._validators
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_validators_insert();
+EXECUTE PROCEDURE dot_kusama.sink_validators_insert();
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_validators_after_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_trim_validators_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM dot_polka._validators WHERE "era" = NEW."era"
+    DELETE FROM dot_kusama._validators WHERE "era" = NEW."era"
         AND "account_id" = NEW."account_id";
     RETURN NEW;
 END;
@@ -425,18 +416,18 @@ $$
 
 CREATE TRIGGER trg_validators_sink_trim_after_upsert
     AFTER INSERT
-    ON dot_polka._validators
+    ON dot_kusama._validators
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_trim_validators_after_insert();
+EXECUTE PROCEDURE dot_kusama.sink_trim_validators_after_insert();
 
 
 -- Nominators
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_nominators_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_nominators_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO dot_polka.nominators("era",
+    INSERT INTO dot_kusama.nominators("era",
                                 "account_id",
                                 "validator",
                                 "is_enabled",
@@ -464,15 +455,15 @@ $$
 
 CREATE TRIGGER trg_nominators_sink_upsert
     BEFORE INSERT
-    ON dot_polka._nominators
+    ON dot_kusama._nominators
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_nominators_insert();
+EXECUTE PROCEDURE dot_kusama.sink_nominators_insert();
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_nominators_after_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_trim_nominators_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-    DELETE FROM dot_polka._nominators WHERE "era" = NEW."era"
+    DELETE FROM dot_kusama._nominators WHERE "era" = NEW."era"
         AND "account_id" = NEW."account_id";
     RETURN NEW;
 END;
@@ -481,18 +472,18 @@ $$
 
 CREATE TRIGGER trg_nominators_sink_trim_after_upsert
     AFTER INSERT
-    ON dot_polka._nominators
+    ON dot_kusama._nominators
     FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_trim_nominators_after_insert();
+EXECUTE PROCEDURE dot_kusama.sink_trim_nominators_after_insert();
 
 
 -- Sessions
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_sessions_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_sessions_insert()
     RETURNS trigger AS
 $$
 BEGIN
-INSERT INTO dot_polka.sessions("session_id",
+INSERT INTO dot_kusama.sessions("session_id",
                                  "era",
                                  "block_start",
                                  "block_end",
@@ -512,15 +503,15 @@ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trg_sessions_sink_upsert
     BEFORE INSERT
-    ON dot_polka._sessions
+    ON dot_kusama._sessions
     FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_sessions_insert();
+    EXECUTE PROCEDURE dot_kusama.sink_sessions_insert();
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_sessions_after_insert()
+CREATE OR REPLACE FUNCTION dot_kusama.sink_trim_sessions_after_insert()
     RETURNS trigger AS
 $$
 BEGIN
-DELETE FROM dot_polka._sessions WHERE "session_id" = NEW."session_id";
+DELETE FROM dot_kusama._sessions WHERE "session_id" = NEW."session_id";
 RETURN NEW;
 END;
 $$
@@ -528,65 +519,15 @@ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trg_sessions_sink_trim_after_upsert
     AFTER INSERT
-    ON dot_polka._sessions
+    ON dot_kusama._sessions
     FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_trim_sessions_after_insert();
+    EXECUTE PROCEDURE dot_kusama.sink_trim_sessions_after_insert();
 
 
--- Eras
-
-CREATE OR REPLACE FUNCTION dot_polka.sink_eras_insert()
-    RETURNS trigger AS
-$$
-BEGIN
-INSERT INTO dot_polka.eras("era",
-                               "session_start",
-                               "validators_active",
-                               "nominators_active",
-                               "total_reward",
-                               "total_stake",
-                               "total_reward_points"
-                               )
-VALUES (NEW."era",
-        NEW."session_start",
-        NEW."validators_active",
-        NEW."nominators_active",
-        NEW."total_reward",
-        NEW."total_stake"::BIGINT,
-        NEW."total_reward_points")
-    ON CONFLICT DO NOTHING;
-
-RETURN NEW;
-END ;
-
-$$
-LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trg_eras_sink_upsert
-    BEFORE INSERT
-    ON dot_polka._eras
-    FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_eras_insert();
-
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_eras_after_insert()
-    RETURNS trigger AS
-$$
-BEGIN
-DELETE FROM dot_polka._eras WHERE "era" = NEW."era";
-RETURN NEW;
-END;
-$$
-LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trg_eras_sink_trim_after_upsert
-    AFTER INSERT
-    ON dot_polka._eras
-    FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_trim_eras_after_insert();
 
 --  BI additions
 
-CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance TABLESPACE pg_default AS
+CREATE MATERIALIZED VIEW dot_kusama.mv_bi_accounts_balance TABLESPACE pg_default AS
 SELECT
            e.session_id,
            e.era,
@@ -595,17 +536,17 @@ SELECT
            e.data,
            b.id AS block_id,
            b.block_time
-FROM dot_polka.events e
-JOIN dot_polka.blocks b ON b.id = e.block_id
+FROM dot_kusama.events e
+JOIN dot_kusama.blocks b ON b.id = e.block_id
 WHERE e.section::text = 'balances'::text
 ORDER BY e.block_id DESC WITH DATA;
 
-REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance;
+REFRESH MATERIALIZED VIEW dot_kusama.mv_bi_accounts_balance;
 
 
 
 
-CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking AS
+CREATE MATERIALIZED VIEW dot_kusama.mv_bi_accounts_staking AS
 SELECT
            e.session_id,
            e.era,
@@ -615,9 +556,9 @@ SELECT
                   ELSE (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10^10
            END AS balance,
            b.block_time
-FROM dot_polka.events e
-JOIN dot_polka.blocks b ON b.id = e.block_id
+FROM dot_kusama.events e
+JOIN dot_kusama.blocks b ON b.id = e.block_id
 WHERE e.section = 'staking' AND e.method IN ('Bonded', 'Reward', 'Slash', 'Unbonded', 'Withdrawn')
 ORDER BY e.block_id DESC WITH DATA;
 
-REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking;
+REFRESH MATERIALIZED VIEW dot_kusama.mv_bi_accounts_staking;
