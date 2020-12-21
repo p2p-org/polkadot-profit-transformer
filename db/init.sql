@@ -40,13 +40,6 @@ CREATE TABLE dot_polka.extrinsics (
     "extrinsic" JSONB
 );
 
-CREATE TABLE dot_polka.sessions (
-    "session_id" INT PRIMARY KEY ,
-    "era" INT,
-    "block_start" BIGINT,
-    "block_end" BIGINT,
-    "block_time" TIMESTAMP
-);
 
 CREATE TABLE dot_polka.eras (
     "era" INT PRIMARY KEY,
@@ -153,13 +146,6 @@ CREATE TABLE dot_polka._extrinsics (
     "extrinsic" TEXT
 );
 
-CREATE TABLE dot_polka._sessions (
-    "session_id" INT PRIMARY KEY ,
-    "era" INT,
-    "block_start" BIGINT,
-    "block_end" BIGINT,
-    "block_time" BIGINT
-);
 
 CREATE TABLE dot_polka._eras (
     "era" INT PRIMARY KEY ,
@@ -486,51 +472,6 @@ CREATE TRIGGER trg_nominators_sink_trim_after_upsert
 EXECUTE PROCEDURE dot_polka.sink_trim_nominators_after_insert();
 
 
--- Sessions
-
-CREATE OR REPLACE FUNCTION dot_polka.sink_sessions_insert()
-    RETURNS trigger AS
-$$
-BEGIN
-INSERT INTO dot_polka.sessions("session_id",
-                                 "era",
-                                 "block_start",
-                                 "block_end",
-                                 "block_time")
-VALUES (NEW."session_id",
-        NEW."era",
-        NEW."block_start",
-        NEW."block_end",
-        to_timestamp(NEW."block_time"))
-    ON CONFLICT DO NOTHING;
-
-RETURN NEW;
-END ;
-
-$$
-LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trg_sessions_sink_upsert
-    BEFORE INSERT
-    ON dot_polka._sessions
-    FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_sessions_insert();
-
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_sessions_after_insert()
-    RETURNS trigger AS
-$$
-BEGIN
-DELETE FROM dot_polka._sessions WHERE "session_id" = NEW."session_id";
-RETURN NEW;
-END;
-$$
-LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trg_sessions_sink_trim_after_upsert
-    AFTER INSERT
-    ON dot_polka._sessions
-    FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_trim_sessions_after_insert();
 
 
 -- Eras

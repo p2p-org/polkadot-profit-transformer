@@ -7,6 +7,8 @@ let currentSpecVersion = null
  * Provides era validators operations
  * @class
  */
+
+// TODO: Rename to stacking
 class ValidatorsService {
   /**
    * Creates an instance of ValidatorsService.
