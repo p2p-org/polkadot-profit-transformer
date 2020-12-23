@@ -82,6 +82,7 @@ CREATE TABLE dot_polka.nominators (
 
 CREATE TABLE dot_polka.account_identity (
     "account_id" varchar(50) PRIMARY KEY,
+    "root_account_id" varchar(50),
     "display" varchar(256),
     "legal" varchar(256),
     "web" varchar(256),
@@ -152,7 +153,7 @@ CREATE TABLE dot_polka._eras (
     "session_start" INT,
     "validators_active" INT,
     "nominators_active" INT,
-    "total_reward" BIGINT,
+    "total_reward" TEXT,
     "total_stake" TEXT,
     "total_reward_points" INT
 );
@@ -492,7 +493,7 @@ VALUES (NEW."era",
         NEW."session_start",
         NEW."validators_active",
         NEW."nominators_active",
-        NEW."total_reward",
+        NEW."total_reward"::BIGINT,
         NEW."total_stake"::BIGINT,
         NEW."total_reward_points")
     ON CONFLICT DO NOTHING;
@@ -524,6 +525,35 @@ CREATE TRIGGER trg_eras_sink_trim_after_upsert
     ON dot_polka._eras
     FOR EACH ROW
     EXECUTE PROCEDURE dot_polka.sink_trim_eras_after_insert();
+
+-- Account identity
+
+CREATE OR REPLACE FUNCTION dot_polka.sink_account_identity_upsert()
+    RETURNS trigger AS
+$$
+BEGIN
+
+NEW."root_account_id" = OLD."root_account_id";
+NEW."display" = OLD."display";
+NEW."legal" = OLD."legal";
+NEW."web" = OLD."web";
+NEW."riot" = OLD."riot";
+NEW."email" = OLD."email";
+NEW."twitter" = OLD."twitter";
+NEW."created_at" = OLD."created_at";
+
+RETURN NEW;
+END ;
+
+$$
+LANGUAGE 'plpgsql';
+
+
+CREATE TRIGGER trg_eras_sink_trim_after_upsert
+    BEFORE UPDATE
+    ON dot_polka.account_identity
+    EXECUTE PROCEDURE dot_polka.sink_account_identity_upsert();
+
 
 --  BI additions
 

@@ -73,20 +73,45 @@ class IdentityProcessorService {
      */
   async onNewAccount(entry) {
         let identity = await this.getIdentity(entry.account_id)
+
+        let superAccountIdRaw = await this.getSuperOf(entry.account_id)
+        let superAccount = null
+        if (!superAccountIdRaw.isEmpty) {
+            superAccount = await this.getIdentity(superAccountIdRaw.value[0].toString())
+
+            if (superAccount) {
+                await this.pushEnrichment(entry.event_id, {
+                    account_id: superAccountIdRaw.value[0].toString(),
+                    display: superAccount.value.info ? hexToString(superAccount.value.info.display.asRaw.toHex()) : null,
+                    legal: superAccount.value.info ? hexToString(superAccount.value.info.legal.asRaw.toHex()) : null,
+                    web: superAccount.value.info ? hexToString(superAccount.value.info.web.asRaw.toHex()) : null,
+                    riot: superAccount.value.info ? hexToString(superAccount.value.info.riot.asRaw.toHex()) : null,
+                    email: superAccount.value.info ? hexToString(superAccount.value.info.email.asRaw.toHex()) : null,
+                    twitter: superAccount.value.info ? hexToString(superAccount.value.info.twitter.asRaw.toHex()) : null
+                })
+            } else {
+                await this.pushEnrichment(entry.event_id, {
+                    account_id: superAccountIdRaw.value[0].toString()
+                })
+            }
+        }
+
         if (identity) {
             await this.pushEnrichment(entry.event_id, {
                 account_id: entry.account_id,
+                root_account_id: !superAccountIdRaw.isEmpty ? superAccountIdRaw.value[0].toString() : null,
                 created_at: entry.block_id,
-                display: hexToString(identity.value.info.display.asRaw.toHex()),
-                legal: hexToString(identity.value.info.legal.asRaw.toHex()),
-                web: hexToString(identity.value.info.web.asRaw.toHex()),
-                riot: hexToString(identity.value.info.riot.asRaw.toHex()),
-                email: hexToString(identity.value.info.email.asRaw.toHex()),
-                twitter: hexToString(identity.value.info.twitter.asRaw.toHex())
+                display: identity.value.info ? hexToString(identity.value.info.display.asRaw.toHex()) : null,
+                legal: identity.value.info ? hexToString(identity.value.info.legal.asRaw.toHex()) : null,
+                web:  identity.value.info ? hexToString(identity.value.info.web.asRaw.toHex()) : null,
+                riot: identity.value.info ? hexToString(identity.value.info.riot.asRaw.toHex()) : null,
+                email: identity.value.info ? hexToString(identity.value.info.email.asRaw.toHex()) : null,
+                twitter: identity.value.info ? hexToString(identity.value.info.twitter.asRaw.toHex()) : null
             })
         } else {
             await this.pushEnrichment(entry.event_id, {
                 account_id: entry.account_id,
+                root_account_id: !superAccountIdRaw.isEmpty ? superAccountIdRaw.value[0].toString() : null,
                 created_at: entry.block_id
             })
         }
@@ -116,18 +141,13 @@ class IdentityProcessorService {
    */
   async getIdentity(accountId) {
     const { polkadotConnector } = this.app
-
-    const identity = await polkadotConnector.query.identity.identityOf(accountId)
-
-    if (identity.isEmpty) {
-      let superAccount = await polkadotConnector.query.identity.superOf(accountId)
-      if (superAccount.isEmpty) {
-        return null
-      }
-      return await this.getIdentity(blockNumber, superAccount.value[0].toString())
-    }
-    return identity;
+    return await polkadotConnector.query.identity.identityOf(accountId);
   }
+
+    async getSuperOf(accountId) {
+        const { polkadotConnector } = this.app
+        return await polkadotConnector.query.identity.superOf(accountId);
+    }
 
   /**
    *

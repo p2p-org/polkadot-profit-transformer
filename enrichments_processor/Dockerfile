@@ -8,6 +8,6 @@ RUN npm install
 
 COPY ./src .
 
-EXPOSE 8081
+EXPOSE 8079
 
 ENTRYPOINT node main.js

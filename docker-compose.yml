@@ -2,7 +2,7 @@
     version: '2'
     services:
       zookeeper:
-        image: confluentinc/cp-zookeeper:5.5.1
+        image: confluentinc/cp-zookeeper:5.5.3
         hostname: zookeeper
         container_name: zookeeper
         ports:
@@ -12,7 +12,7 @@
           ZOOKEEPER_TICK_TIME: 2000
 
       broker:
-        image: confluentinc/cp-server:5.5.1
+        image: confluentinc/cp-server:5.5.3
         hostname: broker
         container_name: broker
         depends_on:
@@ -41,7 +41,7 @@
           CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
 
       schema-registry:
-        image: confluentinc/cp-schema-registry:5.5.1
+        image: confluentinc/cp-schema-registry:5.5.3
         hostname: schema-registry
         container_name: schema-registry
         depends_on:
@@ -89,7 +89,7 @@
           CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
 
       control-center:
-        image: confluentinc/cp-enterprise-control-center:5.5.1
+        image: confluentinc/cp-enterprise-control-center:5.5.3
         hostname: control-center
         container_name: control-center
         depends_on:
@@ -114,7 +114,7 @@
           PORT: 9021
 
       ksqldb-server:
-        image: confluentinc/cp-ksqldb-server:5.5.1
+        image: confluentinc/cp-ksqldb-server:5.5.3
         hostname: ksqldb-server
         container_name: ksqldb-server
         depends_on:
@@ -139,7 +139,7 @@
           - ./udf/target:/etc/ksqldb/ext
 
       ksqldb-cli:
-        image: confluentinc/cp-ksqldb-cli:5.5.1
+        image: confluentinc/cp-ksqldb-cli:5.5.3
         container_name: ksqldb-cli
         depends_on:
           - broker
@@ -149,7 +149,7 @@
         tty: true
 
       ksql-datagen:
-        image: confluentinc/ksqldb-examples:5.5.1
+        image: confluentinc/ksqldb-examples:5.5.3
         hostname: ksql-datagen
         container_name: ksql-datagen
         depends_on:
@@ -171,7 +171,7 @@
           STREAMS_SCHEMA_REGISTRY_PORT: 8081
 
       rest-proxy:
-        image: confluentinc/cp-kafka-rest:5.5.1
+        image: confluentinc/cp-kafka-rest:5.5.3
         depends_on:
           - zookeeper
           - broker

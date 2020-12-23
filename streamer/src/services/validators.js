@@ -196,8 +196,8 @@ class ValidatorsService {
         session_start: 0,
         validators_active: 0,
         nominators_active: 0,
-        total_reward: 0,
-        total_stake: 0,
+        total_reward: '0',
+        total_stake: '0',
         total_reward_points: 0
       }
     }
@@ -206,12 +206,12 @@ class ValidatorsService {
       const [sessionStart, totalStake, totalReward] = await Promise.all([
         polkadotConnector.query.staking.erasStartSessionIndex.at(blockHash, blockEra),
         polkadotConnector.query.staking.erasTotalStake.at(blockHash, blockEra),
-        polkadotConnector.query.staking.erasValidatorReward.at(blockHash, blockEra)
+        polkadotConnector.query.staking.erasValidatorReward(blockEra) // TODO: change to .at query
       ])
 
       result.era_data.session_start = parseInt(sessionStart.toString(), 10)
       result.era_data.total_stake = totalStake.toString()
-      result.era_data.total_reward = !totalReward.isNone ? totalReward.unwrap().toBigInt() : 0
+      result.era_data.total_reward = !totalReward.isNone ? totalReward.unwrap().toString() : 0
     }
 
     let { validators, erasRewardPointsRaw } = [[], []]
