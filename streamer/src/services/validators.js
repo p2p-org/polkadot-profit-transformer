@@ -206,7 +206,7 @@ class ValidatorsService {
       const [sessionStart, totalStake, totalReward] = await Promise.all([
         polkadotConnector.query.staking.erasStartSessionIndex.at(blockHash, blockEra),
         polkadotConnector.query.staking.erasTotalStake.at(blockHash, blockEra),
-        polkadotConnector.query.staking.erasValidatorReward(blockEra) // TODO: change to .at query
+        polkadotConnector.query.staking.erasValidatorReward.at(blockHash, blockEra - 1) // TODO: change to .at query
       ])
 
       result.era_data.session_start = parseInt(sessionStart.toString(), 10)

@@ -227,12 +227,8 @@ class BlocksService {
     try {
       this.app.log.info(`Starting processBlocks`)
 
-      if (startBlockNumber == null) {
-        startBlockNumber = await this.getLastProcessedBlock()
-      }
-
       if (!startBlockNumber) {
-        startBlockNumber = 1
+        startBlockNumber = await this.getLastProcessedBlock()
       }
 
       let lastBlockNumber = await this.getFinBlockNumber()
@@ -301,7 +297,7 @@ class BlocksService {
     let blockNumberFromDB = 0
 
     await postgresConnector
-      .query(`SELECT max("id") as last_number FROM ${DB_SCHEMA}.blocks`)
+      .query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
       .then((res) => {
         blockNumberFromDB = res.rows[0].last_number
       })

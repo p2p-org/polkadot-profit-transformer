@@ -64,10 +64,9 @@
       "name": "{APP_PREFIX}_validators_extraction_sink",
       "config": {
         "topics": "{APP_PREFIX}_STAKING_VALIDATOR_EXTRACTION",
-        "insert.mode": "UPSERT",
+        "insert.mode": "INSERT",
         "table.name.format": "dot_polka._validators",
-        "pk.mode": "record_value",
-        "pk.fields": "id"
+        "pk.mode": "none"
       }
     },
     {

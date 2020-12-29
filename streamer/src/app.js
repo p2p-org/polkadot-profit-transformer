@@ -21,7 +21,7 @@ const argv = require('yargs')
   })
   .option('start', {
     type: 'number',
-    default: 1,
+    default: 0,
     description: 'Start synchronization from block number'
   })
   .option('sub-fin-head', {

@@ -93,6 +93,13 @@ CREATE TABLE dot_polka.account_identity (
     "killed_at" BIGINT
 );
 
+CREATE TABLE dot_polka.extrinsics_methods (
+    "id" VARCHAR(150) PRIMARY KEY,
+    "block_id" BIGINT NOT NULL,
+    "section" VARCHAR(50),
+    "method" VARCHAR(50),
+    "data" JSONB
+)
 
 CREATE TABLE dot_polka.balances (
     "block_id" INTEGER NOT NULL,
@@ -178,6 +185,7 @@ CREATE TABLE dot_polka._nominators (
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
     "is_enabled" BOOL,
+    "is_clipped" BOOL,
     "value" TEXT,
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
@@ -192,6 +200,14 @@ CREATE TABLE dot_polka._balances (
     "is_validator" BOOLEAN,
     "block_time" BIGINT
 );
+
+CREATE TABLE dot_polka._extrinsics_methods (
+    "id" VARCHAR(150) PRIMARY KEY,
+    "block_id" BIGINT NOT NULL,
+    "section" VARCHAR(50),
+    "method" VARCHAR(50),
+    "data" JSONB
+)
 
 -- Blocks
 
@@ -473,8 +489,6 @@ CREATE TRIGGER trg_nominators_sink_trim_after_upsert
 EXECUTE PROCEDURE dot_polka.sink_trim_nominators_after_insert();
 
 
-
-
 -- Eras
 
 CREATE OR REPLACE FUNCTION dot_polka.sink_eras_insert()
@@ -554,6 +568,52 @@ CREATE TRIGGER trg_eras_sink_trim_after_upsert
     ON dot_polka.account_identity
     EXECUTE PROCEDURE dot_polka.sink_account_identity_upsert();
 
+
+-- Extrinsics Methods
+
+CREATE OR REPLACE FUNCTION dot_polka.sink_extrinsics_methods_insert()
+    RETURNS trigger AS
+$$
+BEGIN
+INSERT INTO dot_polka.extrinsics_methods("id",
+                             "block_id",
+                             "section",
+                             "method",
+                             "data")
+VALUES (NEW."id",
+        NEW."block_id",
+        NEW."section",
+        NEW."method",
+        NEW."data"::jsonb)
+    ON CONFLICT DO NOTHING;
+
+RETURN NEW;
+END ;
+
+$$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER trg_extrinsics_methods_sink_upsert
+    BEFORE INSERT
+    ON dot_polka._events
+    FOR EACH ROW
+    EXECUTE PROCEDURE dot_polka.sink_extrinsics_methods_insert();
+
+CREATE OR REPLACE FUNCTION dot_polka.sink_trim_extrinsics_methods_after_insert()
+    RETURNS trigger AS
+$$
+BEGIN
+DELETE FROM dot_polka._extrinsics_methods WHERE "id" = NEW."id";
+RETURN NEW;
+END;
+$$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER trg_extrinsics_methods_sink_trim_after
+    AFTER INSERT
+    ON dot_polka._extrinsics_methods
+    FOR EACH ROW
+    EXECUTE PROCEDURE dot_polka.sink_trim_extrinsics_methods_after_insert();
 
 --  BI additions
 
