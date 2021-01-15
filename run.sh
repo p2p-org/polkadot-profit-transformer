@@ -14,6 +14,10 @@ APP_MODE=dev
 APP_NETWORK=polkadot
 APP_PREFIX=$(echo "$APP_ID"_"$APP_MODE"_"$APP_NETWORK" | tr '[:lower:]' '[:upper:]')
 
+COLOR_RED=`tput setaf 1`
+COLOR_GREEN=`tput setaf 2`
+COLOR_NONE=`tput sgr0`
+
 # {
 #  "ksql": "",
 #  "streamsProperties": {}
@@ -26,19 +30,28 @@ read -r -d '' KSQL_FILE_TEMPLATE <<-EOM
 }
 EOM
 
-if ! type "jq" >/dev/null; then
-  echo "The \"jq\" command not found"
+# Check dependencies
+if ! type "docker" >/dev/null; then
+  echo "${COLOR_RED}The \"docker\" not found${COLOR_NONE}"
   exit 1
 fi
 
+if ! type "docker-compose" >/dev/null; then
+  echo "${COLOR_RED}The \"docker-compose\" command not found${COLOR_NONE}"
+  exit 1
+fi
 
+if ! type "jq" >/dev/null; then
+  echo "${COLOR_RED}The \"jq\" command not found${COLOR_NONE}"
+  exit 1
+fi
 
 docker-compose -f docker-compose.ksql.yml  -f docker-compose.yml up -d zookeeper broker
 docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d --build schema-registry connect control-center \
   ksqldb-server ksqldb-cli ksql-datagen rest-proxy db
 
-echo "Starting ksql containers..."
-sleep 2m # we should wait a little bit
+echo "${COLOR_GREEN}Starting ksql containers...${COLOR_NONE}"
+sleep 4m # we should wait a little bit
 
 
 KAFKA_API_ATTEMPT_COUNTER=0
@@ -49,7 +62,7 @@ echo "Waiting for kafka broker..."
 while [[ "$(curl -sX GET "$KAFKA_REST_PROXY_URL/brokers" \
   -H "Content-Type: application/vnd.kafka.v2+json" | jq -r '.brokers[0]')" = null ]]; do
     if [ ${KAFKA_API_ATTEMPTS} -eq ${KAFKA_API_ATTEMPT_COUNTER} ];then
-      echo "Cannot connect to Kafka API instance. Max attempts reached"
+      echo "${COLOR_RED}Cannot connect to Kafka API instance. Max attempts reached${COLOR_NONE}"
       exit 1
     fi
 
@@ -60,14 +73,14 @@ done
 
 if [ ! -s $FILE_KSQL_CONFIG ]
 then
-  echo "KSQL config not found \"$FILE_KSQL_CONFIG\""
+  echo "${COLOR_RED}KSQL config not found \"$FILE_KSQL_CONFIG\"${COLOR_NONE}"
   exit
 fi
 
 KSQL_CONFIG+=$(<"$FILE_KSQL_CONFIG")
 
 if [[ $(jq -r '.topics[0]' <<<"$KSQL_CONFIG") == null ]]; then
-  echo "KSQL config \"$FILE_KSQL_CONFIG\" doesn't contains \"topic\" entries"
+  echo "${COLOR_RED}KSQL config \"$FILE_KSQL_CONFIG\" doesn't contains \"topic\" entries${COLOR_NONE}"
   exit
 fi
 
@@ -107,22 +120,22 @@ echo "KSQL server is ready. Version \"$KSQL_SERVER_VERSION\""
 
 
 if [ ! -d $DIR_KSQL_INIT_CONFIG ]; then
-  echo "KSQL migrations dir \"$DIR_KSQL_INIT_CONFIG\" not exists"
+  echo "${COLOR_RED}KSQL migrations dir \"$DIR_KSQL_INIT_CONFIG\" not exists${COLOR_NONE}"
   exit 1
 fi
 
 if [ -z "$(ls -A $DIR_KSQL_INIT_CONFIG/*.sql)" ]; then
-  echo "KSQL migrations dir \"$DIR_KSQL_INIT_CONFIG\" does not contains *.sql files"
+  echo "${COLOR_RED}KSQL migrations dir \"$DIR_KSQL_INIT_CONFIG\" does not contains *.sql files${COLOR_NONE}"
   exit 1
 fi
 
 for file in "$DIR_KSQL_INIT_CONFIG"/*.sql; do
-  echo "Loading KSQL migrations \"$file\""
+  echo "$Loading KSQL migrations \"$file\""
   GEN_KSQL=$(<"$file")
 
   if [ -z "$GEN_KSQL" ]; then
-    echo "Loaded KSQL migrations file is empty"
-    echo "Please, check \"$file\""
+    echo "${COLOR_RED}Loaded KSQL migrations file is empty${COLOR_NONE}"
+    echo "${COLOR_RED}Please, check \"$file\"${COLOR_NONE}"
     continue
   fi
 
@@ -139,7 +152,7 @@ for file in "$DIR_KSQL_INIT_CONFIG"/*.sql; do
     --data "$KSQL_INIT" | jq '. | if type == "array" then null else .message end')
 
   if [[ "$KSQL_RESP_MESSAGE" != null ]]; then
-    echo "$KSQL_RESP_MESSAGE"
+    echo "${COLOR_RED}$KSQL_RESP_MESSAGE${COLOR_NONE}"
   fi
 done
 
@@ -199,43 +212,10 @@ for kafka_connector in $(jq -c '.connectors[]' <<<"$KSQL_CONFIG"); do
     --data "$KAFKA_CONNECTOR_CONFIG" | jq '.message')
 
   if [[ "$KAFKA_CONNECT_RESP_MESSAGE" != null ]]; then
-    echo "$KAFKA_CONNECT_RESP_MESSAGE"
+    echo "${COLOR_RED}$KAFKA_CONNECT_RESP_MESSAGE${COLOR_NONE}"
   fi
 done
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile
 
-# docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server
-
-# sleep 2m
-
-# curl 'http://localhost:5000/setup' \
-#   -H 'Content-Type: application/x-www-form-urlencoded' \
-#   -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \  --cookie-jar gen/cookies.txt \
-#  --data-raw 'name=admin&email=admin%40example.com&password=supersecret123&security_notifications=y&org_name=example' \
-#  --compressed
-
-#curl 'http://localhost:5000/api/data_sources' \
-#  -H 'Connection: keep-alive' \
-#  -H 'Pragma: no-cache' \
-#  -H 'Cache-Control: no-cache' \
-#  -H 'Accept: application/json, text/plain, */*' \
-#  -H 'DNT: 1' \
-#  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36' \
-#  -H 'Content-Type: application/json;charset=UTF-8' \
-#  -H 'Origin: http://localhost:5000' \
-#  -H 'Sec-Fetch-Site: same-origin' \
-#  -H 'Sec-Fetch-Mode: cors' \
-#  -H 'Sec-Fetch-Dest: empty' \
-#  -H 'Referer: http://localhost:5000/data_sources' \
-#  -H 'Accept-Language: en-US,en;q=0.9,ru-RU;q=0.8,ru;q=0.7' \
-#  -H 'Cookie: JSESSIONID=node0p2s19x7kw2v8if1lnudgom091.node0; OAuth_Token_Request_State=fc1e3179-461d-4723-aeb4-60a97b1fbf45; Goland-d8adb5d2=877b5e79-3973-47e2-87f5-f6988e0b9788; ajs_anonymous_id=%22d2f78e54-c242-4db1-b288-6d14d57edd55%22; ajs_user_id=%22d2f78e54-c242-4db1-b288-6d14d57edd55%22; session=.eJwdjs2KwjAUhV9luGsHmia2WJiFQ7R04N5iqZZkI5bGtrHZ1BE14rtPmNWB8_NxXnA8z-Y6QPY738wCjmMH2Qs-WsigzH-clger6h3Tji7YbK2ue0bNdkS_v6sGn1oOtswPAzma0PYRur1Xvn_oGuPQ5ejXd5LfA_ki0m4nynrNURaMfPACHyVdlNtw5WmkPHDz4kEeY3JKBBW6qSbylUPbBVUxykukLD5JVhOGTcgH3Wy-4L2A29XM__-BfSatOJm4Y8v4nIqVSHmybNkqZYYZnpxSDu8_ehdQUQ.EpYJNw.OZmHXdXOqWxV1BczVHJ92G3ou1I' \
-#  --data-binary '{"options":{"host":"db","port":5432,"user":"sink","password":"d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x","sslmode":"disable","dbname":"raw"},"type":"pg","name":"mmm"}' \
-#  --compressed
-
-# curl 'http://localhost:5000/api/data_sources' \
-#   -b gen/cookies.txt \
-#   -H 'Accept: application/json, text/plain, */*' \
-#   -H 'Content-Type: application/json;charset=UTF-8' \
-#   --data-binary '{"options":{"host":"db","port":5432,"user":"sink","password":"d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x","sslmode":"disable","dbname":"raw"},"type":"pg","name":"mbelt"}' \
-#   --compressed
+docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server

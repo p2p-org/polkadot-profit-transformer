@@ -12,7 +12,7 @@
     "dev": "node_modules/.bin/nodemon ./src/main.js",
     "lint": "node_modules/.bin/eslint ./src/main.js",
     "lint:fix": "node_modules/.bin/eslint . --fix",
-    "test": "mocha"
+    "test": "mocha ./**/test/e2e/*.js"
   },
   "dependencies": {
     "@polkadot/api": "^3.4.1",

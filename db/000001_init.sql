@@ -104,14 +104,6 @@ CREATE TABLE dot_polka.account_identity (
     "killed_at" BIGINT
 );
 
-CREATE TABLE dot_polka.extrinsics_methods (
-    "id" VARCHAR(150) PRIMARY KEY,
-    "block_id" BIGINT NOT NULL,
-    "section" VARCHAR(50),
-    "method" VARCHAR(50),
-    "data" JSONB
-)
-
 CREATE TABLE dot_polka.balances (
     "block_id" INTEGER NOT NULL,
     "account_id" TEXT,
@@ -583,26 +575,19 @@ CREATE OR REPLACE FUNCTION dot_polka.sink_account_identity_upsert()
 $$
 BEGIN
 
-NEW."root_account_id" = OLD."root_account_id";
-NEW."display" = OLD."display";
-NEW."legal" = OLD."legal";
-NEW."web" = OLD."web";
-NEW."riot" = OLD."riot";
-NEW."email" = OLD."email";
-NEW."twitter" = OLD."twitter";
-NEW."created_at" = OLD."created_at";
+OLD."killed_at" = OLD."killed_at";
 
-RETURN NEW;
+RETURN OLD;
 END ;
 
 $$
 LANGUAGE 'plpgsql';
 
 
-CREATE TRIGGER trg_eras_sink_trim_after_upsert
+CREATE TRIGGER trg_account_identity_upsert
     BEFORE UPDATE
     ON dot_polka.account_identity
-    EXECUTE PROCEDURE dot_polka.sink_account_identity_upsert();
+    FOR EACH ROW EXECUTE PROCEDURE dot_polka.sink_account_identity_upsert();
 
 --  BI additions
 

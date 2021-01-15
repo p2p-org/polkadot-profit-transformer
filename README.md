@@ -1,3 +1,27 @@
+### Dependensies
+* Docker (memory is allocated minimally at least 8 GB)
+* Docker Compose 
+* jq  
+* Make _(optional)_
+
+
+### Installation
+
+```shell
+git clone https://github.com/p2p-org/mbelt-filecoin-streamer.git
+cd mbelt-filecoin-streamer
+make up
+```
+
+#### Make commands
+
+| Command | Default |
+| ---- | ---- |
+| `up`| Create and run all containers |
+| `ps`| Show processes |
+| `stop`| Stop all containers |
+| `rm`|  Remove force all containers |
+
 ### Features
 This framework provides extractions blocks and subscription to updates (with reorganization support) Polkadot and Kusama.
 
