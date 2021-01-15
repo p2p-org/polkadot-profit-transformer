@@ -82,7 +82,7 @@ CREATE TABLE dot_kusama.nominators (
 
 CREATE TABLE dot_kusama.account_identity (
                                             "account_id" varchar(50) PRIMARY KEY,
-                                            "root_account_id" varchar(50) PRIMARY KEY,
+                                            "root_account_id" varchar(50),
                                             "display" varchar(256),
                                             "legal" varchar(256),
                                             "web" varchar(256),

@@ -4,6 +4,9 @@
       "name": "BLOCK_DATA"
     },
     {
+      "name": "EXTRINSICS_DATA"
+    },
+    {
       "name": "SESSION_DATA"
     },
     {

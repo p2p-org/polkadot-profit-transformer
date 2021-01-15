@@ -1,5 +1,6 @@
 const { SyncStatus } = require('./index')
-const { ValidatorsService } = require('./validators')
+const { StakingService } = require('./staking')
+const { ExtrinsicsService } = require('./extrinsics')
 const { KAFKA_PREFIX, DB_SCHEMA } = require('../environment')
 
 /** @type {BlockHash | string | Uint8Array} */
@@ -56,7 +57,10 @@ class BlocksService {
     })
 
     /** @private */
-    this.validatorsService = new ValidatorsService(app)
+    this.stakingService = new StakingService(app)
+
+    /** @private */
+    this.extrinsicsService = new ExtrinsicsService(app)
   }
 
   /**
@@ -127,20 +131,6 @@ class BlocksService {
 
     const extrinsics = []
 
-    signedBlock.block.extrinsics.forEach((extrinsic, exIndex) => {
-      const referencedEventsIds = events
-        .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(exIndex))
-        .map(({ event }, evIndex) => `${signedBlock.block.header.number}-${evIndex}`)
-
-      extrinsics.push({
-        id: `${signedBlock.block.header.number}-${exIndex}`,
-        block_id: signedBlock.block.header.number,
-        section: extrinsic.method.section,
-        method: extrinsic.method.method,
-        ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
-        extrinsic: extrinsic.toHuman()
-      })
-    })
 
     const lastDigestLogEntry = signedBlock.block.header.digest.logs.length - 1
 
@@ -159,7 +149,6 @@ class BlocksService {
           digest: signedBlock.block.header.digest.toString()
         }
       },
-      extrinsics: [...extrinsics],
       events: blockEvents,
       block_time: blockTime.toNumber()
     }
@@ -181,8 +170,10 @@ class BlocksService {
         throw new Error('cannot push block to Kafka')
       })
 
+    await this.extrinsicsService.extractExtrinsics(parseInt(blockEra.toString(), 10), sessionId.toNumber(), signedBlock.block.header.number, events, signedBlock.block.extrinsics)
+
     if (processedEvents.isNewSession) {
-      this.validatorsService.extractStakers(signedBlock.block.header.number.toNumber())
+      await this.stakingService.extractStakers(signedBlock.block.header.number.toNumber())
     }
   }
 

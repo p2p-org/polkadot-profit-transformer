@@ -205,15 +205,15 @@ done
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile
 
-docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server create_db
+# docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server
 
-sleep 2m
+# sleep 2m
 
-curl 'http://localhost:5000/setup' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \  --cookie-jar gen/cookies.txt \
-  --data-raw 'name=admin&email=admin%40example.com&password=supersecret123&security_notifications=y&org_name=example' \
-  --compressed
+# curl 'http://localhost:5000/setup' \
+#   -H 'Content-Type: application/x-www-form-urlencoded' \
+#   -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \  --cookie-jar gen/cookies.txt \
+#  --data-raw 'name=admin&email=admin%40example.com&password=supersecret123&security_notifications=y&org_name=example' \
+#  --compressed
 
 #curl 'http://localhost:5000/api/data_sources' \
 #  -H 'Connection: keep-alive' \
@@ -233,9 +233,9 @@ curl 'http://localhost:5000/setup' \
 #  --data-binary '{"options":{"host":"db","port":5432,"user":"sink","password":"d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x","sslmode":"disable","dbname":"raw"},"type":"pg","name":"mmm"}' \
 #  --compressed
 
-curl 'http://localhost:5000/api/data_sources' \
-   -b gen/cookies.txt \
-   -H 'Accept: application/json, text/plain, */*' \
-   -H 'Content-Type: application/json;charset=UTF-8' \
-   --data-binary '{"options":{"host":"db","port":5432,"user":"sink","password":"d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x","sslmode":"disable","dbname":"raw"},"type":"pg","name":"mbelt"}' \
-   --compressed
+# curl 'http://localhost:5000/api/data_sources' \
+#   -b gen/cookies.txt \
+#   -H 'Accept: application/json, text/plain, */*' \
+#   -H 'Content-Type: application/json;charset=UTF-8' \
+#   --data-binary '{"options":{"host":"db","port":5432,"user":"sink","password":"d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x","sslmode":"disable","dbname":"raw"},"type":"pg","name":"mbelt"}' \
+#   --compressed

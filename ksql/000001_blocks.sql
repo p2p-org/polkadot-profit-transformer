@@ -1,6 +1,5 @@
 CREATE STREAM {APP_PREFIX}_BLOCK_DATA (
     "block" VARCHAR,
-    "extrinsics" ARRAY < VARCHAR >,
     "events" ARRAY < VARCHAR >,
     "block_time" BIGINT
 ) WITH (

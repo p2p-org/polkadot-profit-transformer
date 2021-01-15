@@ -1,30 +1,51 @@
-CREATE STREAM {APP_PREFIX}_extrinsic (
+CREATE TYPE EXTRINSIC AS STRUCT<
+    "id" VARCHAR,
     "block_id" BIGINT,
-    "extrinsic" STRING
+    "parent_id" VARCHAR,
+    "session_id" INT,
+    "era" INT,
+    "section" VARCHAR,
+    "method" VARCHAR,
+    "mortal_period" INT,
+    "mortal_phase" INT,
+    "is_signed" BOOLEAN,
+    "signer" VARCHAR,
+    "tip" INT,
+    "nonce" DOUBLE,
+    "ref_event_ids" VARCHAR,
+    "version" INT,
+    "extrinsic" STRING,
+    "args" STRING
+>;
+
+CREATE STREAM {APP_PREFIX}_EXTRINSICS_DATA(
+    extrinsics ARRAY <EXTRINSIC>
 ) WITH (
-    kafka_topic = '{APP_PREFIX}_EXTRINSIC',
+    kafka_topic = '{APP_PREFIX}_EXTRINSICS_DATA',
     PARTITIONS = 1,
-    VALUE_FORMAT = 'AVRO',
+    VALUE_FORMAT = 'JSON',
     REPLICAS = 1
 );
 
-INSERT INTO {APP_PREFIX}_extrinsic
-SELECT
-    CAST(extractjsonfield(B."block", '$.header.number') AS BIGINT) AS "block_id",
-    EXPLODE(B."extrinsics") AS "extrinsic"
-
-FROM {APP_PREFIX}_BLOCK_DATA B
-    EMIT CHANGES;
-
-
 
 CREATE STREAM {APP_PREFIX}_EXTRINSIC_EXTRACTION (
-    "id" STRING,
+    "id" VARCHAR,
     "block_id" BIGINT,
-    "section" STRING,
-    "method" STRING,
-    "ref_event_ids" STRING,
-    "extrinsic" STRING
+    "parent_id" VARCHAR,
+    "session_id" INT,
+    "era" INT,
+    "section" VARCHAR,
+    "method" VARCHAR,
+    "mortal_period" INT,
+    "mortal_phase" INT,
+    "is_signed" BOOLEAN,
+    "signer" VARCHAR,
+    "tip" INT,
+    "nonce" DOUBLE,
+    "ref_event_ids" VARCHAR,
+    "version" INT,
+    "extrinsic" STRING,
+    "args" STRING
 ) WITH (
     KAFKA_TOPIC='{APP_PREFIX}_EXTRINSIC_EXTRACTION',
     PARTITIONS=1,
@@ -32,12 +53,12 @@ CREATE STREAM {APP_PREFIX}_EXTRINSIC_EXTRACTION (
     VALUE_FORMAT='AVRO'
 );
 
-INSERT INTO {APP_PREFIX}_EXTRINSIC_EXTRACTION SELECT
-                                     extractjsonfield(E."extrinsic", '$.id') "id",
-                                     E."block_id" "block_id",
-                                     extractjsonfield(E."extrinsic", '$.section') "section",
-                                     extractjsonfield(E."extrinsic", '$.method') "method",
-                                     extractjsonfield(E."extrinsic", '$.ref_event_ids') "ref_event_ids",
-                                     extractjsonfield(E."extrinsic", '$.extrinsic')  "extrinsic"
-FROM {APP_PREFIX}_EXTRINSIC E
+-- INSERT INTO {APP_PREFIX}_EXTRINSIC_EXTRACTION SELECT
+--     EXPLODE(E."extrinsics")
+-- FROM {APP_PREFIX}_EXTRINSICS_DATA E
+--    EMIT CHANGES;
+
+INSERT INTO SUBSTRATE_STREAMER_DEV_POLKADOT_EXTRINSIC_EXTRACTION SELECT
+    EXPLODE(E.extrinsics)
+FROM SUBSTRATE_STREAMER_DEV_POLKADOT_EXTRINSICS_DATA E
     EMIT CHANGES;

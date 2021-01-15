@@ -34,10 +34,21 @@ CREATE TABLE dot_polka.events (
 CREATE TABLE dot_polka.extrinsics (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
+    "parent_id" VARCHAR(150),
+    "session_id" INT,
+    "era" INT,
     "section" VARCHAR(50),
     "method" VARCHAR(50),
+    "mortal_period" INT,
+    "mortal_phase" INT,
+    "is_signed" BOOL,
+    "signer" VARCHAR(66),
+    "tip" INT,
+    "nonce" DOUBLE PRECISION,
     "ref_event_ids" VARCHAR(150)[],
-    "extrinsic" JSONB
+    "version" INT,
+    "extrinsic" JSONB,
+    "args" JSONB
 );
 
 
@@ -146,12 +157,23 @@ CREATE TABLE dot_polka._events (
 );
 
 CREATE TABLE dot_polka._extrinsics (
-    "id" VARCHAR(150) PRIMARY KEY,
-    "block_id" BIGINT NOT NULL,
-    "section" VARCHAR(50),
-    "method" VARCHAR(50),
-    "ref_event_ids" TEXT,
-    "extrinsic" TEXT
+   "id" VARCHAR(150) PRIMARY KEY,
+   "block_id" BIGINT NOT NULL,
+   "parent_id" VARCHAR(150),
+   "session_id" INT,
+   "era" INT,
+   "section" VARCHAR(50),
+   "method" VARCHAR(50),
+   "mortal_period" INT,
+   "mortal_phase" INT,
+   "is_signed" BOOL,
+   "signer" VARCHAR(66),
+   "tip" INT,
+   "nonce" DOUBLE PRECISION,
+   "ref_event_ids" TEXT,
+   "version" INT,
+   "extrinsic" TEXT,
+   "args" TEXT
 );
 
 
@@ -200,14 +222,6 @@ CREATE TABLE dot_polka._balances (
     "is_validator" BOOLEAN,
     "block_time" BIGINT
 );
-
-CREATE TABLE dot_polka._extrinsics_methods (
-    "id" VARCHAR(150) PRIMARY KEY,
-    "block_id" BIGINT NOT NULL,
-    "section" VARCHAR(50),
-    "method" VARCHAR(50),
-    "data" JSONB
-)
 
 -- Blocks
 
@@ -327,16 +341,38 @@ $$
 BEGIN
     INSERT INTO dot_polka.extrinsics("id",
                                 "block_id",
+                                "parent_id",
+                                "session_id",
+                                "era",
                                 "section",
                                 "method",
+                                "mortal_period",
+                                "mortal_phase",
+                                "is_signed",
+                                "signer",
+                                "tip",
+                                "nonce",
                                 "ref_event_ids",
-                                "extrinsic")
+                                "version",
+                                "extrinsic",
+                                "args")
     VALUES (NEW."id",
             NEW."block_id",
+            NEW."parent_id",
+            NEW."session_id",
+            NEW."era",
             NEW."section",
             NEW."method",
+            NEW."mortal_period",
+            NEW."mortal_phase",
+            NEW."is_signed",
+            NEW."signer",
+            NEW."tip",
+            NEW."nonce",
             NEW."ref_event_ids"::VARCHAR(150)[],
-            NEW."extrinsic"::jsonb)
+            NEW."version",
+            NEW."extrinsic"::jsonb,
+            NEW."args"::jsonb)
     ON CONFLICT DO NOTHING;
 
     RETURN NEW;
@@ -567,53 +603,6 @@ CREATE TRIGGER trg_eras_sink_trim_after_upsert
     BEFORE UPDATE
     ON dot_polka.account_identity
     EXECUTE PROCEDURE dot_polka.sink_account_identity_upsert();
-
-
--- Extrinsics Methods
-
-CREATE OR REPLACE FUNCTION dot_polka.sink_extrinsics_methods_insert()
-    RETURNS trigger AS
-$$
-BEGIN
-INSERT INTO dot_polka.extrinsics_methods("id",
-                             "block_id",
-                             "section",
-                             "method",
-                             "data")
-VALUES (NEW."id",
-        NEW."block_id",
-        NEW."section",
-        NEW."method",
-        NEW."data"::jsonb)
-    ON CONFLICT DO NOTHING;
-
-RETURN NEW;
-END ;
-
-$$
-LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trg_extrinsics_methods_sink_upsert
-    BEFORE INSERT
-    ON dot_polka._events
-    FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_extrinsics_methods_insert();
-
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_extrinsics_methods_after_insert()
-    RETURNS trigger AS
-$$
-BEGIN
-DELETE FROM dot_polka._extrinsics_methods WHERE "id" = NEW."id";
-RETURN NEW;
-END;
-$$
-LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trg_extrinsics_methods_sink_trim_after
-    AFTER INSERT
-    ON dot_polka._extrinsics_methods
-    FOR EACH ROW
-    EXECUTE PROCEDURE dot_polka.sink_trim_extrinsics_methods_after_insert();
 
 --  BI additions
 

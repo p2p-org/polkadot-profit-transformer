@@ -1,7 +1,7 @@
 const { ConfigService } = require('./config')
 const { ConsumerService } = require('./consumer')
 const { BlocksService } = require('./blocks')
-const { ValidatorsService } = require('./validators')
+const { StakingService } = require('./staking')
 
 /**
  * Provides cli operations
@@ -19,7 +19,7 @@ class RunnerService {
     this.consumerService = new ConsumerService(app)
 
     /** @private */
-    this.validatorsService = new ValidatorsService(app)
+    this.stakingService = new StakingService(app)
 
     /** @private */
     this.configService = new ConfigService(app)
@@ -48,7 +48,7 @@ class RunnerService {
     await this.configService.bootstrapConfig()
 
     if (options.optionSyncValidators) {
-      await this.validatorsService.syncValidators(options.optionSyncStartBlockNumber)
+      await this.stakingService.syncValidators(options.optionSyncStartBlockNumber)
     } else {
       if (options.optionSync) {
         await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)

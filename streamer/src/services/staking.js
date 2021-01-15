@@ -9,9 +9,9 @@ let currentSpecVersion = null
  */
 
 // TODO: Rename to stacking
-class ValidatorsService {
+class StakingService {
   /**
-   * Creates an instance of ValidatorsService.
+   * Creates an instance of StakingService.
    * @param {object} app fastify app
    */
   constructor(app) {
@@ -206,7 +206,7 @@ class ValidatorsService {
       const [sessionStart, totalStake, totalReward] = await Promise.all([
         polkadotConnector.query.staking.erasStartSessionIndex.at(blockHash, blockEra),
         polkadotConnector.query.staking.erasTotalStake.at(blockHash, blockEra),
-        polkadotConnector.query.staking.erasValidatorReward.at(blockHash, blockEra - 1) // TODO: change to .at query
+        polkadotConnector.query.staking.erasValidatorReward.at(blockHash, blockEra) // TODO: change to .at query
       ])
 
       result.era_data.session_start = parseInt(sessionStart.toString(), 10)
@@ -219,7 +219,7 @@ class ValidatorsService {
     if (isOnlyActiveValidators) {
       ;[validators, erasRewardPointsRaw] = await Promise.all([
         polkadotConnector.query.session.validators.at(blockHash),
-        polkadotConnector.query.staking.erasRewardPoints.at(blockHash, blockEra)
+        polkadotConnector.query.staking.erasRewardPoints.at(blockHash, blockEra) // !!!
       ])
 
       result.era_data.total_reward_points = parseInt(erasRewardPointsRaw.total.toString(), 10)
@@ -413,8 +413,8 @@ class ValidatorsService {
 
 /**
  *
- * @type {{ValidatorsService: ValidatorsService}}
+ * @type {{StakingService: StakingService}}
  */
 module.exports = {
-  ValidatorsService: ValidatorsService
+  StakingService: StakingService
 }
