@@ -219,3 +219,5 @@ done
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server
+
+docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
