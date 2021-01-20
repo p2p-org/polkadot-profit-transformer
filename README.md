@@ -70,7 +70,7 @@ Vendor environment configuration files
 
 ### Features
 This framework provides extractions blocks and subscription to updates (with reorganization support) Polkadot and Kusama.  
-![schema](docs/mbelt_schema.png "mbelt schema")
+![schema](docs/img/mbelt_schema.png "mbelt schema")
 
 ### Overview
 &nbsp; &nbsp;[@streamer](streamer) - The main service, provides extractions and consumer subscriptions operations for [ksqlDB pipelines](streamer/docs/SPECS.md)
