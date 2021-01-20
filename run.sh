@@ -9,9 +9,11 @@ KAFKA_SCHEMA_URL='http://schema-registry:8081'
 KAFKA_KSQL_DB_URL='http://localhost:8088'
 DB_CONNECTION_URL='jdbc:postgresql://db:5432/raw?user=sink&password=d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x'
 
-APP_ID=substrate_streamer
+
 APP_MODE=dev
 APP_NETWORK=polkadot
+
+APP_ID=substrate_streamer
 APP_PREFIX=$(echo "$APP_ID"_"$APP_MODE"_"$APP_NETWORK" | tr '[:lower:]' '[:upper:]')
 
 COLOR_RED=`tput setaf 1`
