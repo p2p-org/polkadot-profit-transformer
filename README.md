@@ -5,10 +5,12 @@
 * Make _(optional)_
 
 ### System requirements
-streamer - 2Gb RAM  
-enrichments_processor - 512Mb RAM  
-KSQL cluster - from 12Gb RAM  
-Postgresql - 1Gb RAM  
+| Module | Min. RAM |
+| ---- | ---- |
+| **streamer** | 2Gb |
+| **enrichments_processor** | 512Mb |
+| KSQL cluster  | 12Gb |
+| Postgresql | 1Gb |
 *(for launching all stack on a single machine, required 16Gb RAM)*
 
 ### Installation
