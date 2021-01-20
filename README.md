@@ -11,7 +11,7 @@
 | **enrichments_processor** | 512Mb |
 | KSQL cluster  | 12Gb |
 | Postgresql | 1Gb |
-*(for launching all stack on a single machine, required 16Gb RAM and 30Gb for *polkadot*, 100Gb for *kusama*)*
+*(for launching all stack on a single machine, required 16Gb RAM and 30Gb disk space for *polkadot*, 100Gb for *kusama*)*
 
 ### Installation
 
