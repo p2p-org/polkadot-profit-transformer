@@ -10,4 +10,4 @@ COPY ./src .
 
 EXPOSE 8080
 
-ENTRYPOINT node main.js --sync --start ${START} --sub-fin-head
+ENTRYPOINT node main.js --sync --sub-fin-head

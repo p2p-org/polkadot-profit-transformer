@@ -18,7 +18,7 @@
 ```shell
 git clone https://github.com/p2p-org/polkadot-profit-transformer.git
 cd polkadot-profit-transformer
-# fill up SUBSTRATE_URI in docker/env/.streamer.env
+# fill up SUBSTRATE_URI in docker/env/.streamer.env, docker/env/.enrichments_processor.env
 make up
 ```
 
