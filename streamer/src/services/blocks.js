@@ -290,7 +290,9 @@ class BlocksService {
     await postgresConnector
       .query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
       .then((res) => {
-        blockNumberFromDB = res.rows[0].last_number
+        if (res.rows.length) {
+          blockNumberFromDB = res.rows[0].last_number
+        }
       })
       .catch((err) => {
         this.app.log.error(`failed to get last synchronized block number: ${err}`)
