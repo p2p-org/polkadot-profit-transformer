@@ -10,4 +10,4 @@ COPY ./src .
 
 EXPOSE 8079
 
-ENTRYPOINT node index.js
+ENTRYPOINT node main.js
