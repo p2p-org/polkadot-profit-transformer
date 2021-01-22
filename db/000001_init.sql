@@ -575,7 +575,7 @@ CREATE OR REPLACE FUNCTION dot_polka.sink_account_identity_upsert()
 $$
 BEGIN
 
-OLD."killed_at" = OLD."killed_at";
+    OLD."killed_at" = NEW."killed_at";
 
 RETURN OLD;
 END ;
