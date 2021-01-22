@@ -290,7 +290,7 @@ class BlocksService {
     await postgresConnector
       .query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
       .then((res) => {
-        if (res.rows.length) {
+        if (res.rows.length && res.rows[0].last_number) {
           blockNumberFromDB = res.rows[0].last_number
         }
       })
