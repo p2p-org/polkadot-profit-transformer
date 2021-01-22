@@ -16,9 +16,9 @@
 ### Installation
 
 ```shell
-git clone https://github.com/p2p-org/mbelt-filecoin-streamer.git
-cd mbelt-filecoin-streamer
-# fill up SUBSTRATE_URI in .streamer.env
+git clone https://github.com/p2p-org/polkadot-profit-transformer.git
+cd polkadot-profit-transformer
+# fill up SUBSTRATE_URI in docker/env/.streamer.env
 make up
 ```
 
