@@ -13,6 +13,8 @@
 | Postgresql | 1Gb |
 *(for launching all stack on a single machine, required 16Gb RAM and 30Gb disk space for *polkadot*, 100Gb for *kusama*)*
 
+You'll also need Polkadot or Kusama archive node with an open websocket interface.
+
 ### Installation
 
 ```shell
