@@ -76,7 +76,16 @@ Vendor environment configuration files
 *.graphile.env*  
 *.redash.env*  
 
+### Health checks
 
+You can check that the streamer is working correctly by running
+```bash
+docker logs polkadot-profit-transformer_streamer_1
+```
+The logs should look like this:
+```
+[1611470950389] INFO	 (1 on c0c920a5bb9a): Process block "939" with hash 0xec2c0fb4f2ccc05b0ab749197db8d6d1c6de07d6e8cb2620d5c308881d1059b5
+```
 
 ### Features
 This framework provides extractions blocks and subscription to updates (with reorganization support) Polkadot and Kusama.  
