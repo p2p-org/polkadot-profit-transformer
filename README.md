@@ -20,7 +20,7 @@ You'll also need Polkadot or Kusama archive node with an open websocket interfac
 ```shell
 git clone https://github.com/p2p-org/polkadot-profit-transformer.git
 cd polkadot-profit-transformer
-# fill up SUBSTRATE_URI in docker/env/.streamer.env, docker/env/.enrichments_processor.env
+# fill up SUBSTRATE_URI and APP_NETWORK in docker/env/.streamer.env, docker/env/.enrichments_processor.env
 make up
 ```
 
