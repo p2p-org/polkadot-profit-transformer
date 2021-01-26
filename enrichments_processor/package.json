@@ -14,11 +14,11 @@
     "lint:fix": "node_modules/.bin/eslint . --fix"
   },
   "dependencies": {
-    "@polkadot/api": "^3.4.1",
-    "@polkadot/types-known": "^3.4.1",
-    "@polkadot/api-derive": "^3.4.1",
-    "@polkadot/rpc-core": "^3.4.1",
-    "@polkadot/types": "^3.4.1",
+    "@polkadot/api": "^3.6.1",
+    "@polkadot/types-known": "^3.6.1",
+    "@polkadot/api-derive": "^3.6.1",
+    "@polkadot/rpc-core": "^3.6.1",
+    "@polkadot/types": "^3.6.1",
     "async-mutex": "^0.2.6",
     "dotenv": "^8.2.0",
     "fastify": "^3.9.2",

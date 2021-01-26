@@ -74,7 +74,36 @@ Vendor environment configuration files
 *.graphile.env*  
 *.redash.env*  
 
+### Postgresql interface
 
+1. Running psql command line from container
+```shell
+$ make psql
+raw=# SELECT * FROM dot_polka.blocks LIMIT 10
+```    
+2. connecting to `db` container with mapped port and credentials from `docker/env/.postges.env`
+
+## PostGraphile UI
+
+Local Docker instance playground
+http://localhost:4000/
+
+## GraphQL endpoint
+
+Local Docker instance
+```bash
+POST http://localhost:5000/graphql
+```
+
+Example:
+```bash
+curl --request POST 'http://localhost:4000/graphql' \
+--header 'Content-Type: application/json' \
+--data '{
+	"query": "query { allBlocks { edges { node { id sessionId era hash  author  } } } }",
+	"variables": null
+}'
+```
 
 ### Features
 This framework provides extractions blocks and subscription to updates (with reorganization support) Polkadot and Kusama.  
