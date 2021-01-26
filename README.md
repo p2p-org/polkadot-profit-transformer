@@ -13,12 +13,14 @@
 | Postgresql | 1Gb |
 *(for launching all stack on a single machine, required 16Gb RAM and 30Gb disk space for *polkadot*, 100Gb for *kusama*)*
 
+You'll also need Polkadot or Kusama archive node with an open websocket interface.
+
 ### Installation
 
 ```shell
 git clone https://github.com/p2p-org/polkadot-profit-transformer.git
 cd polkadot-profit-transformer
-# fill up SUBSTRATE_URI in docker/env/.streamer.env, docker/env/.enrichments_processor.env
+# fill up SUBSTRATE_URI and APP_NETWORK in docker/env/.streamer.env, docker/env/.enrichments_processor.env
 make up
 ```
 
@@ -74,35 +76,15 @@ Vendor environment configuration files
 *.graphile.env*  
 *.redash.env*  
 
-### Postgresql interface
+### Health checks
 
-1. Running psql command line from container
-```shell
-$ make psql
-raw=# SELECT * FROM dot_polka.blocks LIMIT 10
-```    
-2. connecting to `db` container with mapped port and credentials from `docker/env/.postges.env`
-
-## PostGraphile UI
-
-Local Docker instance playground
-http://localhost:4000/
-
-## GraphQL endpoint
-
-Local Docker instance
+You can check that the streamer is working correctly by running
 ```bash
-POST http://localhost:5000/graphql
+docker logs polkadot-profit-transformer_streamer_1
 ```
-
-Example:
-```bash
-curl --request POST 'http://localhost:4000/graphql' \
---header 'Content-Type: application/json' \
---data '{
-	"query": "query { allBlocks { edges { node { id sessionId era hash  author  } } } }",
-	"variables": null
-}'
+The logs should look like this:
+```
+[1611470950389] INFO	 (1 on c0c920a5bb9a): Process block "939" with hash 0xec2c0fb4f2ccc05b0ab749197db8d6d1c6de07d6e8cb2620d5c308881d1059b5
 ```
 
 ### Features
