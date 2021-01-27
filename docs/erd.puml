@@ -1,0 +1,144 @@
+@startuml ER-diagram
+
+' hIde the spot
+hIde circle
+
+' avoId problems with angled crows feet
+skinparam {
+    Linetype ortho
+    Shadowing false
+    RoundCorner 10
+}
+
+entity "Blocks" as block {
+    *id: BIGINT : PK
+    --
+    *hash: VARCHAR(66)
+    *state_root: VARCHAR(66)
+    *extrinsics_root: VARCHAR(66)
+    *parent_hash: VARCHAR(66)
+    *author: VARCHAR(66)
+    *session_id: INT
+    *era: INT
+    *last_log: VARCHAR(100)
+    *digest: JSONB
+    *block_time: TIMESTAMP
+}
+
+entity "Events" as events {
+    *id: VARCHAR(150): PK
+    --
+    *block_id: BIGINT: FK.block.id
+    *session_id: INT : FK block.id
+    *era: INT : FK block.id
+    *section: VARCHAR(50)
+    *method: VARCHAR(50)
+    *data: JSONB
+    *event: JSONB
+}
+
+entity "Extrinsics" as ex {
+    --Composite PK --
+    *id: VARCHAR(150): + FK Blocks.id
+    --
+    *block_id: BIGINT NOT NULL : FK block.id
+    *parent_id: VARCHAR(150)
+    *session_id: INT : FK block.session_id
+    *era: INT : FK block.era
+    *section: VARCHAR(50)
+    *method: VARCHAR(50)
+    *mortal_period: INT
+    *mortal_phase: INT
+    *is_signed: BOOL
+    *signer: VARCHAR(66)
+    *tip: INT
+    *nonce: DOUBLE PRECISION
+    *ref_event_ids: VARCHAR(150):[]
+    *version: INT
+    *extrinsic: JSONB
+    *args: JSONB
+}
+
+entity "Eras" as era {
+    *era: INT: PK
+    --
+    *session_start: INT
+    *validators_active: INT
+    *nominators_active: INT
+    *total_reward: BIGINT
+    *total_stake: BIGINT
+    *total_reward_points: INT
+}
+
+entity "Validators" as val {
+    --Composite PK --
+    era.era: INT: era.era
+    *PK: VARCHAR(50): val.account_id + era.era
+    --
+    *era INT:
+    *account_id: VARCHAR(150)
+    *is_enabled: BOOL
+    *total: BIGINT
+    *own: BIGINT
+    *nominators_count: INT
+    *reward_points: INT
+    *reward_dest: VARCHAR (50)
+    *reward_account_id: VARCHAR (150)
+    *prefs: JSONB
+    *block_time: TIMESTAMP
+}
+
+entity "Nominators" as nom {
+    --Composite PK --
+    era.era: INT: era.era
+    *PK: VARCHAR(50): nom.account_id + era.era
+    --
+    *era: INT
+    *account_id: VARCHAR(150)
+    *validator: VARCHAR (150)
+    *is_enabled: BOOL
+    *is_clipped: BOOL
+    *value: BIGINT
+    *reward_des:t VARCHAR (50)
+    *reward_account_id: VARCHAR (150)
+    *block_time: TIMESTAMP
+}
+
+entity "Identity" as ac {
+    *account_id: varchar(50): PK
+    --
+    *root_account_id: varchar(50)
+    *display: varchar(256)
+    *legal: varchar(256)
+    *web: varchar(256)
+    *riot: varchar(256)
+    *email: varchar(256)
+    *twitter: varchar(256)
+    *created_at: BIGINT
+    *killed_at: BIGINT
+}
+
+entity "balances" as balances {
+    *block_id: INTEGER NOT NULL: FK block.id
+    *account_id: TEXT
+    *balance: DOUBLE PRECISION
+    *method: VARCHAR(30)
+    *is_validator: BOOLEAN
+    *block_time: TIMESTAMP : FK block.id
+}
+
+nom ||.right.|| ac
+era }|..|{ nom
+val }|..|{ era
+val }|..|{ nom
+val ||..|| ac
+balances ||..|| ac
+balances ||..|| nom
+balances ||..|| val
+balances }|.left.|| block
+' block }|..|| era не вижу явной связи
+block ||..|{ events
+block ||..|{ ex
+ex }|.right.|| events
+
+@enduml
