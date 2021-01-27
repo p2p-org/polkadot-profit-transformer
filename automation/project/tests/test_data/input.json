@@ -1,7 +1,7 @@
 {
   "inputs": [
     {
-      "topic": "block_data",
+      "topic": "BLOCK_DATA",
       "key": "0",
       "timestamp": 0,
       "value": {

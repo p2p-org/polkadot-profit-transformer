@@ -1,29 +1,27 @@
 {
-  "name": "polkadot-streamer",
-  "version": "0.0.2",
-  "description": "Stream polkadot blocks and events to Kafka",
+  "name": "enrichments_processor",
+  "version": "0.0.1",
+  "description": "Process enrichments for substats to Kafka",
   "main": "src/main.js",
   "repository": "",
-  "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika",
+  "author": "Dmitry Mandrika",
   "license": "Apache 2.0",
   "private": null,
   "scripts": {
     "start": "node --trace-warnings ./src/main.js",
     "dev": "node_modules/.bin/nodemon ./src/main.js",
     "lint": "node_modules/.bin/eslint ./src/main.js",
-    "lint:fix": "node_modules/.bin/eslint . --fix",
-    "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"
+    "lint:fix": "node_modules/.bin/eslint . --fix"
   },
   "dependencies": {
     "@polkadot/api": "^3.6.1",
+    "@polkadot/types-known": "^3.6.1",
     "@polkadot/api-derive": "^3.6.1",
     "@polkadot/rpc-core": "^3.6.1",
     "@polkadot/types": "^3.6.1",
-    "@polkadot/types-known": "^3.6.1",
-    "@polkadot/util": "^3.6.1",
     "async-mutex": "^0.2.6",
     "dotenv": "^8.2.0",
-    "fastify": "^3.11.0",
+    "fastify": "^3.9.2",
     "fastify-swagger": "^3.5.0",
     "kafkajs": "^1.15.0",
     "pg": "^8.5.1",
@@ -40,7 +38,6 @@
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.0.1",
-    "mocha": "^8.2.1",
     "nodemon": "2.0.4",
     "prettier": "^2.1.2"
   }

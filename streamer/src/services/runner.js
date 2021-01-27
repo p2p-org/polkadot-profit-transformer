@@ -1,5 +1,7 @@
+const { ConfigService } = require('./config')
 const { ConsumerService } = require('./consumer')
 const { BlocksService } = require('./blocks')
+const { StakingService } = require('./staking')
 
 /**
  * Provides cli operations
@@ -15,6 +17,12 @@ class RunnerService {
 
     /** @private */
     this.consumerService = new ConsumerService(app)
+
+    /** @private */
+    this.stakingService = new StakingService(app)
+
+    /** @private */
+    this.configService = new ConfigService(app)
   }
 
   /**
@@ -23,6 +31,7 @@ class RunnerService {
    * @typedef {Object} SyncOptions
    * @property {boolean} optionSync
    * @property {boolean} optionSyncForce
+   * @property {boolean} optionSyncValidators
    * @property {number} optionSyncStartBlockNumber
    * @property {boolean} optionSubscribeFinHead
    */
@@ -35,14 +44,21 @@ class RunnerService {
    * @returns {Promise<void>}
    */
   async sync(options) {
-    if (options.optionSync) {
-      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-    } else if (options.optionSyncForce) {
-      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-    }
 
-    if (options.optionSubscribeFinHead) {
-      await this.consumerService.subscribeFinalizedHeads()
+    await this.configService.bootstrapConfig()
+
+    if (options.optionSyncValidators) {
+      await this.stakingService.syncValidators(options.optionSyncStartBlockNumber)
+    } else {
+      if (options.optionSync) {
+        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+      } else if (options.optionSyncForce) {
+        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+      }
+
+      if (options.optionSubscribeFinHead) {
+        await this.consumerService.subscribeFinalizedHeads()
+      }
     }
   }
 }

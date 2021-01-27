@@ -4,4 +4,4 @@ ADD . .
 
 RUN yarn install
 
-ENTRYPOINT node main.js
+ENTRYPOINT node index.js

@@ -1,3 +1,3 @@
 FROM postgres:12
-COPY init.sql /docker-entrypoint-initdb.d/1.sql
+COPY *.sql /docker-entrypoint-initdb.d/
 CMD ["postgres"]

@@ -4,31 +4,6 @@ const { RunnerService } = require('./services/runner')
 const { LOG_LEVEL } = require('./environment')
 
 const argv = require('yargs')
-  .option('sync', {
-    type: 'boolean',
-    default: false,
-    description: 'Run synchronization blocks, fetched with db'
-  })
-  .option('sync-force', {
-    type: 'boolean',
-    default: false,
-    description: 'Run synchronization all blocks'
-  })
-  .option('sync-stakers', {
-    type: 'boolean',
-    default: false,
-    description: 'Run synchronization stakers'
-  })
-  .option('start', {
-    type: 'number',
-    default: 0,
-    description: 'Start synchronization from block number'
-  })
-  .option('sub-fin-head', {
-    type: 'boolean',
-    default: false,
-    description: 'Subscribe to capture finalized heads'
-  })
   .option('disable-rpc', {
     alias: 'disable-rpc',
     type: 'boolean',
@@ -47,7 +22,7 @@ const build = async () => {
   })
 
   // plugins
-  await require('./plugins/postgres-connector')(fastify)
+  await require('./plugins/kafka-consumer')(fastify)
 
   await require('./plugins/kafka-producer')(fastify)
 
@@ -60,9 +35,6 @@ const build = async () => {
   // hooks
   fastify.addHook('onClose', (instance, done) => {
     //  stop sync, disconnect
-    const { postgresConnector } = instance
-    postgresConnector.end()
-
     const { polkadotConnector } = instance
     polkadotConnector.disconnect()
   })
@@ -70,16 +42,7 @@ const build = async () => {
   fastify.ready().then(
     () => {
       const runner = new RunnerService(fastify)
-      runner.sync(
-        {
-          optionSync: argv['sync-force'] ? false : argv.sync,
-          optionSyncForce: argv['sync-force'],
-          optionSyncValidators: argv['sync-stakers'],
-          optionSyncStartBlockNumber: argv.start,
-          optionSubscribeFinHead: argv['sub-fin-head']
-        },
-        argv['sub-fin-head']
-      )
+      runner.start()
     },
     (err) => {
       fastify.log.info(`Fastify ready error: ${err}`)

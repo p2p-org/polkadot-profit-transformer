@@ -1,2 +1,6 @@
 streamer/node_modules
 identity_enrichment/node_modules
+
+# mbelt config data
+gen_*
+gen

@@ -1,0 +1,15 @@
+FROM node:12-alpine
+
+ENV LOG_LEVEL=debug
+
+WORKDIR /usr/src/app
+
+COPY ./package*.json ./
+
+RUN npm install
+
+COPY ./src .
+
+EXPOSE 8080
+
+ENTRYPOINT node index.js --sync-stakers --start 0

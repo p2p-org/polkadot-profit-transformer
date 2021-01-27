@@ -1,0 +1,95 @@
+{
+  "topics": [
+    {
+      "name": "BLOCK_DATA"
+    },
+    {
+      "name": "EXTRINSICS_DATA"
+    },
+    {
+      "name": "SESSION_DATA"
+    },
+    {
+      "name": "VALIDATORS_DATA"
+    },
+    {
+      "name": "NOMINATORS_DATA"
+    },
+    {
+      "name": "STAKING_ERAS_DATA"
+    },
+    {
+      "name": "ENRICHMENT_ACCOUNT_DATA"
+    },
+    {
+      "name": "IDENTITY_ENRICHMENT_DATA"
+    }
+  ],
+  "connectors": [
+    {
+      "name": "{APP_PREFIX}_block_sink",
+      "config": {
+        "topics": "{APP_PREFIX}_BLOCK",
+        "insert.mode": "UPSERT",
+        "table.name.format": "dot_polka._blocks",
+        "pk.mode": "record_value",
+        "pk.fields": "id"
+      }
+    },
+    {
+      "name": "{APP_PREFIX}_event_extraction_sink",
+      "config": {
+        "topics": "{APP_PREFIX}_EVENT_EXTRACTION",
+        "insert.mode": "INSERT",
+        "table.name.format": "dot_polka._events",
+        "pk.mode": "none"
+      }
+    },
+    {
+      "name": "{APP_PREFIX}_extrinsic_sink",
+      "config": {
+        "topics": "{APP_PREFIX}_EXTRINSIC_EXTRACTION",
+        "insert.mode": "INSERT",
+        "table.name.format": "dot_polka._extrinsics",
+        "pk.mode": "none"
+      }
+    },
+    {
+      "name": "{APP_PREFIX}_nominators_extraction_sink",
+      "config": {
+        "topics": "{APP_PREFIX}_STAKING_NOMINATOR_EXTRACTION",
+        "insert.mode": "INSERT",
+        "table.name.format": "dot_polka._nominators",
+        "pk.mode": "none"
+      }
+    },
+    {
+      "name": "{APP_PREFIX}_validators_extraction_sink",
+      "config": {
+        "topics": "{APP_PREFIX}_STAKING_VALIDATOR_EXTRACTION",
+        "insert.mode": "INSERT",
+        "table.name.format": "dot_polka._validators",
+        "pk.mode": "none"
+      }
+    },
+    {
+      "name": "{APP_PREFIX}_staking_eras_sink",
+      "config": {
+        "topics": "{APP_PREFIX}_STAKING_ERAS",
+        "insert.mode": "INSERT",
+        "table.name.format": "dot_polka._eras",
+        "pk.mode": "none"
+      }
+    },
+    {
+      "name": "{APP_PREFIX}_identity_enrichment_sink",
+      "config": {
+        "topics": "{APP_PREFIX}_IDENTITY_ENRICHMENT",
+        "insert.mode": "UPSERT",
+        "table.name.format": "dot_polka.account_identity",
+        "pk.mode": "record_value",
+        "pk.fields": "account_id"
+      }
+    }
+  ]
+}
