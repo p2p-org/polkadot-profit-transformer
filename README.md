@@ -10,7 +10,7 @@
 | **streamer** | 2Gb |
 | **enrichments_processor** | 512Mb |
 | KSQL cluster  | 12Gb |
-| Postgresql | 1Gb |
+| Postgresql | 1Gb |  
 *(for launching all stack on a single machine, required 16Gb RAM and 30Gb disk space for *polkadot*, 100Gb for *kusama*)*
 
 You'll also need Polkadot or Kusama archive node with an open websocket interface.
@@ -76,6 +76,8 @@ Vendor environment configuration files
 *.graphile.env*  
 *.redash.env*  
 
+## Testing and overview
+
 ### Postgresql interface
 
 1. Running psql command line from container
@@ -85,12 +87,12 @@ raw=# SELECT * FROM dot_polka.blocks LIMIT 10
 ```    
 2. connecting to `db` container with mapped port and credentials from `docker/env/.postges.env`
 
-## PostGraphile UI
+### PostGraphile UI
 
 Local Docker instance playground
 http://localhost:4000/
 
-## GraphQL endpoint
+### GraphQL endpoint
 
 Local Docker instance
 ```bash
@@ -122,10 +124,16 @@ The logs should look like this:
 This framework provides extractions blocks and subscription to updates (with reorganization support) Polkadot and Kusama.  
 ![schema](docs/img/mbelt_schema.png "mbelt schema")
 
-### Overview
-&nbsp; &nbsp;[@streamer](streamer) - The main service, provides extractions and consumer subscriptions operations for [ksqlDB pipelines](streamer/docs/SPECS.md)
+### Database structure
+
+![erd](docs/img/mbelt_erd.png "mbelt database structure")
+
+### Modules description
+&nbsp; &nbsp;[@streamer](streamer) - The main service, provides extractions and consumer subscriptions operations for ksqlDB pipelines
+&nbsp; &nbsp;[@enrichments_processor](enrichments_processor) - The enrichments transformation service, provides extractions and consumer subscriptions operations for [ksqlDB pipelines](streamer/docs/SPECS.md)
 
 &nbsp; &nbsp;Additional modules:
 - [@run.sh](run.sh) - Bootstrap script: creates topics from [@ksql_config.json](ksql_config.json), reads ksql migration files from [@ksql](ksql) directory and run containers
-- [@automation](automation) - contains tests, coverages blocks information processing with defined topics from `transformer_queries.json`
+- [@docker](docker) - contains docker deploying configuration and environment files
 - [@db](db) - contains database simple init migrations
+- [@ksql](ksql) contains ksql init migrations
