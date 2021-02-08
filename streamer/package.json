@@ -15,11 +15,11 @@
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"
   },
   "dependencies": {
-    "@polkadot/api": "^3.6.1",
-    "@polkadot/api-derive": "^3.6.1",
-    "@polkadot/rpc-core": "^3.6.1",
-    "@polkadot/types": "^3.6.1",
-    "@polkadot/types-known": "^3.6.1",
+    "@polkadot/api": "^3.7.3",
+    "@polkadot/api-derive": "^3.7.3",
+    "@polkadot/rpc-core": "^3.7.3",
+    "@polkadot/types": "^3.7.3",
+    "@polkadot/types-known": "^3.7.3",
     "@polkadot/util": "^3.6.1",
     "async-mutex": "^0.2.6",
     "dotenv": "^8.2.0",
@@ -27,7 +27,7 @@
     "fastify-swagger": "^3.5.0",
     "kafkajs": "^1.15.0",
     "pg": "^8.5.1",
-    "pino-pretty": "^4.2.1",
+    "pino-pretty": "^4.5.0",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
