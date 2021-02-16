@@ -5,6 +5,8 @@ dotenv.config({ path: path.resolve(__dirname, '.env') })
 
 const applicationId = 'substrate_streamer'
 
+const requiredVariables = ['APP_MODE', 'APP_NETWORK', 'SUBSTRATE_URI', 'KAFKA_URI', 'DB_HOST', 'DB_USER', 'DB_NAME']
+
 const environment = {
   APP_ID: applicationId,
   APP_CLIENT_ID: 'mbelt-' + applicationId + '-' + process.env.APP_MODE.toLowerCase() + '-' + process.env.APP_NETWORK.toLowerCase(),
@@ -33,4 +35,30 @@ const environment = {
   DB_SCHEMA: process.env.DB_SCHEMA || 'public'
 }
 
-module.exports = environment
+/**
+ * Validate environment variables
+ *
+ * @async
+ * @param app FastifyInstance
+ * @returns {Promise<boolean>}
+ */
+const validateEnv = async (app) => {
+  requiredVariables.forEach((key)=>{
+    if (!process.env[key]) {
+      throw new Error(`${key} is not set`)
+    } else if (process.env[key].length < 3) {
+      throw new Error(`${key} too short`)
+    }
+  })
+
+  const kafkaHostPattern = new RegExp('^\\w+\:\\d+$')
+  if (!kafkaHostPattern.exec(process.env.KAFKA_URI)) {
+    console.log(process.env.KAFKA_URI)
+    throw new Error(`KAFKA_URI should be set as pattern "hostname:port"`)
+  }
+}
+
+module.exports = {
+  environment: environment,
+  validateEnv: validateEnv
+}

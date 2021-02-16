@@ -1,7 +1,7 @@
 const Fastify = require('fastify')
 const { RunnerService } = require('./services/runner')
 
-const { LOG_LEVEL } = require('./environment')
+const { LOG_LEVEL, validateEnv } = require('./environment')
 
 const argv = require('yargs')
   .option('disable-rpc', {
@@ -21,12 +21,39 @@ const build = async () => {
     }
   })
 
+  try {
+    await validateEnv(fastify)
+  } catch (err) {
+    fastify.log.error(`Environment variable error: "${err.message}"`)
+    fastify.log.error(`Stopping instance...`)
+    process.exit(1)
+  }
+
   // plugins
-  await require('./plugins/kafka-consumer')(fastify)
+  try {
+    await require('./plugins/kafka-consumer')(fastify)
+  } catch (err) {
+    fastify.log.error(`Cannot init plugin: "${err.message}"`)
+    fastify.log.error(`Stopping instance...`)
+    process.exit(1)
+  }
 
-  await require('./plugins/kafka-producer')(fastify)
 
-  await require('./plugins/polkadot-connector')(fastify)
+  try {
+    await require('./plugins/kafka-producer')(fastify)
+  } catch (err) {
+    fastify.log.error(`Cannot init plugin: "${err.message}"`)
+    fastify.log.error(`Stopping instance...`)
+    process.exit(1)
+  }
+
+  try {
+    await require('./plugins/polkadot-connector')(fastify)
+  } catch (err) {
+    fastify.log.error(`Cannot init plugin: "${err.message}"`)
+    fastify.log.error(`Stopping instance...`)
+    process.exit(1)
+  }
 
   if (!argv['disable-rpc']) {
     await fastify.register(require('./routes'), { prefix: 'api' })

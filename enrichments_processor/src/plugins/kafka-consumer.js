@@ -4,6 +4,8 @@ const fastifyPlugin = require('fastify-plugin')
 const { APP_CLIENT_ID, KAFKA_PREFIX, KAFKA_URI } = require('../environment')
 
 const kafkaConsumer = async (server, options = {}) => {
+  server.log.info(`Init "kafkaConsumer"`)
+
   const kafka = new Kafka({
     clientId: APP_CLIENT_ID,
     brokers: [KAFKA_URI]

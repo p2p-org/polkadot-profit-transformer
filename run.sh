@@ -2,6 +2,7 @@
 
 DIR_KSQL_INIT_CONFIG='./ksql'
 FILE_KSQL_CONFIG='./ksql_config.json'
+REDASH_HOST='localhost:5000'
 KAFKA_BROKER_HOST='broker:9092'
 KAFKA_REST_PROXY_URL='http://localhost:8082'
 KAFKA_CONNECT_URL='http://localhost:8083'
@@ -132,7 +133,7 @@ if [ -z "$(ls -A $DIR_KSQL_INIT_CONFIG/*.sql)" ]; then
 fi
 
 for file in "$DIR_KSQL_INIT_CONFIG"/*.sql; do
-  echo "$Loading KSQL migrations \"$file\""
+  echo "Loading KSQL migrations \"$file\""
   GEN_KSQL=$(<"$file")
 
   if [ -z "$GEN_KSQL" ]; then
@@ -223,3 +224,12 @@ docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compos
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
+
+docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-server create_db
+
+curl -sX "POST" 'http://localhost:5000/setup' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
+  --cookie-jar cookies.txt \
+  --data-raw 'name=admin&email=admin%40example.org&password=supersecret123&org_name=organization' \
+  --compressed
