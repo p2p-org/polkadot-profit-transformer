@@ -1,5 +1,5 @@
 const { hexToString } = require('@polkadot/util');
-const { KAFKA_PREFIX } = require('../environment')
+const { environment: { KAFKA_PREFIX } } = require('../environment')
 
 /**
  * Provides identity enrichment processing service

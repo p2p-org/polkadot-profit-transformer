@@ -1,4 +1,4 @@
-const { KAFKA_PREFIX, DB_SCHEMA } = require('../environment')
+const { environment: { KAFKA_PREFIX, DB_SCHEMA } } = require('../environment')
 const { BlocksService } = require('./blocks')
 
 /** @type {BlockHash | string | Uint8Array} */

@@ -59,6 +59,6 @@ const validateEnv = async (app) => {
 }
 
 module.exports = {
-  environment: environment,
-  validateEnv: validateEnv
+  environment,
+  validateEnv,
 }

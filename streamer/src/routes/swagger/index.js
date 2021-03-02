@@ -1,4 +1,4 @@
-const { API_PORT } = require('../../environment')
+const { environment: { API_PORT } } = require('../../environment')
 
 module.exports = {
   routePrefix: '/swagger',
