@@ -1,7 +1,7 @@
 const Fastify = require('fastify')
 const { RunnerService } = require('./services/runner')
 
-const { LOG_LEVEL, validateEnv } = require('./environment')
+const { environment: { LOG_LEVEL }, validateEnv } = require('./environment')
 
 const argv = require('yargs')
   .option('sync', {

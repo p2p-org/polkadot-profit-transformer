@@ -1,3 +1,6 @@
+.idea
+cookies.txt
+streamer/.env
 streamer/node_modules
 identity_enrichment/node_modules
 

@@ -1,7 +1,7 @@
 const { SyncStatus } = require('./index')
 const { StakingService } = require('./staking')
 const { ExtrinsicsService } = require('./extrinsics')
-const { KAFKA_PREFIX, DB_SCHEMA } = require('../environment')
+const { environment: { KAFKA_PREFIX, DB_SCHEMA } } = require('../environment')
 
 /** @type {BlockHash | string | Uint8Array} */
 let currentSpecVersion = null

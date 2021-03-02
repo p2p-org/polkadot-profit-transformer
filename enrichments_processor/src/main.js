@@ -1,6 +1,6 @@
 const { build } = require('./app')
 
-const { API_ADDR, API_PORT } = require('./environment')
+const { environment: { API_ADDR, API_PORT } } = require('./environment')
 
 build().then((app) => {
   // run the server!

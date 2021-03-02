@@ -1,4 +1,4 @@
-const { DB_SCHEMA } = require('../environment')
+const { environment: { DB_SCHEMA } } = require('../environment')
 
 /**
  * Provides config operations
