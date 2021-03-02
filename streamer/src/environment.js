@@ -51,7 +51,6 @@ const validateEnv = async (app) => {
     }
   })
 
-  console.log('woot?', process.env.KAFKA_URI);
   const kafkaHostPattern = new RegExp('^\\w+\:\\d+$')
   if (!kafkaHostPattern.exec(process.env.KAFKA_URI)) {
     console.log(process.env.KAFKA_URI)
