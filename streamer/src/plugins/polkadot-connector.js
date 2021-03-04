@@ -1,7 +1,9 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api')
 const fastifyPlugin = require('fastify-plugin')
 
-const { environment: { SUBSTRATE_URI } } = require('../environment')
+const {
+  environment: { SUBSTRATE_URI }
+} = require('../environment')
 
 const polkadotConnector = async (server, options = {}) => {
   server.log.info(`Init "polkadotConnector"`)

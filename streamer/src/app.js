@@ -1,7 +1,10 @@
 const Fastify = require('fastify')
 const { RunnerService } = require('./services/runner')
 
-const { environment: { LOG_LEVEL }, validateEnv } = require('./environment')
+const {
+  environment: { LOG_LEVEL },
+  validateEnv
+} = require('./environment')
 
 const argv = require('yargs')
   .option('sync', {
@@ -64,7 +67,6 @@ const build = async () => {
     fastify.log.error(`Stopping instance...`)
     process.exit(1)
   }
-
 
   try {
     await require('./plugins/kafka-producer')(fastify)

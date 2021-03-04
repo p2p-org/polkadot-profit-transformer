@@ -44,7 +44,6 @@ class RunnerService {
    * @returns {Promise<void>}
    */
   async sync(options) {
-
     await this.configService.bootstrapConfig()
 
     if (options.optionSyncValidators) {
