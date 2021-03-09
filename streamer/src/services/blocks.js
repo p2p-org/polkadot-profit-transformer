@@ -135,7 +135,7 @@ class BlocksService {
         header: {
           number: signedBlock.block.header.number.toNumber(),
           hash: signedBlock.block.header.hash.toHex(),
-          author: extHeader.author.toString(),
+          author: extHeader.author ? extHeader.author.toString() : '',
           session_id: sessionId.toNumber(),
           era: parseInt(blockEra.toString(), 10),
           stateRoot: signedBlock.block.header.stateRoot.toHex(),
