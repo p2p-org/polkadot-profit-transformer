@@ -39,6 +39,9 @@ $ node index.js --sync-force --disable-rpc
 ```
 
 ### Environment variables 
+
+####Don't forget to copy .env.example into ./src/.env when in dev mode
+
 | Variable | Description | Default |
 | -- | -- | :--: |
 | `LOG_LEVEL` | One of `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent` | `"info"`|

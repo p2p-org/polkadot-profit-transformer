@@ -1,10 +1,9 @@
 const { SyncStatus } = require('./index')
 const { StakingService } = require('./staking')
 const { ExtrinsicsService } = require('./extrinsics')
-const { environment: { KAFKA_PREFIX, DB_SCHEMA } } = require('../environment')
-
-/** @type {BlockHash | string | Uint8Array} */
-let currentSpecVersion = null
+const {
+  environment: { KAFKA_PREFIX, DB_SCHEMA }
+} = require('../environment')
 
 /**
  * Provides block operations
@@ -129,9 +128,6 @@ class BlocksService {
     const processedEvents = await this.processEvents(signedBlock.block.header.number, events)
     blockEvents = processedEvents.events
 
-    const extrinsics = []
-
-
     const lastDigestLogEntry = signedBlock.block.header.digest.logs.length - 1
 
     const blockData = {
@@ -139,7 +135,7 @@ class BlocksService {
         header: {
           number: signedBlock.block.header.number.toNumber(),
           hash: signedBlock.block.header.hash.toHex(),
-          author: extHeader.author.toString(),
+          author: extHeader.author ? extHeader.author.toString() : '',
           session_id: sessionId.toNumber(),
           era: parseInt(blockEra.toString(), 10),
           stateRoot: signedBlock.block.header.stateRoot.toHex(),
@@ -170,7 +166,13 @@ class BlocksService {
         throw new Error('cannot push block to Kafka')
       })
 
-    await this.extrinsicsService.extractExtrinsics(parseInt(blockEra.toString(), 10), sessionId.toNumber(), signedBlock.block.header.number, events, signedBlock.block.extrinsics)
+    await this.extrinsicsService.extractExtrinsics(
+      parseInt(blockEra.toString(), 10),
+      sessionId.toNumber(),
+      signedBlock.block.header.number,
+      events,
+      signedBlock.block.extrinsics
+    )
 
     if (processedEvents.isNewSession) {
       await this.stakingService.extractStakers(signedBlock.block.header.number.toNumber())
@@ -197,8 +199,6 @@ class BlocksService {
       this.app.log.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
 
       const rpcMeta = await polkadotConnector.rpc.state.getMetadata(blockHash)
-
-      currentSpecVersion = newSpecVersion
 
       polkadotConnector.registry.setMetadata(rpcMeta)
     }

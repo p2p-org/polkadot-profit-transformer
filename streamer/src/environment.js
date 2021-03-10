@@ -43,7 +43,7 @@ const environment = {
  * @returns {Promise<boolean>}
  */
 const validateEnv = async (app) => {
-  requiredVariables.forEach((key)=>{
+  requiredVariables.forEach((key) => {
     if (!process.env[key]) {
       throw new Error(`${key} is not set`)
     } else if (process.env[key].length < 3) {
@@ -51,7 +51,7 @@ const validateEnv = async (app) => {
     }
   })
 
-  const kafkaHostPattern = new RegExp('^\\w+\:\\d+$')
+  const kafkaHostPattern = new RegExp('^\\w+:\\d+$')
   if (!kafkaHostPattern.exec(process.env.KAFKA_URI)) {
     console.log(process.env.KAFKA_URI)
     throw new Error(`KAFKA_URI should be set as pattern "hostname:port"`)
@@ -60,5 +60,5 @@ const validateEnv = async (app) => {
 
 module.exports = {
   environment,
-  validateEnv,
+  validateEnv
 }
