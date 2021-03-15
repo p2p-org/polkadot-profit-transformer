@@ -9,7 +9,7 @@
   "private": null,
   "scripts": {
     "start": "node --trace-warnings ./src/main.js",
-    "dev": "node_modules/.bin/nodemon ./src/main.js --sync",
+    "dev": "node_modules/.bin/nodemon ./src/main.js",
     "lint": "node_modules/.bin/eslint ./src/main.js",
     "lint:fix": "node_modules/.bin/eslint . --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"
