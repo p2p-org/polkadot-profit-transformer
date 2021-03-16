@@ -175,7 +175,7 @@ class BlocksService {
     )
 
     if (processedEvents.isNewSession) {
-      await this.stakingService.extractStakers(signedBlock.block.header.number.toNumber())
+      await this.stakingService.extractStakers(signedBlock.block.header.number.toNumber(), signedBlock.block)
     }
   }
 
@@ -287,17 +287,16 @@ class BlocksService {
 
     let blockNumberFromDB = 0
 
-    await postgresConnector
-      .query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
-      .then((res) => {
-        if (res.rows.length && res.rows[0].last_number) {
-          blockNumberFromDB = res.rows[0].last_number
-        }
-      })
-      .catch((err) => {
-        this.app.log.error(`failed to get last synchronized block number: ${err}`)
-        throw new Error('cannot get last block number')
-      })
+    try {
+      const { rows } = await postgresConnector.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
+
+      if (rows.length && rows[0].last_number) {
+        blockNumberFromDB = parseInt(rows[0].last_number);
+      }
+    } catch (err) {
+      this.app.log.error(`failed to get last synchronized block number: ${err}`)
+      throw new Error('cannot get last block number')
+    }
 
     return blockNumberFromDB
   }
