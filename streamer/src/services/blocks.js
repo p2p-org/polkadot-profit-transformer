@@ -1,5 +1,5 @@
 const { SyncStatus } = require('./index')
-const { StakingService } = require('./staking')
+const { StakingService } = require('./staking/staking')
 const { ExtrinsicsService } = require('./extrinsics')
 const {
   environment: { KAFKA_PREFIX, DB_SCHEMA }
