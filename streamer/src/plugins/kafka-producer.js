@@ -5,7 +5,7 @@ const {
   environment: { APP_CLIENT_ID, KAFKA_URI }
 } = require('../environment')
 
-const kafkaProducer = async (server, options = {}) => {
+const kafkaProducer = async (server) => {
   server.log.info(`Init "kafkaProducer"`)
 
   const kafka = new Kafka({

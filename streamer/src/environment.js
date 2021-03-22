@@ -42,7 +42,7 @@ const environment = {
  * @param app FastifyInstance
  * @returns {Promise<boolean>}
  */
-const validateEnv = async (app) => {
+const validateEnv = async () => {
   requiredVariables.forEach((key) => {
     if (!process.env[key]) {
       throw new Error(`${key} is not set`)

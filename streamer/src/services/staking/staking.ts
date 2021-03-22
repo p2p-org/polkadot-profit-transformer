@@ -2,7 +2,6 @@ import {
   BlockHash,
   SessionIndex,
   Moment,
-  EraIndex,
   AccountId,
   RewardPoint,
   ValidatorId
@@ -14,8 +13,9 @@ import {
   IGetValidatorsResult,
   IGetStakersByValidator,
   IStakingService,
-  IValidator,
-  TBlockHash, INominator, TBlockEra
+  TBlockHash,
+  INominator,
+  TBlockEra
 } from './staking.types';
 import { FastifyInstance } from 'fastify';
 
@@ -35,8 +35,8 @@ const eraDataExtractionOffset = 4
 
 // TODO: Rename to stacking
 class StakingService implements IStakingService {
-  private app: FastifyInstance & IApplication;
-  private currentSpecVersion: u32;
+  private readonly app: FastifyInstance & IApplication;
+  private readonly currentSpecVersion: u32;
   /**
    * Creates an instance of StakingService.
    * @param {object} app fastify app
@@ -68,12 +68,12 @@ class StakingService implements IStakingService {
       throw new Error('cant get .postgresConnector from fastify app.')
     }
 
-    postgresConnector.connect((err: { toString: () => any; }, client: { query: (arg0: string, arg1: (err: any, result: any) => void) => void; }, release: () => void) => {
+    postgresConnector.connect((err, client, release) => {
       if (err) {
         this.app.log.error(`Error acquiring client: ${err.toString()}`)
         throw new Error(`Error acquiring client`)
       }
-      client.query('SELECT NOW()', (err, result) => {
+      client.query('SELECT NOW()', (err) => {
         release()
         if (err) {
           this.app.log.error(`Error executing query: ${err.toString()}`)
@@ -83,7 +83,7 @@ class StakingService implements IStakingService {
     })
   }
 
-  async syncValidators(era: number = 0) {
+  async syncValidators(era = 0) {
     try {
 
       const lastAvailableEra = await this.getLastEraFromDB()
@@ -206,11 +206,11 @@ class StakingService implements IStakingService {
       blockHash: TBlockHash,
       sessionId: SessionIndex,
       blockTime: Moment,
-      blockEra: TBlockEra,
+      blockEra: TBlockEra
   ): Promise<IGetValidatorsResult> {
     const { polkadotConnector } = this.app
 
-    const result = {
+    const result:IGetValidatorsResult = {
       validators: [],
       stakers: [],
       era_data: {
@@ -290,7 +290,7 @@ class StakingService implements IStakingService {
     )
 
     result.validators = [...enabledValidatorsData.validators, ...disabledValidatorsData.validators];
-    result.nominators = enabledValidatorsData.nominators.concat(disabledValidatorsData.nominators)
+    result.nominators = [...enabledValidatorsData.nominators, ...disabledValidatorsData.nominators];
     result.era_data.nominators_active = result.nominators_active
 
     return result
@@ -318,7 +318,7 @@ class StakingService implements IStakingService {
         const [prefs, stakers, stakersClipped] = await Promise.all([
           await polkadotConnector.query.staking.erasValidatorPrefs.at(blockHash, blockEra.toString(), validator.toString()),
           await polkadotConnector.query.staking.erasStakers.at(blockHash, blockEra.toString(), validator.toString()),
-          await polkadotConnector.query.staking.erasStakersClipped.at(blockHash, blockEra.toString(), validator.toString()),
+          await polkadotConnector.query.staking.erasStakersClipped.at(blockHash, blockEra.toString(), validator.toString())
         ])
 
         this.app.log.debug(
@@ -341,7 +341,7 @@ class StakingService implements IStakingService {
               is_enabled: true,
               is_clipped: !isClipped,
               value: staker.value.toString(),
-              block_time: blockTime.toNumber(),
+              block_time: blockTime.toNumber()
             }
 
             // Only for active
@@ -381,7 +381,6 @@ class StakingService implements IStakingService {
           )
         }
 
-
         result.validators.push({
           session_id: sessionId.toNumber(),
           account_id: validator.toString(),
@@ -390,9 +389,9 @@ class StakingService implements IStakingService {
           total: stakers.total.toString(),
           own: stakers.own.toString(),
           nominators_count: stakers.others.length,
-          reward_points: erasRewardPointsMap.get(validator) ?? '0',
+          reward_points: erasRewardPointsMap.get(validator)?.toString() ?? '0',
           reward_dest: validatorRewardDest,
-          reward_account_id: validatorRewardAccountId,
+          reward_account_id: validatorRewardAccountId?.toString(),
           prefs: prefs.toJSON(),
           block_time: blockTime.toNumber()
         })
@@ -432,7 +431,7 @@ class StakingService implements IStakingService {
       const values = [era, offset];
       const { rows: [block] } = await postgresConnector.query<Pick<IBlockModel, 'id' | 'hash'>>({
         text,
-        values,
+        values
       });
 
       return block;

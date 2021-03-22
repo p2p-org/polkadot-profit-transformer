@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node --trace-warnings ./src/main.js",
     "dev": "node_modules/.bin/nodemon ./src/main.js --sync --start=14392",
-    "lint": "node_modules/.bin/eslint ./src/main.js",
-    "lint:fix": "node_modules/.bin/eslint . --fix",
+    "lint": "npx eslint --ext .js,.ts ./src/main.js",
+    "lint:fix": "npx eslint .  --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"
   },
   "dependencies": {
@@ -32,6 +32,8 @@
   "devDependencies": {
     "@polkadot/types": "^4.1.1",
     "@types/pg": "^7.14.11",
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
     "babel-eslint": "^10.1.0",
     "eslint": "7.9.0",
     "eslint-config-prettier": "^6.15.0",

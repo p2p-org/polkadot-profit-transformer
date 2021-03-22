@@ -1,9 +1,7 @@
-import { u32 } from '@polkadot/types';
 import {
 	AccountId,
 	BlockHash,
 	EraIndex,
-	Hash,
 	Moment,
 	RewardPoint,
 	SessionIndex,
@@ -12,12 +10,9 @@ import {
 import { ApiPromise } from '@polkadot/api';
 import { Producer } from 'kafkajs';
 import { Pool } from 'pg';
-import { FastifyInstance } from 'fastify';
+import { AnyJson } from '@polkadot/types/types';
 
 export interface IStakingService {
-	app: FastifyInstance & IApplication;
-	currentSpecVersion: u32;
-
 	syncValidators(era: number): Promise<void>;
 
 	extractStakers(era: TBlockEra, blockData: Pick<IBlockModel, 'id' | 'hash'>): Promise<void>;
@@ -27,7 +22,7 @@ export interface IStakingService {
 		sessionId: SessionIndex,
 		blockTime: Moment,
 		blockEra: TBlockEra
-	): Promise<IValidator>;
+	): Promise<IGetValidatorsResult>;
 
 	getStakersByValidator(
 		blockHash: TBlockHash,
@@ -72,9 +67,21 @@ export interface IGetValidatorsResult {
 }
 
 export interface IValidator {
-
+	session_id: number;
+	account_id: string;
+	era: number;
+	is_enabled: boolean;
+	total: string;
+	own: string;
+	nominators_count: number;
+	reward_points: string;
+	reward_dest?: string;
+	reward_account_id?: string;
+	prefs: Record<string, AnyJson>;
+	block_time: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IStaker {
 
 }

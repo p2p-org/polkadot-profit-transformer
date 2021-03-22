@@ -95,7 +95,7 @@ const build = async () => {
   }
 
   // hooks
-  fastify.addHook('onClose', (instance, done) => {
+  fastify.addHook('onClose', (instance) => {
     //  stop sync, disconnect
     const { postgresConnector } = instance
     postgresConnector.end()

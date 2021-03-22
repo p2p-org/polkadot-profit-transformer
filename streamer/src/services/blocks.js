@@ -46,7 +46,7 @@ class BlocksService {
         this.app.log.error(`Error acquiring client: ${err.toString()}`)
         throw new Error(`Error acquiring client`)
       }
-      client.query('SELECT NOW()', (err, result) => {
+      client.query('SELECT NOW()', (err) => {
         release()
         if (err) {
           this.app.log.error(`Error executing query: ${err.toString()}`)
@@ -291,7 +291,7 @@ class BlocksService {
       const { rows } = await postgresConnector.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
 
       if (rows.length && rows[0].last_number) {
-        blockNumberFromDB = parseInt(rows[0].last_number);
+        blockNumberFromDB = parseInt(rows[0].last_number)
       }
     } catch (err) {
       this.app.log.error(`failed to get last synchronized block number: ${err}`)
@@ -377,7 +377,7 @@ class BlocksService {
           text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
           values: [blockNumbers]
         },
-        (err, result) => {
+        (err) => {
           release()
           if (err) {
             this.app.log.error(`failed to remove block from table: ${err}`)
@@ -399,7 +399,7 @@ class BlocksService {
             text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
             values: [blockNumbers]
           },
-          (err, result) => {
+          (err) => {
             release()
             if (err) {
               this.app.log.error(`failed to remove block from table "${DB_SCHEMA}.${tbl}": ${err}`)
@@ -434,7 +434,7 @@ class BlocksService {
           text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" >= $1::int`,
           values: [startBlockNumber]
         },
-        (err, result) => {
+        (err) => {
           release()
           if (err) {
             this.app.log.error(`failed to remove blocks from table: ${err}`)
@@ -456,7 +456,7 @@ class BlocksService {
             text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "id" >= $1::int`,
             values: [startBlockNumber]
           },
-          (err, result) => {
+          (err) => {
             release()
             if (err) {
               this.app.log.error(`failed to remove blocks from table "${tbl}": ${err}`)

@@ -1,10 +1,10 @@
 const { BlocksService } = require('../../../services/blocks')
 const { getOneSchema, getStatusSchema, postDeleteBlocksSchema, postTrimSchema } = require('./schemas')
 
-const apiBlocks = async (app, options) => {
+const apiBlocks = async (app) => {
   const blocksService = new BlocksService(app)
 
-  app.get('/update/:blockId', { schema: getOneSchema }, async (request, reply) => {
+  app.get('/update/:blockId', { schema: getOneSchema }, async (request) => {
     const {
       params: { blockId }
     } = request
@@ -21,16 +21,16 @@ const apiBlocks = async (app, options) => {
     return { result: true }
   })
 
-  app.get('/status', { schema: getStatusSchema }, async (request, reply) => {
+  app.get('/status', { schema: getStatusSchema }, async () => {
     return await blocksService.getBlocksStatus()
   })
 
-  app.post('/delete', { schema: postDeleteBlocksSchema }, async (request, reply) => {
+  app.post('/delete', { schema: postDeleteBlocksSchema }, async (request) => {
     const { body } = request
     return await blocksService.removeBlocks(body.block_numbers)
   })
 
-  app.get('/update_trim/:blockId', { schema: postTrimSchema }, async (request, reply) => {
+  app.get('/update_trim/:blockId', { schema: postTrimSchema }, async (request) => {
     const {
       params: { blockId }
     } = request
