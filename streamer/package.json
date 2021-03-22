@@ -8,8 +8,8 @@
   "license": "Apache 2.0",
   "private": null,
   "scripts": {
-    "start": "node --trace-warnings ./src/main.js",
-    "dev": "node_modules/.bin/nodemon ./src/main.js --sync --start=14392",
+    "start": "npx ts-node --trace-warnings ./src/main.js",
+    "dev": "npx ts-node ./src/main.js",
     "lint": "npx eslint --ext .js,.ts ./src/main.js",
     "lint:fix": "npx eslint .  --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"

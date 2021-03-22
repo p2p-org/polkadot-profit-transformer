@@ -175,7 +175,7 @@ class BlocksService {
     )
 
     if (processedEvents.isNewSession) {
-      await this.stakingService.extractStakers(signedBlock.block.header.number.toNumber(), signedBlock.block)
+      await this.stakingService.extractStakers(parseInt(blockEra.toString(), 10), blockHash)
     }
   }
 

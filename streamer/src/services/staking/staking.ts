@@ -83,7 +83,15 @@ class StakingService implements IStakingService {
     })
   }
 
-  async syncValidators(era = 0) {
+  async syncValidators(blockNumber?: number) {
+    let era = 0;
+
+    if (blockNumber) {
+      const blockHash = await this.app.polkadotConnector.rpc.chain.getBlockHash(blockNumber);
+      const eraByBlockHash = await this.app.polkadotConnector.query.staking.currentEra.at(blockHash);
+      era = eraByBlockHash.unwrap().toNumber();
+    }
+
     try {
 
       const lastAvailableEra = await this.getLastEraFromDB()
@@ -106,7 +114,7 @@ class StakingService implements IStakingService {
             throw new Error('cannot get first era block number')
           }
 
-          await this.extractStakers(era, extractionBlock).catch((error) => {
+          await this.extractStakers(era, extractionBlock.hash).catch((error) => {
             lastError = error
             this.app.log.error(`failed to process stakers block #${extractionBlock}: ${error}`)
           })
@@ -128,26 +136,26 @@ class StakingService implements IStakingService {
    * @param {number} era
    * @param {BlockOffsetInfo} blockData
    */
-  async extractStakers(era: number, blockData: Pick<IBlockModel, 'id' | 'hash'>) {
+  async extractStakers(era: number, blockHash: TBlockHash) {
     const { polkadotConnector } = this.app
     const { kafkaProducer } = this.app
 
     this.app.log.info(`Processing stacking data for era "${era}"`)
 
-    await this.updateMetaData(blockData.hash)
+    await this.updateMetaData(blockHash)
 
     const [currentEra, sessionId, blockTime] = await Promise.all([
       polkadotConnector.query.staking.currentEra(),
-      polkadotConnector.query.session.currentIndex.at(blockData.hash),
-      polkadotConnector.query.timestamp.now.at(blockData.hash)
+      polkadotConnector.query.session.currentIndex.at(blockHash),
+      polkadotConnector.query.timestamp.now.at(blockHash)
     ])
 
-    const historyDepth = await polkadotConnector.query.staking.historyDepth.at(blockData.hash)
+    const historyDepth = await polkadotConnector.query.staking.historyDepth.at(blockHash)
     if (currentEra.unwrap().toNumber() - era > historyDepth.toNumber()) {
       this.app.log.warn(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
     }
 
-    const stakingData = await this.getValidators(blockData.hash, sessionId, blockTime, era)
+    const stakingData = await this.getValidators(blockHash, sessionId, blockTime, era)
 
     await kafkaProducer
       .send({
@@ -225,7 +233,6 @@ class StakingService implements IStakingService {
       nominators: [],
       nominators_active: 0
     }
-
     this.app.log.debug(`[validators][getValidators] Block: "${blockHash}"`)
 
     const [sessionStart, totalStake, totalReward] = await Promise.all([
@@ -291,7 +298,7 @@ class StakingService implements IStakingService {
 
     result.validators = [...enabledValidatorsData.validators, ...disabledValidatorsData.validators];
     result.nominators = [...enabledValidatorsData.nominators, ...disabledValidatorsData.nominators];
-    result.era_data.nominators_active = result.nominators_active
+    result.era_data.nominators_active = enabledValidatorsData.nominators_active;
 
     return result
   }
@@ -461,7 +468,7 @@ class StakingService implements IStakingService {
    * @async
    * @param {BlockHash} blockHash - The block hash
    */
-  async updateMetaData(blockHash: string | BlockHash | Uint8Array) {
+  async updateMetaData(blockHash: TBlockHash) {
     const { polkadotConnector } = this.app
 
     /** @type {RuntimeVersion} */

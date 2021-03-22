@@ -13,9 +13,9 @@ import { Pool } from 'pg';
 import { AnyJson } from '@polkadot/types/types';
 
 export interface IStakingService {
-	syncValidators(era: number): Promise<void>;
+	syncValidators(blockNumber: number): Promise<void>;
 
-	extractStakers(era: TBlockEra, blockData: Pick<IBlockModel, 'id' | 'hash'>): Promise<void>;
+	extractStakers(era: TBlockEra, blockData: TBlockHash): Promise<void>;
 
 	getValidators(
 		blockHash: TBlockHash,
