@@ -5,7 +5,7 @@ const {
   environment: { SUBSTRATE_URI }
 } = require('../environment')
 
-const polkadotConnector = async (server, options = {}) => {
+const polkadotConnector = async (server) => {
   server.log.info(`Init "polkadotConnector"`)
 
   const wsProvider = new WsProvider(SUBSTRATE_URI)

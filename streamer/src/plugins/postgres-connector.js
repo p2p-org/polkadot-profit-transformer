@@ -5,7 +5,7 @@ const {
   environment: { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT }
 } = require('../environment')
 
-const postgresConnector = async (server, options = {}) => {
+const postgresConnector = async (server) => {
   server.log.info(`Init "postgresConnector"`)
 
   const pool = new Pool({

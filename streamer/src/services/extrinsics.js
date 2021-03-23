@@ -41,7 +41,7 @@ class ExtrinsicsService {
         this.app.log.error(`Error acquiring client: ${err.toString()}`)
         throw new Error(`Error acquiring client`)
       }
-      client.query('SELECT NOW()', (err, result) => {
+      client.query('SELECT NOW()', (err) => {
         release()
         if (err) {
           this.app.log.error(`Error executing query: ${err.toString()}`)
@@ -68,7 +68,7 @@ class ExtrinsicsService {
     extrinsicsVec.forEach((extrinsic, exIndex) => {
       const referencedEventsIds = events
         .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(exIndex))
-        .map(({ event }, evIndex) => `${blockNumber}-${evIndex}`)
+        .map((_, evIndex) => `${blockNumber}-${evIndex}`)
 
       if (extrinsic.method.method === 'batch') {
         extrinsic.method.args[0].forEach((batchExtrinsicEntry, batchExIndex) => {

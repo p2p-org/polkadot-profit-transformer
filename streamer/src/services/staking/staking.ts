@@ -1,6 +1,27 @@
+import {
+  BlockHash,
+  SessionIndex,
+  Moment,
+  AccountId,
+  RewardPoint,
+  ValidatorId
+} from '@polkadot/types/interfaces';
+import { u32 } from '@polkadot/types';
+import {
+  IApplication,
+  IBlockModel,
+  IGetValidatorsResult,
+  IGetStakersByValidator,
+  IStakingService,
+  TBlockHash,
+  INominator,
+  TBlockEra
+} from './staking.types';
+import { FastifyInstance } from 'fastify';
+
 const {
   environment: { KAFKA_PREFIX, DB_SCHEMA }
-} = require('../environment')
+} = require('../../environment')
 
 const attemptsCount = 5
 
@@ -13,12 +34,14 @@ const eraDataExtractionOffset = 4
  */
 
 // TODO: Rename to stacking
-class StakingService {
+class StakingService implements IStakingService {
+  private readonly app: FastifyInstance & IApplication;
+  private readonly currentSpecVersion: u32;
   /**
    * Creates an instance of StakingService.
    * @param {object} app fastify app
    */
-  constructor(app) {
+  constructor(app: FastifyInstance & IApplication) {
     if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
 
     /** @private */
@@ -50,7 +73,7 @@ class StakingService {
         this.app.log.error(`Error acquiring client: ${err.toString()}`)
         throw new Error(`Error acquiring client`)
       }
-      client.query('SELECT NOW()', (err, result) => {
+      client.query('SELECT NOW()', (err) => {
         release()
         if (err) {
           this.app.log.error(`Error executing query: ${err.toString()}`)
@@ -60,11 +83,16 @@ class StakingService {
     })
   }
 
-  async syncValidators(era) {
+  async syncValidators(blockNumber?: number) {
+    let era = 0;
+
+    if (blockNumber) {
+      const blockHash = await this.app.polkadotConnector.rpc.chain.getBlockHash(blockNumber);
+      const eraByBlockHash = await this.app.polkadotConnector.query.staking.currentEra.at(blockHash);
+      era = eraByBlockHash.unwrap().toNumber();
+    }
+
     try {
-      if (era == null) {
-        era = 0
-      }
 
       const lastAvailableEra = await this.getLastEraFromDB()
 
@@ -82,11 +110,11 @@ class StakingService {
           let lastError = null
           const extractionBlock = await this.getFirstBlockFromDB(era + eraDataExtractionOffset, attemptsCount - attempts)
 
-          if (extractionBlock.id === 0 && era > 0) {
+          if (parseInt(extractionBlock.id) === 0 && era > 0) {
             throw new Error('cannot get first era block number')
           }
 
-          await this.extractStakers(era, extractionBlock).catch((error) => {
+          await this.extractStakers(era, extractionBlock.hash).catch((error) => {
             lastError = error
             this.app.log.error(`failed to process stakers block #${extractionBlock}: ${error}`)
           })
@@ -108,26 +136,26 @@ class StakingService {
    * @param {number} era
    * @param {BlockOffsetInfo} blockData
    */
-  async extractStakers(era, blockData) {
+  async extractStakers(era: number, blockHash: TBlockHash) {
     const { polkadotConnector } = this.app
     const { kafkaProducer } = this.app
 
     this.app.log.info(`Processing stacking data for era "${era}"`)
 
-    await this.updateMetaData(blockData.hash)
+    await this.updateMetaData(blockHash)
 
     const [currentEra, sessionId, blockTime] = await Promise.all([
       polkadotConnector.query.staking.currentEra(),
-      polkadotConnector.query.session.currentIndex.at(blockData.hash),
-      polkadotConnector.query.timestamp.now.at(blockData.hash)
+      polkadotConnector.query.session.currentIndex.at(blockHash),
+      polkadotConnector.query.timestamp.now.at(blockHash)
     ])
 
-    const historyDepth = await polkadotConnector.query.staking.historyDepth.at(blockData.hash)
+    const historyDepth = await polkadotConnector.query.staking.historyDepth.at(blockHash)
     if (currentEra.unwrap().toNumber() - era > historyDepth.toNumber()) {
       this.app.log.warn(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
     }
 
-    const stakingData = await this.getValidators(blockData.hash, sessionId, blockTime, era)
+    const stakingData = await this.getValidators(blockHash, sessionId, blockTime, era)
 
     await kafkaProducer
       .send({
@@ -139,7 +167,7 @@ class StakingService {
           }
         ]
       })
-      .catch((error) => {
+      .catch((error: any) => {
         this.app.log.error(`failed to push era data: `, error)
         throw new Error('cannot push session data to Kafka')
       })
@@ -161,7 +189,7 @@ class StakingService {
           }
         ]
       })
-      .catch((error) => {
+      .catch((error: any) => {
         this.app.log.error(`failed to push session data: `, error)
         throw new Error('cannot push session data to Kafka')
       })
@@ -182,10 +210,15 @@ class StakingService {
    * @param {number} blockEra
    * @returns {Promise<ValidatorsResult>}
    */
-  async getValidators(blockHash, sessionId, blockTime, blockEra) {
+  async getValidators(
+      blockHash: TBlockHash,
+      sessionId: SessionIndex,
+      blockTime: Moment,
+      blockEra: TBlockEra
+  ): Promise<IGetValidatorsResult> {
     const { polkadotConnector } = this.app
 
-    const result = {
+    const result:IGetValidatorsResult = {
       validators: [],
       stakers: [],
       era_data: {
@@ -196,9 +229,10 @@ class StakingService {
         total_reward: '0',
         total_stake: '0',
         total_reward_points: 0
-      }
+      },
+      nominators: [],
+      nominators_active: 0
     }
-
     this.app.log.debug(`[validators][getValidators] Block: "${blockHash}"`)
 
     const [sessionStart, totalStake, totalReward] = await Promise.all([
@@ -209,7 +243,7 @@ class StakingService {
 
     result.era_data.session_start = parseInt(sessionStart.toString(), 10)
     result.era_data.total_stake = totalStake.toString()
-    result.era_data.total_reward = !totalReward.isNone ? totalReward.unwrap().toString() : 0
+    result.era_data.total_reward = !totalReward.isNone ? totalReward.unwrap().toString() : '0'
 
     const [validators, disabledValidatorsVec, erasRewardPointsRaw] = await Promise.all([
       polkadotConnector.query.session.validators.at(blockHash),
@@ -221,9 +255,7 @@ class StakingService {
     const disabledValidators = disabledValidatorsVec.map((i) => validators[i.toNumber()])
 
     /** @type {Array<u32>} */
-    const enabledValidators = validators.filter(function (item) {
-      return disabledValidators.indexOf(item) === -1
-    })
+    const enabledValidators = validators.filter((item) => disabledValidators.indexOf(item) === -1)
 
     result.era_data.validators_active = enabledValidators.length
     result.era_data.total_reward_points = parseInt(erasRewardPointsRaw.total.toString(), 10)
@@ -239,9 +271,9 @@ class StakingService {
     }
 
     // Prepare reward points
-    const erasRewardPointsMap = {}
+    const erasRewardPointsMap: Map<AccountId, RewardPoint> = new Map();
     erasRewardPointsRaw.individual.forEach((rewardPoints, accountId) => {
-      erasRewardPointsMap[accountId.toString()] = rewardPoints.toNumber()
+      erasRewardPointsMap.set(accountId, rewardPoints);
     })
 
     const enabledValidatorsData = await this.getStakersByValidator(
@@ -253,6 +285,7 @@ class StakingService {
       enabledValidators,
       true
     )
+
     const disabledValidatorsData = await this.getStakersByValidator(
       blockHash,
       sessionId,
@@ -263,17 +296,25 @@ class StakingService {
       false
     )
 
-    result.validators = enabledValidatorsData.validators.concat(disabledValidatorsData.validators)
-    result.nominators = enabledValidatorsData.nominators.concat(disabledValidatorsData.nominators)
-    result.era_data.nominators_active = result.nominators_active
+    result.validators = [...enabledValidatorsData.validators, ...disabledValidatorsData.validators];
+    result.nominators = [...enabledValidatorsData.nominators, ...disabledValidatorsData.nominators];
+    result.era_data.nominators_active = enabledValidatorsData.nominators_active;
 
     return result
   }
 
-  async getStakersByValidator(blockHash, sessionId, blockTime, blockEra, erasRewardPointsMap, validators, isEnabled) {
+  async getStakersByValidator(
+      blockHash: TBlockHash,
+      sessionId: SessionIndex,
+      blockTime: Moment,
+      blockEra: TBlockEra,
+      erasRewardPointsMap: Map<AccountId, RewardPoint>,
+      validators: ValidatorId[],
+      isEnabled: boolean
+  ): Promise<IGetStakersByValidator> {
     const { polkadotConnector } = this.app
 
-    const result = {
+    const result: IGetStakersByValidator = {
       validators: [],
       nominators: [],
       nominators_active: 0
@@ -293,13 +334,13 @@ class StakingService {
 
         for (const staker of stakers.others) {
           try {
-            const isClipped = stakersClipped.others.find((e) => {
+            const isClipped = stakersClipped.others.find((e: { who: { toString: () => any; }; }) => {
               return e.who.toString() === staker.who.toString()
             })
 
             result.nominators_active++
 
-            const stakerEntry = {
+            const stakerEntry: INominator = {
               account_id: staker.who.toString(),
               era: parseInt(blockEra.toString(), 10),
               session_id: sessionId.toNumber(),
@@ -322,7 +363,7 @@ class StakingService {
               }
             }
             // }
-            result.nominators.push(stakerEntry)
+            result.nominators.push(stakerEntry);
           } catch (e) {
             this.app.log.error(`[validators][getValidators] Cannot process staker: ${staker.who} "${e}". Block: ${blockHash}`)
           }
@@ -331,8 +372,8 @@ class StakingService {
         // TODO: Check for duplicates in nominators
         // TODO: Load ledger data
 
-        let { validatorRewardDest, validatorRewardAccountId } = [null, null]
-
+        let validatorRewardDest: string | undefined = undefined;
+        let validatorRewardAccountId: AccountId | undefined = undefined;
         const validatorPayee = await polkadotConnector.query.staking.payee.at(blockHash, validator.toString())
         if (validatorPayee) {
           if (!validatorPayee.isAccount) {
@@ -355,9 +396,9 @@ class StakingService {
           total: stakers.total.toString(),
           own: stakers.own.toString(),
           nominators_count: stakers.others.length,
-          reward_points: erasRewardPointsMap[validator.toString()] ? erasRewardPointsMap[validator.toString()] : 0,
+          reward_points: erasRewardPointsMap.get(validator)?.toString() ?? '0',
           reward_dest: validatorRewardDest,
-          reward_account_id: validatorRewardAccountId,
+          reward_account_id: validatorRewardAccountId?.toString(),
           prefs: prefs.toJSON(),
           block_time: blockTime.toNumber()
         })
@@ -368,6 +409,8 @@ class StakingService {
         )
       }
     }
+
+    this.app.log.info('result', result);
 
     return result
   }
@@ -387,48 +430,35 @@ class StakingService {
    * @param {number} offset
    * @returns {Promise<BlockOffsetInfo>}
    */
-  async getFirstBlockFromDB(era, offset = 0) {
+  async getFirstBlockFromDB(era: number, offset = 0): Promise<Pick<IBlockModel, 'id' | 'hash'>> {
     const { postgresConnector } = this.app
-    let blockNumber = 0
-    let blockHash = 0
-    await postgresConnector
-      .query({
-        text: `SELECT "id", "hash" FROM ${DB_SCHEMA}.blocks WHERE "era" > $1 ORDER BY "id" ASC LIMIT 1 OFFSET $2`,
-        values: [era, offset]
-      })
-      .then((res) => {
-        if (res.rows.length) {
-          blockNumber = res.rows[0].id
-          blockHash = res.rows[0].hash
-        }
-      })
-      .catch((err) => {
-        this.app.log.error(`[getFirstBlockFromDB] failed to get first synchronized era block number: ${err}`)
-        throw new Error('cannot get first era block number')
-      })
 
-    return { id: blockNumber, hash: blockHash }
+    try {
+      const text = `SELECT "id", "hash" FROM ${DB_SCHEMA}.blocks WHERE "era" > $1 ORDER BY "id" ASC LIMIT 1 OFFSET $2`;
+      const values = [era, offset];
+      const { rows: [block] } = await postgresConnector.query<Pick<IBlockModel, 'id' | 'hash'>>({
+        text,
+        values
+      });
+
+      return block;
+    } catch (err) {
+      this.app.log.error(`[getFirstBlockFromDB] failed to get first synchronized era block number: ${err}`)
+      throw new Error('cannot get first era block number')
+    }
   }
 
-  async getLastEraFromDB() {
+  async getLastEraFromDB(): Promise<IBlockModel['era']> {
     const { postgresConnector } = this.app
-    let era = 0
+    try {
+      const queryText = `SELECT "era" FROM ${DB_SCHEMA}.blocks ORDER BY "id" DESC LIMIT 1`;
+      const { rows: [{ era }] } = await postgresConnector.query<Pick<IBlockModel, 'era'>>(queryText);
 
-    await postgresConnector
-      .query({
-        text: `SELECT "era" FROM ${DB_SCHEMA}.blocks ORDER BY "id" DESC LIMIT 1`
-      })
-      .then((res) => {
-        if (res.rows.length) {
-          era = res.rows[0].era
-        }
-      })
-      .catch((err) => {
-        this.app.log.error(`[getLastEraFromDB] failed to get first synchronized era block number: ${err}`)
-        throw new Error('cannot get first era block number')
-      })
-
-    return era
+      return era;
+    } catch (err) {
+      this.app.log.error(`[getLastEraFromDB] failed to get first synchronized era block number: ${err}`)
+      throw new Error('cannot get first era block number')
+    }
   }
 
   /**
@@ -438,7 +468,7 @@ class StakingService {
    * @async
    * @param {BlockHash} blockHash - The block hash
    */
-  async updateMetaData(blockHash) {
+  async updateMetaData(blockHash: TBlockHash) {
     const { polkadotConnector } = this.app
 
     /** @type {RuntimeVersion} */
@@ -461,7 +491,7 @@ class StakingService {
    * @param {number} ms
    * @returns {Promise<>}
    */
-  async sleep(ms) {
+  async sleep(ms: number | undefined) {
     return new Promise((resolve) => {
       setTimeout(resolve, ms)
     })

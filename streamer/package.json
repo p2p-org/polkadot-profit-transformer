@@ -8,17 +8,16 @@
   "license": "Apache 2.0",
   "private": null,
   "scripts": {
-    "start": "node --trace-warnings ./src/main.js",
-    "dev": "node_modules/.bin/nodemon ./src/main.js",
-    "lint": "node_modules/.bin/eslint ./src/main.js",
-    "lint:fix": "node_modules/.bin/eslint . --fix",
+    "start": "npx ts-node --trace-warnings ./src/main.js",
+    "dev": "npx ts-node ./src/main.js",
+    "lint": "npx eslint --ext .js,.ts ./src/main.js",
+    "lint:fix": "npx eslint .  --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"
   },
   "dependencies": {
     "@polkadot/api": "^4.1.1",
     "@polkadot/api-derive": "^4.1.1",
     "@polkadot/rpc-core": "^4.1.1",
-    "@polkadot/types": "^4.1.1",
     "@polkadot/types-known": "^4.1.1",
     "@polkadot/util": "^6.0.5",
     "async-mutex": "^0.2.6",
@@ -31,6 +30,10 @@
     "yargs": "^16.2.0"
   },
   "devDependencies": {
+    "@polkadot/types": "^4.1.1",
+    "@types/pg": "^7.14.11",
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
     "babel-eslint": "^10.1.0",
     "eslint": "7.9.0",
     "eslint-config-prettier": "^6.15.0",
@@ -42,6 +45,8 @@
     "eslint-plugin-standard": "4.0.1",
     "mocha": "^8.2.1",
     "nodemon": "2.0.4",
-    "prettier": "^2.1.2"
+    "prettier": "^2.1.2",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
   }
 }

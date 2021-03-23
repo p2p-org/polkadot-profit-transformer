@@ -1,7 +1,7 @@
 const { ConfigService } = require('./config')
 const { ConsumerService } = require('./consumer')
 const { BlocksService } = require('./blocks')
-const { StakingService } = require('./staking')
+const { StakingService } = require('./staking/staking')
 
 /**
  * Provides cli operations
