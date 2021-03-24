@@ -1,6 +1,6 @@
 .idea
 cookies.txt
-streamer/.env
+streamer/src/.env
 streamer/node_modules
 identity_enrichment/node_modules
 

@@ -320,6 +320,8 @@ class StakingService implements IStakingService {
       nominators_active: 0
     }
 
+    const nominatorsAccountIdSet: Set<string> = new Set();
+
     for (const validator of validators) {
       try {
         const [prefs, stakers, stakersClipped] = await Promise.all([
@@ -338,7 +340,7 @@ class StakingService implements IStakingService {
               return e.who.toString() === staker.who.toString()
             })
 
-            result.nominators_active++
+            nominatorsAccountIdSet.add(staker.who.toString());
 
             const stakerEntry: INominator = {
               account_id: staker.who.toString(),
@@ -410,6 +412,7 @@ class StakingService implements IStakingService {
       }
     }
 
+    result.nominators_active = nominatorsAccountIdSet.size;
     this.app.log.info('result', result);
 
     return result
