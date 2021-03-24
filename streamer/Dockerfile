@@ -7,7 +7,6 @@ COPY ./package*.json ./
 RUN npm install
 
 COPY ./src .
-RUN rm ./.env
 
 EXPOSE 8080
 

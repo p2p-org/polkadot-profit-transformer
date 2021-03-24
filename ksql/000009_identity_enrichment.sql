@@ -1,5 +1,6 @@
 CREATE STREAM {APP_PREFIX}_IDENTITY_ENRICHMENT_DATA(
     "account_id" VARCHAR,
+    "root_account_id" VARCHAR,
     "display" VARCHAR,
     "legal" VARCHAR,
     "riot" VARCHAR,
@@ -16,6 +17,7 @@ CREATE STREAM {APP_PREFIX}_IDENTITY_ENRICHMENT_DATA(
 
 CREATE STREAM {APP_PREFIX}_IDENTITY_ENRICHMENT (
     "account_id" VARCHAR,
+    "root_account_id" VARCHAR,
     "display" VARCHAR,
     "legal" VARCHAR,
     "riot" VARCHAR,
