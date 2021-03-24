@@ -1,6 +1,8 @@
 const { build } = require('./app')
 
-const { environment: { API_ADDR, API_PORT } } = require('./environment')
+const {
+  environment: { API_ADDR, API_PORT }
+} = require('./environment')
 
 build().then((app) => {
   // run the server!
@@ -10,7 +12,10 @@ build().then((app) => {
       process.exit(1)
     }
 
-    process.on('SIGINT', () => app.close())
+    process.on('SIGINT', () => {
+      app.close()
+      process.exit(1)
+    })
     process.on('SIGTERM', () => app.close())
   })
 })

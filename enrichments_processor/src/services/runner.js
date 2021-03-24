@@ -1,5 +1,7 @@
 const { IdentityProcessorService } = require('./identity_processor')
-const { environment: { KAFKA_PREFIX } } = require('../environment')
+const {
+  environment: { KAFKA_PREFIX }
+} = require('../environment')
 
 /**
  * Provides cli operations
@@ -30,7 +32,10 @@ class RunnerService {
 
           switch (topic) {
             case KAFKA_PREFIX + '_ENRICHMENT_ACCOUNT_DATA':
-              await this.identityProcessorService.process(entry)
+              await this.identityProcessorService.processEvent(entry)
+              break
+            case KAFKA_PREFIX + '_EXTRINSICS_DATA':
+              await this.identityProcessorService.processExtrinsics(entry)
               break
             default:
               this.app.log.error(`failed to process topic message "${topic}"`)
@@ -38,7 +43,7 @@ class RunnerService {
         } catch (err) {
           this.app.log.error(`cannot process topic message "${err}"`)
         }
-      },
+      }
     })
   }
 }
