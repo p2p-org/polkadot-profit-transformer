@@ -18,7 +18,7 @@
     "@polkadot/api": "4.1.1",
     "@polkadot/api-derive": "4.1.1",
     "@polkadot/rpc-core": "4.1.1",
-    "@polkadot/types-known": ".1.1",
+    "@polkadot/types-known": "4.1.1",
     "@polkadot/util": "6.0.5",
     "async-mutex": "^0.2.6",
     "dotenv": "^8.2.0",
