@@ -6,7 +6,7 @@
   "repository": "",
   "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika",
   "license": "Apache 2.0",
-  "private": null,
+  "private": false,
   "scripts": {
     "start": "npx ts-node --trace-warnings ./src/main.js",
     "dev": "npx ts-node ./src/main.js",
