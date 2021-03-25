@@ -8,7 +8,9 @@
   "license": "Apache 2.0",
   "private": null,
   "scripts": {
+    "build": "npx tsc",
     "start": "npx ts-node --trace-warnings ./src/main.js",
+    "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
     "dev": "npx ts-node ./src/main.js",
     "lint": "npx eslint --ext .js,.ts ./src/main.js",
     "lint:fix": "npx eslint .  --fix",
