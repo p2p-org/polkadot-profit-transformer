@@ -12,9 +12,12 @@ RUN npm prune --production
 
 FROM node:14-alpine
 
-COPY --from=builder /dist /dist
-COPY --from=builder /node_modules /node_modules
+WORKDIR /usr/src/app
+
+COPY --from=building /usr/src/app/dist ./dist
+COPY --from=building /usr/src/app/node_modules ./node_modules
+COPY ./package*.json ./
 
 EXPOSE 8080
 
-ENTRYPOINT npm run start:prod
+CMD ["node", "./dist/main.js", "--sync", "--sub-fin-head"]
