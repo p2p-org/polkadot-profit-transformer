@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:14-alpine
 
 WORKDIR /usr/src/app
 
@@ -10,4 +10,4 @@ COPY ./src .
 
 EXPOSE 8080
 
-ENTRYPOINT node main.js --sync --sub-fin-head
+ENTRYPOINT npx ts-node main.js --sync --sub-fin-head
