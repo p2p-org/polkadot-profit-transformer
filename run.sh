@@ -54,7 +54,7 @@ docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d --build sc
   ksqldb-server ksqldb-cli ksql-datagen rest-proxy db
 
 echo "${COLOR_GREEN}Starting ksql containers...${COLOR_NONE}"
-sleep 4m # we should wait a little bit
+sleep 180s # we should wait a little bit
 
 
 KAFKA_API_ATTEMPT_COUNTER=0
@@ -223,7 +223,7 @@ docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compos
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server
 
-docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
+# docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-server create_db
 
