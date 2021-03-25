@@ -4,7 +4,9 @@ import {
     IIdentityProcessorService,
     IEvent,
     IExtrinsicsEntry,
-    IExtrinsic
+    IExtrinsic,
+    IEnrichmentEntry,
+    ISubsEntry
 } from './identity_processor.types';
 
 
@@ -18,6 +20,7 @@ const {
  * @class
  */
 class IdentityProcessorService implements IIdentityProcessorService {
+    private readonly app: FastifyInstance & IApplication;
     /**
      * Creates an instance of ConsumerService.
      * @constructor
@@ -51,13 +54,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
      * @property {number} block_id
      */
 
-    /**
-     * Process identity entry from event
-     *
-     * @async
-     * @param {EventIdentityEntry} event
-     * @returns {Promise<void>}
-     */
+
     async processEvent(event: IEvent) {
         switch (event.event) {
             case 'NewAccount':
@@ -73,14 +70,6 @@ class IdentityProcessorService implements IIdentityProcessorService {
         }
     }
 
-    /**
-     * Process new account
-     *
-     * @private
-     * @async
-     * @param {EventIdentityEntry} event
-     * @returns {Promise<void>}
-     */
     async onNewAccount(event: IEvent) {
         return this.pushEnrichment(event.event_id, {
             account_id: event.account_id,
@@ -88,14 +77,6 @@ class IdentityProcessorService implements IIdentityProcessorService {
         })
     }
 
-    /**
-     * Process killed account
-     *
-     * @private
-     * @async
-     * @param {EventIdentityEntry} event
-     * @returns {Promise<void>}
-     */
     async onKilledAccount(event: IEvent) {
         return this.pushEnrichment(event.event_id, {
             account_id: event.account_id,
@@ -112,13 +93,6 @@ class IdentityProcessorService implements IIdentityProcessorService {
      * @property {string} signer
      */
 
-    /**
-     * Process identity entry from extrinsic
-     *
-     * @async
-     * @param {ExtrinsicIdentityEntry} entry
-     * @returns {Promise<void>}
-     */
     async processExtrinsics({extrinsics}: IExtrinsicsEntry) {
 
         const isValidIdentityExtrinsic = (extrinsic: IExtrinsic) => {
@@ -153,6 +127,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
         const identity = await this.getIdentity(accountId)
 
         if (identity) {
+            // @ts-ignore
             const {
                 value: {info: identityInfo}
             } = identity
@@ -179,7 +154,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
     async updateSubAccounts(extrinsic: IExtrinsic) {
         const {method, args} = extrinsic
 
-        const sendToPushEnrichment = ({key, accountId, rootAccountId}) => {
+        const sendToPushEnrichmentSubs = ({key, accountId, rootAccountId}: ISubsEntry) => {
             return this.pushEnrichment(key, {
                 account_id: accountId,
                 root_account_id: rootAccountId
@@ -203,7 +178,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
             const accountId = typeof rawArg === 'string' ? rawArg : rawArg.id
             const rootAccountId = extrinsic.signer
             const key = extrinsic.id
-            return sendToPushEnrichment({key, accountId, rootAccountId})
+            return sendToPushEnrichmentSubs({key, accountId, rootAccountId})
         }
 
         /**
@@ -216,7 +191,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
             const [rawSubs] = args
             const rootAccountId = extrinsic.signer
             const key = extrinsic.id
-            return Promise.all(rawSubs.map(([accountId], index) => sendToPushEnrichment({
+            return Promise.all(rawSubs.map(([accountId]: string, index: number) => sendToPushEnrichmentSubs({
                 key: `${key}_${index}`,
                 accountId,
                 rootAccountId
@@ -239,7 +214,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
             const [rawArg] = extrinsic.args
             const key = extrinsic.id
             const accountId = typeof rawArg === 'string' ? rawArg : rawArg.id
-            return sendToPushEnrichment({key, accountId, rootAccountId: null})
+            return sendToPushEnrichmentSubs({key, accountId, rootAccountId: null})
         }
 
         /**
@@ -251,7 +226,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
         const quitSub = async (extrinsic: IExtrinsic) => {
             const key = extrinsic.id
             const accountId = extrinsic.signer
-            return sendToPushEnrichment({key, accountId, rootAccountId: null})
+            return sendToPushEnrichmentSubs({key, accountId, rootAccountId: null})
         }
 
         switch (method) {
@@ -303,16 +278,8 @@ class IdentityProcessorService implements IIdentityProcessorService {
      * @property {number} killed_at
      */
 
-    /**
-     * Push enrichment
-     *
-     * @private
-     * @async
-     * @param {string} key
-     * @param {IdentityEnrichment} data
-     * @returns {Promise<void>}
-     */
-    async pushEnrichment(key, data) {
+  
+    async pushEnrichment(key: string, data: IEnrichmentEntry) {
         const {kafkaProducer} = this.app
 
         await kafkaProducer

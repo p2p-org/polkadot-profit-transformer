@@ -1,20 +1,5 @@
-import {
-  AccountId,
-  BlockHash,
-  EraIndex,
-  Moment,
-  RewardPoint,
-  SessionIndex,
-  ValidatorId,
-} from '@polkadot/types/interfaces';
-
-
-
-
 import { ApiPromise } from '@polkadot/api';
 import { Producer } from 'kafkajs';
-import { AnyJson } from '@polkadot/types/types';
-
 
 export interface IApplication {
   polkadotConnector: ApiPromise;
@@ -34,10 +19,28 @@ export interface IExtrinsicsEntry {
 
 export interface IEvent {
   account_id: string,
-  block_id: string,
+  block_id: number,
   event: string,
   event_id: string
+}
 
+export interface IEnrichmentEntry {
+  account_id: string,
+  root_account_id?: string | null,
+  display?: string | null,
+  legal?: string | null,
+  web?: string | null,
+  riot?: string | null,
+  email?: string | null,
+  twitter?: string | null,
+  created_at?: number,
+  killed_at?: number
+}
+
+export interface ISubsEntry {
+  key: string,
+  accountId: string,
+  rootAccountId: string | null
 }
 
 export interface IIdentityProcessorService {
@@ -47,11 +50,12 @@ export interface IIdentityProcessorService {
 
   onKilledAccount(event: IEvent): Promise<void>;
 
-  processExstrinsics( extrinsics: [IExtrinsic]): Promise<void>;
+  processExtrinsics( entry: IExtrinsicsEntry): Promise<void>;
 
-  updateAccountIdentity(extrinsic: IExtrinsic): Promise<void>
+  updateAccountIdentity(extrinsic: IExtrinsic): Promise<void>;
 
-  updateSubAccounts(extrinsic: IExtrinsic): Promise<void>
+  updateSubAccounts(extrinsic: IExtrinsic): Promise<void>;
 
+  pushEnrichment(key: string, data: IEnrichmentEntry): Promise<void>
 
 }
