@@ -9,7 +9,6 @@ import {
     ISubsEntry
 } from './identity_processor.types';
 
-
 const {hexToString} = require('@polkadot/util')
 const {
     environment: {KAFKA_PREFIX}
@@ -127,7 +126,6 @@ class IdentityProcessorService implements IIdentityProcessorService {
         const identity = await this.getIdentity(accountId)
 
         if (identity) {
-            // @ts-ignore
             const {
                 value: {info: identityInfo}
             } = identity
@@ -259,8 +257,9 @@ class IdentityProcessorService implements IIdentityProcessorService {
      */
     async getIdentity(accountId: string) {
         const {polkadotConnector} = this.app
-        return await polkadotConnector.query.identity.identityOf(accountId)
+        return polkadotConnector.query.identity.identityOf(accountId)
     }
+
 
     /**
      *
@@ -278,7 +277,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
      * @property {number} killed_at
      */
 
-  
+
     async pushEnrichment(key: string, data: IEnrichmentEntry) {
         const {kafkaProducer} = this.app
 
