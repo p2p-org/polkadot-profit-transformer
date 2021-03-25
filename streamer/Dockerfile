@@ -1,13 +1,20 @@
-FROM node:14-alpine
+FROM node:14-alpine as building
 
 WORKDIR /usr/src/app
 
 COPY ./package*.json ./
+COPY ./tsconfig.json ./
+COPY ./src ./src
 
-RUN npm install
+RUN npm ci
+RUN npm run build
+RUN npm prune --production
 
-COPY ./src .
+FROM node:14-alpine
+
+COPY --from=builder /dist /dist
+COPY --from=builder /node_modules /node_modules
 
 EXPOSE 8080
 
-ENTRYPOINT npx ts-node main.js --sync --sub-fin-head
+ENTRYPOINT npm run start:prod
