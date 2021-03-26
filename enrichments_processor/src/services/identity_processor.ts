@@ -8,62 +8,41 @@ import {
     IEnrichmentEntry,
     ISubsEntry
 } from './identity_processor.types';
+import {Registration} from '@polkadot/types/interfaces';
+import {Option} from '@polkadot/types';
 
-const {hexToString} = require('@polkadot/util')
 const {
     environment: {KAFKA_PREFIX}
 } = require('../environment')
 
 /**
  * Provides identity enrichment processing service
- * @class
  */
 class IdentityProcessorService implements IIdentityProcessorService {
     private readonly app: FastifyInstance & IApplication;
-    /**
-     * Creates an instance of ConsumerService.
-     * @constructor
-     * @param {object} app - The fastify instance object
-     */
-    constructor(app: FastifyInstance & IApplication) {
-        /** @private */
-        this.app = app
 
-        /** @private */
-        const {polkadotConnector} = this.app
+    constructor(app: FastifyInstance & IApplication) {
+        this.app = app
+        const {polkadotConnector, kafkaProducer} = this.app
 
         if (!polkadotConnector) {
             throw new Error('cant get .polkadotConnector from fastify app.')
         }
-
-        const {kafkaProducer} = this.app
 
         if (!kafkaProducer) {
             throw new Error('cant get .kafkaProducer from fastify app.')
         }
     }
 
-    /**
-     * Identity entry from event
-     *
-     * @typedef {Object} EventIdentityEntry
-     * @property {string} event_id
-     * @property {string} account_id
-     * @property {string} event
-     * @property {number} block_id
-     */
-
 
     async processEvent(event: IEvent) {
         switch (event.event) {
             case 'NewAccount':
                 this.app.log.debug(`Process enrichment NewAccount`)
-                await this.onNewAccount(event)
-                return
+                return this.onNewAccount(event)
             case 'KilledAccount':
                 this.app.log.debug(`Process enrichment KilledAccount`)
-                await this.onKilledAccount(event)
-                return
+                return this.onKilledAccount(event)
             default:
                 this.app.log.error(`failed to process undefined entry with event type "${event.event}"`)
         }
@@ -83,15 +62,6 @@ class IdentityProcessorService implements IIdentityProcessorService {
         })
     }
 
-    /**
-     * Identity entry from extrinsic
-     *
-     * @typedef {Object} ExtrinsicIdentityEntry
-     * @property {number} block_id
-     * @property {string} method
-     * @property {string} signer
-     */
-
     async processExtrinsics({extrinsics}: IExtrinsicsEntry) {
 
         const isValidIdentityExtrinsic = (extrinsic: IExtrinsic) => {
@@ -106,50 +76,53 @@ class IdentityProcessorService implements IIdentityProcessorService {
 
         for (const extrinsic of extrinsics) {
             if (isValidIdentityExtrinsic(extrinsic)) {
-                await this.updateAccountIdentity(extrinsic)
-                return
+                return this.updateAccountIdentity(extrinsic)
             }
 
             if (isValidSubsExtrinsic(extrinsic)) {
-                await this.updateSubAccounts(extrinsic)
-                return
+                return this.updateSubAccounts(extrinsic)
             }
         }
     }
 
-    /**
-     *
-     * @param {Object} entry
-     * @returns {Promise<void>}
-     */
     async updateAccountIdentity({id: key, signer: accountId}: IExtrinsic) {
-        const identity = await this.getIdentity(accountId)
 
-        if (identity) {
-            const {
-                value: {info: identityInfo}
-            } = identity
+        this.app.log.debug(`Process updateAccountIdentity with id ${key}`)
 
+        const identityRaw: Option<Registration> = await this.getIdentity(accountId)
+
+        if (identityRaw.isEmpty || identityRaw.isNone) {
             return this.pushEnrichment(key, {
                 account_id: accountId,
-                display: identityInfo ? hexToString(identityInfo.display.asRaw.toHex()) : null,
-                legal: identityInfo ? hexToString(identityInfo.legal.asRaw.toHex()) : null,
-                web: identityInfo ? hexToString(identityInfo.web.asRaw.toHex()) : null,
-                riot: identityInfo ? hexToString(identityInfo.riot.asRaw.toHex()) : null,
-                email: identityInfo ? hexToString(identityInfo.email.asRaw.toHex()) : null,
-                twitter: identityInfo ? hexToString(identityInfo.twitter.asRaw.toHex()) : null
+                display: null,
+                legal: null,
+                web: null,
+                riot: null,
+                email: null,
+                twitter: null
             })
-        } else {
-            this.app.log.error(`updateAccountIdentity: no identity found for ${accountId} from extrinsic ${key}`)
         }
+
+        const getValueOfField = (identityRaw: Option<Registration>, field: string) => {
+            // @ts-ignore
+            return identityRaw?.toHuman()?.info[field]?.Raw || null
+        }
+
+        return this.pushEnrichment(key, {
+            account_id: accountId,
+            display: getValueOfField(identityRaw, 'display'),
+            legal: getValueOfField(identityRaw, 'legal'),
+            web: getValueOfField(identityRaw, 'web'),
+            riot: getValueOfField(identityRaw, 'riot'),
+            email: getValueOfField(identityRaw, 'email'),
+            twitter: getValueOfField(identityRaw, 'twitter'),
+        })
     }
 
-    /**
-     *
-     * @param {Object} extrinsic
-     * @returns {Promise<void>}
-     */
     async updateSubAccounts(extrinsic: IExtrinsic) {
+
+        this.app.log.debug(`Process updateSubAccounts`)
+
         const {method, args} = extrinsic
 
         const sendToPushEnrichmentSubs = ({key, accountId, rootAccountId}: ISubsEntry) => {
@@ -160,16 +133,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
         }
 
         /**
-         * Extrinsic entry type
-         *
-         * @typedef {Object} Extrinsic
-         */
-
-        /**
          * Adds the given account to the sender's subs.
-         *
-         * @param {Extrinsic} extrinsic
-         * @returns {Promise<void>}
          */
         const addSub = async (extrinsic: IExtrinsic) => {
             const [rawArg] = args
@@ -181,9 +145,6 @@ class IdentityProcessorService implements IIdentityProcessorService {
 
         /**
          * Set the sub-accounts of the sender.
-         *
-         * @param {Extrinsic} extrinsic
-         * @returns {[Promise<void>]}
          */
         const setSubs = async (extrinsic: IExtrinsic) => {
             const [rawSubs] = args
@@ -205,10 +166,8 @@ class IdentityProcessorService implements IIdentityProcessorService {
          * or
          * [{ "id": "13SjEpJXxro4HKDLuxjfg3oYP8zpS8E78ZdoabUF4sN4B3hJ"}]
          *
-         * @param {Extrinsic} extrinsic
-         * @returns {Promise<void>}
          */
-        const removeSub = async (extrinsic: IExtrinsic) => {
+        const removeSub = async (extrinsic: IExtrinsic): Promise<void> => {
             const [rawArg] = extrinsic.args
             const key = extrinsic.id
             const accountId = typeof rawArg === 'string' ? rawArg : rawArg.id
@@ -217,11 +176,8 @@ class IdentityProcessorService implements IIdentityProcessorService {
 
         /**
          * Remove the sender as a sub-account.
-         *
-         * @param {Extrinsic} extrinsic
-         * @returns {Promise<void>}
          */
-        const quitSub = async (extrinsic: IExtrinsic) => {
+        const quitSub = async (extrinsic: IExtrinsic): Promise<void> => {
             const key = extrinsic.id
             const accountId = extrinsic.signer
             return sendToPushEnrichmentSubs({key, accountId, rootAccountId: null})
@@ -248,37 +204,13 @@ class IdentityProcessorService implements IIdentityProcessorService {
         }
     }
 
-    /**
-     * Get identity data
-     *
-     * @private
-     * @async
-     * @param {string} accountId - The account id
-     */
-    async getIdentity(accountId: string) {
+    async getIdentity(accountId: string): Promise<Option<Registration>> {
         const {polkadotConnector} = this.app
         return polkadotConnector.query.identity.identityOf(accountId)
     }
 
 
-    /**
-     *
-     * @typedef {Object} IdentityEnrichment
-     * @property {string} account_id
-     * @property {string} root_account_id
-     * @property {number} block_id
-     * @property {string} display
-     * @property {string} legal
-     * @property {string} web
-     * @property {string} riot
-     * @property {string} email
-     * @property {string} twitter
-     * @property {number} created_at
-     * @property {number} killed_at
-     */
-
-
-    async pushEnrichment(key: string, data: IEnrichmentEntry) {
+    async pushEnrichment(key: string, data: IEnrichmentEntry): Promise<void> {
         const {kafkaProducer} = this.app
 
         await kafkaProducer

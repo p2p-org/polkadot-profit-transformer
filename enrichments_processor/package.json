@@ -8,10 +8,12 @@
   "license": "Apache 2.0",
   "private": false,
   "scripts": {
-    "start": "node --trace-warnings ./src/main.js",
-    "dev": "node_modules/.bin/nodemon ./src/main.js",
-    "lint": "node_modules/.bin/eslint ./src/main.js",
-    "lint:fix": "node_modules/.bin/eslint . --fix"
+    "build": "npx tsc",
+    "start": "npx ts-node --trace-warnings ./src/main.js",
+    "start:prod": "node --trace-warnings ./dist/main.js",
+    "dev": "npx ts-node ./src/main.js",
+    "lint": "npx eslint --ext .js,.ts ./src/main.js",
+    "lint:fix": "npx eslint .  --fix"
   },
   "dependencies": {
     "@polkadot/api": "4.1.1",
@@ -28,7 +30,7 @@
     "yargs": "^16.2.0"
   },
   "devDependencies": {
-    "@polkadot/types": "^4.1.1",
+    "@polkadot/types": "4.1.1",
     "@types/pg": "^7.14.11",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",

@@ -16,7 +16,7 @@ export interface IExtrinsic {
 }
 
 export interface IExtrinsicsEntry {
-  extrinsics: [IExtrinsic]
+  extrinsics: IExtrinsic[]
 }
 
 export interface IEvent {

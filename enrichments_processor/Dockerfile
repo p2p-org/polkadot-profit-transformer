@@ -1,13 +1,23 @@
-FROM node:12-alpine
+FROM node:14-alpine as building
 
 WORKDIR /usr/src/app
 
 COPY ./package*.json ./
+COPY ./tsconfig.json ./
+COPY ./src ./src
 
-RUN npm install
+RUN npm ci
+RUN npm run build
+RUN npm prune --production
 
-COPY ./src .
+FROM node:14-alpine
+
+WORKDIR /usr/src/app
+
+COPY --from=building /usr/src/app/dist ./dist
+COPY --from=building /usr/src/app/node_modules ./node_modules
+COPY ./package*.json ./
 
 EXPOSE 8079
 
-ENTRYPOINT node main.js
+CMD ["node", "./dist/main.js"]

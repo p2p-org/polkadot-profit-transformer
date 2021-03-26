@@ -6,7 +6,7 @@ const {
 
 build().then((app) => {
   // run the server!
-  app.listen(API_PORT, API_ADDR, (err, address) => {
+  app.listen(API_PORT, API_ADDR, (err) => {
     if (err) {
       app.log.error(err)
       process.exit(1)

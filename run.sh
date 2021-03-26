@@ -223,7 +223,7 @@ docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compos
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server
 
-# docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
+docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-server create_db
 
