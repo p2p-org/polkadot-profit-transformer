@@ -20,4 +20,4 @@ COPY ./package*.json ./
 
 EXPOSE 8080
 
-CMD ["node", "./dist/main.ts", "--sync", "--sub-fin-head"]
+CMD ["node", "./dist/main.js", "--sync", "--sub-fin-head"]
