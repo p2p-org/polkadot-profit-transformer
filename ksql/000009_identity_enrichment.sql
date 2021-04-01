@@ -6,6 +6,8 @@ CREATE STREAM {APP_PREFIX}_IDENTITY_ENRICHMENT_DATA(
     "riot" VARCHAR,
     "email" VARCHAR,
     "twitter" VARCHAR,
+    "judgement_status" VARCHAR,
+    "registrar_index" BIGINT,
     "created_at" BIGINT,
     "killed_at" BIGINT
 ) WITH (
@@ -23,6 +25,8 @@ CREATE STREAM {APP_PREFIX}_IDENTITY_ENRICHMENT (
     "riot" VARCHAR,
     "email" VARCHAR,
     "twitter" VARCHAR,
+    "judgement_status" VARCHAR,
+    "registrar_index" BIGINT,
     "created_at" BIGINT,
     "killed_at" BIGINT
 ) WITH (
