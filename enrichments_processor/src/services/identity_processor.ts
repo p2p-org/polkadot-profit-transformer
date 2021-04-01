@@ -6,7 +6,8 @@ import {
     IExtrinsicsEntry,
     IExtrinsic,
     IEnrichmentEntry,
-    ISubsEntry
+    ISubsEntry,
+    JudgementStatus
 } from './identity_processor.types';
 import {Registration} from '@polkadot/types/interfaces';
 import {Option} from '@polkadot/types';
@@ -38,11 +39,20 @@ class IdentityProcessorService implements IIdentityProcessorService {
     async processEvent(event: IEvent) {
         switch (event.event) {
             case 'NewAccount':
-                this.app.log.debug(`Process enrichment NewAccount`)
+                this.app.log.debug(`Block ${event.block_id}: Process enrichment NewAccount`)
                 return this.onNewAccount(event)
             case 'KilledAccount':
-                this.app.log.debug(`Process enrichment KilledAccount`)
+                this.app.log.debug(`Block ${event.block_id}: Process enrichment KilledAccount`)
                 return this.onKilledAccount(event)
+            case 'JudgementRequested':
+                this.app.log.debug(`Block ${event.block_id}: Process enrichment JudgementRequested`)
+                return this.onJudgementEvent({event, status: JudgementStatus.REQUESTED})
+             case 'JudgementGiven':
+                this.app.log.debug(`Block ${event.block_id}: Process enrichment JudgementGiven`)
+                return this.onJudgementEvent({event, status: JudgementStatus.GIVEN})
+             case 'JudgementUnrequested':
+                this.app.log.debug(`Block ${event.block_id}: Process enrichment JudgementUnrequested`)
+                return this.onJudgementEvent({event, status: JudgementStatus.UNREQUESTED})
             default:
                 this.app.log.error(`failed to process undefined entry with event type "${event.event}"`)
         }
@@ -62,6 +72,16 @@ class IdentityProcessorService implements IIdentityProcessorService {
         })
     }
 
+    async onJudgementEvent({event, status}: {event: IEvent, status: JudgementStatus}) {
+        const data = JSON.parse(event.data)
+        const enrichmentData = {
+            account_id: event.account_id,
+            judgement_status: status,
+            registrar_index: parseInt(data[1].RegistrarIndex, 16)
+        }
+        return this.pushEnrichment(event.event_id, enrichmentData)
+    }
+
     async processExtrinsics({extrinsics}: IExtrinsicsEntry) {
 
         const isValidIdentityExtrinsic = (extrinsic: IExtrinsic) => {
@@ -72,7 +92,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
         const isValidSubsExtrinsic = (extrinsic: IExtrinsic) => {
             const subsMethods = ['addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs']
             return subsMethods.includes(extrinsic.method) && extrinsic.signer
-        }
+        } 
 
         for (const extrinsic of extrinsics) {
             if (isValidIdentityExtrinsic(extrinsic)) {
@@ -91,21 +111,23 @@ class IdentityProcessorService implements IIdentityProcessorService {
 
         const identityRaw: Option<Registration> = await this.getIdentity(accountId)
 
+
         if (identityRaw.isEmpty || identityRaw.isNone) {
             return this.pushEnrichment(key, {
                 account_id: accountId,
-                display: null,
-                legal: null,
-                web: null,
-                riot: null,
-                email: null,
-                twitter: null
+                display: '',
+                legal: '',
+                web: '',
+                riot: '',
+                email: '',
+                twitter: ''
             })
         }
 
         const getValueOfField = (identityRaw: Option<Registration>, field: string) => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            return identityRaw?.toHuman()?.info[field]?.Raw || null
+            return identityRaw.toHuman().info[field]?.Raw || ''
         }
 
         return this.pushEnrichment(key, {
@@ -115,7 +137,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
             web: getValueOfField(identityRaw, 'web'),
             riot: getValueOfField(identityRaw, 'riot'),
             email: getValueOfField(identityRaw, 'email'),
-            twitter: getValueOfField(identityRaw, 'twitter'),
+            twitter: getValueOfField(identityRaw, 'twitter')
         })
     }
 
@@ -171,7 +193,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
             const [rawArg] = extrinsic.args
             const key = extrinsic.id
             const accountId = typeof rawArg === 'string' ? rawArg : rawArg.id
-            return sendToPushEnrichmentSubs({key, accountId, rootAccountId: null})
+            return sendToPushEnrichmentSubs({key, accountId, rootAccountId: ''})
         }
 
         /**
@@ -180,7 +202,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
         const quitSub = async (extrinsic: IExtrinsic): Promise<void> => {
             const key = extrinsic.id
             const accountId = extrinsic.signer
-            return sendToPushEnrichmentSubs({key, accountId, rootAccountId: null})
+            return sendToPushEnrichmentSubs({key, accountId, rootAccountId: ''})
         }
 
         switch (method) {

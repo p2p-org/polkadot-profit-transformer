@@ -19,11 +19,19 @@ export interface IExtrinsicsEntry {
   extrinsics: IExtrinsic[]
 }
 
+
 export interface IEvent {
   account_id: string,
   block_id: number,
   event: string,
-  event_id: string
+  event_id: string,
+  data: string
+}
+
+export enum JudgementStatus {
+  REQUESTED = 'requested',
+  GIVEN = 'given',
+  UNREQUESTED = 'unrequested'
 }
 
 export interface IEnrichmentEntry {
@@ -35,6 +43,8 @@ export interface IEnrichmentEntry {
   riot?: string | null,
   email?: string | null,
   twitter?: string | null,
+  judgement_status?: JudgementStatus,
+  registrar_index?: number,
   created_at?: number,
   killed_at?: number
 }
