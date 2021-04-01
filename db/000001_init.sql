@@ -100,6 +100,8 @@ CREATE TABLE dot_polka.account_identity (
     "riot" varchar(256),
     "email" varchar(256),
     "twitter" varchar(256),
+    "judgement_status" varchar(256),
+    "registrar_index" BIGINT,
     "created_at" BIGINT,
     "killed_at" BIGINT
 );
@@ -575,9 +577,52 @@ CREATE OR REPLACE FUNCTION dot_polka.sink_account_identity_upsert()
 $$
 BEGIN
 
-    OLD."killed_at" = NEW."killed_at";
+    if  (NEW."root_account_id" is null) then
+		NEW."root_account_id" = OLD."root_account_id";
+	end if;
 
-RETURN OLD;
+    if  (NEW."display" is null) then
+		NEW."display" = OLD."display";
+	end if;
+
+    if  (NEW."legal" is null) then
+		NEW."legal" = OLD."legal";
+	end if;
+
+    if  (NEW."web" is null) then
+		NEW."web" = OLD."web";
+	end if;
+
+    if  (NEW."riot" is null) then
+		NEW."riot" = OLD."riot";
+	end if;
+
+    if  (NEW."email" is null) then
+		NEW."email" = OLD."email";
+	end if;
+
+    if  (NEW."twitter" is null) then
+		NEW."twitter" = OLD."twitter";
+	end if;
+
+    if  (NEW."judgement_status" is null) then
+		NEW."judgement_status" = OLD."judgement_status";
+	end if;
+
+    if  (NEW."registrar_index" is null) then
+		NEW."registrar_index" = OLD."registrar_index";
+	end if;
+
+    if  (NEW."created_at" is null) then
+		NEW."created_at" = OLD."created_at";
+	end if;
+
+    if  (NEW."killed_at" is null) then
+		NEW."killed_at" = OLD."killed_at";
+	end if;
+
+
+RETURN NEW;
 END ;
 
 $$
