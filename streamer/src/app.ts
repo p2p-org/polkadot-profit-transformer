@@ -1,12 +1,18 @@
-const Fastify = require('fastify')
-const { RunnerService } = require('./services/runner')
-
-const {
-  environment: { LOG_LEVEL },
+import Fastify  from 'fastify'
+import { RunnerService } from './services/runner';
+import routes from './routes';
+import {
+  registerKafkaPlugin,
+  registerPolkadotPlugin,
+  registerPostgresPlugin
+} from './plugins';
+import {
+  environment,
   validateEnv
-} = require('./environment')
+} from './environment';
+import yargs from 'yargs'
 
-const argv = require('yargs')
+const { argv } = yargs
   .option('sync', {
     type: 'boolean',
     default: false,
@@ -38,19 +44,19 @@ const argv = require('yargs')
     default: false,
     description: 'Disable api'
   })
-  .help().argv
+  .help();
 
 const build = async () => {
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
     logger: {
-      level: LOG_LEVEL,
+      level: environment.LOG_LEVEL,
       prettyPrint: true
     }
   })
 
   try {
-    await validateEnv(fastify)
+    await validateEnv()
   } catch (err) {
     fastify.log.error(`Environment variable error: "${err.message}"`)
     fastify.log.error(`Stopping instance...`)
@@ -61,23 +67,9 @@ const build = async () => {
 
   // plugins
   try {
-    await require('./plugins/postgres-connector')(fastify)
-  } catch (err) {
-    fastify.log.error(`Cannot init plugin: "${err.message}"`)
-    fastify.log.error(`Stopping instance...`)
-    process.exit(1)
-  }
-
-  try {
-    await require('./plugins/kafka-producer')(fastify)
-  } catch (err) {
-    fastify.log.error(`Cannot init plugin: "${err.message}"`)
-    fastify.log.error(`Stopping instance...`)
-    process.exit(1)
-  }
-
-  try {
-    await require('./plugins/polkadot-connector')(fastify)
+    await registerPostgresPlugin(fastify, {});
+    await registerKafkaPlugin(fastify, {});
+    await registerPolkadotPlugin(fastify, {});
   } catch (err) {
     fastify.log.error(`Cannot init plugin: "${err.message}"`)
     fastify.log.error(`Stopping instance...`)
@@ -86,7 +78,7 @@ const build = async () => {
 
   if (!argv['disable-rpc']) {
     try {
-      await fastify.register(require('./routes'), { prefix: 'api' })
+      await fastify.register(routes, { prefix: 'api' })
     } catch (err) {
       fastify.log.error(`Cannot init endpoint: "${err.message}"`)
       fastify.log.error(`Stopping instance...`)
@@ -104,28 +96,25 @@ const build = async () => {
     polkadotConnector.disconnect()
   })
 
-  fastify.ready().then(
-    () => {
-      const runner = new RunnerService(fastify)
-      runner.sync(
-        {
-          optionSync: argv['sync-force'] ? false : argv.sync,
-          optionSyncForce: argv['sync-force'],
-          optionSyncValidators: argv['sync-stakers'],
-          optionSyncStartBlockNumber: argv.start,
-          optionSubscribeFinHead: argv['sub-fin-head']
-        },
-        argv['sub-fin-head']
-      )
-    },
-    (err) => {
-      fastify.log.info(`Fastify ready error: ${err}`)
-    }
-  )
+  try {
+    await fastify.ready();
+    const runner = new RunnerService(fastify)
+    runner.sync(
+      {
+        optionSync: argv['sync-force'] ? false : argv.sync,
+        optionSyncForce: argv['sync-force'],
+        optionSyncValidators: argv['sync-stakers'],
+        optionSyncStartBlockNumber: argv.start,
+        optionSubscribeFinHead: argv['sub-fin-head']
+      }
+    )
+  } catch (err) {
+    fastify.log.info(`Fastify ready error: ${err}`)
+  }
 
   return fastify
 }
 
-module.exports = {
+export {
   build
 }
