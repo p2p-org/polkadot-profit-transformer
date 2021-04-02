@@ -27,7 +27,7 @@ services:
       - docker/env/.enrichments_processor.env
 
   db:
-    build: "./db"
+    build: ./db
     restart: always
     container_name: postgres
     hostname: postgres
@@ -41,3 +41,12 @@ services:
       - ksqldb-server
     env_file:
       - docker/env/.postgres.env
+
+  streamer_tests:
+    build:
+      context: ./
+      dockerfile: streamer/Dockerfile.tests
+    depends_on:
+      - db
+    env_file:
+      - docker/env/.streamer.env

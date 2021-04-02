@@ -1,0 +1,11 @@
+FROM node:14
+
+WORKDIR /autotests
+COPY . .
+
+WORKDIR streamer
+RUN npm install
+
+COPY . .
+
+CMD ["npm", "test"]
