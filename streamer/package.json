@@ -11,7 +11,7 @@
     "build": "npx tsc",
     "start": "npx ts-node --trace-warnings src/main.ts",
     "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
-    "dev": "npx ts-node src/main.ts",
+    "dev": "npx ts-node src/main.ts --sync",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
     "lint:fix": "npx eslint .  --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"

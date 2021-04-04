@@ -41,12 +41,6 @@ export interface IStakingService {
 	updateMetaData(blockHash: TBlockHash): Promise<void>;
 }
 
-export interface IApplication {
-	polkadotConnector: ApiPromise;
-	kafkaProducer: Producer;
-	postgresConnector: Pool;
-}
-
 export interface IBlockModel {
 	id: string;
 	hash: string;

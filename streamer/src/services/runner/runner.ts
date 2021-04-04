@@ -1,14 +1,28 @@
-const { ConfigService } = require('./config')
-const { ConsumerService } = require('./consumer')
-const { BlocksService } = require('./blocks')
-const { StakingService } = require('./staking/staking')
+import { IRunnerService } from './runner.types';
+import { FastifyInstance } from 'fastify';
+import { IBlocksService } from '../blocks/blocks.types';
+import { IStakingService } from '../staking/staking.types';
+import { IConfigService } from '../config/config.types';
+import { IConsumerService } from '../consumer/consumer.types';
+
+const { ConfigService } = require('../config/config')
+const { ConsumerService } = require('../consumer/consumer')
+const { BlocksService } = require('../blocks/blocks')
+const { StakingService } = require('../staking/staking')
 
 /**
  * Provides cli operations
  * @class
  */
-class RunnerService {
-  constructor(app) {
+class RunnerService implements IRunnerService {
+  private readonly app: FastifyInstance;
+
+  private readonly blocksService: IBlocksService;
+  private readonly consumerService: IConsumerService;
+  private readonly stakingService: IStakingService;
+  private readonly configService: IConfigService;
+
+  constructor(app: FastifyInstance) {
     /** @private */
     this.app = app
 
@@ -43,7 +57,7 @@ class RunnerService {
    * @param {SyncOptions} options
    * @returns {Promise<void>}
    */
-  async sync(options) {
+  async sync(options: Parameters<IRunnerService['sync']>[0]): Promise<void> {
     await this.configService.bootstrapConfig()
 
     if (options.optionSyncValidators) {
@@ -62,6 +76,6 @@ class RunnerService {
   }
 }
 
-module.exports = {
-  RunnerService: RunnerService
+export {
+  RunnerService
 }

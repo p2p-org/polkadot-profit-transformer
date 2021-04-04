@@ -1,9 +1,11 @@
 import 'reflect-metadata';
 import { build } from './app';
 
-const {
-  environment: { API_ADDR, API_PORT }
-} = require('./environment')
+import {
+  environment
+} from './environment';
+
+const { API_ADDR, API_PORT } = environment;
 
 (async () => {
   const app = await build();

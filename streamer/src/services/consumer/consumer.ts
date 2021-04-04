@@ -1,17 +1,21 @@
-const { SyncStatus } = require('./index')
-const { BlocksService } = require('./blocks')
+import { IConsumerService } from './consumer.types';
+import { FastifyInstance } from 'fastify';
+import { SyncStatus } from '../index'
+import { BlocksService } from '../blocks/blocks';
+import { Header } from '@polkadot/types/interfaces';
 
 /**
  * Provides blocks streamer service
  * @class
  */
-class ConsumerService {
+class ConsumerService implements IConsumerService {
+  private readonly app: FastifyInstance;
   /**
    * Creates an instance of ConsumerService.
    * @constructor
    * @param {object} app - The fastify instance object
    */
-  constructor(app) {
+  constructor(app: FastifyInstance) {
     /** @private */
     this.app = app
 
@@ -29,7 +33,7 @@ class ConsumerService {
    * @async
    * @returns {Promise<void>}
    */
-  async subscribeFinalizedHeads() {
+  async subscribeFinalizedHeads(): Promise<void> {
     const { polkadotConnector } = this.app
 
     if (SyncStatus.isLocked()) {
@@ -60,7 +64,7 @@ class ConsumerService {
    * @param {BlockHash} blockHash
    * @returns {Promise<void>}
    */
-  async onFinalizedHead(blockHash) {
+  private async onFinalizedHead(blockHash: Header): Promise<void> {
     const blocksService = new BlocksService(this.app)
 
     const blockNumberFromDB = await blocksService.getLastProcessedBlock()
@@ -82,6 +86,6 @@ class ConsumerService {
   }
 }
 
-module.exports = {
-  ConsumerService: ConsumerService
+export {
+  ConsumerService
 }
