@@ -1,20 +1,27 @@
-const { SyncStatus } = require('./index')
-const { StakingService } = require('./staking/staking')
-const { ExtrinsicsService } = require('./extrinsics')
-const {
-  environment: { KAFKA_PREFIX, DB_SCHEMA }
-} = require('../environment')
+import { SyncStatus } from '../index';
+import { StakingService } from '../staking/staking';
+import { ExtrinsicsService } from '../extrinsics/extrinsics';
+import { environment } from '../../environment';
+import { FastifyInstance } from 'fastify';
+import { u32 } from '@polkadot/types';
+
+const { KAFKA_PREFIX, DB_SCHEMA } = environment;
 
 /**
  * Provides block operations
  * @class
  */
 class BlocksService {
+  private readonly app: FastifyInstance;
+  private readonly currentSpecVersion: u32;
+  private readonly stakingService: StakingService;
+  private readonly extrinsicsService: ExtrinsicsService;
+
   /**
    * Creates an instance of BlocksService.
    * @param {object} app fastify app
    */
-  constructor(app) {
+  constructor(app: FastifyInstance) {
     if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
 
     /** @private */
@@ -70,7 +77,7 @@ class BlocksService {
    * @param {number} blockNumber
    * @returns {Promise<boolean>}
    */
-  async updateOneBlock(blockNumber) {
+  private async updateOneBlock(blockNumber) {
     if (SyncStatus.isLocked()) {
       this.app.log.error(`failed execute "updateOneBlock": sync in process`)
       throw new Error('sync in process')
@@ -92,20 +99,19 @@ class BlocksService {
    * @param {BlockHash} blockHash
    * @returns {Promise}
    */
-  async processBlock(height, blockHash = null) {
+  async processBlock(height: number): Promise<void> {
     const { polkadotConnector } = this.app
     const { kafkaProducer } = this.app
+    let blockHash = null;
 
-    if (blockHash == null) {
-      if (height == null) {
-        throw new Error('empty height and blockHash')
-      }
+    if (height == null) {
+      throw new Error('empty height and blockHash')
+    }
 
-      blockHash = await polkadotConnector.rpc.chain.getBlockHash(height)
+    blockHash = await polkadotConnector.rpc.chain.getBlockHash(height)
 
-      if (!blockHash) {
-        throw new Error('cannot get block hash')
-      }
+    if (!blockHash) {
+      throw new Error('cannot get block hash')
     }
 
     // Check is this required
@@ -186,7 +192,7 @@ class BlocksService {
    * @async
    * @param {BlockHash} blockHash - The block hash
    */
-  async updateMetaData(blockHash) {
+  private async updateMetaData(blockHash) {
     const { polkadotConnector } = this.app
 
     /** @type {RuntimeVersion} */
@@ -258,7 +264,7 @@ class BlocksService {
    * @param blockNumber
    * @returns {Promise<boolean>}
    */
-  async runBlocksWorker(workerId, blockNumber) {
+  private async runBlocksWorker(workerId, blockNumber) {
     for (let attempts = 5; attempts > 0; attempts--) {
       let lastError = null
       await this.processBlock(blockNumber).catch((error) => {
@@ -282,7 +288,7 @@ class BlocksService {
    * @async
    * @returns {Promise<number>}
    */
-  async getLastProcessedBlock() {
+  private async getLastProcessedBlock() {
     const { postgresConnector } = this.app
 
     let blockNumberFromDB = 0
@@ -301,7 +307,7 @@ class BlocksService {
     return blockNumberFromDB
   }
 
-  async getFinBlockNumber() {
+  private async getFinBlockNumber() {
     const { polkadotConnector } = this.app
 
     const lastFinHeader = await polkadotConnector.rpc.chain.getFinalizedHead()
@@ -474,7 +480,7 @@ class BlocksService {
    * @param {number} startBlockNumber
    * @returns {Promise<{result: boolean}>}
    */
-  async trimAndUpdateToFinalized(startBlockNumber) {
+  async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
     if (SyncStatus.isLocked()) {
       this.app.log.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
       return { result: false }
@@ -550,6 +556,6 @@ class BlocksService {
  *
  * @type {{BlocksService: BlocksService}}
  */
-module.exports = {
-  BlocksService: BlocksService
+export {
+  BlocksService
 }

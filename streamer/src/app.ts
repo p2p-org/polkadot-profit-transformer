@@ -1,5 +1,5 @@
 import Fastify  from 'fastify'
-import { RunnerService } from './services/runner';
+import { RunnerService } from './services/runner/runner';
 import routes from './routes';
 import {
   registerKafkaPlugin,
@@ -99,7 +99,7 @@ const build = async () => {
   try {
     await fastify.ready();
     const runner = new RunnerService(fastify)
-    runner.sync(
+    await runner.sync(
       {
         optionSync: argv['sync-force'] ? false : argv.sync,
         optionSyncForce: argv['sync-force'],

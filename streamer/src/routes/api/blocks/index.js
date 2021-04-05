@@ -1,4 +1,4 @@
-const { BlocksService } = require('../../../services/blocks')
+const { BlocksService } = require('../../../services/blocks/blocks')
 const { getOneSchema, getStatusSchema, postDeleteBlocksSchema, postTrimSchema } = require('./schemas')
 
 const apiBlocks = async (app) => {
@@ -34,7 +34,7 @@ const apiBlocks = async (app) => {
     const {
       params: { blockId }
     } = request
-    return await blocksService.trimAndUpdateToFinalized(blockId)
+    return await blocksService.trimAndUpdateToFinalized(parseInt(blockId))
   })
 }
 

@@ -1,17 +1,19 @@
-const {
-  environment: { DB_SCHEMA }
-} = require('../environment')
+import { environment } from '../../environment';
+import { IConfigService } from './config.types';
+import { FastifyInstance } from 'fastify';
 
+const { DB_SCHEMA } = environment;
 /**
  * Provides config operations
  * @class
  */
-class ConfigService {
+class ConfigService implements IConfigService {
+  private readonly app: FastifyInstance;
   /**
    * Creates an instance of ConfigsService.
    * @param {object} app fastify app
    */
-  constructor(app) {
+  constructor(app: FastifyInstance) {
     if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
 
     /** @private */
@@ -44,7 +46,7 @@ class ConfigService {
     })
   }
 
-  async bootstrapConfig() {
+  async bootstrapConfig(): Promise<true | undefined> {
     const { polkadotConnector } = this.app
 
     const [currentChainRaw, currentChainTypeRaw] = await Promise.all([
@@ -86,7 +88,7 @@ class ConfigService {
     }
   }
 
-  async setConfigValueToDB(key, value) {
+  private async setConfigValueToDB(key: string, value: string) {
     const { postgresConnector } = this.app
 
     if (!key.length) {
@@ -110,7 +112,7 @@ class ConfigService {
     return true
   }
 
-  async getConfigValueFromDB(key) {
+  private async getConfigValueFromDB(key: string) {
     const { postgresConnector } = this.app
     let value = ''
 
@@ -141,6 +143,6 @@ class ConfigService {
  *
  * @type {{ConfigService: ConfigService}}
  */
-module.exports = {
-  ConfigService: ConfigService
+export {
+  ConfigService
 }

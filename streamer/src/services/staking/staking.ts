@@ -8,7 +8,6 @@ import {
 } from '@polkadot/types/interfaces';
 import { u32 } from '@polkadot/types';
 import {
-  IApplication,
   IBlockModel,
   IGetValidatorsResult,
   IGetStakersByValidator,
@@ -35,13 +34,13 @@ const eraDataExtractionOffset = 4
 
 // TODO: Rename to stacking
 class StakingService implements IStakingService {
-  private readonly app: FastifyInstance & IApplication;
+  private readonly app: FastifyInstance;
   private readonly currentSpecVersion: u32;
   /**
    * Creates an instance of StakingService.
    * @param {object} app fastify app
    */
-  constructor(app: FastifyInstance & IApplication) {
+  constructor(app: FastifyInstance) {
     if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
 
     /** @private */
@@ -501,10 +500,6 @@ class StakingService implements IStakingService {
   }
 }
 
-/**
- *
- * @type {{StakingService: StakingService}}
- */
-module.exports = {
-  StakingService: StakingService
+export {
+  StakingService
 }
