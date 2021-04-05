@@ -5,4 +5,6 @@ export interface IBlocksService {
 		startBlockNumber: number | null
 	): Promise<void>;
 	trimAndUpdateToFinalized(blockId: string): Promise<{ result: boolean; }>;
+	updateOneBlock(blockNumber: number): Promise<true>;
+	removeBlocks(blockNumbers: number[]): Promise<{ result: true }>;
 }
