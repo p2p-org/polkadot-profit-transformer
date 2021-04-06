@@ -16,7 +16,7 @@ const apiBlocks = async (app) => {
       throw err
     }
 
-    await blocksService.updateOneBlock(blockId)
+    await blocksService.updateOneBlock(parseInt(blockId))
 
     return { result: true }
   })
