@@ -30,20 +30,6 @@ class ConfigService implements IConfigService {
     if (!postgresConnector) {
       throw new Error('cant get .postgresConnector from fastify app.')
     }
-
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`Error acquiring client: ${err.toString()}`)
-        throw new Error(`Error acquiring client`)
-      }
-      client.query('SELECT NOW()', (err) => {
-        release()
-        if (err) {
-          this.app.log.error(`Error executing query: ${err.toString()}`)
-          throw new Error(`Error executing query`)
-        }
-      })
-    })
   }
 
   async bootstrapConfig(): Promise<true | undefined> {
@@ -99,15 +85,16 @@ class ConfigService implements IConfigService {
       throw new Error('"value" is empty')
     }
 
-    await postgresConnector
-      .query({
-        text: `INSERT INTO  ${DB_SCHEMA}._config VALUES ($1, $2)`,
-        values: [key, value]
-      })
-      .catch((err) => {
-        this.app.log.error(`failed to set config key "${err}"`)
-        throw new Error('cannot set config value')
-      })
+    try {
+      await postgresConnector
+          .query({
+            text: `INSERT INTO  ${DB_SCHEMA}._config VALUES ($1, $2)`,
+            values: [key, value]
+          })
+    } catch (err) {
+      this.app.log.error(`failed to set config key "${err}"`)
+      throw new Error('cannot set config value')
+    }
 
     return true
   }
@@ -120,20 +107,19 @@ class ConfigService implements IConfigService {
       throw new Error('"key" is empty')
     }
 
-    await postgresConnector
-      .query({
+    try {
+      const { rows } = await postgresConnector.query({
         text: `SELECT "value" FROM ${DB_SCHEMA}._config WHERE "key" = $1 LIMIT 1`,
         values: [key]
-      })
-      .then((res) => {
-        if (res.rows.length) {
-          value = res.rows[0].value
-        }
-      })
-      .catch((err) => {
-        this.app.log.error(`failed to get config key "${err}"`)
-        throw new Error('cannot get config value')
-      })
+      });
+
+      if (rows.length) {
+        value = rows[0].value;
+      }
+    } catch (err) {
+      this.app.log.error(`failed to get config key "${err}"`)
+      throw new Error('cannot get config value')
+    }
 
     return value
   }
