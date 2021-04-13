@@ -39,20 +39,6 @@ class ExtrinsicsService implements IExtrinsicsService {
     if (!postgresConnector) {
       throw new Error('cant get .postgresConnector from fastify app.');
     }
-
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`Error acquiring client: ${err.toString()}`);
-        throw new Error(`Error acquiring client`);
-      }
-      client.query('SELECT NOW()', (err) => {
-        release();
-        if (err) {
-          this.app.log.error(`Error executing query: ${err.toString()}`);
-          throw new Error(`Error executing query`);
-        }
-      });
-    });
   }
 
   async extractExtrinsics(...args: Parameters<IExtrinsicsService['extractExtrinsics']>): Promise<void> {
@@ -119,8 +105,8 @@ class ExtrinsicsService implements IExtrinsicsService {
       })
     })
 
-    await kafkaProducer
-      .send({
+    try {
+      await kafkaProducer.send({
         topic: KAFKA_PREFIX + '_EXTRINSICS_DATA',
         messages: [
           {
@@ -130,11 +116,11 @@ class ExtrinsicsService implements IExtrinsicsService {
             })
           }
         ]
-      })
-      .catch((error) => {
-        this.app.log.error(`failed to push block: `, error)
-        throw new Error('cannot push block to Kafka')
-      })
+      });
+    } catch(error) {
+      this.app.log.error(`failed to push block: `, error)
+      throw new Error('cannot push block to Kafka')
+    }
   }
 }
 
