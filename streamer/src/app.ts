@@ -1,15 +1,8 @@
-import Fastify  from 'fastify'
-import { RunnerService } from './services/runner/runner';
-import routes from './routes';
-import {
-  registerKafkaPlugin,
-  registerPolkadotPlugin,
-  registerPostgresPlugin
-} from './plugins';
-import {
-  environment,
-  validateEnv
-} from './environment';
+import Fastify from 'fastify'
+import { RunnerService } from './services/runner/runner'
+import routes from './routes'
+import { registerKafkaPlugin, registerPolkadotPlugin, registerPostgresPlugin } from './plugins'
+import { environment, validateEnv } from './environment'
 import yargs from 'yargs'
 
 const { argv } = yargs
@@ -28,10 +21,20 @@ const { argv } = yargs
     default: false,
     description: 'Run synchronization stakers'
   })
+  .option('watchdog', {
+    type: 'boolean',
+    default: false,
+    description: 'Run watchdog'
+  })
   .option('start', {
     type: 'number',
     default: 0,
-    description: 'Start synchronization from block number'
+    description: 'Start synchronization or watchdog tests from block number'
+  })
+  .option('watchdog-concurrency', {
+    type: 'number',
+    default: 1,
+    description: 'Concurrency of watchdog threads'
   })
   .option('sub-fin-head', {
     type: 'boolean',
@@ -44,7 +47,7 @@ const { argv } = yargs
     default: false,
     description: 'Disable api'
   })
-  .help();
+  .help()
 
 const build = async () => {
   const fastify = Fastify({
@@ -67,9 +70,9 @@ const build = async () => {
 
   // plugins
   try {
-    await registerPostgresPlugin(fastify, {});
-    await registerKafkaPlugin(fastify, {});
-    await registerPolkadotPlugin(fastify, {});
+    await registerPostgresPlugin(fastify, {})
+    await registerKafkaPlugin(fastify, {})
+    await registerPolkadotPlugin(fastify, {})
   } catch (err) {
     fastify.log.error(`Cannot init plugin: "${err.message}"`)
     fastify.log.error(`Stopping instance...`)
@@ -97,24 +100,25 @@ const build = async () => {
   })
 
   try {
-    await fastify.ready();
+    await fastify.ready()
     const runner = new RunnerService(fastify)
-    await runner.sync(
-      {
-        optionSync: argv['sync-force'] ? false : argv.sync,
-        optionSyncForce: argv['sync-force'],
-        optionSyncValidators: argv['sync-stakers'],
-        optionSyncStartBlockNumber: argv.start,
-        optionSubscribeFinHead: argv['sub-fin-head']
-      }
-    )
+    await runner.sync({
+      optionSync: argv['sync-force'] ? false : argv.sync,
+      optionSyncForce: argv['sync-force'],
+      optionSyncValidators: argv['sync-stakers'],
+      optionSyncStartBlockNumber: argv.start,
+      optionSubscribeFinHead: argv['sub-fin-head'],
+      optionStartWatchdog: argv['watchdog'],
+      optionWatchdogStartBlockNumber: argv['start'],
+      optionWatchdogConcurrency: argv['watchdog-concurrency'],
+      optionWwatchdogStartIdle: argv['watchdog-start-idle']
+    })
   } catch (err) {
-    fastify.log.info(`Fastify ready error: ${err}`)
+    throw err
+    // fastify.log.info(`Fastify ready error: ${err}`)
   }
 
   return fastify
 }
 
-export {
-  build
-}
+export { build }

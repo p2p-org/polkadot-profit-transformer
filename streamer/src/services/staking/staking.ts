@@ -1,12 +1,5 @@
-import {
-  BlockHash,
-  SessionIndex,
-  Moment,
-  AccountId,
-  RewardPoint,
-  ValidatorId
-} from '@polkadot/types/interfaces';
-import { u32 } from '@polkadot/types';
+import { BlockHash, SessionIndex, Moment, AccountId, RewardPoint, ValidatorId } from '@polkadot/types/interfaces'
+import { u32 } from '@polkadot/types'
 import {
   IBlockModel,
   IGetValidatorsResult,
@@ -15,8 +8,8 @@ import {
   TBlockHash,
   INominator,
   TBlockEra
-} from './staking.types';
-import { FastifyInstance } from 'fastify';
+} from './staking.types'
+import { FastifyInstance } from 'fastify'
 
 const {
   environment: { KAFKA_PREFIX, DB_SCHEMA }
@@ -34,8 +27,8 @@ const eraDataExtractionOffset = 4
 
 // TODO: Rename to stacking
 class StakingService implements IStakingService {
-  private readonly app: FastifyInstance;
-  private readonly currentSpecVersion: u32;
+  private readonly app: FastifyInstance
+  private readonly currentSpecVersion: u32
   /**
    * Creates an instance of StakingService.
    * @param {object} app fastify app
@@ -83,16 +76,15 @@ class StakingService implements IStakingService {
   }
 
   async syncValidators(blockNumber?: number) {
-    let era = 0;
+    let era = 0
 
     if (blockNumber) {
-      const blockHash = await this.app.polkadotConnector.rpc.chain.getBlockHash(blockNumber);
-      const eraByBlockHash = await this.app.polkadotConnector.query.staking.currentEra.at(blockHash);
-      era = eraByBlockHash.unwrap().toNumber();
+      const blockHash = await this.app.polkadotConnector.rpc.chain.getBlockHash(blockNumber)
+      const eraByBlockHash = await this.app.polkadotConnector.query.staking.currentEra.at(blockHash)
+      era = eraByBlockHash.unwrap().toNumber()
     }
 
     try {
-
       const lastAvailableEra = await this.getLastEraFromDB()
 
       const lastDataExtractionAvailableEra = lastAvailableEra - eraDataExtractionOffset
@@ -136,6 +128,7 @@ class StakingService implements IStakingService {
    * @param {BlockOffsetInfo} blockData
    */
   async extractStakers(era: number, blockHash: TBlockHash) {
+    console.log('EXTRACT STAKERS')
     const { polkadotConnector } = this.app
     const { kafkaProducer } = this.app
 
@@ -156,6 +149,7 @@ class StakingService implements IStakingService {
 
     const stakingData = await this.getValidators(blockHash, sessionId, blockTime, era)
 
+    console.log('SEND TO KAFKA')
     await kafkaProducer
       .send({
         topic: KAFKA_PREFIX + '_STAKING_ERAS_DATA',
@@ -210,14 +204,14 @@ class StakingService implements IStakingService {
    * @returns {Promise<ValidatorsResult>}
    */
   async getValidators(
-      blockHash: TBlockHash,
-      sessionId: SessionIndex,
-      blockTime: Moment,
-      blockEra: TBlockEra
+    blockHash: TBlockHash,
+    sessionId: SessionIndex,
+    blockTime: Moment,
+    blockEra: TBlockEra
   ): Promise<IGetValidatorsResult> {
     const { polkadotConnector } = this.app
 
-    const result:IGetValidatorsResult = {
+    const result: IGetValidatorsResult = {
       validators: [],
       stakers: [],
       era_data: {
@@ -270,9 +264,9 @@ class StakingService implements IStakingService {
     }
 
     // Prepare reward points
-    const erasRewardPointsMap: Map<AccountId, RewardPoint> = new Map();
+    const erasRewardPointsMap: Map<AccountId, RewardPoint> = new Map()
     erasRewardPointsRaw.individual.forEach((rewardPoints, accountId) => {
-      erasRewardPointsMap.set(accountId, rewardPoints);
+      erasRewardPointsMap.set(accountId, rewardPoints)
     })
 
     const enabledValidatorsData = await this.getStakersByValidator(
@@ -295,21 +289,21 @@ class StakingService implements IStakingService {
       false
     )
 
-    result.validators = [...enabledValidatorsData.validators, ...disabledValidatorsData.validators];
-    result.nominators = [...enabledValidatorsData.nominators, ...disabledValidatorsData.nominators];
-    result.era_data.nominators_active = enabledValidatorsData.nominators_active;
+    result.validators = [...enabledValidatorsData.validators, ...disabledValidatorsData.validators]
+    result.nominators = [...enabledValidatorsData.nominators, ...disabledValidatorsData.nominators]
+    result.era_data.nominators_active = enabledValidatorsData.nominators_active
 
     return result
   }
 
   async getStakersByValidator(
-      blockHash: TBlockHash,
-      sessionId: SessionIndex,
-      blockTime: Moment,
-      blockEra: TBlockEra,
-      erasRewardPointsMap: Map<AccountId, RewardPoint>,
-      validators: ValidatorId[],
-      isEnabled: boolean
+    blockHash: TBlockHash,
+    sessionId: SessionIndex,
+    blockTime: Moment,
+    blockEra: TBlockEra,
+    erasRewardPointsMap: Map<AccountId, RewardPoint>,
+    validators: ValidatorId[],
+    isEnabled: boolean
   ): Promise<IGetStakersByValidator> {
     const { polkadotConnector } = this.app
 
@@ -319,7 +313,7 @@ class StakingService implements IStakingService {
       nominators_active: 0
     }
 
-    const nominatorsAccountIdSet: Set<string> = new Set();
+    const nominatorsAccountIdSet: Set<string> = new Set()
 
     for (const validator of validators) {
       try {
@@ -335,11 +329,11 @@ class StakingService implements IStakingService {
 
         for (const staker of stakers.others) {
           try {
-            const isClipped = stakersClipped.others.find((e: { who: { toString: () => any; }; }) => {
+            const isClipped = stakersClipped.others.find((e: { who: { toString: () => any } }) => {
               return e.who.toString() === staker.who.toString()
             })
 
-            nominatorsAccountIdSet.add(staker.who.toString());
+            nominatorsAccountIdSet.add(staker.who.toString())
 
             const stakerEntry: INominator = {
               account_id: staker.who.toString(),
@@ -364,7 +358,7 @@ class StakingService implements IStakingService {
               }
             }
             // }
-            result.nominators.push(stakerEntry);
+            result.nominators.push(stakerEntry)
           } catch (e) {
             this.app.log.error(`[validators][getValidators] Cannot process staker: ${staker.who} "${e}". Block: ${blockHash}`)
           }
@@ -373,8 +367,8 @@ class StakingService implements IStakingService {
         // TODO: Check for duplicates in nominators
         // TODO: Load ledger data
 
-        let validatorRewardDest: string | undefined = undefined;
-        let validatorRewardAccountId: AccountId | undefined = undefined;
+        let validatorRewardDest: string | undefined = undefined
+        let validatorRewardAccountId: AccountId | undefined = undefined
         const validatorPayee = await polkadotConnector.query.staking.payee.at(blockHash, validator.toString())
         if (validatorPayee) {
           if (!validatorPayee.isAccount) {
@@ -411,8 +405,7 @@ class StakingService implements IStakingService {
       }
     }
 
-    result.nominators_active = nominatorsAccountIdSet.size;
-    this.app.log.info('result', result);
+    result.nominators_active = nominatorsAccountIdSet.size
 
     return result
   }
@@ -436,14 +429,16 @@ class StakingService implements IStakingService {
     const { postgresConnector } = this.app
 
     try {
-      const text = `SELECT "id", "hash" FROM ${DB_SCHEMA}.blocks WHERE "era" > $1 ORDER BY "id" ASC LIMIT 1 OFFSET $2`;
-      const values = [era, offset];
-      const { rows: [block] } = await postgresConnector.query<Pick<IBlockModel, 'id' | 'hash'>>({
+      const text = `SELECT "id", "hash" FROM ${DB_SCHEMA}.blocks WHERE "era" > $1 ORDER BY "id" ASC LIMIT 1 OFFSET $2`
+      const values = [era, offset]
+      const {
+        rows: [block]
+      } = await postgresConnector.query<Pick<IBlockModel, 'id' | 'hash'>>({
         text,
         values
-      });
+      })
 
-      return block;
+      return block
     } catch (err) {
       this.app.log.error(`[getFirstBlockFromDB] failed to get first synchronized era block number: ${err}`)
       throw new Error('cannot get first era block number')
@@ -453,10 +448,12 @@ class StakingService implements IStakingService {
   async getLastEraFromDB(): Promise<IBlockModel['era']> {
     const { postgresConnector } = this.app
     try {
-      const queryText = `SELECT "era" FROM ${DB_SCHEMA}.blocks ORDER BY "id" DESC LIMIT 1`;
-      const { rows: [{ era }] } = await postgresConnector.query<Pick<IBlockModel, 'era'>>(queryText);
+      const queryText = `SELECT "era" FROM ${DB_SCHEMA}.blocks ORDER BY "id" DESC LIMIT 1`
+      const {
+        rows: [{ era }]
+      } = await postgresConnector.query<Pick<IBlockModel, 'era'>>(queryText)
 
-      return era;
+      return era
     } catch (err) {
       this.app.log.error(`[getLastEraFromDB] failed to get first synchronized era block number: ${err}`)
       throw new Error('cannot get first era block number')
@@ -500,6 +497,4 @@ class StakingService implements IStakingService {
   }
 }
 
-export {
-  StakingService
-}
+export { StakingService }

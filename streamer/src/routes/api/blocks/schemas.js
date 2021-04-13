@@ -86,9 +86,25 @@ const postTrimSchema = {
   }
 }
 
+const watchdogRestartSchema = {
+  tags,
+  params: paramsJsonSchema,
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        result: { type: 'boolean' }
+      }
+    },
+    400: errorResponse,
+    500: errorResponse
+  }
+}
+
 module.exports = {
   getOneSchema,
   getStatusSchema,
   postDeleteBlocksSchema,
-  postTrimSchema
+  postTrimSchema,
+  watchdogRestartSchema
 }

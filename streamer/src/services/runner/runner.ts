@@ -1,9 +1,11 @@
-import { IRunnerService } from './runner.types';
-import { FastifyInstance } from 'fastify';
-import { IBlocksService } from '../blocks/blocks.types';
-import { IStakingService } from '../staking/staking.types';
-import { IConfigService } from '../config/config.types';
-import { IConsumerService } from '../consumer/consumer.types';
+import { IRunnerService } from './runner.types'
+import { FastifyInstance } from 'fastify'
+import { IBlocksService } from '../blocks/blocks.types'
+import { IStakingService } from '../staking/staking.types'
+import { IConfigService } from '../config/config.types'
+import { IConsumerService } from '../consumer/consumer.types'
+
+import { init as watchdogInit, run as watchdogRun } from '../watchdog/watchdog'
 
 const { ConfigService } = require('../config/config')
 const { ConsumerService } = require('../consumer/consumer')
@@ -15,12 +17,12 @@ const { StakingService } = require('../staking/staking')
  * @class
  */
 class RunnerService implements IRunnerService {
-  private readonly app: FastifyInstance;
+  private readonly app: FastifyInstance
 
-  private readonly blocksService: IBlocksService;
-  private readonly consumerService: IConsumerService;
-  private readonly stakingService: IStakingService;
-  private readonly configService: IConfigService;
+  private readonly blocksService: IBlocksService
+  private readonly consumerService: IConsumerService
+  private readonly stakingService: IStakingService
+  private readonly configService: IConfigService
 
   constructor(app: FastifyInstance) {
     /** @private */
@@ -62,20 +64,26 @@ class RunnerService implements IRunnerService {
 
     if (options.optionSyncValidators) {
       await this.stakingService.syncValidators(options.optionSyncStartBlockNumber)
-    } else {
-      if (options.optionSync) {
-        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-      } else if (options.optionSyncForce) {
-        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-      }
+      return
+    }
 
-      if (options.optionSubscribeFinHead) {
-        await this.consumerService.subscribeFinalizedHeads()
-      }
+    if (options.optionSync) {
+      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+    }
+
+    if (options.optionSyncForce) {
+      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+    }
+
+    if (options.optionSubscribeFinHead) {
+      await this.consumerService.subscribeFinalizedHeads()
+    }
+
+    if (options.optionStartWatchdog) {
+      watchdogInit(this.app, options.optionWatchdogConcurrency)
+      watchdogRun(options.optionWatchdogStartBlockNumber)
     }
   }
 }
 
-export {
-  RunnerService
-}
+export { RunnerService }

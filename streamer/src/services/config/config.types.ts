@@ -1,3 +1,3 @@
 export interface IConfigService {
-	bootstrapConfig(): Promise<true | undefined>;
+  bootstrapConfig(): Promise<void>
 }
