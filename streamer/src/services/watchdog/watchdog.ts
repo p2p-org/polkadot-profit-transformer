@@ -69,10 +69,6 @@ const isExtrinsicsExist = async (block: IBlock): Promise<boolean> => {
       values: [block.id]
     })
 
-    // https://github.com/polkadot-js/api/issues/3383
-    // const extrinsicsInBlockchainCount = await polkadotConnector.query.system.extrinsicCount.at(block.hash)
-
-    // temporary method to check if extinsics count in db is correct, should be replaced with the commented method above
     const signedBlock = await polkadotConnector.rpc.chain.getBlock(block.hash)
 
     const calculateExtrinsicsCountWithNestedBatch = (extrinsics: any) => {

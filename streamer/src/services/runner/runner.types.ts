@@ -8,6 +8,5 @@ export interface IRunnerService {
     optionStartWatchdog: boolean
     optionWatchdogStartBlockNumber: number
     optionWatchdogConcurrency: number
-    optionWwatchdogStartIdle: boolean
   }): Promise<void>
 }

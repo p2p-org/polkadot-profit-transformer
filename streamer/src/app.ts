@@ -110,8 +110,7 @@ const build = async () => {
       optionSubscribeFinHead: argv['sub-fin-head'],
       optionStartWatchdog: argv['watchdog'],
       optionWatchdogStartBlockNumber: argv['start'],
-      optionWatchdogConcurrency: argv['watchdog-concurrency'],
-      optionWwatchdogStartIdle: argv['watchdog-start-idle']
+      optionWatchdogConcurrency: argv['watchdog-concurrency']
     })
   } catch (err) {
     throw err
