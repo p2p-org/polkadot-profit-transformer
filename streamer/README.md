@@ -30,12 +30,12 @@ Application provides options for actualize data and HTTP API for operations with
 
 Recommended execution
 ```bash
-$ node index.js --sync --sub-fin-head 
+$ node index.ts --sync --sub-fin-head 
 ```
 
 Run for updating all synchronized blocks
 ```bash
-$ node index.js --sync-force --disable-rpc
+$ node index.ts --sync-force --disable-rpc
 ```
 
 ### Environment variables 
