@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import {
-  IsNotEmpty,
+  IsNotEmpty, IsNumber,
   IsPort,
   IsString,
   IsUrl,
@@ -83,6 +83,10 @@ class EnvironmentVariableConfig {
 
   @IsString()
   DB_SCHEMA = 'public';
+
+  //App config
+  @IsNumber()
+  ERA_EXTRACTION_OFFSET = 4;
 }
 
 const environment = plainToClass(EnvironmentVariableConfig, process.env);

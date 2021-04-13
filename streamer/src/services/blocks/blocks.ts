@@ -7,7 +7,7 @@ import { u32, Vec } from '@polkadot/types';
 import { EventRecord } from '@polkadot/types/interfaces';
 import { AnyJson, Codec } from '@polkadot/types/types';
 
-const {KAFKA_PREFIX, DB_SCHEMA} = environment;
+const {KAFKA_PREFIX, DB_SCHEMA, ERA_EXTRACTION_OFFSET} = environment;
 
 /**
  * Provides block operations
@@ -113,11 +113,13 @@ class BlocksService {
       polkadotConnector.query.timestamp.now.at(blockHash),
       polkadotConnector.query.system.events.at(blockHash)
     ]);
+    const era = parseInt(blockEra.toString(), 10);
 
     if (!signedBlock) {
       throw new Error('cannot get block');
     }
     let blockEvents = [];
+
 
     const processedEvents = await this.processEvents(signedBlock.block.header.number.toNumber(), events);
     blockEvents = processedEvents.events;
@@ -131,7 +133,7 @@ class BlocksService {
           hash: signedBlock.block.header.hash.toHex(),
           author: extHeader?.author ? extHeader.author.toString() : '',
           session_id: sessionId.toNumber(),
-          era: parseInt(blockEra.toString(), 10),
+          era,
           stateRoot: signedBlock.block.header.stateRoot.toHex(),
           extrinsicsRoot: signedBlock.block.header.extrinsicsRoot.toHex(),
           parentHash: signedBlock.block.header.parentHash.toHex(),
@@ -162,15 +164,19 @@ class BlocksService {
     }
 
     await this.extrinsicsService.extractExtrinsics(
-        parseInt(blockEra.toString(), 10),
+        era,
         sessionId.toNumber(),
         signedBlock.block.header.number,
         events,
         signedBlock.block.extrinsics
     );
 
-    if (processedEvents.isNewSession) {
-      await this.stakingService.extractStakers(parseInt(blockEra.toString(), 10), blockHash);
+    if (
+        processedEvents.isNewSession
+        && await this.isStakersDataExists(era)
+        && era - ERA_EXTRACTION_OFFSET
+    ) {
+      await this.stakingService.extractStakers(era, blockHash);
     }
   }
 
@@ -243,6 +249,24 @@ class BlocksService {
       // Please read and understand the WARNING above before using this API.
       SyncStatus.release();
     }
+  }
+
+  private async isStakersDataExists(era: number): Promise<boolean> {
+    const { rows } = await this.app.postgresConnector.query(`
+      SELECT 1
+      FROM ${DB_SCHEMA}.validators v
+      where v.era = $1
+      union all
+      SELECT 1
+      FROM ${DB_SCHEMA}.nominators n
+      where n.era = $1
+      union all
+      SELECT 1
+      FROM ${DB_SCHEMA}.eras n
+      where n.era = $1
+    `, [era]);
+
+    return !!rows.length && rows.length === 3;
   }
 
   /**
