@@ -19,13 +19,13 @@ import {
 import { FastifyInstance } from 'fastify';
 
 const {
-  environment: { KAFKA_PREFIX, DB_SCHEMA }
+  environment: { KAFKA_PREFIX, DB_SCHEMA, ERA_EXTRACTION_OFFSET }
 } = require('../../environment')
 
 const attemptsCount = 5
 
 // Declares era offset for extraction staking data for target era
-const eraDataExtractionOffset = 4
+const eraDataExtractionOffset = ERA_EXTRACTION_OFFSET;
 
 /**
  * Provides era validators operations
