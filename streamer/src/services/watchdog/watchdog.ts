@@ -105,8 +105,9 @@ const isBlockValid = async (blockId: number): Promise<boolean> => {
 
   const isEventsExists = await isEventsExist(blockFromDB)
   const isExtrinsicsExists = await isExtrinsicsExist(blockFromDB, blockFromChain)
+  const isParentHashValid = blockFromDB.parent_hash === blockFromChain.block.header.parentHash.toString()
 
-  if (!isEventsExists || !isExtrinsicsExists) {
+  if (!isEventsExists || !isExtrinsicsExists || !isParentHashValid) {
     app.log.debug(`events or extrinsics is not exist in DB for block ${blockId}`)
     return false
   }
@@ -115,7 +116,8 @@ const isBlockValid = async (blockId: number): Promise<boolean> => {
 }
 
 const verifyBlock = async (blockId: number): Promise<void> => {
-  if (!isBlockValid) {
+  const isBlockValidResult = await isBlockValid(blockId)
+  if (!isBlockValidResult) {
     try {
       await blocksService.processBlock(blockId, true)
     } catch (error) {
