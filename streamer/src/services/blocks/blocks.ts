@@ -256,12 +256,12 @@ class BlocksService {
       SELECT 1
       FROM ${DB_SCHEMA}.validators v
       where v.era = $1
-      union all
-      SELECT 1
+      union 
+      SELECT 2
       FROM ${DB_SCHEMA}.nominators n
       where n.era = $1
-      union all
-      SELECT 1
+      union 
+      SELECT 3
       FROM ${DB_SCHEMA}.eras n
       where n.era = $1
     `, [era]);
