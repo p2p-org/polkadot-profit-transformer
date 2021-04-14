@@ -174,7 +174,7 @@ class BlocksService {
     if (
         processedEvents.isNewSession
         && !(await this.isStakersDataExists(era))
-        && era - ERA_EXTRACTION_OFFSET
+        && (era - ERA_EXTRACTION_OFFSET >= 0)
     ) {
       await this.stakingService.extractStakers(era, blockHash);
     }
