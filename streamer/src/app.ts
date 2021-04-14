@@ -21,20 +21,25 @@ const { argv } = yargs
     default: false,
     description: 'Run synchronization stakers'
   })
+  .option('start', {
+    type: 'number',
+    default: 0,
+    description: 'Start synchronization from block number'
+  })
   .option('watchdog', {
     type: 'boolean',
     default: false,
     description: 'Run watchdog'
   })
-  .option('start', {
-    type: 'number',
-    default: 0,
-    description: 'Start synchronization or watchdog tests from block number'
-  })
   .option('watchdog-concurrency', {
     type: 'number',
-    default: 1,
+    default: 10,
     description: 'Concurrency of watchdog threads'
+  })
+  .option('watchdog-start', {
+    type: 'number',
+    default: 0,
+    description: 'Start watchdog tests from block number'
   })
   .option('sub-fin-head', {
     type: 'boolean',
@@ -109,7 +114,7 @@ const build = async () => {
       optionSyncStartBlockNumber: argv.start,
       optionSubscribeFinHead: argv['sub-fin-head'],
       optionStartWatchdog: argv['watchdog'],
-      optionWatchdogStartBlockNumber: argv['start'],
+      optionWatchdogStartBlockNumber: argv['watchdog-start'],
       optionWatchdogConcurrency: argv['watchdog-concurrency']
     })
   } catch (err) {
