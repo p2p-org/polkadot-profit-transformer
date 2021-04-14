@@ -1,3 +1,9 @@
+export interface IBlocksStatusResult {
+  status: string
+  fin_height_diff: number
+  height_diff: number
+}
+
 export interface IBlocksService {
   getLastProcessedBlock(): Promise<number>
   processBlock(blockNumber: number, fromWatchdog: boolean): Promise<void>
@@ -5,4 +11,5 @@ export interface IBlocksService {
   trimAndUpdateToFinalized(blockId: string): Promise<{ result: boolean }>
   updateOneBlock(blockNumber: number): Promise<true>
   removeBlocks(blockNumbers: number[]): Promise<{ result: true }>
+  getBlocksStatus(): Promise<IBlocksStatusResult>
 }

@@ -6,6 +6,7 @@ import { FastifyInstance } from 'fastify'
 import { u32, Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
+import { IBlocksStatusResult } from './blocks.types'
 
 const { KAFKA_PREFIX, DB_SCHEMA } = environment
 
@@ -101,6 +102,7 @@ class BlocksService {
    * @param {BlockHash} blockHash
    * @returns {Promise}
    */
+
   async processBlock(height: number, fromWatchdog = false): Promise<void> {
     const { polkadotConnector } = this.app
     const { kafkaProducer } = this.app
@@ -220,7 +222,7 @@ class BlocksService {
    * @param startBlockNumber
    * @returns {Promise<void>}
    */
-  async processBlocks(startBlockNumber: number | null = null) {
+  async processBlocks(startBlockNumber: number | null = null): Promise<void> {
     await SyncStatus.acquire()
 
     try {
@@ -309,7 +311,7 @@ class BlocksService {
     return blockNumberFromDB
   }
 
-  async getFinBlockNumber() {
+  async getFinBlockNumber(): Promise<number> {
     const { polkadotConnector } = this.app
 
     const lastFinHeader = await polkadotConnector.rpc.chain.getFinalizedHead()
@@ -334,7 +336,7 @@ class BlocksService {
    * @async
    * @returns {Promise<SyncSimpleStatus>}
    */
-  async getBlocksStatus() {
+  async getBlocksStatus(): Promise<IBlocksStatusResult> {
     const { polkadotConnector } = this.app
 
     const result = {
