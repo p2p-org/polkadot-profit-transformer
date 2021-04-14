@@ -1,4 +1,4 @@
-import { setNewStartBlockId, getStatus } from '../../../services/watchdog/watchdog'
+import { restartFromBlockId, getStatus } from '../../../services/watchdog/watchdog'
 const { getStatusSchema, watchdogRestartSchema } = require('./schemas')
 
 const apiBlocks = async (app) => {
@@ -10,7 +10,7 @@ const apiBlocks = async (app) => {
     const {
       params: { blockId }
     } = request
-    return setNewStartBlockId(+blockId)
+    return restartFromBlockId(+blockId)
   })
 }
 

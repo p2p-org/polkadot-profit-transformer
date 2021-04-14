@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
 import { StakingService } from '../staking/staking'
+import { SignedBlock } from '@polkadot/types/interfaces'
 
 const { DB_SCHEMA } = environment
 
@@ -59,8 +60,8 @@ const isEventsExist = async (block: IBlock): Promise<boolean> => {
   }
 }
 
-const isExtrinsicsExist = async (block: IBlock): Promise<boolean> => {
-  const { postgresConnector, polkadotConnector } = app
+const isExtrinsicsExist = async (block: IBlock, blockFromChain: SignedBlock): Promise<boolean> => {
+  const { postgresConnector } = app
   try {
     const {
       rows: [{ count }]
@@ -68,8 +69,6 @@ const isExtrinsicsExist = async (block: IBlock): Promise<boolean> => {
       text: `SELECT count(*) FROM ${DB_SCHEMA}.extrinsics WHERE "block_id" = $1::int`,
       values: [block.id]
     })
-
-    const signedBlock = await polkadotConnector.rpc.chain.getBlock(block.hash)
 
     const calculateExtrinsicsCountWithNestedBatch = (extrinsics: any) => {
       const reducer = (acc: number, extrinsic: { method: { method: string; args: (string | any[])[] } }) => {
@@ -83,7 +82,7 @@ const isExtrinsicsExist = async (block: IBlock): Promise<boolean> => {
       return extrinsics.reduce(reducer, 0)
     }
 
-    const extrinsicsCount = calculateExtrinsicsCountWithNestedBatch(signedBlock.block.extrinsics)
+    const extrinsicsCount = calculateExtrinsicsCountWithNestedBatch(blockFromChain.block.extrinsics)
 
     return +count === extrinsicsCount
   } catch (err) {
@@ -92,24 +91,31 @@ const isExtrinsicsExist = async (block: IBlock): Promise<boolean> => {
   }
 }
 
-const verifyBlock = async (blockId: number): Promise<void> => {
+const isBlockValid = async (blockId: number): Promise<boolean> => {
+  const { polkadotConnector } = app
+
   const blockFromDB = await getBlockFromDB(blockId)
+  const blockFromChain = await polkadotConnector.rpc.chain.getBlock(blockFromDB.hash)
+
   if (!blockFromDB) {
     app.log.debug(`block is not exists in DB: ${blockId}`)
 
-    try {
-      await blocksService.processBlock(blockId, true)
-      return
-    } catch (error) {
-      app.log.error(`error in blocksService.processBlock invocation when try to resync missed block ${blockId}`)
-    }
+    return false
   }
 
   const isEventsExists = await isEventsExist(blockFromDB)
-  const isExtrinsicsExists = await isExtrinsicsExist(blockFromDB)
+  const isExtrinsicsExists = await isExtrinsicsExist(blockFromDB, blockFromChain)
 
   if (!isEventsExists || !isExtrinsicsExists) {
     app.log.debug(`events or extrinsics is not exist in DB for block ${blockId}`)
+    return false
+  }
+
+  return true
+}
+
+const verifyBlock = async (blockId: number): Promise<void> => {
+  if (!isBlockValid) {
     try {
       await blocksService.processBlock(blockId, true)
     } catch (error) {
@@ -131,11 +137,6 @@ const getEraFromDB = async (eraId: number): Promise<IEra> => {
     app.log.error(`failed to get era by id ${eraId}, error: ${err}`)
     throw new Error(`cannot get era by id ${eraId}`)
   }
-}
-
-interface IEraData {
-  validators_active: number
-  nominators_active: number
 }
 
 const verifyEraOfBlockId = async (blockId: number): Promise<void> => {
@@ -174,6 +175,11 @@ const verifyEraOfBlockId = async (blockId: number): Promise<void> => {
   ])
 
   const stakingData = await stakingService.getValidators(block.hash, sessionId, blockTime, delayedEra)
+
+  interface IEraData {
+    validators_active: number
+    nominators_active: number
+  }
 
   const isEraDataValid = (eraFromDB: IEra, eraData: IEraData): boolean => {
     return eraData.validators_active === eraFromDB.validators_active && eraData.nominators_active === eraFromDB.nominators_active
@@ -234,33 +240,6 @@ const getNextBlockIdInterval = async (currentBlockId: number): Promise<Array<num
     .map((_, i) => currentBlockId + i + 1)
 }
 
-export const run = async (startBlockId: number): Promise<void> => {
-  const isStartBlockValid = await isStartHeightValid(startBlockId)
-
-  if (!isStartBlockValid) {
-    app.log.debug(`Attempt to run verification with blockId greater than current watchdog_verify_height. Exit with error.`)
-    process.exit(0)
-  }
-
-  await configService.updateConfigValueInDB('watchdog_started_at', Date.now())
-  app.log.info(`Watchdog start from blockId ${startBlockId}`)
-
-  lastCheckedBlockId = startBlockId - 1
-  setWatchdogStatus(VerifierStatus.RUNNING)
-
-  while (true) {
-    const blocksToCheck = await getNextBlockIdInterval(lastCheckedBlockId)
-
-    await Promise.all([...blocksToCheck.map((blockId) => verifyBlock(blockId)), verifyEraOfBlockId(blocksToCheck[0])])
-
-    lastCheckedBlockId = blocksToCheck[blocksToCheck.length - 1]
-
-    await configService.updateConfigValueInDB('watchdog_verify_height', lastCheckedBlockId)
-
-    lastCheckedBlockId = await updateLastCheckedBlockIdIfRestartOrBlocksEnd(lastCheckedBlockId)
-  }
-}
-
 interface IWatchdogStatus {
   status: VerifierStatus
   current_height: number
@@ -285,7 +264,12 @@ interface IWatchdogRestartResponse {
   result: boolean
 }
 
-export const setNewStartBlockId = async (newStartBlockId: number): Promise<IWatchdogRestartResponse> => {
+/**
+ * Invoked by /api/wathchdog/restart/:blockId REST request
+ * @param newStartBlockId
+ * @returns
+ */
+export const restartFromBlockId = async (newStartBlockId: number): Promise<IWatchdogRestartResponse> => {
   const isStartBlockValid = await isStartHeightValid(newStartBlockId)
 
   if (!isStartBlockValid) {
@@ -295,6 +279,7 @@ export const setNewStartBlockId = async (newStartBlockId: number): Promise<IWatc
   }
 
   if (getWatchdogStatus() === VerifierStatus.IDLE) {
+    // this resolve was saved as "global" object when all blocks verified
     resolve(newStartBlockId - 1)
   } else {
     restartBlockId = newStartBlockId - 1
@@ -304,6 +289,46 @@ export const setNewStartBlockId = async (newStartBlockId: number): Promise<IWatc
   return { result: true }
 }
 
+/**
+ * Main method invoked by runner on service start
+ * Consists infinite loop, sleeping in IDLE mode when all blocks verified
+ * could be rewinded by /api/watchdog/restart/:blockId REST request
+ *
+ * @param startBlockId
+ */
+export const run = async (startBlockId: number): Promise<void> => {
+  const isStartBlockValid = await isStartHeightValid(startBlockId)
+
+  if (!isStartBlockValid) {
+    app.log.debug(`Attempt to run verification with blockId greater than current watchdog_verify_height. Exit with error.`)
+    process.exit(0)
+  }
+
+  await configService.updateConfigValueInDB('watchdog_started_at', Date.now())
+  app.log.info(`Watchdog start from blockId ${startBlockId}`)
+
+  lastCheckedBlockId = startBlockId - 1
+  setWatchdogStatus(VerifierStatus.RUNNING)
+
+  while (true) {
+    const blocksToCheck = await getNextBlockIdInterval(lastCheckedBlockId)
+
+    await Promise.all([...blocksToCheck.map((blockId) => verifyBlock(blockId)), verifyEraOfBlockId(blocksToCheck[0])])
+
+    lastCheckedBlockId = blocksToCheck[blocksToCheck.length - 1]
+
+    await configService.updateConfigValueInDB('watchdog_verify_height', lastCheckedBlockId)
+
+    // will sleep here if all blocks verified
+    lastCheckedBlockId = await updateLastCheckedBlockIdIfRestartOrBlocksEnd(lastCheckedBlockId)
+  }
+}
+
+/**
+ * Init method invoked by runner.ts on startup
+ * @param appParam
+ * @param concurrencyParam
+ */
 export const init = (appParam: FastifyInstance, concurrencyParam: number): void => {
   concurrency = concurrencyParam
   setWatchdogStatus(VerifierStatus.NEW)
