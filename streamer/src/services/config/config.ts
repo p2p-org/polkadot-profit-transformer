@@ -31,20 +31,6 @@ class ConfigService implements IConfigService {
     if (!postgresConnector) {
       throw new Error('cant get .postgresConnector from fastify app.')
     }
-
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`Error acquiring client: ${err.toString()}`)
-        throw new Error(`Error acquiring client`)
-      }
-      client.query('SELECT NOW()', (err) => {
-        release()
-        if (err) {
-          this.app.log.error(`Error executing query: ${err.toString()}`)
-          throw new Error(`Error executing query`)
-        }
-      })
-    })
   }
 
   async bootstrapConfig(): Promise<void> {
@@ -86,11 +72,6 @@ class ConfigService implements IConfigService {
       this.getConfigValueFromDB('watchdog_finished_at')
     ])
 
-    console.log({
-      watchdogVerifyHeight,
-      watchdogStartedAt,
-      watchdogFinishedAt
-    })
     if (!watchdogVerifyHeight) {
       await this.setConfigValueToDB('watchdog_verify_height', INITIAL_VERIFY_HEIGHT)
     }

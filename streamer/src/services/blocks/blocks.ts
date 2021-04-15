@@ -8,7 +8,7 @@ import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
 import { IBlocksStatusResult } from './blocks.types'
 
-const { KAFKA_PREFIX, DB_SCHEMA } = environment
+const { KAFKA_PREFIX, DB_SCHEMA, ERA_EXTRACTION_OFFSET } = environment
 
 /**
  * Provides block operations
@@ -50,20 +50,6 @@ class BlocksService {
     if (!postgresConnector) {
       throw new Error('cant get .postgresConnector from fastify app.')
     }
-
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`Error acquiring client: ${err.toString()}`)
-        throw new Error(`Error acquiring client`)
-      }
-      client.query('SELECT NOW()', (err) => {
-        release()
-        if (err) {
-          this.app.log.error(`Error executing query: ${err.toString()}`)
-          throw new Error(`Error executing query`)
-        }
-      })
-    })
 
     /** @private */
     this.stakingService = new StakingService(app)
@@ -129,6 +115,7 @@ class BlocksService {
       polkadotConnector.query.timestamp.now.at(blockHash),
       polkadotConnector.query.system.events.at(blockHash)
     ])
+    const era = parseInt(blockEra.toString(), 10)
 
     if (!signedBlock) {
       throw new Error('cannot get block')
@@ -147,7 +134,7 @@ class BlocksService {
           hash: signedBlock.block.header.hash.toHex(),
           author: extHeader?.author ? extHeader.author.toString() : '',
           session_id: sessionId.toNumber(),
-          era: parseInt(blockEra.toString(), 10),
+          era,
           stateRoot: signedBlock.block.header.stateRoot.toHex(),
           extrinsicsRoot: signedBlock.block.header.extrinsicsRoot.toHex(),
           parentHash: signedBlock.block.header.parentHash.toHex(),
@@ -161,8 +148,8 @@ class BlocksService {
 
     this.app.log.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
 
-    await kafkaProducer
-      .send({
+    try {
+      await kafkaProducer.send({
         topic: KAFKA_PREFIX + '_BLOCK_DATA',
         messages: [
           {
@@ -171,21 +158,21 @@ class BlocksService {
           }
         ]
       })
-      .catch((error) => {
-        this.app.log.error(`failed to push block: `, error)
-        throw new Error('cannot push block to Kafka')
-      })
+    } catch (error) {
+      this.app.log.error(`failed to push block: `, error)
+      throw new Error('cannot push block to Kafka')
+    }
 
     await this.extrinsicsService.extractExtrinsics(
-      parseInt(blockEra.toString(), 10),
+      era,
       sessionId.toNumber(),
       signedBlock.block.header.number,
       events,
       signedBlock.block.extrinsics
     )
 
-    if (processedEvents.isNewSession && !fromWatchdog) {
-      await this.stakingService.extractStakers(parseInt(blockEra.toString(), 10), blockHash)
+    if (processedEvents.isNewSession && !(await this.isStakersDataExists(era)) && era - ERA_EXTRACTION_OFFSET >= 0 && !fromWatchdog) {
+      await this.stakingService.extractStakers(era, blockHash)
     }
   }
 
@@ -258,6 +245,27 @@ class BlocksService {
       // Please read and understand the WARNING above before using this API.
       SyncStatus.release()
     }
+  }
+
+  private async isStakersDataExists(era: number): Promise<boolean> {
+    const { rows } = await this.app.postgresConnector.query(
+      `
+      SELECT 1
+      FROM ${DB_SCHEMA}.validators v
+      where v.era = $1
+      union 
+      SELECT 2
+      FROM ${DB_SCHEMA}.nominators n
+      where n.era = $1
+      union 
+      SELECT 3
+      FROM ${DB_SCHEMA}.eras n
+      where n.era = $1
+    `,
+      [era]
+    )
+
+    return !!rows.length && rows.length === 3
   }
 
   /**
@@ -375,50 +383,30 @@ class BlocksService {
    */
   async removeBlocks(blockNumbers: number[]): Promise<{ result: true }> {
     const { postgresConnector } = this.app
+    const transaction = await postgresConnector.connect()
 
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`failed to remove block from table: ${err}`)
-        throw new Error('cannot remove blocks')
+    try {
+      await transaction.query({
+        text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
+        values: [blockNumbers]
+      })
+
+      for (const tbl of ['balances', 'events', 'extrinsics']) {
+        await transaction.query({
+          text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
+          values: [blockNumbers]
+        })
       }
 
-      client.query(
-        {
-          text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
-          values: [blockNumbers]
-        },
-        (err) => {
-          release()
-          if (err) {
-            this.app.log.error(`failed to remove block from table: ${err}`)
-            throw new Error('cannot remove blocks')
-          }
-        }
-      )
-    })
-
-    for (const tbl of ['balances', 'events', 'extrinsics']) {
-      postgresConnector.connect((err, client, release) => {
-        if (err) {
-          this.app.log.error(`failed to remove block from table "${DB_SCHEMA}.${tbl}": ${err}`)
-          throw new Error('cannot remove blocks')
-        }
-
-        client.query(
-          {
-            text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
-            values: [blockNumbers]
-          },
-          (err) => {
-            release()
-            if (err) {
-              this.app.log.error(`failed to remove block from table "${DB_SCHEMA}.${tbl}": ${err}`)
-              throw new Error('cannot remove blocks')
-            }
-          }
-        )
-      })
+      await transaction.query('COMMIT')
+      transaction.release()
+    } catch (err) {
+      this.app.log.error(`failed to remove block from table: ${err}`)
+      await transaction.query('ROLLBACK')
+      transaction.release()
+      throw new Error('cannot remove blocks')
     }
+
     return { result: true }
   }
 
@@ -432,49 +420,28 @@ class BlocksService {
    */
   private async trimBlocks(startBlockNumber: number): Promise<void> {
     const { postgresConnector } = this.app
+    const transaction = await postgresConnector.connect()
 
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`failed to remove block from table: ${err}`)
-        throw new Error('cannot remove blocks')
+    try {
+      await transaction.query({
+        text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" >= $1::int`,
+        values: [startBlockNumber]
+      })
+
+      for (const tbl of ['balances', 'events', 'extrinsics']) {
+        await transaction.query({
+          text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "id" >= $1::int`,
+          values: [startBlockNumber]
+        })
       }
 
-      client.query(
-        {
-          text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" >= $1::int`,
-          values: [startBlockNumber]
-        },
-        (err) => {
-          release()
-          if (err) {
-            this.app.log.error(`failed to remove blocks from table: ${err}`)
-            throw new Error('cannot remove blocks')
-          }
-        }
-      )
-    })
-
-    for (const tbl of ['balances', 'events', 'extrinsics']) {
-      postgresConnector.connect((err, client, release) => {
-        if (err) {
-          this.app.log.error(`failed to remove blocks from table "${tbl}": ${err}`)
-          throw new Error('cannot remove blocks')
-        }
-
-        client.query(
-          {
-            text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "id" >= $1::int`,
-            values: [startBlockNumber]
-          },
-          (err) => {
-            release()
-            if (err) {
-              this.app.log.error(`failed to remove blocks from table "${tbl}": ${err}`)
-              throw new Error('cannot remove blocks')
-            }
-          }
-        )
-      })
+      await transaction.query('COMMIT')
+      transaction.release()
+    } catch (err) {
+      this.app.log.error(`failed to remove blocks from table: ${err}`)
+      await transaction.query('ROLLBACK')
+      transaction.release()
+      throw new Error('cannot remove blocks')
     }
   }
 

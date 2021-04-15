@@ -12,13 +12,13 @@ import {
 import { FastifyInstance } from 'fastify'
 
 const {
-  environment: { KAFKA_PREFIX, DB_SCHEMA }
+  environment: { KAFKA_PREFIX, DB_SCHEMA, ERA_EXTRACTION_OFFSET }
 } = require('../../environment')
 
 const attemptsCount = 5
 
 // Declares era offset for extraction staking data for target era
-const eraDataExtractionOffset = 4
+const eraDataExtractionOffset = ERA_EXTRACTION_OFFSET;
 
 /**
  * Provides era validators operations
@@ -60,19 +60,6 @@ class StakingService implements IStakingService {
       throw new Error('cant get .postgresConnector from fastify app.')
     }
 
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`Error acquiring client: ${err.toString()}`)
-        throw new Error(`Error acquiring client`)
-      }
-      client.query('SELECT NOW()', (err) => {
-        release()
-        if (err) {
-          this.app.log.error(`Error executing query: ${err.toString()}`)
-          throw new Error(`Error executing query`)
-        }
-      })
-    })
   }
 
   async syncValidators(blockNumber?: number) {
