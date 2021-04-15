@@ -3,6 +3,7 @@ import { IConfigService } from './config.types'
 import { FastifyInstance } from 'fastify'
 
 const { DB_SCHEMA } = environment
+const INITIAL_VERIFY_HEIGHT = -1
 /**
  * Provides config operations
  * @class
@@ -79,10 +80,22 @@ class ConfigService implements IConfigService {
       throw new Error(`Node "system.chainType" not compare to saved type: "${currentChainType}" and "${dbChainType}"`)
     }
 
-    const watchdogVerifyHeight = await this.getConfigValueFromDB('watchdog_verify_height')
+    const [watchdogVerifyHeight, watchdogStartedAt, watchdogFinishedAt] = await Promise.all([
+      this.getConfigValueFromDB('watchdog_verify_height'),
+      await this.getConfigValueFromDB('watchdog_started_at'),
+      await this.getConfigValueFromDB('watchdog_finished_at')
+    ])
 
     if (!watchdogVerifyHeight) {
-      await this.setConfigValueToDB('watchdog_verify_height', 0)
+      await this.setConfigValueToDB('watchdog_verify_height', INITIAL_VERIFY_HEIGHT)
+    }
+
+    if (!watchdogStartedAt) {
+      await this.setConfigValueToDB('watchdog_started_at', 0)
+    }
+
+    if (!watchdogFinishedAt) {
+      await this.setConfigValueToDB('watchdog_finished_at', 0)
     }
   }
 
