@@ -38,7 +38,6 @@ const { argv } = yargs
   })
   .option('watchdog-start', {
     type: 'number',
-    default: 0,
     description: 'Start watchdog tests from block number'
   })
   .option('sub-fin-head', {
