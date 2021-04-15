@@ -70,22 +70,27 @@ class ConfigService implements IConfigService {
     if (!dbChain && !dbChainType) {
       this.app.log.info(`Init new chain config: chain="${currentChain}", chain_type="${currentChainType}"`)
       await Promise.all([this.setConfigValueToDB('chain', currentChain), this.setConfigValueToDB('chain_type', currentChainType)])
-    }
+    } else {
+      if (dbChain !== currentChain) {
+        throw new Error(`Node "system.chain" not compare to saved type: "${currentChain}" and "${dbChain}"`)
+      }
 
-    if (dbChain !== currentChain) {
-      throw new Error(`Node "system.chain" not compare to saved type: "${currentChain}" and "${dbChain}"`)
-    }
-
-    if (dbChainType !== currentChainType) {
-      throw new Error(`Node "system.chainType" not compare to saved type: "${currentChainType}" and "${dbChainType}"`)
+      if (dbChainType !== currentChainType) {
+        throw new Error(`Node "system.chainType" not compare to saved type: "${currentChainType}" and "${dbChainType}"`)
+      }
     }
 
     const [watchdogVerifyHeight, watchdogStartedAt, watchdogFinishedAt] = await Promise.all([
       this.getConfigValueFromDB('watchdog_verify_height'),
-      await this.getConfigValueFromDB('watchdog_started_at'),
-      await this.getConfigValueFromDB('watchdog_finished_at')
+      this.getConfigValueFromDB('watchdog_started_at'),
+      this.getConfigValueFromDB('watchdog_finished_at')
     ])
 
+    console.log({
+      watchdogVerifyHeight,
+      watchdogStartedAt,
+      watchdogFinishedAt
+    })
     if (!watchdogVerifyHeight) {
       await this.setConfigValueToDB('watchdog_verify_height', INITIAL_VERIFY_HEIGHT)
     }
@@ -100,8 +105,7 @@ class ConfigService implements IConfigService {
   }
 
   async setConfigValueToDB(key: string, value: string | number): Promise<void> {
-    console.log('setConfigToDB', { key, value })
-
+    console.log('set config in db', { key, value })
     const valueToSave = value.toString()
     const { postgresConnector } = this.app
 
