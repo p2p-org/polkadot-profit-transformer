@@ -97,8 +97,7 @@ const isBlockValid = async (blockId: number): Promise<boolean> => {
   const blockFromDB = await getBlockFromDB(blockId)
 
   if (!blockFromDB) {
-    app.log.debug(`block is not exists in DB: ${blockId}`)
-
+    app.log.debug(`Block is not exists in DB: ${blockId}`)
     return false
   }
 
@@ -109,7 +108,7 @@ const isBlockValid = async (blockId: number): Promise<boolean> => {
   const isParentHashValid = blockFromDB.parent_hash === blockFromChain.block.header.parentHash.toString()
 
   if (!isEventsExists || !isExtrinsicsExists || !isParentHashValid) {
-    app.log.debug(`events or extrinsics is not exist in DB for block ${blockId}`)
+    app.log.debug(`Events or extrinsics is not exist in DB for block ${blockId}`)
     return false
   }
 
@@ -117,9 +116,11 @@ const isBlockValid = async (blockId: number): Promise<boolean> => {
 }
 
 const verifyBlock = async (blockId: number): Promise<void> => {
+  app.log.debug(`Validate block ${blockId}`)
   const isBlockValidResult = await isBlockValid(blockId)
   if (!isBlockValidResult) {
     try {
+      app.log.debug(`Block ${blockId} is not valid, resync.`)
       await blocksService.processBlock(blockId, true)
     } catch (error) {
       app.log.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
@@ -166,6 +167,8 @@ const verifyEraOfBlockId = async (blockId: number) => {
 
   setCurrentEra(blockEra)
 
+  app.log.debug(`Validate era ${blockEra}`)
+
   const delayedEra = blockEra - ERA_DELAY_OFFSET
 
   const isDelayedEraExists = delayedEra >= 0
@@ -178,7 +181,7 @@ const verifyEraOfBlockId = async (blockId: number) => {
   }
 
   if (!eraFromDB) {
-    app.log.debug(`era is not exists in DB: ${delayedEra}, resync`)
+    app.log.debug(`Era is not exists in DB: ${delayedEra}, resync`)
     try {
       await resyncEra(delayedEra, blockHash)
       return
@@ -204,12 +207,12 @@ const verifyEraOfBlockId = async (blockId: number) => {
   }
 
   if (!isEraDataValid(eraFromDB, stakingData.era_data)) {
-    app.log.debug(`era in DB is not equals data from api: ${blockId}, resync`)
+    app.log.debug(`Era in DB is not equals data from api: ${blockId}, resync`)
     try {
       await resyncEra(delayedEra, blockHash)
       return
     } catch (error) {
-      app.log.error(`error whan trying to resync era ${delayedEra}`)
+      app.log.error(`Error when trying to resync era ${delayedEra}`)
     }
   }
 
@@ -271,6 +274,7 @@ export const getStatus = async (): Promise<IWatchdogStatus> => {
   const result = {
     status,
     current_height: lastCheckedBlockId,
+    last_era_checked: currentEraId - ERA_DELAY_OFFSET,
     finished_at: undefined
   }
 
@@ -308,6 +312,37 @@ export const restartFromBlockId = async (newStartBlockId: number): Promise<IWatc
   return { result: true }
 }
 
+const isDBEmpty = async () => {
+  const { postgresConnector } = app
+  try {
+    const { rows } = await postgresConnector.query({
+      text: `SELECT count (*) FROM ${DB_SCHEMA}.blocks`
+    })
+    const blocksInDBCount = +rows[0].count
+
+    return blocksInDBCount === 0
+  } catch (err) {
+    app.log.error(`No blocks in DB, exit`)
+    throw new Error('no blocks in db')
+  }
+}
+
+const isStartParamsValid = async (startBlockId: number) => {
+  const isStartBlockValid = await isStartHeightValid(startBlockId)
+
+  if (!isStartBlockValid) {
+    app.log.error(`Attempt to run verification with blockId ${startBlockId} greater than current watchdog_verify_height. Exit with error.`)
+    return false
+  }
+
+  const dbEmptyCheck = await isDBEmpty()
+
+  if (dbEmptyCheck) {
+    app.log.error('Blocks table in DB is empty, exit')
+    return false
+  }
+  return true
+}
 /**
  * Main method invoked by runner on service start
  * Consists infinite loop, sleeping in IDLE mode when all blocks verified
@@ -319,13 +354,13 @@ export const run = async (startBlockId: number | undefined): Promise<void> => {
 
   if (!startBlockId) {
     const watchdogVerifyHeight = await configService.getConfigValueFromDB('watchdog_verify_height')
-    startBlockId = +watchdogVerifyHeight
+    startBlockId = +watchdogVerifyHeight + 1
   }
 
-  const isStartBlockValid = await isStartHeightValid(startBlockId)
+  const isStartValid = await isStartParamsValid(startBlockId)
 
-  if (!isStartBlockValid) {
-    app.log.debug(`Attempt to run verification with blockId greater than current watchdog_verify_height. Exit with error.`)
+  if (!isStartValid) {
+    app.log.error('Starting conditions is not valid, exit')
     process.exit(0)
   }
 
@@ -333,9 +368,16 @@ export const run = async (startBlockId: number | undefined): Promise<void> => {
 
   lastCheckedBlockId = startBlockId - 1
 
-  const lastCheckedBlockHash = await getBlockIdHash(lastCheckedBlockId)
-  const lastCheckedEra = +(await polkadotConnector.query.staking.currentEra.at(lastCheckedBlockHash)).toString()
+  const getLastCheckedEra = async (lastCheckedBlockId: number): Promise<number> => {
+    if (lastCheckedBlockId >= 0) {
+      const lastCheckedBlockHash = await getBlockIdHash(lastCheckedBlockId)
+      const lastCheckedEra = +(await polkadotConnector.query.staking.currentEra.at(lastCheckedBlockHash)).toString()
+      return lastCheckedEra
+    }
+    return -1
+  }
 
+  const lastCheckedEra = await getLastCheckedEra(lastCheckedBlockId)
   setCurrentEra(lastCheckedEra)
 
   setWatchdogStatus(VerifierStatus.RUNNING)
