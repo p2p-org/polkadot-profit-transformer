@@ -81,22 +81,8 @@ class ConfigService implements IConfigService {
 
     const watchdogVerifyHeight = await this.getConfigValueFromDB('watchdog_verify_height')
 
-    console.log({ watchdogVerifyHeight })
-
-    if (!watchdogVerifyHeight || !watchdogVerifyHeight.length) {
+    if (!watchdogVerifyHeight) {
       await this.setConfigValueToDB('watchdog_verify_height', 0)
-    }
-
-    const watchdogStartedAt = await this.getConfigValueFromDB('watchdog_started_at')
-
-    if (!watchdogStartedAt || !watchdogStartedAt.length) {
-      await this.setConfigValueToDB('watchdog_started_at', 0)
-    }
-
-    const watchdogFinishedAt = await this.getConfigValueFromDB('watchdog_finished_at')
-
-    if (!watchdogFinishedAt || !watchdogFinishedAt.length) {
-      await this.setConfigValueToDB('watchdog_finished_at', 0)
     }
   }
 
