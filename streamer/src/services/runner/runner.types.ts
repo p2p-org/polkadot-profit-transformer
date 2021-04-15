@@ -6,7 +6,7 @@ export interface IRunnerService {
     optionSyncStartBlockNumber: number
     optionSubscribeFinHead: boolean
     optionStartWatchdog: boolean
-    optionWatchdogStartBlockNumber: number
+    optionWatchdogStartBlockNumber: number | undefined
     optionWatchdogConcurrency: number
   }): Promise<void>
 }

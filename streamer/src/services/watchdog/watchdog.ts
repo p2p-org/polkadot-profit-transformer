@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
 import { StakingService } from '../staking/staking'
-import { SignedBlock } from '@polkadot/types/interfaces'
+import { BlockHash, SignedBlock } from '@polkadot/types/interfaces'
 
 const { DB_SCHEMA } = environment
 
@@ -95,13 +95,14 @@ const isBlockValid = async (blockId: number): Promise<boolean> => {
   const { polkadotConnector } = app
 
   const blockFromDB = await getBlockFromDB(blockId)
-  const blockFromChain = await polkadotConnector.rpc.chain.getBlock(blockFromDB.hash)
 
   if (!blockFromDB) {
     app.log.debug(`block is not exists in DB: ${blockId}`)
 
     return false
   }
+
+  const blockFromChain = await polkadotConnector.rpc.chain.getBlock(blockFromDB.hash)
 
   const isEventsExists = await isEventsExist(blockFromDB)
   const isExtrinsicsExists = await isExtrinsicsExist(blockFromDB, blockFromChain)
@@ -141,30 +142,45 @@ const getEraFromDB = async (eraId: number): Promise<IEra> => {
   }
 }
 
-const verifyEraOfBlockId = async (blockId: number): Promise<void> => {
+const getBlockIdHash = async (blockId: number) => {
   const { polkadotConnector } = app
   const block = await getBlockFromDB(blockId)
 
-  const isEraChanged = block.era > getCurrentEra()
+  if (!block) {
+    return await polkadotConnector.rpc.chain.getBlockHash(blockId)
+  } else {
+    return block.hash
+  }
+}
+
+const verifyEraOfBlockId = async (blockId: number) => {
+  const { polkadotConnector } = app
+
+  const blockHash = await getBlockIdHash(blockId)
+
+  const blockEra = +(await polkadotConnector.query.staking.currentEra.at(blockHash)).toString()
+
+  const isEraChanged = blockEra > getCurrentEra()
+
   if (!isEraChanged) return
 
-  setCurrentEra(block.era)
+  setCurrentEra(blockEra)
 
-  const delayedEra = block.era - ERA_DELAY_OFFSET
+  const delayedEra = blockEra - ERA_DELAY_OFFSET
 
   const isDelayedEraExists = delayedEra >= 0
   if (!isDelayedEraExists) return
 
   const eraFromDB = await getEraFromDB(delayedEra)
 
-  const resyncEra = async (eraId: number, block: IBlock) => {
-    stakingService.extractStakers(eraId, block.hash)
+  const resyncEra = async (eraId: number, blockHash: string | BlockHash) => {
+    stakingService.extractStakers(eraId, blockHash)
   }
 
   if (!eraFromDB) {
     app.log.debug(`era is not exists in DB: ${delayedEra}, resync`)
     try {
-      await resyncEra(delayedEra, block)
+      await resyncEra(delayedEra, blockHash)
       return
     } catch (error) {
       app.log.error(`error whan trying to resync era ${delayedEra}`)
@@ -172,11 +188,11 @@ const verifyEraOfBlockId = async (blockId: number): Promise<void> => {
   }
 
   const [sessionId, blockTime] = await Promise.all([
-    polkadotConnector.query.session.currentIndex.at(block.hash),
-    polkadotConnector.query.timestamp.now.at(block.hash)
+    polkadotConnector.query.session.currentIndex.at(blockHash),
+    polkadotConnector.query.timestamp.now.at(blockHash)
   ])
 
-  const stakingData = await stakingService.getValidators(block.hash, sessionId, blockTime, delayedEra)
+  const stakingData = await stakingService.getValidators(blockHash, sessionId, blockTime, delayedEra)
 
   interface IEraData {
     validators_active: number
@@ -190,7 +206,7 @@ const verifyEraOfBlockId = async (blockId: number): Promise<void> => {
   if (!isEraDataValid(eraFromDB, stakingData.era_data)) {
     app.log.debug(`era in DB is not equals data from api: ${blockId}, resync`)
     try {
-      await resyncEra(delayedEra, block)
+      await resyncEra(delayedEra, blockHash)
       return
     } catch (error) {
       app.log.error(`error whan trying to resync era ${delayedEra}`)
@@ -200,11 +216,11 @@ const verifyEraOfBlockId = async (blockId: number): Promise<void> => {
   app.log.debug(`Era ${eraFromDB.era} is correct`)
 }
 
-const isStartHeightValid = async (blockId: number): Promise<boolean> => {
+const isStartHeightValid = async (startBlockId: number): Promise<boolean> => {
   const watchdogVerifyHeight = await configService.getConfigValueFromDB('watchdog_verify_height')
   app.log.debug(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
 
-  return blockId >= 0 && blockId - 1 <= +watchdogVerifyHeight
+  return startBlockId >= 0 && startBlockId - 1 <= +watchdogVerifyHeight
 }
 
 const updateLastCheckedBlockIdIfRestartOrBlocksEnd = async (lastCheckedBlockId: number): Promise<number> => {
@@ -297,7 +313,15 @@ export const restartFromBlockId = async (newStartBlockId: number): Promise<IWatc
  * Consists infinite loop, sleeping in IDLE mode when all blocks verified
  * could be rewinded by /api/watchdog/restart/:blockId REST request
  */
-export const run = async (startBlockId: number): Promise<void> => {
+export const run = async (startBlockId: number | undefined): Promise<void> => {
+  const { polkadotConnector } = app
+  await configService.updateConfigValueInDB('watchdog_started_at', Date.now())
+
+  if (!startBlockId) {
+    const watchdogVerifyHeight = await configService.getConfigValueFromDB('watchdog_verify_height')
+    startBlockId = +watchdogVerifyHeight
+  }
+
   const isStartBlockValid = await isStartHeightValid(startBlockId)
 
   if (!isStartBlockValid) {
@@ -305,10 +329,15 @@ export const run = async (startBlockId: number): Promise<void> => {
     process.exit(0)
   }
 
-  await configService.updateConfigValueInDB('watchdog_started_at', Date.now())
   app.log.info(`Watchdog start from blockId ${startBlockId}`)
 
   lastCheckedBlockId = startBlockId - 1
+
+  const lastCheckedBlockHash = await getBlockIdHash(lastCheckedBlockId)
+  const lastCheckedEra = +(await polkadotConnector.query.staking.currentEra.at(lastCheckedBlockHash)).toString()
+
+  setCurrentEra(lastCheckedEra)
+
   setWatchdogStatus(VerifierStatus.RUNNING)
 
   while (true) {
