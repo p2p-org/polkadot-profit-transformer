@@ -267,9 +267,6 @@ interface IWatchdogStatus {
   finished_at: string | undefined
 }
 
-/**
- * invoked by REST /api/watchdog/status request
- */
 export const getStatus = async (): Promise<IWatchdogStatus> => {
   const result = {
     status,
@@ -291,6 +288,8 @@ interface IWatchdogRestartResponse {
 
 /**
  * Invoked by /api/wathchdog/restart/:blockId REST request
+ * @param newStartBlockId
+ * @returns
  */
 export const restartFromBlockId = async (newStartBlockId: number): Promise<IWatchdogRestartResponse> => {
   const isStartBlockValid = await isStartHeightValid(newStartBlockId)
@@ -347,6 +346,8 @@ const isStartParamsValid = async (startBlockId: number) => {
  * Main method invoked by runner on service start
  * Consists infinite loop, sleeping in IDLE mode when all blocks verified
  * could be rewinded by /api/watchdog/restart/:blockId REST request
+ *
+ * @param startBlockId
  */
 export const run = async (startBlockId: number | undefined): Promise<void> => {
   const { polkadotConnector } = app
@@ -398,6 +399,8 @@ export const run = async (startBlockId: number | undefined): Promise<void> => {
 
 /**
  * Init method invoked by runner.ts on startup
+ * @param appParam
+ * @param concurrencyParam
  */
 export const init = (appParam: FastifyInstance, concurrencyParam: number): void => {
   concurrency = concurrencyParam

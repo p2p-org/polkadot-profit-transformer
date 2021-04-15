@@ -1,7 +1,7 @@
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./streamer/tsconfig.json",
+    "project": "tsconfig.json",
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint/eslint-plugin"],
@@ -36,6 +36,6 @@
     "jsx-quotes": [2, "prefer-single"],
     "no-useless-escape": 0,
     "valid-jsdoc": 0,
-    "linebreak-style": ["error", "unix"]
+    "linebreak-style": [ "error", "unix" ]
   }
 }
