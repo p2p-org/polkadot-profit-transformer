@@ -21,7 +21,7 @@ const getStatusSchema = {
       type: 'object',
       properties: {
         status: { type: 'string' },
-        last_era_checked: { type: 'nmber' },
+        last_era_checked: { type: 'number' },
         current_height: { type: 'number' },
         finished_at: { type: 'number' }
       }
