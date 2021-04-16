@@ -171,12 +171,14 @@ class BlocksService {
         signedBlock.block.extrinsics
     );
 
+
+    const extractedEra = era - ERA_EXTRACTION_OFFSET
     if (
         processedEvents.isNewSession
         && !(await this.isStakersDataExists(era))
-        && (era - ERA_EXTRACTION_OFFSET >= 0)
+        && (extractedEra >= 0)
     ) {
-      await this.stakingService.extractStakers(era, blockHash);
+      await this.stakingService.extractStakers(extractedEra, blockHash);
     }
   }
 
