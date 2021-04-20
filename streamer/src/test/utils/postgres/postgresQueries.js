@@ -1,4 +1,4 @@
-const { environment } = require('../../../environment')
+const {environment} = require('../../../environment')
 const DB_SCHEMA = environment.DB_SCHEMA
 const totalStakeThreshold = 1000000
 const totalRewardThreshold = 1000000
@@ -30,13 +30,13 @@ async function getTopBlock(postgres) {
 async function getMissedValidators(postgres) {
     const missedValidators = await getQuery(
         postgres,
-        `SELECT era FROM( ` +
-        `SELECT ${DB_SCHEMA}.eras.era,count(${DB_SCHEMA}.validators.era) ` +
-        `FROM ${DB_SCHEMA}.validators ` +
-        `FULL OUTER JOIN ${DB_SCHEMA}.eras on ${DB_SCHEMA}.validators.era=${DB_SCHEMA}.eras.era ` +
-        `GROUP BY ${DB_SCHEMA}.validators.era,${DB_SCHEMA}.eras.era ` +
-        `HAVING ${DB_SCHEMA}.eras.validators_active<>count(${DB_SCHEMA}.validators.era) ` +
-        `)t`
+        `SELECT era FROM( 
+         SELECT ${DB_SCHEMA}.eras.era,count(${DB_SCHEMA}.validators.era) 
+         FROM ${DB_SCHEMA}.validators 
+         FULL OUTER JOIN ${DB_SCHEMA}.eras on ${DB_SCHEMA}.validators.era=${DB_SCHEMA}.eras.era
+         GROUP BY ${DB_SCHEMA}.validators.era,${DB_SCHEMA}.eras.era 
+         HAVING ${DB_SCHEMA}.eras.validators_active<>count(${DB_SCHEMA}.validators.era) 
+        )t`
     )
     return {
         count: missedValidators.rowCount,
@@ -47,13 +47,13 @@ async function getMissedValidators(postgres) {
 async function getMissedNominators(postgres) {
     const missedNominators = await getQuery(
         postgres,
-        `SELECT era FROM( ` +
-        `SELECT ${DB_SCHEMA}.eras.era,count(distinct ${DB_SCHEMA}.nominators.account_id) ` +
-        `FROM ${DB_SCHEMA}.nominators ` +
-        `FULL OUTER JOIN ${DB_SCHEMA}.eras on ${DB_SCHEMA}.nominators.era=${DB_SCHEMA}.eras.era ` +
-        `GROUP BY ${DB_SCHEMA}.nominators.era,${DB_SCHEMA}.eras.era ` +
-        `HAVING ${DB_SCHEMA}.eras.nominators_active<>count(distinct ${DB_SCHEMA}.nominators.account_id) ` +
-        `)t`
+        `SELECT era FROM(
+         SELECT ${DB_SCHEMA}.eras.era,count(distinct ${DB_SCHEMA}.nominators.account_id)
+         FROM ${DB_SCHEMA}.nominators
+         FULL OUTER JOIN ${DB_SCHEMA}.eras on ${DB_SCHEMA}.nominators.era=${DB_SCHEMA}.eras.era
+         GROUP BY ${DB_SCHEMA}.nominators.era,${DB_SCHEMA}.eras.era
+         HAVING ${DB_SCHEMA}.eras.nominators_active<>count(distinct ${DB_SCHEMA}.nominators.account_id)
+        )t`
     )
     return {
         count: missedNominators.rowCount,
@@ -103,14 +103,14 @@ async function getErasWithLowTotalRewardPoints(postgres) {
 async function getMissedHashesForSequenceOfBlocks(postgres) {
     const missedHashes = await getQuery(
         postgres,
-        `SELECT id,parent_hash, prv_id,Prv_hash ` +
-        `FROM ` +
-        `(SELECT id,parent_hash, ` +
-        `Lag(hash) over (ORDER BY id) Prv_hash, ` +
-        `Lag(id) over (ORDER BY id) prv_id ` +
-        `FROM dot_polka.blocks) AS InnerQuery ` +
-        `WHERE parent_hash<>Prv_hash ` +
-        `ORDER BY id`
+        `SELECT id,parent_hash, prv_id,Prv_hash
+         FROM
+        (SELECT id,parent_hash,
+        Lag(hash) over (ORDER BY id) Prv_hash,
+        Lag(id) over (ORDER BY id) prv_id
+        FROM dot_polka.blocks) AS InnerQuery
+        WHERE parent_hash<>Prv_hash 
+        ORDER BY id`
     )
     return {
         breakCount: missedHashes.rows.length,
@@ -121,13 +121,13 @@ async function getMissedHashesForSequenceOfBlocks(postgres) {
 async function getErasWithRewardPointsInconsistencies(postgres) {
     const inconsistencies = await getQuery(
         postgres,
-        'SELECT era FROM( ' +
-        'SELECT dot_polka.eras.era,count( dot_polka.nominators.era),dot_polka.eras.nominators_active ' +
-        'FROM dot_polka.nominators ' +
-        'FULL OUTER JOIN dot_polka.eras on dot_polka.nominators.era=dot_polka.eras.era ' +
-        'GROUP BY dot_polka.nominators.era,dot_polka.eras.era ' +
-        'HAVING dot_polka.eras.nominators_active<>count(dot_polka.nominators.era) or dot_polka.eras.nominators_active is null ' +
-        ')t'
+        `SELECT era FROM(
+         SELECT ${DB_SCHEMA}.eras.era,count( ${DB_SCHEMA}.nominators.era),${DB_SCHEMA}.eras.nominators_active 
+         FROM ${DB_SCHEMA}.nominators 
+         FULL OUTER JOIN ${DB_SCHEMA}.eras on ${DB_SCHEMA}.nominators.era=${DB_SCHEMA}.eras.era 
+         GROUP BY ${DB_SCHEMA}.nominators.era,${DB_SCHEMA}.eras.era
+         HAVING ${DB_SCHEMA}.eras.nominators_active<>count(${DB_SCHEMA}.nominators.era) or ${DB_SCHEMA}.eras.nominators_active is null
+        )t`
     )
     return {
         erasCount: inconsistencies.rows.length,
