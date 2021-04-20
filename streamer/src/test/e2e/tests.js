@@ -20,8 +20,8 @@ describe('Init', () => {
 
     it('Check for "chain" and "chainType"', async () => {
         const [currentChainRaw, currentChainTypeRaw] = await Promise.all([
-            await nodeApi.rpc.system.chain(),
-            await nodeApi.rpc.system.chainType()
+            nodeApi.rpc.system.chain(),
+            nodeApi.rpc.system.chainType()
         ])
 
         const currentChain = currentChainRaw.toString().trim()
@@ -39,7 +39,8 @@ describe('Init', () => {
         const missedValidators = await postgresQueries.getMissedValidators(postgres)
         equal(missedValidators.count, 0,
             `There is discrepancy between sum of validators_active in ${environment.DB_SCHEMA}.eras and count ` +
-                    `of validators in ${environment.DB_SCHEMA}.validators for corresponding value of era; Eras : ${missedValidators.eras}`
+                    `of validators in ${environment.DB_SCHEMA}.validators for corresponding value of era; ` +
+                    `Eras : ${JSON.stringify(missedValidators.eras)}`
         )
     })
 
@@ -47,7 +48,8 @@ describe('Init', () => {
         const missedNominators = await postgresQueries.getMissedNominators(postgres)
         equal(missedNominators.count, 0,
             `There is discrepancy between sum of nominators_active in ${environment.DB_SCHEMA}.eras and count ` +
-                    `of nominators in ${environment.DB_SCHEMA}.nominators for corresponding value of era; Eras : ${missedNominators.eras}`
+                    `of nominators in ${environment.DB_SCHEMA}.nominators for corresponding value of era; ` +
+                    `Eras : ${JSON.stringify(missedNominators.eras)}`
         )
     })
 
@@ -62,7 +64,7 @@ describe('Init', () => {
     it('Check node top block  with streamer top block', async () => {
         const topBlock = await postgresQueries.getTopBlock(postgres)
         const nodeTopBlock = await nodeApi.rpc.chain.getHeader()
-        const topBlockDifference = nodeTopBlock.number.toString() - topBlock
+        const topBlockDifference = nodeTopBlock.number.toNumber() - topBlock
         equal(topBlockDifference < 100, true,
             `Streamer top block is lag behind of node top block for ${topBlockDifference} blocks`)
     })
@@ -70,25 +72,25 @@ describe('Init', () => {
     it('Check eras for low total stake', async () => {
         const erasCountWithLowTotalStake = await postgresQueries.getErasWithLowTotalStack(postgres)
         equal(erasCountWithLowTotalStake.erasCount, 0,
-            `There is ${erasCountWithLowTotalStake.eras} eras with low total stake`)
+            `There is ${JSON.stringify(erasCountWithLowTotalStake.eras)} eras with low total stake`)
     })
 
     it('Check eras for low total reward', async () => {
         const erasCountWithLowTotalReward = await postgresQueries.getErasWithLowTotalReward(postgres)
         equal(erasCountWithLowTotalReward.erasCount, 0,
-            `There is ${erasCountWithLowTotalReward.eras} eras with low total rewards`)
+            `There is ${JSON.stringify(erasCountWithLowTotalReward.eras)} eras with low total rewards`)
     })
 
     it('Check eras for low total reward points', async () => {
         const erasCountWithLowTotalRewardPoints = await postgresQueries.getErasWithLowTotalRewardPoints(postgres)
         equal(erasCountWithLowTotalRewardPoints.erasCount, 0,
-            `There is ${erasCountWithLowTotalRewardPoints.eras} eras with low total rewards points`)
+            `There is ${JSON.stringify(erasCountWithLowTotalRewardPoints.eras)} eras with low total rewards points`)
     })
 
     it('Check rewards points in eras and sum of reward points in validators by eras', async () => {
         const rewardPointsInconsistenciesEras = await postgresQueries.getErasWithRewardPointsInconsistencies(postgres)
-        equal(JSON.stringify(rewardPointsInconsistenciesEras.erasCount), 0,
-            `There is ${JSON.stringify(rewardPointsInconsistenciesEras.erasCount)} ` +
+        equal(rewardPointsInconsistenciesEras.erasCount, 0,
+            `There is ${rewardPointsInconsistenciesEras.erasCount} ` +
                     `eras count with incorrect reward_points sum in validators table;Eras : ` +
                     `${JSON.stringify(rewardPointsInconsistenciesEras.eras)} `
         )
