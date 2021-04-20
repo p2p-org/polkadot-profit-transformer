@@ -6,15 +6,14 @@ const totalRewardPointsThreshold = 20
 
 
 async function getQuery(postgres, queryString) {
-    return await postgres
-        .query(queryString)
-        .catch((err) => {
-            console.log(err.stack)
-            throw new Error(`Error executing query`)
-        })
-        .then((res) => {
-            return res
-        })
+    let queryResult
+    try {
+        queryResult = await postgres.query(queryString)
+    } catch (error) {
+        console.log(error.stack)
+        throw new Error(`Error executing query`)
+    }
+    return queryResult
 }
 
 async function getMissedBlocksCount(postgres) {
