@@ -1,13 +1,13 @@
-import { Mutex } from 'async-mutex';
+const { Mutex } = require('async-mutex')
 
 /** @type {Mutex} */
-const SyncStatus = new Mutex();
+const SyncStatus = new Mutex()
 
 /**
  * Provides access to lock synchronization mutex
  *
  * @type {{SyncStatus: Mutex}}
  */
-export {
+module.exports = {
   SyncStatus
 }
