@@ -1,6 +1,6 @@
 import { IConsumerService } from './consumer.types';
 import { FastifyInstance } from 'fastify';
-import { SyncStatus } from '../index'
+import { SyncStatus } from '../index';
 import { BlocksService } from '../blocks/blocks';
 import { Header } from '@polkadot/types/interfaces';
 
@@ -17,13 +17,13 @@ class ConsumerService implements IConsumerService {
    */
   constructor(app: FastifyInstance) {
     /** @private */
-    this.app = app
+    this.app = app;
 
     /** @private */
-    const { polkadotConnector } = this.app
+    const { polkadotConnector } = this.app;
 
     if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.')
+      throw new Error('cant get .polkadotConnector from fastify app.');
     }
   }
 
@@ -34,26 +34,26 @@ class ConsumerService implements IConsumerService {
    * @returns {Promise<void>}
    */
   async subscribeFinalizedHeads(): Promise<void> {
-    const { polkadotConnector } = this.app
+    const { polkadotConnector } = this.app;
 
     if (SyncStatus.isLocked()) {
-      this.app.log.error(`failed setup "subscribeFinalizedHeads": sync in process`)
-      return
+      this.app.log.error(`failed setup "subscribeFinalizedHeads": sync in process`);
+      return;
     }
 
-    this.app.log.info(`Starting subscribeFinalizedHeads`)
+    this.app.log.info(`Starting subscribeFinalizedHeads`);
 
-    const blocksService = new BlocksService(this.app)
+    const blocksService = new BlocksService(this.app);
 
-    const blockNumberFromDB = await blocksService.getLastProcessedBlock()
+    const blockNumberFromDB = await blocksService.getLastProcessedBlock();
 
     if (blockNumberFromDB === 0) {
-      this.app.log.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `)
+      this.app.log.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `);
     }
 
     polkadotConnector.rpc.chain.subscribeFinalizedHeads((header) => {
-      return this.onFinalizedHead(header)
-    })
+      return this.onFinalizedHead(header);
+    });
   }
 
   /**
@@ -65,27 +65,27 @@ class ConsumerService implements IConsumerService {
    * @returns {Promise<void>}
    */
   private async onFinalizedHead(blockHash: Header): Promise<void> {
-    const blocksService = new BlocksService(this.app)
+    const blocksService = new BlocksService(this.app);
 
-    const blockNumberFromDB = await blocksService.getLastProcessedBlock()
+    const blockNumberFromDB = await blocksService.getLastProcessedBlock();
 
     if (blockHash.number.toNumber() === blockNumberFromDB) {
-      return
+      return;
     }
 
-    this.app.log.info(`Captured block "${blockHash.number}" with hash ${blockHash.hash}`)
+    this.app.log.info(`Captured block "${blockHash.number}" with hash ${blockHash.hash}`);
 
     if (blockHash.number.toNumber() < blockNumberFromDB) {
-      this.app.log.info(`stash operation detected`)
-      await blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
+      this.app.log.info(`stash operation detected`);
+      await blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber());
     }
 
     blocksService.processBlock(blockHash.number.toNumber()).catch((error) => {
-      this.app.log.error(`failed to process captured block #${blockHash}:`, error)
-    })
+      this.app.log.error(`failed to process captured block #${blockHash}:`, error);
+    });
   }
 }
 
 export {
   ConsumerService
-}
+};

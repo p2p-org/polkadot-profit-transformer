@@ -155,7 +155,7 @@ class BlocksService {
                 value: JSON.stringify(blockData)
               }
             ]
-          })
+          });
     } catch(error) {
       this.app.log.error(`failed to push block: `, error);
       throw new Error('cannot push block to Kafka');
@@ -372,7 +372,7 @@ class BlocksService {
         await transaction.query({
           text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
           values: [blockNumbers]
-        })
+        });
       }
 
       await transaction.query('COMMIT');
@@ -466,11 +466,11 @@ class BlocksService {
       const {event, phase} = record;
       const types = event.typeDef;
 
-      const eventData: { [x: string]: Codec; }[] = []
+      const eventData: { [x: string]: Codec; }[] = [];
 
       if (event.section === 'session') {
         if (event.method === 'NewSession') {
-          isNewSession = true
+          isNewSession = true;
         }
       }
 
@@ -478,8 +478,8 @@ class BlocksService {
         event.data.forEach((data, index) => {
           eventData.push({
             [types[index].type]: data
-          })
-        })
+          });
+        });
 
         blockEvents.push({
           id: `${blockNumber}-${eventIndex}`,
@@ -489,13 +489,13 @@ class BlocksService {
           meta: event.meta.toJSON(),
           data: eventData,
           event: event.toJSON()
-        })
+        });
       }
-    })
+    });
     return {
       events: blockEvents,
       isNewSession: isNewSession
-    }
+    };
   }
 
   /**
@@ -505,8 +505,8 @@ class BlocksService {
    */
   async sleep(ms: number) {
     return new Promise((resolve) => {
-      setTimeout(resolve, ms)
-    })
+      setTimeout(resolve, ms);
+    });
   }
 }
 
@@ -516,4 +516,4 @@ class BlocksService {
  */
 export {
   BlocksService
-}
+};

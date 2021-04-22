@@ -1,6 +1,6 @@
 const {
   environment: { API_PORT }
-} = require('../../environment')
+} = require('../../environment');
 
 module.exports = {
   routePrefix: '/swagger',
@@ -24,4 +24,4 @@ module.exports = {
     produces: ['application/json'],
     tags: [{ name: 'block', description: 'Chain block' }]
   }
-}
+};

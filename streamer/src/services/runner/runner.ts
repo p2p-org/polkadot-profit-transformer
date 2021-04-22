@@ -5,10 +5,10 @@ import { IStakingService } from '../staking/staking.types';
 import { IConfigService } from '../config/config.types';
 import { IConsumerService } from '../consumer/consumer.types';
 
-const { ConfigService } = require('../config/config')
-const { ConsumerService } = require('../consumer/consumer')
-const { BlocksService } = require('../blocks/blocks')
-const { StakingService } = require('../staking/staking')
+const { ConfigService } = require('../config/config');
+const { ConsumerService } = require('../consumer/consumer');
+const { BlocksService } = require('../blocks/blocks');
+const { StakingService } = require('../staking/staking');
 
 /**
  * Provides cli operations
@@ -24,19 +24,19 @@ class RunnerService implements IRunnerService {
 
   constructor(app: FastifyInstance) {
     /** @private */
-    this.app = app
+    this.app = app;
 
     /** @private */
-    this.blocksService = new BlocksService(app)
+    this.blocksService = new BlocksService(app);
 
     /** @private */
-    this.consumerService = new ConsumerService(app)
+    this.consumerService = new ConsumerService(app);
 
     /** @private */
-    this.stakingService = new StakingService(app)
+    this.stakingService = new StakingService(app);
 
     /** @private */
-    this.configService = new ConfigService(app)
+    this.configService = new ConfigService(app);
   }
 
   /**
@@ -58,19 +58,19 @@ class RunnerService implements IRunnerService {
    * @returns {Promise<void>}
    */
   async sync(options: Parameters<IRunnerService['sync']>[0]): Promise<void> {
-    await this.configService.bootstrapConfig()
+    await this.configService.bootstrapConfig();
 
     if (options.optionSyncValidators) {
-      await this.stakingService.syncValidators(options.optionSyncStartBlockNumber)
+      await this.stakingService.syncValidators(options.optionSyncStartBlockNumber);
     } else {
       if (options.optionSync) {
-        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber);
       } else if (options.optionSyncForce) {
-        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber);
       }
 
       if (options.optionSubscribeFinHead) {
-        await this.consumerService.subscribeFinalizedHeads()
+        await this.consumerService.subscribeFinalizedHeads();
       }
     }
   }
@@ -78,4 +78,4 @@ class RunnerService implements IRunnerService {
 
 export {
   RunnerService
-}
+};

@@ -4,8 +4,8 @@ const errorResponse = {
     code: { type: 'number' },
     message: { type: 'string', nullable: true }
   }
-}
+};
 
 module.exports = {
   errorResponse
-}
+};

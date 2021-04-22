@@ -92,4 +92,4 @@ const validateEnv = async () => await validate(environment);
 export {
   environment,
   validateEnv
-}
+};

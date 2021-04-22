@@ -66,12 +66,12 @@ class ExtrinsicsService implements IExtrinsicsService {
 
     const {kafkaProducer} = this.app;
 
-    const extrinsics: IExtrinsic[] = []
+    const extrinsics: IExtrinsic[] = [];
 
     extrinsicsVec.forEach((extrinsic, exIndex) => {
       const referencedEventsIds = events
         .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(exIndex))
-        .map((_, evIndex) => `${blockNumber}-${evIndex}`)
+        .map((_, evIndex) => `${blockNumber}-${evIndex}`);
 
       if (extrinsic.method.method === 'batch') {
         //fix it later, most probably something bad is going on here
@@ -95,8 +95,8 @@ class ExtrinsicsService implements IExtrinsicsService {
             version: extrinsic.tip.toNumber(),
             extrinsic: batchExtrinsicEntry.toHuman(),
             args: batchExtrinsicEntry.args
-          })
-        })
+          });
+        });
       }
 
       extrinsics.push({
@@ -116,8 +116,8 @@ class ExtrinsicsService implements IExtrinsicsService {
         version: extrinsic.tip.toNumber(),
         extrinsic: extrinsic.toHuman(),
         args: extrinsic.args
-      })
-    })
+      });
+    });
 
     await kafkaProducer
       .send({
@@ -132,9 +132,9 @@ class ExtrinsicsService implements IExtrinsicsService {
         ]
       })
       .catch((error) => {
-        this.app.log.error(`failed to push block: `, error)
-        throw new Error('cannot push block to Kafka')
-      })
+        this.app.log.error(`failed to push block: `, error);
+        throw new Error('cannot push block to Kafka');
+      });
   }
 }
 
@@ -144,4 +144,4 @@ class ExtrinsicsService implements IExtrinsicsService {
  */
 export {
   ExtrinsicsService
-}
+};

@@ -1,6 +1,7 @@
-import Fastify  from 'fastify'
+import Fastify  from 'fastify';
 import { RunnerService } from './services/runner/runner';
 import routes from './routes';
+import pc, { register } from 'prom-client';
 import {
   registerKafkaPlugin,
   registerPolkadotPlugin,
@@ -10,7 +11,7 @@ import {
   environment,
   validateEnv
 } from './environment';
-import yargs from 'yargs'
+import yargs from 'yargs';
 
 const { argv } = yargs
   .option('sync', {
@@ -46,24 +47,48 @@ const { argv } = yargs
   })
   .help();
 
+function run() {
+  const Registry = pc.Registry;
+  const register = new Registry();
+  const gateway = new pc.Pushgateway('http://127.0.0.1:9090', [], register);
+  const prefix = 'dummy_prefix_name';
+
+  const test = new pc.Counter({
+    name: `${prefix}_test`,
+    help: `${prefix}_test`,
+    registers: [register]
+  });
+  register.registerMetric(test);
+  test.inc(10);
+
+  gateway.push({ jobName: prefix }, (err, resp, body) => {
+    console.log(`Error: ${err}`);
+    console.log(`Body: ${body}`);
+    console.log(`Response status: ${resp}`);
+  });
+}
+
+
 const build = async () => {
+  run();
+
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
     logger: {
       level: environment.LOG_LEVEL,
       prettyPrint: true
     }
-  })
+  });
 
   try {
-    await validateEnv()
+    await validateEnv();
   } catch (err) {
-    fastify.log.error(`Environment variable error: "${err.message}"`)
-    fastify.log.error(`Stopping instance...`)
-    process.exit(1)
+    fastify.log.error(`Environment variable error: "${err.message}"`);
+    fastify.log.error(`Stopping instance...`);
+    process.exit(1);
   }
 
-  fastify.log.info(`Init plugins...`)
+  fastify.log.info(`Init plugins...`);
 
   // plugins
   try {
@@ -71,34 +96,34 @@ const build = async () => {
     await registerKafkaPlugin(fastify, {});
     await registerPolkadotPlugin(fastify, {});
   } catch (err) {
-    fastify.log.error(`Cannot init plugin: "${err.message}"`)
-    fastify.log.error(`Stopping instance...`)
-    process.exit(1)
+    fastify.log.error(`Cannot init plugin: "${err.message}"`);
+    fastify.log.error(`Stopping instance...`);
+    process.exit(1);
   }
 
   if (!argv['disable-rpc']) {
     try {
-      await fastify.register(routes, { prefix: 'api' })
+      await fastify.register(routes, { prefix: 'api' });
     } catch (err) {
-      fastify.log.error(`Cannot init endpoint: "${err.message}"`)
-      fastify.log.error(`Stopping instance...`)
-      process.exit(1)
+      fastify.log.error(`Cannot init endpoint: "${err.message}"`);
+      fastify.log.error(`Stopping instance...`);
+      process.exit(1);
     }
   }
 
   // hooks
   fastify.addHook('onClose', (instance) => {
     //  stop sync, disconnect
-    const { postgresConnector } = instance
-    postgresConnector.end()
+    const { postgresConnector } = instance;
+    postgresConnector.end();
 
-    const { polkadotConnector } = instance
-    polkadotConnector.disconnect()
-  })
+    const { polkadotConnector } = instance;
+    polkadotConnector.disconnect();
+  });
 
   try {
     await fastify.ready();
-    const runner = new RunnerService(fastify)
+    const runner = new RunnerService(fastify);
     await runner.sync(
       {
         optionSync: argv['sync-force'] ? false : argv.sync,
@@ -107,14 +132,14 @@ const build = async () => {
         optionSyncStartBlockNumber: argv.start,
         optionSubscribeFinHead: argv['sub-fin-head']
       }
-    )
+    );
   } catch (err) {
-    fastify.log.info(`Fastify ready error: ${err}`)
+    fastify.log.info(`Fastify ready error: ${err}`);
   }
 
-  return fastify
-}
+  return fastify;
+};
 
 export {
   build
-}
+};

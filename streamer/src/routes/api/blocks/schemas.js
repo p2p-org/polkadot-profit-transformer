@@ -1,7 +1,7 @@
-const { errorResponse } = require('../../swagger/defaultSchema')
+const { errorResponse } = require('../../swagger/defaultSchema');
 
 // Tags
-const tags = ['block']
+const tags = ['block'];
 
 // Bodies
 const bodyTrimBlocksJsonSchema = {
@@ -16,7 +16,7 @@ const bodyTrimBlocksJsonSchema = {
     }
   },
   required: ['block_numbers']
-}
+};
 
 // Params
 const paramsJsonSchema = {
@@ -25,7 +25,7 @@ const paramsJsonSchema = {
     blockId: { type: 'number' }
   },
   required: ['blockId']
-}
+};
 
 // Methods
 const getOneSchema = {
@@ -41,7 +41,7 @@ const getOneSchema = {
     400: errorResponse,
     500: errorResponse
   }
-}
+};
 
 const getStatusSchema = {
   tags,
@@ -54,7 +54,7 @@ const getStatusSchema = {
       }
     }
   }
-}
+};
 
 const postDeleteBlocksSchema = {
   tags,
@@ -69,7 +69,7 @@ const postDeleteBlocksSchema = {
     400: errorResponse,
     500: errorResponse
   }
-}
+};
 
 const postTrimSchema = {
   tags,
@@ -84,11 +84,11 @@ const postTrimSchema = {
     400: errorResponse,
     500: errorResponse
   }
-}
+};
 
 module.exports = {
   getOneSchema,
   getStatusSchema,
   postDeleteBlocksSchema,
   postTrimSchema
-}
+};
