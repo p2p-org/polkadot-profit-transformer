@@ -1,4 +1,4 @@
-import { AccountId, EventRecord } from '@polkadot/types/interfaces'
+import { AccountId, EventRecord, Exposure } from '@polkadot/types/interfaces'
 import { TBlockHash, INominator, IValidator, IEraData } from './staking.types'
 import { FastifyInstance } from 'fastify'
 import { ApiPromise } from '@polkadot/api'
@@ -48,12 +48,8 @@ const getValidatorsAndNominatorsData = async ({ blockHash, eraId }: IBlockEraPar
     eraRewardPointsMap.set(accountId.toString(), rewardPoints.toNumber())
   })
 
-  const processValidator = async (validatorAccountId: string) => {
-    const [prefs, stakers, stakersClipped] = await Promise.all([
-      await polkadotConnector.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId),
-      await polkadotConnector.query.staking.erasStakers.at(blockHash, eraId, validatorAccountId),
-      await polkadotConnector.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId)
-    ])
+  const processValidator = async (validatorAccountId: string, stakers: Exposure, stakersClipped: Exposure) => {
+    const prefs = await polkadotConnector.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId)
 
     app.log.debug(`[validators][getStakersByValidator] Loaded stakers: ${stakers.others.length} for validator "${validatorAccountId}"`)
 
@@ -117,13 +113,14 @@ const getValidatorsAndNominatorsData = async ({ blockHash, eraId }: IBlockEraPar
     })
   }
 
-  const validatorsProcessTasks = []
-
   for (const validatorAccountId of validatorsAccountIdSet) {
-    validatorsProcessTasks.push(processValidator(validatorAccountId))
-  }
+    const [stakers, stakersClipped] = await Promise.all([
+      polkadotConnector.query.staking.erasStakers.at(blockHash, eraId, validatorAccountId),
+      polkadotConnector.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId)
+    ])
 
-  await Promise.all(validatorsProcessTasks)
+    await processValidator(validatorAccountId, stakers, stakersClipped)
+  }
 
   return {
     validators,
@@ -142,7 +139,6 @@ const processEraPayout = async (eraPayoutEvent: EventRecord, blockHash: TBlockHa
   // }
 
   app.log.debug(`Process payout for era: ${eraId}`)
-  // await this.updateMetaData(blockHash)
 
   const blockTime = await polkadotConnector.query.timestamp.now.at(blockHash)
 
@@ -184,6 +180,8 @@ const processEraPayout = async (eraPayoutEvent: EventRecord, blockHash: TBlockHa
     app.log.error(`failed to push session data: `, error)
     throw new Error('cannot push session data to Kafka')
   }
+
+  console.log('ERA STAKING FINISHED ----------------------')
 }
 
 export const addEraToProcessingQueue = (() => {

@@ -86,7 +86,6 @@ class ConfigService implements IConfigService {
   }
 
   async setConfigValueToDB(key: string, value: string | number): Promise<void> {
-    console.log('set config in db', { key, value })
     const valueToSave = value.toString()
     const { postgresConnector } = this.app
 

@@ -210,7 +210,7 @@ class BlocksService {
         startBlockNumber = await this.getLastProcessedBlock()
       }
 
-      let lastBlockNumber = 4659901 // await this.getFinBlockNumber()
+      let lastBlockNumber = await this.getFinBlockNumber()
 
       this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
