@@ -1,5 +1,5 @@
 import { SyncStatus } from '../index'
-import { StakingService } from '../staking/staking'
+import { addEraToProcessingQueue } from '../staking/staking'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { environment } from '../../environment'
 import { FastifyInstance } from 'fastify'
@@ -8,7 +8,7 @@ import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
 import { IBlocksStatusResult } from './blocks.types'
 
-const { KAFKA_PREFIX, DB_SCHEMA, ERA_EXTRACTION_OFFSET } = environment
+const { KAFKA_PREFIX, DB_SCHEMA } = environment
 
 /**
  * Provides block operations
@@ -17,7 +17,6 @@ const { KAFKA_PREFIX, DB_SCHEMA, ERA_EXTRACTION_OFFSET } = environment
 class BlocksService {
   private readonly app: FastifyInstance
   private readonly currentSpecVersion: u32
-  private readonly stakingService: StakingService
   private readonly extrinsicsService: ExtrinsicsService
 
   /**
@@ -52,9 +51,6 @@ class BlocksService {
     }
 
     /** @private */
-    this.stakingService = new StakingService(app)
-
-    /** @private */
     this.extrinsicsService = new ExtrinsicsService(app)
   }
 
@@ -79,17 +75,7 @@ class BlocksService {
     return true
   }
 
-  /**
-   * Update one block
-   *
-   * @private
-   * @async
-   * @param {number} height
-   * @param {BlockHash} blockHash
-   * @returns {Promise}
-   */
-
-  async processBlock(height: number, fromWatchdog = false): Promise<void> {
+  async processBlock(height: number): Promise<void> {
     const { polkadotConnector } = this.app
     const { kafkaProducer } = this.app
     let blockHash = null
@@ -104,7 +90,7 @@ class BlocksService {
       throw new Error('cannot get block hash')
     }
 
-    // Check is this required
+    // Check if this required? Will try stage run without it
     // await this.updateMetaData(blockHash)
 
     const [sessionId, blockEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
@@ -115,15 +101,14 @@ class BlocksService {
       polkadotConnector.query.timestamp.now.at(blockHash),
       polkadotConnector.query.system.events.at(blockHash)
     ])
+
     const era = parseInt(blockEra.toString(), 10)
 
     if (!signedBlock) {
       throw new Error('cannot get block')
     }
-    let blockEvents = []
 
     const processedEvents = await this.processEvents(signedBlock.block.header.number.toNumber(), events)
-    blockEvents = processedEvents.events
 
     const lastDigestLogEntry = signedBlock.block.header.digest.logs.length - 1
 
@@ -142,7 +127,7 @@ class BlocksService {
           digest: signedBlock.block.header.digest.toString()
         }
       },
-      events: blockEvents,
+      events: processedEvents,
       block_time: blockTime.toNumber()
     }
 
@@ -171,8 +156,14 @@ class BlocksService {
       signedBlock.block.extrinsics
     )
 
-    if (processedEvents.isNewSession && !(await this.isStakersDataExists(era)) && era - ERA_EXTRACTION_OFFSET >= 0 && !fromWatchdog) {
-      await this.stakingService.extractStakers(era, blockHash)
+    const findEraPayoutEvent = (events: Vec<EventRecord>) => {
+      return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
+    }
+
+    const eraPayoutEvent = findEraPayoutEvent(events)
+
+    if (eraPayoutEvent) {
+      addEraToProcessingQueue(eraPayoutEvent, blockHash)
     }
   }
 
@@ -219,7 +210,7 @@ class BlocksService {
         startBlockNumber = await this.getLastProcessedBlock()
       }
 
-      let lastBlockNumber = await this.getFinBlockNumber()
+      let lastBlockNumber = 4659901 // await this.getFinBlockNumber()
 
       this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
@@ -245,27 +236,6 @@ class BlocksService {
       // Please read and understand the WARNING above before using this API.
       SyncStatus.release()
     }
-  }
-
-  private async isStakersDataExists(era: number): Promise<boolean> {
-    const { rows } = await this.app.postgresConnector.query(
-      `
-      SELECT 1
-      FROM ${DB_SCHEMA}.validators v
-      where v.era = $1
-      union 
-      SELECT 2
-      FROM ${DB_SCHEMA}.nominators n
-      where n.era = $1
-      union 
-      SELECT 3
-      FROM ${DB_SCHEMA}.eras n
-      where n.era = $1
-    `,
-      [era]
-    )
-
-    return !!rows.length && rows.length === 3
   }
 
   /**
@@ -466,12 +436,6 @@ class BlocksService {
     return { result: true }
   }
 
-  /**
-   *
-   * @param {number} blockNumber
-   * @param {Vec<EventRecord>} events
-   * @returns {Promise<Object>}
-   */
   private async processEvents(blockNumber: number, events: Vec<EventRecord>) {
     interface IEvent {
       id: string
@@ -483,23 +447,15 @@ class BlocksService {
       event: Record<string, AnyJson>
     }
 
-    interface IProcessEventsResult {
-      events: Array<IEvent>
-      isNewSession: boolean
-    }
-
-    const reducer = (acc: IProcessEventsResult, record: any, eventIndex: number) => {
+    const processEvent = (acc: Array<IEvent>, record: EventRecord, eventIndex: number): Array<IEvent> => {
       const { event, phase } = record
-      const types = event.typeDef
 
-      if (event.section === 'session' && event.method === 'NewSession') {
-        acc.isNewSession = true
-      }
+      const types = event.typeDef
 
       const extractEventData = (eventDataRaw: any[]): { [x: string]: Codec }[] =>
         eventDataRaw.map((data: any, index: number) => ({ [types[index].type]: data }))
 
-      acc.events.push({
+      acc.push({
         id: `${blockNumber}-${eventIndex}`,
         section: event.section,
         method: event.method,
@@ -512,7 +468,7 @@ class BlocksService {
       return acc
     }
 
-    const result: IProcessEventsResult = events.reduce(reducer, { events: [], isNewSession: false })
+    const result = events.reduce(processEvent, [])
 
     return result
   }

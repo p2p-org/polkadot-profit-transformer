@@ -3,7 +3,6 @@ import { IBlock, IEra, VerifierStatus } from './watchdog.types'
 import { FastifyInstance } from 'fastify'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
-import { StakingService } from '../staking/staking'
 import { BlockHash, SignedBlock } from '@polkadot/types/interfaces'
 
 const { DB_SCHEMA } = environment
@@ -19,7 +18,6 @@ let restartBlockId = -1
 let currentEraId = -1
 let blocksService: BlocksService
 let configService: ConfigService
-let stakingService: StakingService
 
 const getWatchdogStatus = (): VerifierStatus => status
 const setWatchdogStatus = (newStatus: VerifierStatus) => (status = newStatus)
@@ -121,7 +119,7 @@ const verifyBlock = async (blockId: number): Promise<void> => {
   if (!isBlockValidResult) {
     try {
       app.log.debug(`Block ${blockId} is not valid, resync.`)
-      await blocksService.processBlock(blockId, true)
+      await blocksService.processBlock(blockId)
     } catch (error) {
       app.log.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
     }
@@ -177,7 +175,7 @@ const verifyEraOfBlockId = async (blockId: number) => {
   const eraFromDB = await getEraFromDB(delayedEra)
 
   const resyncEra = async (eraId: number, blockHash: string | BlockHash) => {
-    stakingService.extractStakers(eraId, blockHash)
+    // stakingService.extractStakers(eraId, blockHash)
   }
 
   if (!eraFromDB) {
@@ -190,33 +188,33 @@ const verifyEraOfBlockId = async (blockId: number) => {
     }
   }
 
-  const [sessionId, blockTime] = await Promise.all([
-    polkadotConnector.query.session.currentIndex.at(blockHash),
-    polkadotConnector.query.timestamp.now.at(blockHash)
-  ])
+  // const [sessionId, blockTime] = await Promise.all([
+  //   polkadotConnector.query.session.currentIndex.at(blockHash),
+  //   polkadotConnector.query.timestamp.now.at(blockHash)
+  // ])
 
-  const stakingData = await stakingService.getValidators(blockHash, sessionId, blockTime, delayedEra)
+  // const stakingData = await stakingService.getValidators(blockHash, sessionId, blockTime, delayedEra)
 
-  interface IEraData {
-    validators_active: number
-    nominators_active: number
-  }
+  // interface IEraData {
+  //   validators_active: number
+  //   nominators_active: number
+  // }
 
-  const isEraDataValid = (eraFromDB: IEra, eraData: IEraData): boolean => {
-    return eraData.validators_active === eraFromDB.validators_active && eraData.nominators_active === eraFromDB.nominators_active
-  }
+  // const isEraDataValid = (eraFromDB: IEra, eraData: IEraData): boolean => {
+  //   return eraData.validators_active === eraFromDB.validators_active && eraData.nominators_active === eraFromDB.nominators_active
+  // }
 
-  if (!isEraDataValid(eraFromDB, stakingData.era_data)) {
-    app.log.debug(`Era in DB is not equals data from api: ${blockId}, resync`)
-    try {
-      await resyncEra(delayedEra, blockHash)
-      return
-    } catch (error) {
-      app.log.error(`Error when trying to resync era ${delayedEra}`)
-    }
-  }
+  // if (!isEraDataValid(eraFromDB, stakingData.era_data)) {
+  //   app.log.debug(`Era in DB is not equals data from api: ${blockId}, resync`)
+  //   try {
+  //     await resyncEra(delayedEra, blockHash)
+  //     return
+  //   } catch (error) {
+  //     app.log.error(`Error when trying to resync era ${delayedEra}`)
+  //   }
+  // }
 
-  app.log.debug(`Era ${eraFromDB.era} is correct`)
+  // app.log.debug(`Era ${eraFromDB.era} is correct`)
 }
 
 const isStartHeightValid = async (startBlockId: number): Promise<boolean> => {
@@ -322,8 +320,8 @@ const isDBEmpty = async () => {
 
     return blocksInDBCount === 0
   } catch (err) {
-    app.log.error(`No blocks in DB, exit`)
-    throw new Error('no blocks in db')
+    app.log.error(`Error check is db empty`)
+    throw new Error('Error check is db empty')
   }
 }
 
@@ -405,5 +403,4 @@ export const init = (appParam: FastifyInstance, concurrencyParam: number): void 
   app = appParam
   blocksService = new BlocksService(app)
   configService = new ConfigService(app)
-  stakingService = new StakingService(app)
 }

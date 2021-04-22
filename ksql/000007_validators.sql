@@ -1,6 +1,6 @@
 
 CREATE STREAM {APP_PREFIX}_staking_validator (
-    "session_id" INT,
+    "era" INT,
     "validator" STRING
 ) WITH (
     kafka_topic = '{APP_PREFIX}_STAKING_VALIDATOR',
@@ -11,7 +11,7 @@ CREATE STREAM {APP_PREFIX}_staking_validator (
 
 INSERT INTO {APP_PREFIX}_staking_validator
 SELECT
-    S."session_id" "session_id",
+    S."era" "era",
     EXPLODE(S."validators") AS "validator"
 FROM {APP_PREFIX}_SESSION_DATA S
     EMIT CHANGES;
@@ -19,7 +19,6 @@ FROM {APP_PREFIX}_SESSION_DATA S
 CREATE STREAM {APP_PREFIX}_STAKING_VALIDATOR_EXTRACTION (
     "era" INT,
     "account_id" STRING,
-    "is_enabled" BOOLEAN,
     "total" STRING,
     "own" STRING,
     "reward_points" INT,
@@ -38,7 +37,6 @@ CREATE STREAM {APP_PREFIX}_STAKING_VALIDATOR_EXTRACTION (
 INSERT INTO {APP_PREFIX}_STAKING_VALIDATOR_EXTRACTION SELECT
                                              CAST(extractjsonfield(N."validator", '$.era') AS INT) "era",
                                              extractjsonfield(N."validator", '$.account_id') "account_id",
-                                             CAST(extractjsonfield(N."validator", '$.is_enabled') AS BOOLEAN) "is_enabled",
                                              extractjsonfield(N."validator", '$.total') "total",
                                              extractjsonfield(N."validator", '$.own') "own",
                                              CAST(extractjsonfield(N."validator", '$.reward_points') AS INT) "reward_points",

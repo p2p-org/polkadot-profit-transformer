@@ -1,16 +1,16 @@
 import { IRunnerService } from './runner.types'
 import { FastifyInstance } from 'fastify'
 import { IBlocksService } from '../blocks/blocks.types'
-import { IStakingService } from '../staking/staking.types'
 import { IConfigService } from '../config/config.types'
 import { IConsumerService } from '../consumer/consumer.types'
+
+import { init as stakingServiceInit } from '../staking/staking'
 
 import { init as watchdogInit, run as watchdogRun } from '../watchdog/watchdog'
 
 const { ConfigService } = require('../config/config')
 const { ConsumerService } = require('../consumer/consumer')
 const { BlocksService } = require('../blocks/blocks')
-const { StakingService } = require('../staking/staking')
 
 /**
  * Provides cli operations
@@ -21,7 +21,6 @@ class RunnerService implements IRunnerService {
 
   private readonly blocksService: IBlocksService
   private readonly consumerService: IConsumerService
-  private readonly stakingService: IStakingService
   private readonly configService: IConfigService
 
   constructor(app: FastifyInstance) {
@@ -35,10 +34,9 @@ class RunnerService implements IRunnerService {
     this.consumerService = new ConsumerService(app)
 
     /** @private */
-    this.stakingService = new StakingService(app)
-
-    /** @private */
     this.configService = new ConfigService(app)
+
+    stakingServiceInit(app)
   }
 
   /**
@@ -61,11 +59,6 @@ class RunnerService implements IRunnerService {
    */
   async sync(options: Parameters<IRunnerService['sync']>[0]): Promise<void> {
     await this.configService.bootstrapConfig()
-
-    if (options.optionSyncValidators) {
-      await this.stakingService.syncValidators(options.optionSyncStartBlockNumber)
-      return
-    }
 
     if (options.optionSync) {
       await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)

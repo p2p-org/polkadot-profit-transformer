@@ -29,7 +29,7 @@ services:
   watchdog:
     build:
       context: ./streamer
-      dockerfile: ./streamer/Dockerfile.watchdog
+      dockerfile: ./Dockerfile.watchdog
     restart: always
     ports:
       - 8087:8080
