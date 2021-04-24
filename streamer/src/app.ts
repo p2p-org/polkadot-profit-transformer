@@ -1,4 +1,4 @@
-import Fastify  from 'fastify';
+import Fastify from 'fastify';
 import { RunnerService } from './services/runner/runner';
 import routes from './routes';
 import pc, { register } from 'prom-client';
@@ -34,6 +34,20 @@ const { argv } = yargs
     default: 0,
     description: 'Start synchronization from block number'
   })
+  .option('watchdog', {
+    type: 'boolean',
+    default: false,
+    description: 'Run watchdog'
+  })
+  .option('watchdog-concurrency', {
+    type: 'number',
+    default: 10,
+    description: 'Concurrency of watchdog threads'
+  })
+  .option('watchdog-start', {
+    type: 'number',
+    description: 'Start watchdog tests from block number'
+  })
   .option('sub-fin-head', {
     type: 'boolean',
     default: false,
@@ -45,7 +59,7 @@ const { argv } = yargs
     default: false,
     description: 'Disable api'
   })
-  .help();
+  .help()
 
 function run() {
   const Registry = pc.Registry;
@@ -78,23 +92,23 @@ const build = async () => {
       level: environment.LOG_LEVEL,
       prettyPrint: true
     }
-  });
+  })
 
   try {
-    await validateEnv();
+    await validateEnv()
   } catch (err) {
-    fastify.log.error(`Environment variable error: "${err.message}"`);
-    fastify.log.error(`Stopping instance...`);
-    process.exit(1);
+    fastify.log.error(`Environment variable error: "${err.message}"`)
+    fastify.log.error(`Stopping instance...`)
+    process.exit(1)
   }
 
-  fastify.log.info(`Init plugins...`);
+  fastify.log.info(`Init plugins...`)
 
   // plugins
   try {
-    await registerPostgresPlugin(fastify, {});
-    await registerKafkaPlugin(fastify, {});
-    await registerPolkadotPlugin(fastify, {});
+    await registerPostgresPlugin(fastify, {})
+    await registerKafkaPlugin(fastify, {})
+    await registerPolkadotPlugin(fastify, {})
   } catch (err) {
     fastify.log.error(`Cannot init plugin: "${err.message}"`);
     fastify.log.error(`Stopping instance...`);
@@ -103,11 +117,11 @@ const build = async () => {
 
   if (!argv['disable-rpc']) {
     try {
-      await fastify.register(routes, { prefix: 'api' });
+      await fastify.register(routes, { prefix: 'api' })
     } catch (err) {
-      fastify.log.error(`Cannot init endpoint: "${err.message}"`);
-      fastify.log.error(`Stopping instance...`);
-      process.exit(1);
+      fastify.log.error(`Cannot init endpoint: "${err.message}"`)
+      fastify.log.error(`Stopping instance...`)
+      process.exit(1)
     }
   }
 
@@ -122,24 +136,24 @@ const build = async () => {
   });
 
   try {
-    await fastify.ready();
-    const runner = new RunnerService(fastify);
-    await runner.sync(
-      {
-        optionSync: argv['sync-force'] ? false : argv.sync,
-        optionSyncForce: argv['sync-force'],
-        optionSyncValidators: argv['sync-stakers'],
-        optionSyncStartBlockNumber: argv.start,
-        optionSubscribeFinHead: argv['sub-fin-head']
-      }
-    );
+    await fastify.ready()
+    const runner = new RunnerService(fastify)
+    await runner.sync({
+      optionSync: argv['sync-force'] ? false : argv.sync,
+      optionSyncForce: argv['sync-force'],
+      optionSyncValidators: argv['sync-stakers'],
+      optionSyncStartBlockNumber: argv.start,
+      optionSubscribeFinHead: argv['sub-fin-head'],
+      optionStartWatchdog: argv['watchdog'],
+      optionWatchdogStartBlockNumber: argv['watchdog-start'],
+      optionWatchdogConcurrency: argv['watchdog-concurrency']
+    })
   } catch (err) {
-    fastify.log.info(`Fastify ready error: ${err}`);
+    throw err
+    // fastify.log.info(`Fastify ready error: ${err}`)
   }
 
   return fastify;
 };
 
-export {
-  build
-};
+export { build }

@@ -1,60 +1,57 @@
-import { SyncStatus } from '../index';
-import { StakingService } from '../staking/staking';
-import { ExtrinsicsService } from '../extrinsics/extrinsics';
-import { environment } from '../../environment';
-import { FastifyInstance } from 'fastify';
-import { u32, Vec } from '@polkadot/types';
-import { EventRecord } from '@polkadot/types/interfaces';
-import { AnyJson, Codec } from '@polkadot/types/types';
+import { SyncStatus } from '../index'
+import { addEraToProcessingQueue } from '../staking/staking'
+import { ExtrinsicsService } from '../extrinsics/extrinsics'
+import { environment } from '../../environment'
+import { FastifyInstance } from 'fastify'
+import { u32, Vec } from '@polkadot/types'
+import { EventRecord } from '@polkadot/types/interfaces'
+import { AnyJson, Codec } from '@polkadot/types/types'
+import { IBlocksStatusResult } from './blocks.types'
 
-const {KAFKA_PREFIX, DB_SCHEMA} = environment;
+const { KAFKA_PREFIX, DB_SCHEMA } = environment
 
 /**
  * Provides block operations
  * @class
  */
 class BlocksService {
-  private readonly app: FastifyInstance;
-  private readonly currentSpecVersion: u32;
-  private readonly stakingService: StakingService;
-  private readonly extrinsicsService: ExtrinsicsService;
+  private readonly app: FastifyInstance
+  private readonly currentSpecVersion: u32
+  private readonly extrinsicsService: ExtrinsicsService
 
   /**
    * Creates an instance of BlocksService.
    * @param {object} app fastify app
    */
   constructor(app: FastifyInstance) {
-    if (!app.ready) throw new Error(`can't get .ready from fastify app.`);
+    if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
 
     /** @private */
-    this.app = app;
+    this.app = app
 
-    const {polkadotConnector} = this.app;
+    const { polkadotConnector } = this.app
 
     if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.');
+      throw new Error('cant get .polkadotConnector from fastify app.')
     }
 
     /** @type {u32} */
-    this.currentSpecVersion = polkadotConnector.createType('u32', 0);
+    this.currentSpecVersion = polkadotConnector.createType('u32', 0)
 
-    const {kafkaProducer} = this.app;
+    const { kafkaProducer } = this.app
 
     if (!kafkaProducer) {
-      throw new Error('cant get .kafkaProducer from fastify app.');
+      throw new Error('cant get .kafkaProducer from fastify app.')
     }
 
-    const {postgresConnector} = this.app;
+    const { postgresConnector } = this.app
 
     if (!postgresConnector) {
-      throw new Error('cant get .postgresConnector from fastify app.');
+      throw new Error('cant get .postgresConnector from fastify app.')
     }
 
     /** @private */
-    this.stakingService = new StakingService(app);
-
-    /** @private */
-    this.extrinsicsService = new ExtrinsicsService(app);
+    this.extrinsicsService = new ExtrinsicsService(app)
   }
 
   /**
@@ -67,42 +64,33 @@ class BlocksService {
    */
   async updateOneBlock(blockNumber: number): Promise<true> {
     if (SyncStatus.isLocked()) {
-      this.app.log.error(`failed execute "updateOneBlock": sync in process`);
-      throw new Error('sync in process');
+      this.app.log.error(`failed execute "updateOneBlock": sync in process`)
+      throw new Error('sync in process')
     }
 
     await this.processBlock(blockNumber).catch((error) => {
-      this.app.log.error(`failed to process block #${blockNumber}: ${error}`);
-      throw new Error('cannot process block');
-    });
-    return true;
+      this.app.log.error(`failed to process block #${blockNumber}: ${error}`)
+      throw new Error('cannot process block')
+    })
+    return true
   }
 
-  /**
-   * Update one block
-   *
-   * @private
-   * @async
-   * @param {number} height
-   * @param {BlockHash} blockHash
-   * @returns {Promise}
-   */
   async processBlock(height: number): Promise<void> {
-    const {polkadotConnector} = this.app;
-    const {kafkaProducer} = this.app;
-    let blockHash = null;
+    const { polkadotConnector } = this.app
+    const { kafkaProducer } = this.app
+    let blockHash = null
 
     if (height == null) {
-      throw new Error('empty height and blockHash');
+      throw new Error('empty height and blockHash')
     }
 
-    blockHash = await polkadotConnector.rpc.chain.getBlockHash(height);
+    blockHash = await polkadotConnector.rpc.chain.getBlockHash(height)
 
     if (!blockHash) {
-      throw new Error('cannot get block hash');
+      throw new Error('cannot get block hash')
     }
 
-    // Check is this required
+    // Check if this required? Will try stage run without it
     // await this.updateMetaData(blockHash)
 
     const [sessionId, blockEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
@@ -112,17 +100,17 @@ class BlocksService {
       polkadotConnector.derive.chain.getHeader(blockHash),
       polkadotConnector.query.timestamp.now.at(blockHash),
       polkadotConnector.query.system.events.at(blockHash)
-    ]);
+    ])
+
+    const era = parseInt(blockEra.toString(), 10)
 
     if (!signedBlock) {
-      throw new Error('cannot get block');
+      throw new Error('cannot get block')
     }
-    let blockEvents = [];
 
-    const processedEvents = await this.processEvents(signedBlock.block.header.number.toNumber(), events);
-    blockEvents = processedEvents.events;
+    const processedEvents = await this.processEvents(signedBlock.block.header.number.toNumber(), events)
 
-    const lastDigestLogEntry = signedBlock.block.header.digest.logs.length - 1;
+    const lastDigestLogEntry = signedBlock.block.header.digest.logs.length - 1
 
     const blockData = {
       block: {
@@ -131,7 +119,7 @@ class BlocksService {
           hash: signedBlock.block.header.hash.toHex(),
           author: extHeader?.author ? extHeader.author.toString() : '',
           session_id: sessionId.toNumber(),
-          era: parseInt(blockEra.toString(), 10),
+          era,
           stateRoot: signedBlock.block.header.stateRoot.toHex(),
           extrinsicsRoot: signedBlock.block.header.extrinsicsRoot.toHex(),
           parentHash: signedBlock.block.header.parentHash.toHex(),
@@ -139,38 +127,43 @@ class BlocksService {
           digest: signedBlock.block.header.digest.toString()
         }
       },
-      events: blockEvents,
+      events: processedEvents,
       block_time: blockTime.toNumber()
-    };
+    }
 
-    this.app.log.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`);
+    this.app.log.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
 
     try {
-      await kafkaProducer
-          .send({
-            topic: KAFKA_PREFIX + '_BLOCK_DATA',
-            messages: [
-              {
-                key: blockData.block.header.number.toString(),
-                value: JSON.stringify(blockData)
-              }
-            ]
-          });
-    } catch(error) {
-      this.app.log.error(`failed to push block: `, error);
-      throw new Error('cannot push block to Kafka');
+      await kafkaProducer.send({
+        topic: KAFKA_PREFIX + '_BLOCK_DATA',
+        messages: [
+          {
+            key: blockData.block.header.number.toString(),
+            value: JSON.stringify(blockData)
+          }
+        ]
+      })
+    } catch (error) {
+      this.app.log.error(`failed to push block: `, error)
+      throw new Error('cannot push block to Kafka')
     }
 
     await this.extrinsicsService.extractExtrinsics(
-        parseInt(blockEra.toString(), 10),
-        sessionId.toNumber(),
-        signedBlock.block.header.number,
-        events,
-        signedBlock.block.extrinsics
-    );
+      era,
+      sessionId.toNumber(),
+      signedBlock.block.header.number,
+      events,
+      signedBlock.block.extrinsics
+    )
 
-    if (processedEvents.isNewSession) {
-      await this.stakingService.extractStakers(parseInt(blockEra.toString(), 10), blockHash);
+    const findEraPayoutEvent = (events: Vec<EventRecord>) => {
+      return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
+    }
+
+    const eraPayoutEvent = findEraPayoutEvent(events)
+
+    if (eraPayoutEvent) {
+      addEraToProcessingQueue(eraPayoutEvent, blockHash)
     }
   }
 
@@ -182,20 +175,20 @@ class BlocksService {
    * @param {BlockHash} blockHash - The block hash
    */
   private async updateMetaData(blockHash: any): Promise<void> {
-    const {polkadotConnector} = this.app;
+    const { polkadotConnector } = this.app
 
     /** @type {RuntimeVersion} */
-    const runtimeVersion = await polkadotConnector.rpc.state.getRuntimeVersion(blockHash);
+    const runtimeVersion = await polkadotConnector.rpc.state.getRuntimeVersion(blockHash)
 
     /** @type {u32} */
-    const newSpecVersion = runtimeVersion.specVersion;
+    const newSpecVersion = runtimeVersion.specVersion
 
     if (newSpecVersion.gt(this.currentSpecVersion)) {
-      this.app.log.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`);
+      this.app.log.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
 
-      const rpcMeta = await polkadotConnector.rpc.state.getMetadata(blockHash);
+      const rpcMeta = await polkadotConnector.rpc.state.getMetadata(blockHash)
 
-      polkadotConnector.registry.setMetadata(rpcMeta);
+      polkadotConnector.registry.setMetadata(rpcMeta)
     }
   }
 
@@ -208,18 +201,18 @@ class BlocksService {
    * @returns {Promise<void>}
    */
   async processBlocks(startBlockNumber: number | null = null): Promise<void> {
-    await SyncStatus.acquire();
+    await SyncStatus.acquire()
 
     try {
-      this.app.log.info(`Starting processBlocks`);
+      this.app.log.info(`Starting processBlocks`)
 
       if (!startBlockNumber) {
-        startBlockNumber = await this.getLastProcessedBlock();
+        startBlockNumber = await this.getLastProcessedBlock()
       }
 
-      let lastBlockNumber = await this.getFinBlockNumber();
+      let lastBlockNumber = await this.getFinBlockNumber()
 
-      this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`);
+      this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
       for (let i = startBlockNumber; i <= lastBlockNumber; i += 10) {
         await Promise.all([
@@ -233,15 +226,15 @@ class BlocksService {
           this.runBlocksWorker(8, i + 7),
           this.runBlocksWorker(9, i + 8),
           this.runBlocksWorker(10, i + 9)
-        ]);
+        ])
 
         if (i === lastBlockNumber) {
-          lastBlockNumber = await this.getFinBlockNumber();
+          lastBlockNumber = await this.getFinBlockNumber()
         }
       }
     } finally {
       // Please read and understand the WARNING above before using this API.
-      SyncStatus.release();
+      SyncStatus.release()
     }
   }
 
@@ -255,19 +248,19 @@ class BlocksService {
    */
   private async runBlocksWorker(workerId: number, blockNumber: number) {
     for (let attempts = 5; attempts > 0; attempts--) {
-      let lastError = null;
+      let lastError = null
       await this.processBlock(blockNumber).catch((error) => {
-        lastError = error;
-        this.app.log.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`);
-      });
+        lastError = error
+        this.app.log.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
+      })
 
       if (!lastError) {
-        return true;
+        return true
       }
 
-      await this.sleep(2000);
+      await this.sleep(2000)
     }
-    return false;
+    return false
   }
 
   /**
@@ -278,31 +271,31 @@ class BlocksService {
    * @returns {Promise<number>}
    */
   async getLastProcessedBlock(): Promise<number> {
-    const {postgresConnector} = this.app;
+    const { postgresConnector } = this.app
 
-    let blockNumberFromDB = 0;
+    let blockNumberFromDB = 0
 
     try {
-      const {rows} = await postgresConnector.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`);
+      const { rows } = await postgresConnector.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
 
       if (rows.length && rows[0].last_number) {
-        blockNumberFromDB = parseInt(rows[0].last_number);
+        blockNumberFromDB = parseInt(rows[0].last_number)
       }
     } catch (err) {
-      this.app.log.error(`failed to get last synchronized block number: ${err}`);
-      throw new Error('cannot get last block number');
+      this.app.log.error(`failed to get last synchronized block number: ${err}`)
+      throw new Error('cannot get last block number')
     }
 
-    return blockNumberFromDB;
+    return blockNumberFromDB
   }
 
-  private async getFinBlockNumber() {
-    const {polkadotConnector} = this.app;
+  async getFinBlockNumber(): Promise<number> {
+    const { polkadotConnector } = this.app
 
-    const lastFinHeader = await polkadotConnector.rpc.chain.getFinalizedHead();
-    const lastFinBlock = await polkadotConnector.rpc.chain.getBlock(lastFinHeader);
+    const lastFinHeader = await polkadotConnector.rpc.chain.getFinalizedHead()
+    const lastFinBlock = await polkadotConnector.rpc.chain.getBlock(lastFinHeader)
 
-    return lastFinBlock.block.header.number.toNumber();
+    return lastFinBlock.block.header.number.toNumber()
   }
 
   /**
@@ -321,33 +314,33 @@ class BlocksService {
    * @async
    * @returns {Promise<SyncSimpleStatus>}
    */
-  async getBlocksStatus() {
-    const {polkadotConnector} = this.app;
+  async getBlocksStatus(): Promise<IBlocksStatusResult> {
+    const { polkadotConnector } = this.app
 
     const result = {
       status: 'undefined',
       height_diff: -1,
       fin_height_diff: -1
-    };
+    }
 
     if (SyncStatus.isLocked()) {
-      result.status = 'synchronization';
+      result.status = 'synchronization'
     } else {
-      result.status = 'synchronized';
+      result.status = 'synchronized'
     }
 
     try {
-      const lastBlockNumber = await this.getFinBlockNumber();
-      const lastHeader = await polkadotConnector.rpc.chain.getHeader();
-      const lastLocalNumber = await this.getLastProcessedBlock();
+      const lastBlockNumber = await this.getFinBlockNumber()
+      const lastHeader = await polkadotConnector.rpc.chain.getHeader()
+      const lastLocalNumber = await this.getLastProcessedBlock()
 
-      result.height_diff = lastBlockNumber - lastLocalNumber;
-      result.fin_height_diff = lastHeader.number.toNumber() - lastBlockNumber;
+      result.height_diff = lastBlockNumber - lastLocalNumber
+      result.fin_height_diff = lastHeader.number.toNumber() - lastBlockNumber
     } catch (err) {
-      this.app.log.error(`failed to get block diff: ${err}`);
+      this.app.log.error(`failed to get block diff: ${err}`)
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -359,32 +352,32 @@ class BlocksService {
    * @returns {Promise<{result: boolean}>}
    */
   async removeBlocks(blockNumbers: number[]): Promise<{ result: true }> {
-    const {postgresConnector} = this.app;
-    const transaction = await postgresConnector.connect();
+    const { postgresConnector } = this.app
+    const transaction = await postgresConnector.connect()
 
     try {
       await transaction.query({
-            text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
-            values: [blockNumbers]
-      });
+        text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
+        values: [blockNumbers]
+      })
 
       for (const tbl of ['balances', 'events', 'extrinsics']) {
         await transaction.query({
           text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
           values: [blockNumbers]
-        });
+        })
       }
 
-      await transaction.query('COMMIT');
-      transaction.release();
+      await transaction.query('COMMIT')
+      transaction.release()
     } catch (err) {
-      this.app.log.error(`failed to remove block from table: ${err}`);
-      await transaction.query('ROLLBACK');
-      transaction.release();
-      throw new Error('cannot remove blocks');
+      this.app.log.error(`failed to remove block from table: ${err}`)
+      await transaction.query('ROLLBACK')
+      transaction.release()
+      throw new Error('cannot remove blocks')
     }
 
-    return {result: true};
+    return { result: true }
   }
 
   /**
@@ -396,29 +389,29 @@ class BlocksService {
    * @returns {Promise<void>}
    */
   private async trimBlocks(startBlockNumber: number): Promise<void> {
-    const {postgresConnector} = this.app;
-    const transaction = await postgresConnector.connect();
+    const { postgresConnector } = this.app
+    const transaction = await postgresConnector.connect()
 
     try {
       await transaction.query({
         text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" >= $1::int`,
         values: [startBlockNumber]
-      });
+      })
 
       for (const tbl of ['balances', 'events', 'extrinsics']) {
         await transaction.query({
           text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "id" >= $1::int`,
           values: [startBlockNumber]
-        });
+        })
       }
 
-      await transaction.query('COMMIT');
-      transaction.release();
+      await transaction.query('COMMIT')
+      transaction.release()
     } catch (err) {
-      this.app.log.error(`failed to remove blocks from table: ${err}`);
-      await transaction.query('ROLLBACK');
-      transaction.release();
-      throw new Error('cannot remove blocks');
+      this.app.log.error(`failed to remove blocks from table: ${err}`)
+      await transaction.query('ROLLBACK')
+      transaction.release()
+      throw new Error('cannot remove blocks')
     }
   }
 
@@ -430,72 +423,54 @@ class BlocksService {
    */
   async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
     if (SyncStatus.isLocked()) {
-      this.app.log.error(`failed setup "trimAndUpdateToFinalized": sync in process`);
-      return {result: false};
+      this.app.log.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
+      return { result: false }
     }
 
     try {
-      await this.trimBlocks(startBlockNumber);
-      await this.processBlocks(startBlockNumber);
+      await this.trimBlocks(startBlockNumber)
+      await this.processBlocks(startBlockNumber)
     } catch (err) {
-      this.app.log.error(`failed to execute trimAndUpdateToFinalized: ${err}`);
+      this.app.log.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
     }
-    return {result: true};
+    return { result: true }
   }
 
-  /**
-   *
-   * @param {number} blockNumber
-   * @param {Vec<EventRecord>} events
-   * @returns {Promise<Object>}
-   */
   private async processEvents(blockNumber: number, events: Vec<EventRecord>) {
-    const blockEvents: {
-      id: string;
-      section: string;
-      method: string;
-      phase: AnyJson;
-      meta: Record<string, AnyJson>;
-      data: any[];
-      event: Record<string, AnyJson>;
-    }[] = [];
+    interface IEvent {
+      id: string
+      section: string
+      method: string
+      phase: AnyJson
+      meta: Record<string, AnyJson>
+      data: any[]
+      event: Record<string, AnyJson>
+    }
 
-    let isNewSession = false;
+    const processEvent = (acc: Array<IEvent>, record: EventRecord, eventIndex: number): Array<IEvent> => {
+      const { event, phase } = record
 
-    events.forEach((record, eventIndex) => {
-      const {event, phase} = record;
-      const types = event.typeDef;
+      const types = event.typeDef
 
-      const eventData: { [x: string]: Codec; }[] = [];
+      const extractEventData = (eventDataRaw: any[]): { [x: string]: Codec }[] =>
+        eventDataRaw.map((data: any, index: number) => ({ [types[index].type]: data }))
 
-      if (event.section === 'session') {
-        if (event.method === 'NewSession') {
-          isNewSession = true;
-        }
-      }
+      acc.push({
+        id: `${blockNumber}-${eventIndex}`,
+        section: event.section,
+        method: event.method,
+        phase: phase.toJSON(),
+        meta: event.meta.toJSON(),
+        data: extractEventData(event.data),
+        event: event.toJSON()
+      })
 
-      if (event.data.length) {
-        event.data.forEach((data, index) => {
-          eventData.push({
-            [types[index].type]: data
-          });
-        });
+      return acc
+    }
 
-        blockEvents.push({
-          id: `${blockNumber}-${eventIndex}`,
-          section: event.section,
-          method: event.method,
-          phase: phase.toJSON(),
-          meta: event.meta.toJSON(),
-          data: eventData,
-          event: event.toJSON()
-        });
-      }
-    });
-    return {
-      events: blockEvents,
-      isNewSession: isNewSession
-    };
+    const result = events.reduce(processEvent, [])
+
+    return result
   }
 
   /**
@@ -503,7 +478,7 @@ class BlocksService {
    * @param {number} ms
    * @returns {Promise<>}
    */
-  async sleep(ms: number) {
+  async sleep(ms: number): Promise<any> {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
@@ -514,6 +489,4 @@ class BlocksService {
  *
  * @type {{BlocksService: BlocksService}}
  */
-export {
-  BlocksService
-};
+export { BlocksService }

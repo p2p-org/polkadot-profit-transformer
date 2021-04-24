@@ -9,7 +9,7 @@
   "private": false,
   "scripts": {
     "build": "npx tsc",
-    "start": "npx ts-node --trace-warnings src/main.ts",
+    "start": "npx ts-node src/main.ts",
     "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
     "dev": "npx ts-node src/main.ts --sync",
     "lint": "npx eslint --ext .js,.ts src/main.ts",

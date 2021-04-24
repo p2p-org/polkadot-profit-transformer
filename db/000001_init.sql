@@ -55,8 +55,6 @@ CREATE TABLE dot_polka.extrinsics (
 CREATE TABLE dot_polka.eras (
     "era" INT PRIMARY KEY,
     "session_start" INT,
-    "validators_active" INT,
-    "nominators_active" INT,
     "total_reward" BIGINT,
     "total_stake" BIGINT,
     "total_reward_points" INT
@@ -65,7 +63,6 @@ CREATE TABLE dot_polka.eras (
 CREATE TABLE dot_polka.validators (
     "era" INT,
     "account_id" VARCHAR(150),
-    "is_enabled" BOOL,
     "total" BIGINT,
     "own" BIGINT,
     "nominators_count" INT,
@@ -81,7 +78,6 @@ CREATE TABLE dot_polka.nominators (
     "era" INT,
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
-    "is_enabled" BOOL,
     "is_clipped" BOOL,
     "value" BIGINT,
     "reward_dest" VARCHAR (50),
@@ -174,8 +170,6 @@ CREATE TABLE dot_polka._extrinsics (
 CREATE TABLE dot_polka._eras (
     "era" INT PRIMARY KEY ,
     "session_start" INT,
-    "validators_active" INT,
-    "nominators_active" INT,
     "total_reward" TEXT,
     "total_stake" TEXT,
     "total_reward_points" INT
@@ -184,7 +178,6 @@ CREATE TABLE dot_polka._eras (
 CREATE TABLE dot_polka._validators (
     "era" INT,
     "account_id" VARCHAR(150),
-    "is_enabled" BOOL,
     "is_clipped" BOOL,
     "total" TEXT,
     "own" TEXT,
@@ -200,7 +193,6 @@ CREATE TABLE dot_polka._nominators (
     "era" INT,
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
-    "is_enabled" BOOL,
     "is_clipped" BOOL,
     "value" TEXT,
     "reward_dest" VARCHAR (50),
@@ -411,7 +403,6 @@ $$
 BEGIN
     INSERT INTO dot_polka.validators("era",
                                 "account_id",
-                                "is_enabled",
                                 "total",
                                 "own",
                                 "reward_points",
@@ -422,7 +413,6 @@ BEGIN
                                 "block_time")
     VALUES (NEW."era",
             NEW."account_id",
-            NEW."is_enabled",
             NEW."total"::BIGINT,
             NEW."own"::BIGINT,
             NEW."reward_points",
@@ -472,7 +462,6 @@ BEGIN
     INSERT INTO dot_polka.nominators("era",
                                 "account_id",
                                 "validator",
-                                "is_enabled",
                                 "is_clipped",
                                 "value",
                                 "reward_dest",
@@ -481,7 +470,6 @@ BEGIN
     VALUES (NEW."era",
             NEW."account_id",
             NEW."validator",
-            NEW."is_enabled",
             NEW."is_clipped",
             NEW."value"::BIGINT,
             NEW."reward_dest",
@@ -527,16 +515,12 @@ $$
 BEGIN
 INSERT INTO dot_polka.eras("era",
                                "session_start",
-                               "validators_active",
-                               "nominators_active",
                                "total_reward",
                                "total_stake",
                                "total_reward_points"
                                )
 VALUES (NEW."era",
         NEW."session_start",
-        NEW."validators_active",
-        NEW."nominators_active",
         NEW."total_reward"::BIGINT,
         NEW."total_stake"::BIGINT,
         NEW."total_reward_points")
