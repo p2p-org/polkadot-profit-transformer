@@ -3,7 +3,7 @@ import { IBlock, IEra, VerifierStatus } from './watchdog.types'
 import { FastifyInstance } from 'fastify'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
-import { BlockHash, SignedBlock } from '@polkadot/types/interfaces'
+import { /*BlockHash,*/ SignedBlock } from '@polkadot/types/interfaces'
 
 const { DB_SCHEMA } = environment
 
@@ -174,14 +174,14 @@ const verifyEraOfBlockId = async (blockId: number) => {
 
   const eraFromDB = await getEraFromDB(delayedEra)
 
-  const resyncEra = async (eraId: number, blockHash: string | BlockHash) => {
+  const resyncEra = async (/*eraId: number, blockHash: string | BlockHash*/) => {
     // stakingService.extractStakers(eraId, blockHash)
   }
 
   if (!eraFromDB) {
     app.log.debug(`Era is not exists in DB: ${delayedEra}, resync`)
     try {
-      await resyncEra(delayedEra, blockHash)
+      await resyncEra(/*delayedEra, blockHash*/)
       return
     } catch (error) {
       app.log.error(`error whan trying to resync era ${delayedEra}`)

@@ -1,6 +1,6 @@
-import { Kafka, Producer } from 'kafkajs';
-import fastifyPlugin from 'fastify-plugin';
-import { FastifyInstance } from 'fastify';
+import { Kafka, Producer } from 'kafkajs'
+import fastifyPlugin from 'fastify-plugin'
+import { FastifyInstance } from 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -10,20 +10,20 @@ declare module 'fastify' {
 
 const {
   environment: { APP_CLIENT_ID, KAFKA_URI }
-} = require('../environment');
+} = require('../environment')
 
 const kafkaProducer = async (server: FastifyInstance) => {
-  server.log.info(`Init "kafkaProducer"`);
+  server.log.info(`Init "kafkaProducer"`)
 
   const kafka = new Kafka({
     clientId: APP_CLIENT_ID,
     brokers: [KAFKA_URI]
-  });
+  })
 
-  const producer = kafka.producer();
-  await producer.connect();
+  const producer = kafka.producer()
+  await producer.connect()
 
-  server.decorate('kafkaProducer', producer);
-};
+  server.decorate('kafkaProducer', producer)
+}
 
-export const registerKafkaPlugin = fastifyPlugin(kafkaProducer);
+export const registerKafkaPlugin = fastifyPlugin(kafkaProducer)

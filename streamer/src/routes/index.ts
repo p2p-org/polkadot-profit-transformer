@@ -1,6 +1,7 @@
-const oas = require('fastify-swagger')
+import oas from 'fastify-swagger'
+import { FastifyInstance } from 'fastify'
 
-const apiRoutes = async (app) => {
+export default async (app: FastifyInstance): Promise<void> => {
   app.register(oas, require('./swagger'))
   app.register(require('./api/blocks'), { prefix: 'blocks' })
   app.register(require('./api/watchdog'), { prefix: 'watchdog' })
@@ -8,5 +9,3 @@ const apiRoutes = async (app) => {
     return { api: 'v1.0' }
   })
 }
-
-module.exports = apiRoutes

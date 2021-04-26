@@ -1,6 +1,6 @@
-import { ApiPromise, WsProvider } from '@polkadot/api';
-import fastifyPlugin from 'fastify-plugin';
-import { FastifyInstance } from 'fastify';
+import { ApiPromise, WsProvider } from '@polkadot/api'
+import fastifyPlugin from 'fastify-plugin'
+import { FastifyInstance } from 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -10,15 +10,15 @@ declare module 'fastify' {
 
 const {
   environment: { SUBSTRATE_URI }
-} = require('../environment');
+} = require('../environment')
 
 const polkadotConnector = async (server: FastifyInstance) => {
-  server.log.info(`Init "polkadotConnector"`);
+  server.log.info(`Init "polkadotConnector"`)
 
-  const wsProvider = new WsProvider(SUBSTRATE_URI);
-  const api = await ApiPromise.create({ provider: wsProvider });
-  server.decorate('polkadotConnector', api);
-};
+  const wsProvider = new WsProvider(SUBSTRATE_URI)
+  const api = await ApiPromise.create({ provider: wsProvider })
+  server.decorate('polkadotConnector', api)
+}
 
-export const registerPolkadotPlugin = fastifyPlugin(polkadotConnector);
+export const registerPolkadotPlugin = fastifyPlugin(polkadotConnector)
 

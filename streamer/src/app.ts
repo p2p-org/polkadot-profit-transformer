@@ -1,17 +1,18 @@
-import Fastify from 'fastify';
-import { RunnerService } from './services/runner/runner';
-import routes from './routes';
-import pc, { register } from 'prom-client';
+import Fastify, { FastifyInstance } from 'fastify'
+import { RunnerService } from './services/runner/runner'
+import routes from './routes'
+import pc from 'prom-client'
 import {
   registerKafkaPlugin,
   registerPolkadotPlugin,
   registerPostgresPlugin
-} from './plugins';
+} from './plugins'
 import {
   environment,
   validateEnv
-} from './environment';
-import yargs from 'yargs';
+} from './environment'
+import yargs from 'yargs'
+import prometheus from './routes/api/prometheus'
 
 const { argv } = yargs
   .option('sync', {
@@ -62,29 +63,29 @@ const { argv } = yargs
   .help()
 
 function run() {
-  const Registry = pc.Registry;
-  const register = new Registry();
-  const gateway = new pc.Pushgateway('http://127.0.0.1:9090', [], register);
-  const prefix = 'dummy_prefix_name';
+  const Registry = pc.Registry
+  const register = new Registry()
+  const gateway = new pc.Pushgateway('http://127.0.0.1:9090', [], register)
+  const prefix = 'dummy_prefix_name'
 
   const test = new pc.Counter({
     name: `${prefix}_test`,
     help: `${prefix}_test`,
     registers: [register]
-  });
-  register.registerMetric(test);
-  test.inc(10);
+  })
+  register.registerMetric(test)
+  test.inc(10)
 
   gateway.push({ jobName: prefix }, (err, resp, body) => {
-    console.log(`Error: ${err}`);
-    console.log(`Body: ${body}`);
-    console.log(`Response status: ${resp}`);
-  });
+    console.log(`Error: ${err}`)
+    console.log(`Body: ${body}`)
+    console.log(`Response status: ${resp}`)
+  })
 }
 
 
-const build = async () => {
-  run();
+const build = async (): Promise<FastifyInstance> => {
+  run()
 
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
@@ -110,14 +111,15 @@ const build = async () => {
     await registerKafkaPlugin(fastify, {})
     await registerPolkadotPlugin(fastify, {})
   } catch (err) {
-    fastify.log.error(`Cannot init plugin: "${err.message}"`);
-    fastify.log.error(`Stopping instance...`);
-    process.exit(1);
+    fastify.log.error(`Cannot init plugin: "${err.message}"`)
+    fastify.log.error(`Stopping instance...`)
+    process.exit(1)
   }
 
   if (!argv['disable-rpc']) {
     try {
       await fastify.register(routes, { prefix: 'api' })
+      await fastify.register(prometheus, { prefix: '/' })
     } catch (err) {
       fastify.log.error(`Cannot init endpoint: "${err.message}"`)
       fastify.log.error(`Stopping instance...`)
@@ -128,12 +130,12 @@ const build = async () => {
   // hooks
   fastify.addHook('onClose', (instance) => {
     //  stop sync, disconnect
-    const { postgresConnector } = instance;
-    postgresConnector.end();
+    const { postgresConnector } = instance
+    postgresConnector.end()
 
-    const { polkadotConnector } = instance;
-    polkadotConnector.disconnect();
-  });
+    const { polkadotConnector } = instance
+    polkadotConnector.disconnect()
+  })
 
   try {
     await fastify.ready()
@@ -153,7 +155,7 @@ const build = async () => {
     // fastify.log.info(`Fastify ready error: ${err}`)
   }
 
-  return fastify;
-};
+  return fastify
+}
 
 export { build }

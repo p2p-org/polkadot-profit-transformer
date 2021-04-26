@@ -61,7 +61,7 @@ class RunnerService implements IRunnerService {
     await this.configService.bootstrapConfig()
 
     if (options.optionSync) {
-      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+      this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
     }
 
     if (options.optionSyncForce) {

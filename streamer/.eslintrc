@@ -37,6 +37,6 @@
     "no-useless-escape": 0,
     "valid-jsdoc": 0,
     "linebreak-style": [ "error", "unix" ],
-    "semi": "error"
+    "semi": ["error", "never"]
   }
 }
