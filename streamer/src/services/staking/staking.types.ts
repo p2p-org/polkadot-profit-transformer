@@ -1,28 +1,10 @@
+import { StakingService } from './staking'
 import { AccountId, BlockHash, EraIndex, Moment, RewardPoint, SessionIndex, ValidatorId } from '@polkadot/types/interfaces'
 import { AnyJson } from '@polkadot/types/types'
+import { FastifyInstance } from 'fastify'
 
 export interface IStakingService {
-  syncValidators(blockNumber: number): Promise<void>
-
-  extractStakers(era: TBlockEra, blockData: TBlockHash): Promise<void>
-
-  getValidators(blockHash: TBlockHash, sessionId: SessionIndex, blockTime: Moment, blockEra: TBlockEra): Promise<IGetValidatorsResult>
-
-  getStakersByValidator(
-    blockHash: TBlockHash,
-    sessionId: SessionIndex,
-    blockTime: Moment,
-    blockEra: TBlockEra,
-    erasRewardPointsMap: Map<AccountId, RewardPoint>,
-    validators: ValidatorId[],
-    isEnabled: boolean
-  ): Promise<IGetStakersByValidator>
-
-  getFirstBlockFromDB(era: number, offset: number): Promise<Pick<IBlockModel, 'id' | 'hash'>>
-
-  getLastEraFromDB(): Promise<IBlockModel['era']>
-
-  updateMetaData(blockHash: TBlockHash): Promise<void>
+  //
 }
 
 export interface IBlockModel {

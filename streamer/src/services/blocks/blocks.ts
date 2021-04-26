@@ -1,5 +1,5 @@
 import { SyncStatus } from '../index'
-import { addEraToProcessingQueue } from '../staking/staking'
+import StakingService from '../staking/staking'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { environment } from '../../environment'
 import { FastifyInstance } from 'fastify'
@@ -18,6 +18,7 @@ class BlocksService {
   private readonly app: FastifyInstance
   private readonly currentSpecVersion: u32
   private readonly extrinsicsService: ExtrinsicsService
+  private readonly stakingService: StakingService
 
   /**
    * Creates an instance of BlocksService.
@@ -52,6 +53,7 @@ class BlocksService {
 
     /** @private */
     this.extrinsicsService = new ExtrinsicsService(app)
+    this.stakingService = StakingService.getInstance(app)
   }
 
   /**
@@ -163,7 +165,7 @@ class BlocksService {
     const eraPayoutEvent = findEraPayoutEvent(events)
 
     if (eraPayoutEvent) {
-      addEraToProcessingQueue(eraPayoutEvent, blockHash)
+      this.stakingService.addToQueue({ eraPayoutEvent, blockHash })
     }
   }
 

@@ -4,8 +4,6 @@ import { IBlocksService } from '../blocks/blocks.types'
 import { IConfigService } from '../config/config.types'
 import { IConsumerService } from '../consumer/consumer.types'
 
-import { init as stakingServiceInit } from '../staking/staking'
-
 import { init as watchdogInit, run as watchdogRun } from '../watchdog/watchdog'
 
 const { ConfigService } = require('../config/config')
@@ -35,8 +33,6 @@ class RunnerService implements IRunnerService {
 
     /** @private */
     this.configService = new ConfigService(app)
-
-    stakingServiceInit(app)
   }
 
   /**
