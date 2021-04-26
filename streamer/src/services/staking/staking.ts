@@ -1,5 +1,13 @@
-import { AccountId, EventRecord, Exposure } from '@polkadot/types/interfaces'
-import { TBlockHash, INominator, IValidator, IEraData, IStakingService } from './staking.types'
+import { AccountId, Exposure } from '@polkadot/types/interfaces'
+import {
+  IGetValidatorsNominatorsResult,
+  IBlockEraParams,
+  INominator,
+  IValidator,
+  IEraData,
+  IStakingService,
+  IProcessEraPayload
+} from './staking.types'
 import { FastifyInstance } from 'fastify'
 import { ApiPromise } from '@polkadot/api'
 import { Producer } from 'kafkajs'
@@ -9,22 +17,8 @@ const {
   environment: { KAFKA_PREFIX }
 } = require('../../environment')
 
-interface IBlockEraParams {
-  eraId: number
-  blockHash: TBlockHash
-}
-interface IProcessEraPayload {
-  eraPayoutEvent: EventRecord
-  blockHash: TBlockHash
-}
-
-interface IGetValidatorsNominatorsResult {
-  nominators: INominator[]
-  validators: IValidator[]
-}
-
 export default class StakingService implements IStakingService {
-  private static instance: StakingService
+  static instance: StakingService
   private readonly app: FastifyInstance
   private readonly polkadotConnector: ApiPromise
   private readonly kafkaProducer: Producer
@@ -215,7 +209,7 @@ export default class StakingService implements IStakingService {
       throw new Error('cannot push session data to Kafka')
     }
 
-    console.log('ERA STAKING FINISHED ----------------------')
+    this.app.log.debug(`Era ${eraId.toString()} staking processing finished`)
     cb(null)
   }
 }

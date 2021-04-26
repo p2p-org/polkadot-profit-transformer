@@ -1,28 +1,26 @@
-import { StakingService } from './staking'
-import { AccountId, BlockHash, EraIndex, Moment, RewardPoint, SessionIndex, ValidatorId } from '@polkadot/types/interfaces'
+import { AccountId, BlockHash, EraIndex, EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson } from '@polkadot/types/types'
-import { FastifyInstance } from 'fastify'
+
+export type TBlockHash = string | BlockHash | Uint8Array
+export type TBlockEra = number | string | EraIndex | Uint8Array
+
+export interface IProcessEraPayload {
+  eraPayoutEvent: EventRecord
+  blockHash: TBlockHash
+}
+
+export interface IBlockEraParams {
+  eraId: number
+  blockHash: TBlockHash
+}
+
+export interface IGetValidatorsNominatorsResult {
+  nominators: INominator[]
+  validators: IValidator[]
+}
 
 export interface IStakingService {
-  //
-}
-
-export interface IBlockModel {
-  id: string
-  hash: string
-  era: number
-}
-
-export interface IGetStakersByValidator {
-  validators: IValidator[]
-  nominators: INominator[]
-}
-export interface IGetValidatorsResult {
-  validators: IValidator[]
-  stakers: IStaker[]
-  era_data: IEraData
-  nominators: INominator[]
-  nominators_active: number
+  addToQueue(payload: IProcessEraPayload): void
 }
 
 export interface IValidator {
@@ -36,9 +34,6 @@ export interface IValidator {
   reward_account_id?: string
   prefs: Record<string, AnyJson>
 }
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IStaker {}
 
 export interface INominator {
   account_id: string
@@ -57,6 +52,3 @@ export interface IEraData {
   total_stake: string
   total_reward_points: number
 }
-
-export type TBlockHash = string | BlockHash | Uint8Array
-export type TBlockEra = number | string | EraIndex | Uint8Array
