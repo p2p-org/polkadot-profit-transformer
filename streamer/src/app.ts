@@ -1,7 +1,6 @@
 import Fastify, { FastifyInstance } from 'fastify'
 import { RunnerService } from './services/runner/runner'
 import routes from './routes'
-import pc from 'prom-client'
 import {
   registerKafkaPlugin,
   registerPolkadotPlugin,
@@ -13,6 +12,9 @@ import {
 } from './environment'
 import yargs from 'yargs'
 import prometheus from './routes/api/prometheus'
+import { PolkadotModule } from './modules/polkadot.module'
+import { KafkaModule } from './modules/kafka.module'
+import { PostgresModule } from './modules/postgres.module'
 
 const { argv } = yargs
   .option('sync', {
@@ -62,31 +64,14 @@ const { argv } = yargs
   })
   .help()
 
-function run() {
-  const Registry = pc.Registry
-  const register = new Registry()
-  const gateway = new pc.Pushgateway('http://127.0.0.1:9090', [], register)
-  const prefix = 'dummy_prefix_name'
-
-  const test = new pc.Counter({
-    name: `${prefix}_test`,
-    help: `${prefix}_test`,
-    registers: [register]
-  })
-  register.registerMetric(test)
-  test.inc(10)
-
-  gateway.push({ jobName: prefix }, (err, resp, body) => {
-    console.log(`Error: ${err}`)
-    console.log(`Body: ${body}`)
-    console.log(`Response status: ${resp}`)
-  })
+const initModules = async(): Promise<void> => {
+  await PostgresModule.init()
+  await PolkadotModule.init()
+  await KafkaModule.init()
 }
 
-
 const build = async (): Promise<FastifyInstance> => {
-  run()
-
+  await initModules()
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
     logger: {

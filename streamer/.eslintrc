@@ -27,7 +27,7 @@
     "@typescript-eslint/no-var-requires": "off",
     "max-len": ["error", { "code": 140, "ignoreUrls": true }],
     "no-undef": 1,
-    "no-unused-vars": 1,
+    "no-unused-vars": "off",
     "camelcase": 0,
     "eol-last": 1,
     "no-multiple-empty-lines": 1,
