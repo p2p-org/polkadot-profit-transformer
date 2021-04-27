@@ -2,11 +2,10 @@ import { IRunnerService } from './runner.types'
 import { FastifyInstance } from 'fastify'
 import { IBlocksService } from '../blocks/blocks.types'
 import { IConfigService } from '../config/config.types'
+import { IWatchdogService } from '../watchdog/watchdog.types'
 import { IConsumerService } from '../consumer/consumer.types'
 
-import { init as stakingServiceInit } from '../staking/staking'
-
-import { init as watchdogInit, run as watchdogRun } from '../watchdog/watchdog'
+import WatchdogService from '../watchdog/watchdog'
 
 const { ConfigService } = require('../config/config')
 const { ConsumerService } = require('../consumer/consumer')
@@ -22,6 +21,7 @@ class RunnerService implements IRunnerService {
   private readonly blocksService: IBlocksService
   private readonly consumerService: IConsumerService
   private readonly configService: IConfigService
+  private readonly watchdogService: IWatchdogService
 
   constructor(app: FastifyInstance) {
     /** @private */
@@ -36,7 +36,7 @@ class RunnerService implements IRunnerService {
     /** @private */
     this.configService = new ConfigService(app)
 
-    stakingServiceInit(app)
+    this.watchdogService = WatchdogService.getInstance(app)
   }
 
   /**
@@ -73,8 +73,7 @@ class RunnerService implements IRunnerService {
     }
 
     if (options.optionStartWatchdog) {
-      watchdogInit(this.app, options.optionWatchdogConcurrency)
-      watchdogRun(options.optionWatchdogStartBlockNumber)
+      this.watchdogService.run(options.optionWatchdogStartBlockNumber)
     }
   }
 }

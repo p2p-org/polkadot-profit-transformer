@@ -1,3 +1,8 @@
+import { BlockHash, EraIndex } from '@polkadot/types/interfaces'
+
+export type TBlockHash = string | BlockHash | Uint8Array
+export type TBlockEra = number | string | EraIndex | Uint8Array
+
 export interface IBlock {
   id: string
   hash: string
@@ -14,8 +19,9 @@ export interface IBlock {
 
 export interface IEra {
   era: number
-  validators_active: number
-  nominators_active: number
+  total_reward_points: number
+  total_reward: number
+  total_stake: number
 }
 
 export enum VerifierStatus {
@@ -23,4 +29,20 @@ export enum VerifierStatus {
   RUNNING = 'running',
   IDLE = 'idle',
   RESTART = 'restart'
+}
+
+export interface IWatchdogStatus {
+  status: VerifierStatus
+  current_height: number
+  finished_at: string | undefined
+}
+
+export interface IWatchdogRestartResponse {
+  result: boolean
+}
+
+export interface IWatchdogService {
+  run(startBlockId: number | undefined): Promise<void>
+  getStatus(): Promise<IWatchdogStatus>
+  restartFromBlockId(newStartBlockId: number): Promise<IWatchdogRestartResponse>
 }
