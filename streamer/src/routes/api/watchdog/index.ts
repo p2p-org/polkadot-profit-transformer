@@ -1,7 +1,8 @@
 import WatchdogService from '../../../services/watchdog/watchdog'
-const { getStatusSchema, watchdogRestartSchema } = require('./schemas')
+import { getStatusSchema, watchdogRestartSchema } from './schemas'
+import { FastifyInstance } from 'fastify'
 
-const apiBlocks = async (app) => {
+const apiBlocks = async (app: FastifyInstance) => {
   app.get('/status', { schema: getStatusSchema }, async () => {
     const watchdogService = WatchdogService.getInstance(app)
     return watchdogService.getStatus()
@@ -9,6 +10,8 @@ const apiBlocks = async (app) => {
 
   app.get('/restart/:blockId', { schema: watchdogRestartSchema }, async (request) => {
     const {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       params: { blockId }
     } = request
     const watchdogService = WatchdogService.getInstance(app)

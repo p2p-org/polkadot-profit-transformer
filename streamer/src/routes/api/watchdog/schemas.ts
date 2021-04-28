@@ -1,4 +1,4 @@
-const { errorResponse } = require('../../swagger/defaultSchema')
+import { errorResponse } from '../../swagger/defaultSchema'
 
 // Tags
 const tags = ['watchdog']
@@ -44,7 +44,7 @@ const watchdogRestartSchema = {
   }
 }
 
-module.exports = {
+export {
   getStatusSchema,
   watchdogRestartSchema
 }

@@ -7,6 +7,13 @@ import { u32, Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
 import { IBlocksStatusResult } from './blocks.types'
+import { counter } from '../statcollector/statcollector'
+import { Pool } from 'pg'
+import { Producer } from 'kafkajs'
+import { ApiPromise } from '@polkadot/api'
+import { PostgresModule } from '../../modules/postgres.module'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { KafkaModule } from '../../modules/kafka.module'
 
 const { KAFKA_PREFIX, DB_SCHEMA } = environment
 
@@ -16,6 +23,10 @@ const { KAFKA_PREFIX, DB_SCHEMA } = environment
  */
 class BlocksService {
   private readonly app: FastifyInstance
+  private readonly repository: Pool = PostgresModule.inject()
+  private readonly kafkaProducer: Producer = KafkaModule.inject()
+  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  /*private readonly logger: FastifyLoggerInstance*/
   private readonly currentSpecVersion: u32
   private readonly extrinsicsService: ExtrinsicsService
   private readonly stakingService: StakingService
@@ -27,31 +38,8 @@ class BlocksService {
   constructor(app: FastifyInstance) {
     if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
 
-    /** @private */
     this.app = app
-
-    const { polkadotConnector } = this.app
-
-    if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.')
-    }
-
-    /** @type {u32} */
-    this.currentSpecVersion = polkadotConnector.createType('u32', 0)
-
-    const { kafkaProducer } = this.app
-
-    if (!kafkaProducer) {
-      throw new Error('cant get .kafkaProducer from fastify app.')
-    }
-
-    const { postgresConnector } = this.app
-
-    if (!postgresConnector) {
-      throw new Error('cant get .postgresConnector from fastify app.')
-    }
-
-    /** @private */
+    this.currentSpecVersion = this.polkadotApi.createType('u32', 0)
     this.extrinsicsService = new ExtrinsicsService(app)
     this.stakingService = StakingService.getInstance(app)
   }
@@ -78,15 +66,14 @@ class BlocksService {
   }
 
   async processBlock(height: number): Promise<void> {
-    const { polkadotConnector } = this.app
-    const { kafkaProducer } = this.app
+
     let blockHash = null
 
     if (height == null) {
       throw new Error('empty height and blockHash')
     }
 
-    blockHash = await polkadotConnector.rpc.chain.getBlockHash(height)
+    blockHash = await this.polkadotApi.rpc.chain.getBlockHash(height)
 
     if (!blockHash) {
       throw new Error('cannot get block hash')
@@ -96,12 +83,12 @@ class BlocksService {
     // await this.updateMetaData(blockHash)
 
     const [sessionId, blockEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
-      polkadotConnector.query.session.currentIndex.at(blockHash),
-      polkadotConnector.query.staking.currentEra.at(blockHash),
-      polkadotConnector.rpc.chain.getBlock(blockHash),
-      polkadotConnector.derive.chain.getHeader(blockHash),
-      polkadotConnector.query.timestamp.now.at(blockHash),
-      polkadotConnector.query.system.events.at(blockHash)
+      this.polkadotApi.query.session.currentIndex.at(blockHash),
+      this.polkadotApi.query.staking.currentEra.at(blockHash),
+      this.polkadotApi.rpc.chain.getBlock(blockHash),
+      this.polkadotApi.derive.chain.getHeader(blockHash),
+      this.polkadotApi.query.timestamp.now.at(blockHash),
+      this.polkadotApi.query.system.events.at(blockHash)
     ])
 
     const era = parseInt(blockEra.toString(), 10)
@@ -136,7 +123,7 @@ class BlocksService {
     this.app.log.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
 
     try {
-      await kafkaProducer.send({
+      await this.kafkaProducer.send({
         topic: KAFKA_PREFIX + '_BLOCK_DATA',
         messages: [
           {
@@ -167,6 +154,8 @@ class BlocksService {
     if (eraPayoutEvent) {
       this.stakingService.addToQueue({ eraPayoutEvent, blockHash })
     }
+
+    counter.inc(1)
   }
 
   /**
@@ -177,10 +166,8 @@ class BlocksService {
    * @param {BlockHash} blockHash - The block hash
    */
   private async updateMetaData(blockHash: any): Promise<void> {
-    const { polkadotConnector } = this.app
-
     /** @type {RuntimeVersion} */
-    const runtimeVersion = await polkadotConnector.rpc.state.getRuntimeVersion(blockHash)
+    const runtimeVersion = await this.polkadotApi.rpc.state.getRuntimeVersion(blockHash)
 
     /** @type {u32} */
     const newSpecVersion = runtimeVersion.specVersion
@@ -188,9 +175,9 @@ class BlocksService {
     if (newSpecVersion.gt(this.currentSpecVersion)) {
       this.app.log.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
 
-      const rpcMeta = await polkadotConnector.rpc.state.getMetadata(blockHash)
+      const rpcMeta = await this.polkadotApi.rpc.state.getMetadata(blockHash)
 
-      polkadotConnector.registry.setMetadata(rpcMeta)
+      this.polkadotApi.registry.setMetadata(rpcMeta)
     }
   }
 
@@ -273,12 +260,10 @@ class BlocksService {
    * @returns {Promise<number>}
    */
   async getLastProcessedBlock(): Promise<number> {
-    const { postgresConnector } = this.app
-
     let blockNumberFromDB = 0
 
     try {
-      const { rows } = await postgresConnector.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
+      const { rows } = await this.repository.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
 
       if (rows.length && rows[0].last_number) {
         blockNumberFromDB = parseInt(rows[0].last_number)
@@ -292,10 +277,8 @@ class BlocksService {
   }
 
   async getFinBlockNumber(): Promise<number> {
-    const { polkadotConnector } = this.app
-
-    const lastFinHeader = await polkadotConnector.rpc.chain.getFinalizedHead()
-    const lastFinBlock = await polkadotConnector.rpc.chain.getBlock(lastFinHeader)
+    const lastFinHeader = await this.polkadotApi.rpc.chain.getFinalizedHead()
+    const lastFinBlock = await this.polkadotApi.rpc.chain.getBlock(lastFinHeader)
 
     return lastFinBlock.block.header.number.toNumber()
   }
@@ -317,8 +300,6 @@ class BlocksService {
    * @returns {Promise<SyncSimpleStatus>}
    */
   async getBlocksStatus(): Promise<IBlocksStatusResult> {
-    const { polkadotConnector } = this.app
-
     const result = {
       status: 'undefined',
       height_diff: -1,
@@ -333,7 +314,7 @@ class BlocksService {
 
     try {
       const lastBlockNumber = await this.getFinBlockNumber()
-      const lastHeader = await polkadotConnector.rpc.chain.getHeader()
+      const lastHeader = await this.polkadotApi.rpc.chain.getHeader()
       const lastLocalNumber = await this.getLastProcessedBlock()
 
       result.height_diff = lastBlockNumber - lastLocalNumber
@@ -354,8 +335,7 @@ class BlocksService {
    * @returns {Promise<{result: boolean}>}
    */
   async removeBlocks(blockNumbers: number[]): Promise<{ result: true }> {
-    const { postgresConnector } = this.app
-    const transaction = await postgresConnector.connect()
+    const transaction = await this.repository.connect()
 
     try {
       await transaction.query({
@@ -391,8 +371,7 @@ class BlocksService {
    * @returns {Promise<void>}
    */
   private async trimBlocks(startBlockNumber: number): Promise<void> {
-    const { postgresConnector } = this.app
-    const transaction = await postgresConnector.connect()
+    const transaction = await this.repository.connect()
 
     try {
       await transaction.query({

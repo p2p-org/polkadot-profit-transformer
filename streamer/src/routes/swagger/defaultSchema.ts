@@ -6,6 +6,6 @@ const errorResponse = {
   }
 }
 
-module.exports = {
+export {
   errorResponse
 }

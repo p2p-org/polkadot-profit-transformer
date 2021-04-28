@@ -1,4 +1,4 @@
-const { Mutex } = require('async-mutex')
+import { Mutex } from 'async-mutex'
 
 /** @type {Mutex} */
 const SyncStatus = new Mutex()
@@ -8,6 +8,4 @@ const SyncStatus = new Mutex()
  *
  * @type {{SyncStatus: Mutex}}
  */
-module.exports = {
-  SyncStatus
-}
+export { SyncStatus }

@@ -1,8 +1,8 @@
-import { IConsumerService } from './consumer.types';
-import { FastifyInstance } from 'fastify';
+import { IConsumerService } from './consumer.types'
+import { FastifyInstance } from 'fastify'
 import { SyncStatus } from '../index'
-import { BlocksService } from '../blocks/blocks';
-import { Header } from '@polkadot/types/interfaces';
+import { BlocksService } from '../blocks/blocks'
+import { Header } from '@polkadot/types/interfaces'
 
 /**
  * Provides blocks streamer service

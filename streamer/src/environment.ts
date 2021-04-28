@@ -1,5 +1,5 @@
-import dotenv from 'dotenv';
-import { resolve } from 'path';
+import dotenv from 'dotenv'
+import { resolve } from 'path'
 import {
   IsNotEmpty, IsNumber,
   IsPort,
@@ -8,12 +8,12 @@ import {
   Matches,
   MinLength,
   validate
-} from 'class-validator';
-import { plainToClass } from 'class-transformer';
+} from 'class-validator'
+import { plainToClass } from 'class-transformer'
 
-dotenv.config({ path: resolve(__dirname, '.env') });
+dotenv.config({ path: resolve(__dirname, '.env') })
 
-const applicationId = 'substrate_streamer';
+const applicationId = 'substrate_streamer'
 
 class EnvironmentVariableConfig {
   @IsString()
@@ -22,7 +22,7 @@ class EnvironmentVariableConfig {
   APP_ID!: string;
 
   get APP_CLIENT_ID(): string {
-    return `mbelt-${applicationId}-${this.APP_MODE.toLowerCase()}-${this.APP_NETWORK.toLowerCase()}`;
+    return `mbelt-${applicationId}-${this.APP_MODE.toLowerCase()}-${this.APP_NETWORK.toLowerCase()}`
   }
 
   @IsString()
@@ -58,7 +58,7 @@ class EnvironmentVariableConfig {
 
   @IsString()
   get KAFKA_PREFIX(): string {
-    return `SUBSTRATE_STREAMER_${this.APP_MODE.toUpperCase()}_${this.APP_NETWORK.toUpperCase()}`;
+    return `SUBSTRATE_STREAMER_${this.APP_MODE.toUpperCase()}_${this.APP_NETWORK.toUpperCase()}`
   };
 
   // Postgres
@@ -89,9 +89,9 @@ class EnvironmentVariableConfig {
   ERA_EXTRACTION_OFFSET = 4;
 }
 
-const environment = plainToClass(EnvironmentVariableConfig, process.env);
+const environment = plainToClass(EnvironmentVariableConfig, process.env)
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const validateEnv = async () => await validate(environment);
+const validateEnv = async () => await validate(environment)
 
 export {
   environment,

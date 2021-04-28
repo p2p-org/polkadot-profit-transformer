@@ -1,9 +1,20 @@
-import Fastify from 'fastify'
+import Fastify, { FastifyInstance } from 'fastify'
 import { RunnerService } from './services/runner/runner'
 import routes from './routes'
-import { registerKafkaPlugin, registerPolkadotPlugin, registerPostgresPlugin } from './plugins'
-import { environment, validateEnv } from './environment'
+import {
+  registerKafkaPlugin,
+  registerPolkadotPlugin,
+  registerPostgresPlugin
+} from './plugins'
+import {
+  environment,
+  validateEnv
+} from './environment'
 import yargs from 'yargs'
+import prometheus from './routes/api/prometheus'
+import { PolkadotModule } from './modules/polkadot.module'
+import { KafkaModule } from './modules/kafka.module'
+import { PostgresModule } from './modules/postgres.module'
 
 const { argv } = yargs
   .option('sync', {
@@ -53,7 +64,14 @@ const { argv } = yargs
   })
   .help()
 
-const build = async () => {
+const initModules = async(): Promise<void> => {
+  await PostgresModule.init()
+  await PolkadotModule.init()
+  await KafkaModule.init()
+}
+
+const build = async (): Promise<FastifyInstance> => {
+  await initModules()
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
     logger: {
@@ -86,6 +104,7 @@ const build = async () => {
   if (!argv['disable-rpc']) {
     try {
       await fastify.register(routes, { prefix: 'api' })
+      await fastify.register(prometheus, { prefix: '/' })
     } catch (err) {
       fastify.log.error(`Cannot init endpoint: "${err.message}"`)
       fastify.log.error(`Stopping instance...`)

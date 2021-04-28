@@ -13,7 +13,7 @@
     "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
     "dev": "npx ts-node src/main.ts --sync",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
-    "lint:fix": "npx eslint .  --fix",
+    "lint:fix": "npx eslint . --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js"
   },
   "dependencies": {
@@ -32,6 +32,7 @@
     "kafkajs": "^1.15.0",
     "pg": "^8.5.1",
     "pino-pretty": "^4.5.0",
+    "prom-client": "^13.1.0",
     "reflect-metadata": "^0.1.13",
     "yargs": "^16.2.0"
   },
@@ -51,10 +52,29 @@
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.0.1",
+    "husky": "^6.0.0",
+    "lint-staged": "^10.5.4",
     "mocha": "^8.2.1",
     "nodemon": "2.0.4",
     "prettier": "^2.1.2",
     "ts-node": "^9.1.1",
+    "type-coverage": "^2.17.2",
     "typescript": "^4.2.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run type-coverage && npm run build"
+    }
+  },
+  "lint-staged": {
+    "*.(ts)": [
+      "prettier --write",
+      "eslint --fix",
+      "git add"
+    ],
+    "*.(json|js)": [
+      "prettier --write"
+    ]
   }
 }
