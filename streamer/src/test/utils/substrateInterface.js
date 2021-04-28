@@ -13,9 +13,9 @@ async function getConnection() {
     return connection
 }
 
-async function apiDisconnect() {
+function apiDisconnect() {
     if (connection != null) {
-        return await connection.disconnect()
+        return connection.disconnect()
     }
 }
 

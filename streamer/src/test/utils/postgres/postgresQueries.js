@@ -9,11 +9,11 @@ async function getQuery(postgres, queryString) {
     let queryResult
     try {
         queryResult = await postgres.query(queryString)
+        return queryResult
     } catch (error) {
         console.log(error.stack)
         throw new Error(`Error executing query`)
     }
-    return queryResult
 }
 
 async function getMissedBlocksCount(postgres) {
