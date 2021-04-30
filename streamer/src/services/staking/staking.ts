@@ -112,6 +112,7 @@ export default class StakingService implements IStakingService {
         `[validators][getStakersByValidator] Loaded stakers: ${stakers.others.length} for validator "${validatorAccountId}"`
       )
 
+      // TODO try the parallel execution
       for (const staker of stakers.others) {
         try {
           const isClipped = stakersClipped.others.find((e: { who: { toString: () => any } }) => {
