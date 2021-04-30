@@ -66,7 +66,6 @@ class BlocksService {
   }
 
   async processBlock(height: number): Promise<void> {
-
     let blockHash = null
 
     if (height == null) {
@@ -204,6 +203,7 @@ class BlocksService {
       this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
       for (let i = startBlockNumber; i <= lastBlockNumber; i += 10) {
+        console.log({ i, lastBlockNumber })
         await Promise.all([
           this.runBlocksWorker(1, i),
           this.runBlocksWorker(2, i + 1),

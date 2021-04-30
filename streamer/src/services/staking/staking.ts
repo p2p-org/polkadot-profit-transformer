@@ -1,3 +1,4 @@
+import { IBlock } from './../watchdog/watchdog.types'
 import { AccountId, Exposure } from '@polkadot/types/interfaces'
 import {
   IGetValidatorsNominatorsResult,
@@ -12,9 +13,10 @@ import { FastifyInstance } from 'fastify'
 import { ApiPromise } from '@polkadot/api'
 import { Producer } from 'kafkajs'
 import fastq from 'fastq'
+import { Pool } from 'pg'
 
 const {
-  environment: { KAFKA_PREFIX }
+  environment: { KAFKA_PREFIX, DB_SCHEMA }
 } = require('../../environment')
 
 export default class StakingService implements IStakingService {
@@ -23,11 +25,13 @@ export default class StakingService implements IStakingService {
   private readonly polkadotConnector: ApiPromise
   private readonly kafkaProducer: Producer
   private readonly queue: any
+  private postgresConnector: Pool
 
   constructor(app: FastifyInstance) {
     this.app = app
     this.polkadotConnector = app.polkadotConnector
     this.kafkaProducer = app.kafkaProducer
+    this.postgresConnector = app.postgresConnector
     this.queue = fastq(this, this.processEraPayout, 1)
   }
 
@@ -60,6 +64,20 @@ export default class StakingService implements IStakingService {
     }
   }
 
+  async getFirstBlockInSession(sessionId: number): Promise<IBlock> {
+    try {
+      const { rows } = await this.postgresConnector.query({
+        text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "session_id" = $1::int order by "id" limit 1`,
+        values: [sessionId]
+      })
+
+      return rows[0]
+    } catch (err) {
+      this.app.log.error(`failed to get first block of session ${sessionId}, error: ${err}`)
+      throw new Error('cannot find first era block')
+    }
+  }
+
   async getValidatorsAndNominatorsData({ blockHash, eraId }: IBlockEraParams): Promise<IGetValidatorsNominatorsResult> {
     const validatorsAccountIdSet: Set<string> = new Set()
     const eraRewardPointsMap: Map<string, number> = new Map()
@@ -68,9 +86,22 @@ export default class StakingService implements IStakingService {
     const validators: IValidator[] = []
 
     const eraRewardPointsRaw = await this.polkadotConnector.query.staking.erasRewardPoints.at(blockHash, +eraId)
+    const sessionStart = await this.polkadotConnector.query.staking.erasStartSessionIndex(+eraId)
+
+    const firstBlockOfEra = await this.getFirstBlockInSession(+sessionStart)
+
+    if (!firstBlockOfEra) {
+      this.app.log.error(`first block of era ${eraId} not found in DB`)
+      throw new Error(`first block of ${eraId} not found in DB`)
+    }
+
+    const validatorsStartedEra = await this.polkadotConnector.query.session.validators.at(firstBlockOfEra.hash)
+
+    validatorsStartedEra.forEach((accountId) => {
+      validatorsAccountIdSet.add(accountId.toString())
+    })
 
     eraRewardPointsRaw.individual.forEach((rewardPoints, accountId) => {
-      validatorsAccountIdSet.add(accountId.toString())
       eraRewardPointsMap.set(accountId.toString(), rewardPoints.toNumber())
     })
 
@@ -91,7 +122,7 @@ export default class StakingService implements IStakingService {
             era: eraId,
             account_id: staker.who.toString(),
             validator: validatorAccountId,
-            is_clipped: !isClipped,
+            is_clipped: !!isClipped,
             value: staker.value.toString()
           }
 
@@ -157,59 +188,57 @@ export default class StakingService implements IStakingService {
   }
 
   async processEraPayout({ eraPayoutEvent, blockHash }: IProcessEraPayload, cb: (arg0: null) => void): Promise<void> {
-    const [eraId] = eraPayoutEvent.event.data
-
-    // TODO: Add node HISTORY_DEPTH checking
-    // const currentEra = await this.polkadotConnector.query.staking.currentEra()
-    // const historyDepth = await this.polkadotConnector.query.staking.historyDepth.at(blockHash)
-    // if (currentEra.unwrap().toNumber() - +eraId > historyDepth.toNumber()) {
-    //   this.app.log.warn(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
-    // }
-
-    this.app.log.debug(`Process payout for era: ${eraId}`)
-
-    const blockTime = await this.polkadotConnector.query.timestamp.now.at(blockHash)
-
-    const eraData = await this.getEraData({ blockHash, eraId: +eraId })
-
-    const { validators, nominators } = await this.getValidatorsAndNominatorsData({ blockHash, eraId: +eraId })
-
     try {
-      await this.kafkaProducer.send({
-        topic: KAFKA_PREFIX + '_STAKING_ERAS_DATA',
-        messages: [
-          {
-            key: eraData.era.toString(),
-            value: JSON.stringify(eraData)
-          }
-        ]
-      })
-    } catch (error: any) {
-      this.app.log.error(`failed to push era data: `, error)
-      throw new Error('cannot push session data to Kafka')
+      const [eraId] = eraPayoutEvent.event.data
+
+      this.app.log.debug(`Process payout for era: ${eraId}`)
+
+      const blockTime = await this.polkadotConnector.query.timestamp.now.at(blockHash)
+
+      const eraData = await this.getEraData({ blockHash, eraId: +eraId })
+
+      const { validators, nominators } = await this.getValidatorsAndNominatorsData({ blockHash, eraId: +eraId })
+
+      try {
+        await this.kafkaProducer.send({
+          topic: KAFKA_PREFIX + '_STAKING_ERAS_DATA',
+          messages: [
+            {
+              key: eraData.era.toString(),
+              value: JSON.stringify(eraData)
+            }
+          ]
+        })
+      } catch (error: any) {
+        this.app.log.error(`failed to push era data: `, error)
+        throw new Error('cannot push session data to Kafka')
+      }
+
+      try {
+        await this.kafkaProducer.send({
+          topic: KAFKA_PREFIX + '_SESSION_DATA',
+          messages: [
+            {
+              // key: blockData.block.header.number.toString(),
+              value: JSON.stringify({
+                era: +eraId.toString(),
+                validators: validators.map((validator) => ({ ...validator, block_time: blockTime.toNumber() })),
+                nominators: nominators.map((nominator) => ({ ...nominator, block_time: blockTime.toNumber() })),
+                block_time: blockTime.toNumber()
+              })
+            }
+          ]
+        })
+      } catch (error: any) {
+        this.app.log.error(`failed to push session data: `, error)
+        throw new Error('cannot push session data to Kafka')
+      }
+
+      this.app.log.debug(`Era ${eraId.toString()} staking processing finished`)
+    } catch (error) {
+      this.app.log.error(`error in processing era staking: ${error}`)
     }
 
-    try {
-      await this.kafkaProducer.send({
-        topic: KAFKA_PREFIX + '_SESSION_DATA',
-        messages: [
-          {
-            // key: blockData.block.header.number.toString(),
-            value: JSON.stringify({
-              era: +eraId.toString(),
-              validators: validators.map((validator) => ({ ...validator, block_time: blockTime.toNumber() })),
-              nominators: nominators.map((nominator) => ({ ...nominator, block_time: blockTime.toNumber() })),
-              block_time: blockTime.toNumber()
-            })
-          }
-        ]
-      })
-    } catch (error: any) {
-      this.app.log.error(`failed to push session data: `, error)
-      throw new Error('cannot push session data to Kafka')
-    }
-
-    this.app.log.debug(`Era ${eraId.toString()} staking processing finished`)
     cb(null)
   }
 }
