@@ -2,11 +2,6 @@ import Fastify, { FastifyInstance } from 'fastify'
 import { RunnerService } from './services/runner/runner'
 import routes from './routes'
 import {
-  registerKafkaPlugin,
-  registerPolkadotPlugin,
-  registerPostgresPlugin
-} from './plugins'
-import {
   validateEnv
 } from './environment'
 import yargs from 'yargs'
@@ -88,17 +83,6 @@ const build = async (): Promise<FastifyInstance> => {
 
   fastify.log.info(`Init plugins...`)
 
-  // plugins
-  try {
-    await registerPostgresPlugin(fastify, {})
-    await registerKafkaPlugin(fastify, {})
-    await registerPolkadotPlugin(fastify, {})
-  } catch (err) {
-    fastify.log.error(`Cannot init plugin: "${err.message}"`)
-    fastify.log.error(`Stopping instance...`)
-    process.exit(1)
-  }
-
   if (!argv['disable-rpc']) {
     try {
       await fastify.register(routes, { prefix: 'api' })
@@ -109,16 +93,6 @@ const build = async (): Promise<FastifyInstance> => {
       process.exit(1)
     }
   }
-
-  // hooks
-  fastify.addHook('onClose', (instance) => {
-    //  stop sync, disconnect
-    const { postgresConnector } = instance
-    postgresConnector.end()
-
-    const { polkadotConnector } = instance
-    polkadotConnector.disconnect()
-  })
 
   try {
     await fastify.ready()

@@ -266,8 +266,6 @@ class BlocksService {
       throw new Error('cannot get last block number')
     }
 
-    this.logger.warn(`block extracted: ${blockNumberFromDB}`)
-
     return blockNumberFromDB
   }
 
