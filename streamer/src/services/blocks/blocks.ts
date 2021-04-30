@@ -2,7 +2,6 @@ import { SyncStatus } from '../index'
 import StakingService from '../staking/staking'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { environment } from '../../environment'
-import { FastifyInstance } from 'fastify'
 import { u32, Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
@@ -11,9 +10,11 @@ import { counter } from '../statcollector/statcollector'
 import { Pool } from 'pg'
 import { Producer } from 'kafkajs'
 import { ApiPromise } from '@polkadot/api'
+import { Logger } from 'pino'
 import { PostgresModule } from '../../modules/postgres.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { KafkaModule } from '../../modules/kafka.module'
+import { LoggerModule } from '../../modules/logger.module'
 
 const { KAFKA_PREFIX, DB_SCHEMA } = environment
 
@@ -22,26 +23,18 @@ const { KAFKA_PREFIX, DB_SCHEMA } = environment
  * @class
  */
 class BlocksService {
-  private readonly app: FastifyInstance
   private readonly repository: Pool = PostgresModule.inject()
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  /*private readonly logger: FastifyLoggerInstance*/
+  private readonly logger: Logger = LoggerModule.inject()
   private readonly currentSpecVersion: u32
   private readonly extrinsicsService: ExtrinsicsService
   private readonly stakingService: StakingService
 
-  /**
-   * Creates an instance of BlocksService.
-   * @param {object} app fastify app
-   */
-  constructor(app: FastifyInstance) {
-    if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
-
-    this.app = app
+  constructor() {
     this.currentSpecVersion = this.polkadotApi.createType('u32', 0)
-    this.extrinsicsService = new ExtrinsicsService(app)
-    this.stakingService = StakingService.getInstance(app)
+    this.extrinsicsService = new ExtrinsicsService()
+    this.stakingService = StakingService.getInstance()
   }
 
   /**
@@ -54,12 +47,12 @@ class BlocksService {
    */
   async updateOneBlock(blockNumber: number): Promise<true> {
     if (SyncStatus.isLocked()) {
-      this.app.log.error(`failed execute "updateOneBlock": sync in process`)
+      this.logger.error(`failed execute "updateOneBlock": sync in process`)
       throw new Error('sync in process')
     }
 
     await this.processBlock(blockNumber).catch((error) => {
-      this.app.log.error(`failed to process block #${blockNumber}: ${error}`)
+      this.logger.error(`failed to process block #${blockNumber}: ${error}`)
       throw new Error('cannot process block')
     })
     return true
@@ -119,7 +112,7 @@ class BlocksService {
       block_time: blockTime.toNumber()
     }
 
-    this.app.log.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
+    this.logger.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
 
     try {
       await this.kafkaProducer.send({
@@ -132,7 +125,7 @@ class BlocksService {
         ]
       })
     } catch (error) {
-      this.app.log.error(`failed to push block: `, error)
+      this.logger.error(`failed to push block: `, error)
       throw new Error('cannot push block to Kafka')
     }
 
@@ -172,7 +165,7 @@ class BlocksService {
     const newSpecVersion = runtimeVersion.specVersion
 
     if (newSpecVersion.gt(this.currentSpecVersion)) {
-      this.app.log.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
+      this.logger.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
 
       const rpcMeta = await this.polkadotApi.rpc.state.getMetadata(blockHash)
 
@@ -192,7 +185,7 @@ class BlocksService {
     await SyncStatus.acquire()
 
     try {
-      this.app.log.info(`Starting processBlocks`)
+      this.logger.info(`Starting processBlocks`)
 
       if (!startBlockNumber) {
         startBlockNumber = await this.getLastProcessedBlock()
@@ -200,10 +193,9 @@ class BlocksService {
 
       let lastBlockNumber = await this.getFinBlockNumber()
 
-      this.app.log.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
+      this.logger.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
       for (let i = startBlockNumber; i <= lastBlockNumber; i += 10) {
-        console.log({ i, lastBlockNumber })
         await Promise.all([
           this.runBlocksWorker(1, i),
           this.runBlocksWorker(2, i + 1),
@@ -240,7 +232,7 @@ class BlocksService {
       let lastError = null
       await this.processBlock(blockNumber).catch((error) => {
         lastError = error
-        this.app.log.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
+        this.logger.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
       })
 
       if (!lastError) {
@@ -269,7 +261,7 @@ class BlocksService {
         blockNumberFromDB = parseInt(rows[0].last_number)
       }
     } catch (err) {
-      this.app.log.error(`failed to get last synchronized block number: ${err}`)
+      this.logger.error(`failed to get last synchronized block number: ${err}`)
       throw new Error('cannot get last block number')
     }
 
@@ -320,7 +312,7 @@ class BlocksService {
       result.height_diff = lastBlockNumber - lastLocalNumber
       result.fin_height_diff = lastHeader.number.toNumber() - lastBlockNumber
     } catch (err) {
-      this.app.log.error(`failed to get block diff: ${err}`)
+      this.logger.error(`failed to get block diff: ${err}`)
     }
 
     return result
@@ -353,7 +345,7 @@ class BlocksService {
       await transaction.query('COMMIT')
       transaction.release()
     } catch (err) {
-      this.app.log.error(`failed to remove block from table: ${err}`)
+      this.logger.error(`failed to remove block from table: ${err}`)
       await transaction.query('ROLLBACK')
       transaction.release()
       throw new Error('cannot remove blocks')
@@ -389,7 +381,7 @@ class BlocksService {
       await transaction.query('COMMIT')
       transaction.release()
     } catch (err) {
-      this.app.log.error(`failed to remove blocks from table: ${err}`)
+      this.logger.error(`failed to remove blocks from table: ${err}`)
       await transaction.query('ROLLBACK')
       transaction.release()
       throw new Error('cannot remove blocks')
@@ -404,7 +396,7 @@ class BlocksService {
    */
   async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
     if (SyncStatus.isLocked()) {
-      this.app.log.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
+      this.logger.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
       return { result: false }
     }
 
@@ -412,7 +404,7 @@ class BlocksService {
       await this.trimBlocks(startBlockNumber)
       await this.processBlocks(startBlockNumber)
     } catch (err) {
-      this.app.log.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
+      this.logger.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
     }
     return { result: true }
   }
@@ -449,9 +441,7 @@ class BlocksService {
       return acc
     }
 
-    const result = events.reduce(processEvent, [])
-
-    return result
+    return events.reduce(processEvent, [])
   }
 
   /**

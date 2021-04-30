@@ -7,7 +7,6 @@ import {
   registerPostgresPlugin
 } from './plugins'
 import {
-  environment,
   validateEnv
 } from './environment'
 import yargs from 'yargs'
@@ -15,6 +14,7 @@ import prometheus from './routes/api/prometheus'
 import { PolkadotModule } from './modules/polkadot.module'
 import { KafkaModule } from './modules/kafka.module'
 import { PostgresModule } from './modules/postgres.module'
+import { LoggerModule } from './modules/logger.module'
 
 const { argv } = yargs
   .option('sync', {
@@ -65,6 +65,7 @@ const { argv } = yargs
   .help()
 
 const initModules = async(): Promise<void> => {
+  await LoggerModule.init()
   await PostgresModule.init()
   await PolkadotModule.init()
   await KafkaModule.init()
@@ -74,10 +75,7 @@ const build = async (): Promise<FastifyInstance> => {
   await initModules()
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
-    logger: {
-      level: environment.LOG_LEVEL,
-      prettyPrint: true
-    }
+    logger: LoggerModule.inject()
   })
 
   try {

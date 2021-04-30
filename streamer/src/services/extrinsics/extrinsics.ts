@@ -1,6 +1,13 @@
 import { environment } from '../../environment'
-import { FastifyInstance } from 'fastify'
 import { IExtrinsic, IExtrinsicsService } from './extrinsics.types'
+import { Pool } from 'pg'
+import { PostgresModule } from '../../modules/postgres.module'
+import { Producer } from 'kafkajs'
+import { KafkaModule } from '../../modules/kafka.module'
+import { ApiPromise } from '@polkadot/api'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
 const {KAFKA_PREFIX} = environment
 
@@ -10,50 +17,8 @@ const {KAFKA_PREFIX} = environment
  */
 
 class ExtrinsicsService implements IExtrinsicsService {
-  private readonly app: FastifyInstance;
-
-  /**
-   * Creates an instance of ExtrinsicsService.
-   * @param {object} app fastify app
-   */
-  constructor(app: FastifyInstance) {
-    if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
-
-    /** @private */
-    this.app = app
-
-    const {polkadotConnector} = this.app
-
-    if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.')
-    }
-
-    const {kafkaProducer} = this.app
-
-    if (!kafkaProducer) {
-      throw new Error('cant get .kafkaProducer from fastify app.')
-    }
-
-    const {postgresConnector} = this.app
-
-    if (!postgresConnector) {
-      throw new Error('cant get .postgresConnector from fastify app.')
-    }
-
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`Error acquiring client: ${err.toString()}`)
-        throw new Error(`Error acquiring client`)
-      }
-      client.query('SELECT NOW()', (err) => {
-        release()
-        if (err) {
-          this.app.log.error(`Error executing query: ${err.toString()}`)
-          throw new Error(`Error executing query`)
-        }
-      })
-    })
-  }
+  private readonly kafkaProducer: Producer = KafkaModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
 
   async extractExtrinsics(...args: Parameters<IExtrinsicsService['extractExtrinsics']>): Promise<void> {
     const [
@@ -63,8 +28,6 @@ class ExtrinsicsService implements IExtrinsicsService {
       events,
       extrinsicsVec
     ] = args
-
-    const {kafkaProducer} = this.app
 
     const extrinsics: IExtrinsic[] = []
 
@@ -120,7 +83,7 @@ class ExtrinsicsService implements IExtrinsicsService {
       })
     })
 
-    await kafkaProducer
+    await this.kafkaProducer
       .send({
         topic: KAFKA_PREFIX + '_EXTRINSICS_DATA',
         messages: [
@@ -133,7 +96,7 @@ class ExtrinsicsService implements IExtrinsicsService {
         ]
       })
       .catch((error) => {
-        this.app.log.error(`failed to push block: `, error)
+        this.logger.error(`failed to push block: `, error)
         throw new Error('cannot push block to Kafka')
       })
   }
