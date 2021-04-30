@@ -16,6 +16,7 @@ CREATE STREAM {APP_PREFIX}_BLOCK (
     "author" STRING,
     "session_id" INT,
     "era" INT,
+    "current_era" INT,
     "last_log" STRING,
     "digest" STRING,
     "block_time" BIGINT
@@ -35,6 +36,7 @@ INSERT INTO {APP_PREFIX}_BLOCK SELECT
                       EXTRACTJSONFIELD(B."block", '$.header.author') "author",
                       CAST(EXTRACTJSONFIELD(B."block", '$.header.session_id') AS INT) "session_id",
                       CAST(EXTRACTJSONFIELD(B."block", '$.header.era') AS INT) "era",
+                      CAST(EXTRACTJSONFIELD(B."block", '$.header.currentEra') AS INT) "current_era",
                       EXTRACTJSONFIELD(B."block", '$.header.last_log') "last_log",
                       EXTRACTJSONFIELD(B."block", '$.header.digest') "digest",
                       CAST((B."block_time" / 1000) AS BIGINT)   "block_time"
