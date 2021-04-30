@@ -1,5 +1,5 @@
 import { IBlock } from './../watchdog/watchdog.types'
-import { AccountId, Exposure } from '@polkadot/types/interfaces'
+import { AccountId, Exposure, IndividualExposure } from '@polkadot/types/interfaces'
 import {
   IGetValidatorsNominatorsResult,
   IBlockEraParams,
@@ -112,8 +112,7 @@ export default class StakingService implements IStakingService {
         `[validators][getStakersByValidator] Loaded stakers: ${stakers.others.length} for validator "${validatorAccountId}"`
       )
 
-      // TODO try the parallel execution
-      for (const staker of stakers.others) {
+      const processStaker = async (staker: IndividualExposure) => {
         try {
           const isClipped = stakersClipped.others.find((e: { who: { toString: () => any } }) => {
             return e.who.toString() === staker.who.toString()
@@ -142,6 +141,8 @@ export default class StakingService implements IStakingService {
           this.app.log.error(`[validators][getValidators] Cannot process staker: ${staker.who} "${e}". Block: ${blockHash}`)
         }
       }
+
+      await Promise.all(stakers.others.map((staker) => processStaker(staker)))
 
       let validatorRewardDest: string | undefined = undefined
       let validatorRewardAccountId: AccountId | undefined = undefined
