@@ -15,7 +15,8 @@
     "lint": "npx eslint --ext .js,.ts src/main.ts",
     "lint:fix": "npx eslint . --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
-    "prepare": "cd .. && husky install streamer/.husky"
+    "prepare": "cd .. && husky install streamer/.husky",
+    "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@polkadot/api": "4.1.1",
@@ -66,7 +67,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npx lint-staged",
+      "pre-commit": "npm lint-staged",
       "pre-push": "npm run type-coverage && npm run build"
     }
   },
