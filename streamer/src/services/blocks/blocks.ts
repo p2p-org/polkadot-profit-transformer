@@ -71,19 +71,18 @@ class BlocksService {
       throw new Error('cannot get block hash')
     }
 
-    // Check if this required? Will try stage run without it
-    // await this.updateMetaData(blockHash)
-
-    const [sessionId, blockEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
+    const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
       this.polkadotApi.query.session.currentIndex.at(blockHash),
       this.polkadotApi.query.staking.currentEra.at(blockHash),
+      this.polkadotApi.query.staking.activeEra.at(blockHash),
       this.polkadotApi.rpc.chain.getBlock(blockHash),
       this.polkadotApi.derive.chain.getHeader(blockHash),
       this.polkadotApi.query.timestamp.now.at(blockHash),
       this.polkadotApi.query.system.events.at(blockHash)
     ])
 
-    const era = parseInt(blockEra.toString(), 10)
+    const currentEra = parseInt(blockCurrentEra.toString(), 10)
+    const era = Number(activeEra.unwrap().get('index'))
 
     if (!signedBlock) {
       throw new Error('cannot get block')
@@ -100,6 +99,7 @@ class BlocksService {
           hash: signedBlock.block.header.hash.toHex(),
           author: extHeader?.author ? extHeader.author.toString() : '',
           session_id: sessionId.toNumber(),
+          currentEra,
           era,
           stateRoot: signedBlock.block.header.stateRoot.toHex(),
           extrinsicsRoot: signedBlock.block.header.extrinsicsRoot.toHex(),

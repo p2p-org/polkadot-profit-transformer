@@ -15,6 +15,7 @@ CREATE TABLE dot_polka.blocks (
     "author" VARCHAR(66),
     "session_id" INT,
     "era" INT,
+    "current_era" INT,
     "last_log" VARCHAR(100),
     "digest" JSONB,
     "block_time" TIMESTAMP
@@ -130,6 +131,7 @@ CREATE TABLE dot_polka._blocks (
     "author" VARCHAR(66),
     "session_id" INT,
     "era" INT,
+    "current_era" INT,
     "last_log" VARCHAR(100),
     "digest" TEXT,
     "block_time" BIGINT
@@ -223,6 +225,7 @@ BEGIN
                                 "author",
                                 "session_id",
                                 "era",
+                                "current_era",
                                 "last_log",
                                 "digest",
                                 "block_time")
@@ -234,6 +237,7 @@ BEGIN
             NEW."author",
             NEW."session_id",
             NEW."era",
+            NEW."current_era",
             NEW."last_log",
             NEW."digest"::jsonb,
             to_timestamp(NEW."block_time"))
