@@ -6,6 +6,12 @@ const { SUBSTRATE_URI } = environment
 export class PolkadotModule {
   private static instance: PolkadotModule
 
+  private wsProvider: WsProvider
+  private api?: ApiPromise
+  private constructor() {
+    this.wsProvider = new WsProvider(SUBSTRATE_URI)
+  }
+
   static async init(): Promise<void> {
     if (!PolkadotModule.instance) {
       PolkadotModule.instance = new PolkadotModule()
@@ -18,11 +24,5 @@ export class PolkadotModule {
     }
 
     return PolkadotModule.instance.api
-  }
-
-  private wsProvider: WsProvider
-  private api?: ApiPromise
-  private constructor() {
-    this.wsProvider = new WsProvider(SUBSTRATE_URI)
   }
 }

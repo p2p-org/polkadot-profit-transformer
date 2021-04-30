@@ -152,29 +152,6 @@ class BlocksService {
   }
 
   /**
-   * Update specs version metadata
-   *
-   * @private
-   * @async
-   * @param {BlockHash} blockHash - The block hash
-   */
-  private async updateMetaData(blockHash: any): Promise<void> {
-    /** @type {RuntimeVersion} */
-    const runtimeVersion = await this.polkadotApi.rpc.state.getRuntimeVersion(blockHash)
-
-    /** @type {u32} */
-    const newSpecVersion = runtimeVersion.specVersion
-
-    if (newSpecVersion.gt(this.currentSpecVersion)) {
-      this.logger.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
-
-      const rpcMeta = await this.polkadotApi.rpc.state.getMetadata(blockHash)
-
-      this.polkadotApi.registry.setMetadata(rpcMeta)
-    }
-  }
-
-  /**
    * Process all blocks with head
    *
    * @public
@@ -220,30 +197,6 @@ class BlocksService {
     }
   }
 
-  /**
-   *
-   * @private
-   * @async
-   * @param workerId
-   * @param blockNumber
-   * @returns {Promise<boolean>}
-   */
-  private async runBlocksWorker(workerId: number, blockNumber: number) {
-    for (let attempts = 5; attempts > 0; attempts--) {
-      let lastError = null
-      await this.processBlock(blockNumber).catch((error) => {
-        lastError = error
-        this.logger.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
-      })
-
-      if (!lastError) {
-        return true
-      }
-
-      await this.sleep(2000)
-    }
-    return false
-  }
 
   /**
    * Returns last processed block number from database
@@ -356,6 +309,86 @@ class BlocksService {
   }
 
   /**
+   * Trim last blocks and update up to finalized head
+   *
+   * @param {number} startBlockNumber
+   * @returns {Promise<{result: boolean}>}
+   */
+  async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
+    if (SyncStatus.isLocked()) {
+      this.logger.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
+      return { result: false }
+    }
+
+    try {
+      await this.trimBlocks(startBlockNumber)
+      await this.processBlocks(startBlockNumber)
+    } catch (err) {
+      this.logger.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
+    }
+    return { result: true }
+  }
+
+  /**
+   *
+   * @param {number} ms
+   * @returns {Promise<>}
+   */
+  async sleep(ms: number): Promise<any> {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms)
+    })
+  }
+
+  /**
+   * Update specs version metadata
+   *
+   * @private
+   * @async
+   * @param {BlockHash} blockHash - The block hash
+   */
+  private async updateMetaData(blockHash: any): Promise<void> {
+    /** @type {RuntimeVersion} */
+    const runtimeVersion = await this.polkadotApi.rpc.state.getRuntimeVersion(blockHash)
+
+    /** @type {u32} */
+    const newSpecVersion = runtimeVersion.specVersion
+
+    if (newSpecVersion.gt(this.currentSpecVersion)) {
+      this.logger.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
+
+      const rpcMeta = await this.polkadotApi.rpc.state.getMetadata(blockHash)
+
+      this.polkadotApi.registry.setMetadata(rpcMeta)
+    }
+  }
+
+  /**
+   *
+   * @private
+   * @async
+   * @param workerId
+   * @param blockNumber
+   * @returns {Promise<boolean>}
+   */
+  private async runBlocksWorker(workerId: number, blockNumber: number) {
+    for (let attempts = 5; attempts > 0; attempts--) {
+      let lastError = null
+      await this.processBlock(blockNumber).catch((error) => {
+        lastError = error
+        this.logger.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
+      })
+
+      if (!lastError) {
+        return true
+      }
+
+      await this.sleep(2000)
+    }
+    return false
+  }
+
+  /**
    * Remove blocks data from database from start
    *
    * @async
@@ -387,27 +420,6 @@ class BlocksService {
       transaction.release()
       throw new Error('cannot remove blocks')
     }
-  }
-
-  /**
-   * Trim last blocks and update up to finalized head
-   *
-   * @param {number} startBlockNumber
-   * @returns {Promise<{result: boolean}>}
-   */
-  async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
-    if (SyncStatus.isLocked()) {
-      this.logger.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
-      return { result: false }
-    }
-
-    try {
-      await this.trimBlocks(startBlockNumber)
-      await this.processBlocks(startBlockNumber)
-    } catch (err) {
-      this.logger.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
-    }
-    return { result: true }
   }
 
   private async processEvents(blockNumber: number, events: Vec<EventRecord>) {
@@ -443,17 +455,6 @@ class BlocksService {
     }
 
     return events.reduce(processEvent, [])
-  }
-
-  /**
-   *
-   * @param {number} ms
-   * @returns {Promise<>}
-   */
-  async sleep(ms: number): Promise<any> {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms)
-    })
   }
 }
 

@@ -1,11 +1,7 @@
 import { environment } from '../../environment'
 import { IExtrinsic, IExtrinsicsService } from './extrinsics.types'
-import { Pool } from 'pg'
-import { PostgresModule } from '../../modules/postgres.module'
 import { Producer } from 'kafkajs'
 import { KafkaModule } from '../../modules/kafka.module'
-import { ApiPromise } from '@polkadot/api'
-import { PolkadotModule } from '../../modules/polkadot.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
 

@@ -6,6 +6,18 @@ const {
 
 export class PostgresModule {
 	private static instance: PostgresModule
+
+	private pool: Pool;
+	private constructor() {
+		this.pool = new Pool({
+			host: DB_HOST,
+			user: DB_USER,
+			database: DB_NAME,
+			password: DB_PASSWORD,
+			port: DB_PORT
+		})
+	}
+
 	static async init(): Promise<void> {
 		if (!PostgresModule.instance) {
 			PostgresModule.instance = new PostgresModule()
@@ -17,16 +29,5 @@ export class PostgresModule {
 		}
 
 		return PostgresModule.instance.pool
-	}
-
-	private pool: Pool;
-	private constructor() {
-		this.pool = new Pool({
-			host: DB_HOST,
-			user: DB_USER,
-			database: DB_NAME,
-			password: DB_PASSWORD,
-			port: DB_PORT
-		})
 	}
 }

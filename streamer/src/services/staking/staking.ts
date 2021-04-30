@@ -9,7 +9,6 @@ import {
   IStakingService,
   IProcessEraPayload
 } from './staking.types'
-import { FastifyInstance } from 'fastify'
 import { ApiPromise } from '@polkadot/api'
 import { Producer } from 'kafkajs'
 import fastq from 'fastq'
