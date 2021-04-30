@@ -1,13 +1,15 @@
 import 'reflect-metadata'
-import { build } from './app'
+import { build, runner } from './app'
 
 import { environment } from './environment'
 const { API_PORT, API_ADDR } = environment
 
 ;(async () => {
   const app = await build()
+
   try {
     await app.listen(API_PORT, API_ADDR)
+    await runner()
     process.on('SIGINT', () => {
       app.close()
       process.exit(1)

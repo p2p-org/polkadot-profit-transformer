@@ -1,6 +1,13 @@
 import { environment } from '../../environment'
-import { TBlockHash, IBlock, IEra, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
-import { FastifyInstance } from 'fastify'
+import {
+  TBlockHash,
+  IBlock,
+  IEra,
+  VerifierStatus,
+  IWatchdogService,
+  IWatchdogStatus,
+  IWatchdogRestartResponse
+} from './watchdog.types'
 import StakingService from '../staking/staking'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
@@ -8,6 +15,12 @@ import { EventRecord, SignedBlock } from '@polkadot/types/interfaces'
 import { ApiPromise } from '@polkadot/api'
 import { Pool } from 'pg'
 import { Vec } from '@polkadot/types'
+import { PostgresModule } from '../../modules/postgres.module'
+import { Producer } from 'kafkajs'
+import { KafkaModule } from '../../modules/kafka.module'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
 const { DB_SCHEMA } = environment
 
@@ -15,8 +28,11 @@ const WATCHDOG_CONCURRENCY = 10
 
 export default class WatchdogService implements IWatchdogService {
   static instance: WatchdogService
-  private readonly app: FastifyInstance
-  private readonly polkadotConnector: ApiPromise
+
+  private readonly repository: Pool = PostgresModule.inject()
+  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
+
   private resolve: { (arg0: number): void; (value: number | PromiseLike<number>): void } | undefined
   private concurrency: number
   private status: VerifierStatus
@@ -25,24 +41,20 @@ export default class WatchdogService implements IWatchdogService {
   private currentEraId: number
   private lastCheckedBlockId: number
   private restartBlockId: number
-  private postgresConnector: Pool
 
-  constructor(app: FastifyInstance) {
-    this.app = app
-    this.polkadotApi = app.polkadotConnector
-    this.repository = app.postgresConnector
+  constructor() {
     this.concurrency = WATCHDOG_CONCURRENCY
     this.status = VerifierStatus.NEW
-    this.blocksService = new BlocksService(app)
-    this.configService = new ConfigService(app)
+    this.blocksService = new BlocksService()
+    this.configService = new ConfigService()
     this.currentEraId = -1
     this.lastCheckedBlockId = -1
     this.restartBlockId = -1
   }
 
-  static getInstance(app: FastifyInstance): WatchdogService {
+  static getInstance(): WatchdogService {
     if (!WatchdogService.instance) {
-      WatchdogService.instance = new WatchdogService(app)
+      WatchdogService.instance = new WatchdogService()
     }
 
     return WatchdogService.instance
@@ -148,7 +160,7 @@ export default class WatchdogService implements IWatchdogService {
     const eraFromDb = await this.getEraFromDB(+eraId)
 
     if (!eraFromDb) {
-      StakingService.getInstance(this.app).addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
+      StakingService.getInstance().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
       return
     }
 

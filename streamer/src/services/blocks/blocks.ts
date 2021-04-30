@@ -27,6 +27,7 @@ class BlocksService {
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
+
   private readonly currentSpecVersion: u32
   private readonly extrinsicsService: ExtrinsicsService
   private readonly stakingService: StakingService
@@ -264,6 +265,8 @@ class BlocksService {
       this.logger.error(`failed to get last synchronized block number: ${err}`)
       throw new Error('cannot get last block number')
     }
+
+    this.logger.warn(`block extracted: ${blockNumberFromDB}`)
 
     return blockNumberFromDB
   }

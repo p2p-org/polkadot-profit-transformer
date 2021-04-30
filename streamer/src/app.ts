@@ -122,17 +122,6 @@ const build = async (): Promise<FastifyInstance> => {
 
   try {
     await fastify.ready()
-    const runner = new RunnerService(fastify)
-    await runner.sync({
-      optionSync: argv['sync-force'] ? false : argv.sync,
-      optionSyncForce: argv['sync-force'],
-      optionSyncValidators: argv['sync-stakers'],
-      optionSyncStartBlockNumber: argv.start,
-      optionSubscribeFinHead: argv['sub-fin-head'],
-      optionStartWatchdog: argv['watchdog'],
-      optionWatchdogStartBlockNumber: argv['watchdog-start'],
-      optionWatchdogConcurrency: argv['watchdog-concurrency']
-    })
   } catch (err) {
     throw err
     // fastify.log.info(`Fastify ready error: ${err}`)
@@ -141,4 +130,18 @@ const build = async (): Promise<FastifyInstance> => {
   return fastify
 }
 
-export { build }
+const runner = async(): Promise<void> => {
+  const runner = new RunnerService()
+  await runner.sync({
+    optionSync: argv['sync-force'] ? false : argv.sync,
+    optionSyncForce: argv['sync-force'],
+    optionSyncValidators: argv['sync-stakers'],
+    optionSyncStartBlockNumber: argv.start,
+    optionSubscribeFinHead: argv['sub-fin-head'],
+    optionStartWatchdog: argv['watchdog'],
+    optionWatchdogStartBlockNumber: argv['watchdog-start'],
+    optionWatchdogConcurrency: argv['watchdog-concurrency']
+  })
+}
+
+export { build, runner }
