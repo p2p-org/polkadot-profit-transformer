@@ -37,7 +37,7 @@ class ConsumerService implements IConsumerService {
       this.logger.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `)
     }
 
-    this.polkadotApi.rpc.chain.subscribeFinalizedHeads((header) => {
+    await this.polkadotApi.rpc.chain.subscribeFinalizedHeads((header) => {
       return this.onFinalizedHead(header)
     })
   }
@@ -66,9 +66,11 @@ class ConsumerService implements IConsumerService {
       await blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
     }
 
-    blocksService.processBlock(blockHash.number.toNumber()).catch((error) => {
+    try {
+      await blocksService.processBlock(blockHash.number.toNumber())
+    } catch(error) {
       this.logger.error(`failed to process captured block #${blockHash}:`, error)
-    })
+    }
   }
 }
 

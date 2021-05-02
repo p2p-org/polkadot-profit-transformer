@@ -1,0 +1,82 @@
+import { environment } from '../environment'
+import { Pool } from 'pg'
+import { PostgresModule } from '../modules/postgres.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../modules/logger.module'
+
+const { DB_SCHEMA } = environment
+
+export class BlockRepository {
+	static schema: string = DB_SCHEMA
+
+	private readonly connectionProvider: Pool = PostgresModule.inject()
+	private readonly logger: Logger = LoggerModule.inject()
+
+	async getLastProcessedBlock(): Promise<number> {
+		let blockNumberFromDB = 0
+
+		try {
+			const queryText = `SELECT id AS last_number FROM ${BlockRepository.schema}.blocks ORDER BY id DESC LIMIT 1`
+			const { rows } = await this.connectionProvider.query(queryText)
+
+			if (rows.length && rows[0].last_number) {
+				blockNumberFromDB = parseInt(rows[0].last_number)
+			}
+		} catch (err) {
+			this.logger.error(`failed to get last synchronized block number: ${err}`)
+			throw new Error('cannot get last block number')
+		}
+
+		return blockNumberFromDB
+	}
+
+	async removeBlockData(blockNumbers: number[]): Promise<void> {
+		const transaction = await this.connectionProvider.connect()
+
+		try {
+			await transaction.query({
+				text: `DELETE FROM "${BlockRepository.schema}.blocks" WHERE "id" = ANY($1::int[])`,
+				values: [blockNumbers]
+			})
+
+			for (const tbl of ['balances', 'events', 'extrinsics']) {
+				await transaction.query({
+					text: `DELETE FROM "${BlockRepository.schema}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
+					values: [blockNumbers]
+				})
+			}
+
+			await transaction.query('COMMIT')
+		} catch (err) {
+			this.logger.error(`failed to remove block from table: ${err}`)
+			await transaction.query('ROLLBACK')
+		} finally {
+			transaction.release()
+		}
+	}
+
+	async trimBlocksFrom(startBlockNumber: number): Promise<void> {
+		const transaction = await this.connectionProvider.connect()
+
+		try {
+			await transaction.query({
+				text: `DELETE FROM "${BlockRepository.schema}.blocks" WHERE "id" >= $1::int`,
+				values: [startBlockNumber]
+			})
+
+			for (const tbl of ['balances', 'events', 'extrinsics']) {
+				await transaction.query({
+					text: `DELETE FROM "${BlockRepository.schema}.${tbl}" WHERE "id" >= $1::int`,
+					values: [startBlockNumber]
+				})
+			}
+
+			await transaction.query('COMMIT')
+		} catch (err) {
+			this.logger.error(`failed to remove blocks from table: ${err}`)
+			await transaction.query('ROLLBACK')
+		} finally {
+			transaction.release()
+		}
+	}
+}

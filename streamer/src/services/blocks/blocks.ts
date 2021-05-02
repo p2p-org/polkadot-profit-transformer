@@ -2,38 +2,36 @@ import { SyncStatus } from '../index'
 import StakingService from '../staking/staking'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { environment } from '../../environment'
-import { u32, Vec } from '@polkadot/types'
+import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
 import { IBlocksStatusResult } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
-import { Pool } from 'pg'
 import { Producer } from 'kafkajs'
 import { ApiPromise } from '@polkadot/api'
 import { Logger } from 'pino'
-import { PostgresModule } from '../../modules/postgres.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { KafkaModule } from '../../modules/kafka.module'
 import { LoggerModule } from '../../modules/logger.module'
+import { BlockRepository } from '../../repositores/block.repository'
+import { BlockServiceError, EBlockServiceError } from '../../common/errors/blocks.error'
 
-const { KAFKA_PREFIX, DB_SCHEMA } = environment
+const { KAFKA_PREFIX } = environment
 
 /**
  * Provides block operations
  * @class
  */
 class BlocksService {
-  private readonly repository: Pool = PostgresModule.inject()
+  private readonly blockRepository: BlockRepository = new BlockRepository()
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
 
-  private readonly currentSpecVersion: u32
   private readonly extrinsicsService: ExtrinsicsService
   private readonly stakingService: StakingService
 
   constructor() {
-    this.currentSpecVersion = this.polkadotApi.createType('u32', 0)
     this.extrinsicsService = new ExtrinsicsService()
     this.stakingService = StakingService.getInstance()
   }
@@ -49,27 +47,24 @@ class BlocksService {
   async updateOneBlock(blockNumber: number): Promise<true> {
     if (SyncStatus.isLocked()) {
       this.logger.error(`failed execute "updateOneBlock": sync in process`)
-      throw new Error('sync in process')
+      throw new BlockServiceError(EBlockServiceError.SYNC_IN_PROCESS)
     }
 
-    await this.processBlock(blockNumber).catch((error) => {
+    try {
+      await this.processBlock(blockNumber)
+    } catch (error) {
       this.logger.error(`failed to process block #${blockNumber}: ${error}`)
-      throw new Error('cannot process block')
-    })
+      throw new BlockServiceError(EBlockServiceError.BLOCK_PROCESS_ERROR)
+    }
+
     return true
   }
 
   async processBlock(height: number): Promise<void> {
-    let blockHash = null
-
-    if (height == null) {
-      throw new Error('empty height and blockHash')
-    }
-
-    blockHash = await this.polkadotApi.rpc.chain.getBlockHash(height)
+    const blockHash = await this.polkadotApi.rpc.chain.getBlockHash(height)
 
     if (!blockHash) {
-      throw new Error('cannot get block hash')
+      throw new BlockServiceError(EBlockServiceError.BLOCKHASH_NOT_FOUND)
     }
 
     const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
@@ -86,7 +81,7 @@ class BlocksService {
     const era = Number(activeEra.unwrap().get('index'))
 
     if (!signedBlock) {
-      throw new Error('cannot get block')
+      throw new BlockServiceError(EBlockServiceError.BLOCK_NOT_FOUND)
     }
 
     const processedEvents = await this.processEvents(signedBlock.block.header.number.toNumber(), events)
@@ -127,7 +122,7 @@ class BlocksService {
       })
     } catch (error) {
       this.logger.error(`failed to push block: `, error)
-      throw new Error('cannot push block to Kafka')
+      throw new BlockServiceError(EBlockServiceError.KAFKA_SEND_ERROR)
     }
 
     await this.extrinsicsService.extractExtrinsics(
@@ -138,11 +133,7 @@ class BlocksService {
       signedBlock.block.extrinsics
     )
 
-    const findEraPayoutEvent = (events: Vec<EventRecord>) => {
-      return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
-    }
-
-    const eraPayoutEvent = findEraPayoutEvent(events)
+    const eraPayoutEvent = this.findEraPayoutEvent(events)
 
     if (eraPayoutEvent) {
       this.stakingService.addToQueue({ eraPayoutEvent, blockHash })
@@ -153,11 +144,6 @@ class BlocksService {
 
   /**
    * Process all blocks with head
-   *
-   * @public
-   * @async
-   * @param startBlockNumber
-   * @returns {Promise<void>}
    */
   async processBlocks(startBlockNumber: number | null = null): Promise<void> {
     await SyncStatus.acquire()
@@ -200,26 +186,9 @@ class BlocksService {
 
   /**
    * Returns last processed block number from database
-   *
-   * @public
-   * @async
-   * @returns {Promise<number>}
    */
   async getLastProcessedBlock(): Promise<number> {
-    let blockNumberFromDB = 0
-
-    try {
-      const { rows } = await this.repository.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
-
-      if (rows.length && rows[0].last_number) {
-        blockNumberFromDB = parseInt(rows[0].last_number)
-      }
-    } catch (err) {
-      this.logger.error(`failed to get last synchronized block number: ${err}`)
-      throw new Error('cannot get last block number')
-    }
-
-    return blockNumberFromDB
+    return this.blockRepository.getLastProcessedBlock()
   }
 
   async getFinBlockNumber(): Promise<number> {
@@ -230,20 +199,7 @@ class BlocksService {
   }
 
   /**
-   * Synchronization status
-   *
-   * @typedef {Object} SyncSimpleStatus
-   * @property {string} status
-   * @property {number} fin_height_diff
-   * @property {number} height_diff
-   */
-
-  /**
    *  Returns synchronization status, and diff between head and finalized head
-   *
-   * @public
-   * @async
-   * @returns {Promise<SyncSimpleStatus>}
    */
   async getBlocksStatus(): Promise<IBlocksStatusResult> {
     const result = {
@@ -274,35 +230,12 @@ class BlocksService {
 
   /**
    * Remove blocks data from database by numbers
-   *
-   * @public
-   * @async
-   * @param {number[]} blockNumbers
-   * @returns {Promise<{result: boolean}>}
    */
   async removeBlocks(blockNumbers: number[]): Promise<{ result: true }> {
-    const transaction = await this.repository.connect()
-
     try {
-      await transaction.query({
-        text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
-        values: [blockNumbers]
-      })
-
-      for (const tbl of ['balances', 'events', 'extrinsics']) {
-        await transaction.query({
-          text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
-          values: [blockNumbers]
-        })
-      }
-
-      await transaction.query('COMMIT')
-      transaction.release()
+      await this.blockRepository.removeBlockData(blockNumbers)
     } catch (err) {
-      this.logger.error(`failed to remove block from table: ${err}`)
-      await transaction.query('ROLLBACK')
-      transaction.release()
-      throw new Error('cannot remove blocks')
+      throw new BlockServiceError(EBlockServiceError.REMOVE_BLOCK_ERROR)
     }
 
     return { result: true }
@@ -310,9 +243,6 @@ class BlocksService {
 
   /**
    * Trim last blocks and update up to finalized head
-   *
-   * @param {number} startBlockNumber
-   * @returns {Promise<{result: boolean}>}
    */
   async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
     if (SyncStatus.isLocked()) {
@@ -321,7 +251,7 @@ class BlocksService {
     }
 
     try {
-      await this.trimBlocks(startBlockNumber)
+      await this.blockRepository.trimBlocksFrom(startBlockNumber)
       await this.processBlocks(startBlockNumber)
     } catch (err) {
       this.logger.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
@@ -334,50 +264,26 @@ class BlocksService {
    * @param {number} ms
    * @returns {Promise<>}
    */
-  async sleep(ms: number): Promise<any> {
+  private async sleep(ms: number): Promise<any> {
     return new Promise((resolve) => {
       setTimeout(resolve, ms)
     })
   }
 
-  /**
-   * Update specs version metadata
-   *
-   * @private
-   * @async
-   * @param {BlockHash} blockHash - The block hash
-   */
-  private async updateMetaData(blockHash: any): Promise<void> {
-    /** @type {RuntimeVersion} */
-    const runtimeVersion = await this.polkadotApi.rpc.state.getRuntimeVersion(blockHash)
-
-    /** @type {u32} */
-    const newSpecVersion = runtimeVersion.specVersion
-
-    if (newSpecVersion.gt(this.currentSpecVersion)) {
-      this.logger.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
-
-      const rpcMeta = await this.polkadotApi.rpc.state.getMetadata(blockHash)
-
-      this.polkadotApi.registry.setMetadata(rpcMeta)
-    }
+  private findEraPayoutEvent (events: Vec<EventRecord>) {
+    return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
   }
 
-  /**
-   *
-   * @private
-   * @async
-   * @param workerId
-   * @param blockNumber
-   * @returns {Promise<boolean>}
-   */
   private async runBlocksWorker(workerId: number, blockNumber: number) {
     for (let attempts = 5; attempts > 0; attempts--) {
       let lastError = null
-      await this.processBlock(blockNumber).catch((error) => {
+
+      try {
+        await this.processBlock(blockNumber)
+      } catch (error) {
         lastError = error
         this.logger.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
-      })
+      }
 
       if (!lastError) {
         return true
@@ -386,40 +292,6 @@ class BlocksService {
       await this.sleep(2000)
     }
     return false
-  }
-
-  /**
-   * Remove blocks data from database from start
-   *
-   * @async
-   * @private
-   * @param {number} startBlockNumber
-   * @returns {Promise<void>}
-   */
-  private async trimBlocks(startBlockNumber: number): Promise<void> {
-    const transaction = await this.repository.connect()
-
-    try {
-      await transaction.query({
-        text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" >= $1::int`,
-        values: [startBlockNumber]
-      })
-
-      for (const tbl of ['balances', 'events', 'extrinsics']) {
-        await transaction.query({
-          text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "id" >= $1::int`,
-          values: [startBlockNumber]
-        })
-      }
-
-      await transaction.query('COMMIT')
-      transaction.release()
-    } catch (err) {
-      this.logger.error(`failed to remove blocks from table: ${err}`)
-      await transaction.query('ROLLBACK')
-      transaction.release()
-      throw new Error('cannot remove blocks')
-    }
   }
 
   private async processEvents(blockNumber: number, events: Vec<EventRecord>) {
@@ -458,8 +330,4 @@ class BlocksService {
   }
 }
 
-/**
- *
- * @type {{BlocksService: BlocksService}}
- */
 export { BlocksService }
