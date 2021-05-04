@@ -1,6 +1,11 @@
 import { environment } from '../../environment'
 import { IConfigService } from './config.types'
-import { FastifyInstance } from 'fastify'
+import { Pool } from 'pg'
+import { PostgresModule } from '../../modules/postgres.module'
+import { ApiPromise } from '@polkadot/api'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
 const { DB_SCHEMA } = environment
 const INITIAL_VERIFY_HEIGHT = -1
@@ -9,37 +14,15 @@ const INITIAL_VERIFY_HEIGHT = -1
  * @class
  */
 class ConfigService implements IConfigService {
-  private readonly app: FastifyInstance
-  /**
-   * Creates an instance of ConfigsService.
-   * @param {object} app fastify app
-   */
-  constructor(app: FastifyInstance) {
-    if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
-
-    /** @private */
-    this.app = app
-
-    const { polkadotConnector } = this.app
-
-    if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.')
-    }
-
-    const { postgresConnector } = this.app
-
-    if (!postgresConnector) {
-      throw new Error('cant get .postgresConnector from fastify app.')
-    }
-  }
+  private readonly repository: Pool = PostgresModule.inject()
+  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
 
   async bootstrapConfig(): Promise<void> {
-    const { polkadotConnector } = this.app
-
     const [currentChain, currentChainType] = (
       await Promise.all([
-        polkadotConnector.rpc.system.chain(), // Polkadot
-        polkadotConnector.rpc.system.chainType() // Live
+        this.polkadotApi.rpc.system.chain(), // Polkadot
+        this.polkadotApi.rpc.system.chainType() // Live
       ])
     ).map((value) => value.toString().trim())
 
@@ -54,7 +37,7 @@ class ConfigService implements IConfigService {
     const [dbChain, dbChainType] = await Promise.all([this.getConfigValueFromDB('chain'), this.getConfigValueFromDB('chain_type')])
 
     if (!dbChain && !dbChainType) {
-      this.app.log.info(`Init new chain config: chain="${currentChain}", chain_type="${currentChainType}"`)
+      this.logger.info(`Init new chain config: chain="${currentChain}", chain_type="${currentChainType}"`)
       await Promise.all([this.setConfigValueToDB('chain', currentChain), this.setConfigValueToDB('chain_type', currentChainType)])
     } else {
       if (dbChain !== currentChain) {
@@ -87,7 +70,6 @@ class ConfigService implements IConfigService {
 
   async setConfigValueToDB(key: string, value: string | number): Promise<void> {
     const valueToSave = value.toString()
-    const { postgresConnector } = this.app
 
     if (!key.length) {
       throw new Error('"key" is empty')
@@ -98,50 +80,46 @@ class ConfigService implements IConfigService {
     }
 
     try {
-      await postgresConnector.query({
+      await this.repository.query({
         text: `INSERT INTO  ${DB_SCHEMA}._config VALUES ($1, $2)`,
         values: [key, valueToSave]
       })
     } catch (err) {
-      this.app.log.error(`failed to set config key "${err}"`)
+      this.logger.error(`failed to set config key "${err}"`)
       throw new Error('cannot set config value')
     }
   }
 
   async getConfigValueFromDB(key: string): Promise<string> {
-    const { postgresConnector } = this.app
-
     if (!key.length) {
       throw new Error('"key" is empty')
     }
 
     try {
-      const result = await postgresConnector.query({
+      const result = await this.repository.query({
         text: `SELECT "value" FROM ${DB_SCHEMA}._config WHERE "key" = $1 LIMIT 1`,
         values: [key]
       })
 
       return result.rows[0]?.value
     } catch (err) {
-      this.app.log.error(`failed to get config key "${err}"`)
+      this.logger.error(`failed to get config key "${err}"`)
       throw new Error('cannot get config value')
     }
   }
 
   async updateConfigValueInDB(key: string, value: string | number): Promise<void> {
-    const { postgresConnector } = this.app
-
     if (!key.length) {
       throw new Error('updateConfigValueInDB "key" is empty')
     }
 
     try {
-      await postgresConnector.query({
+      await this.repository.query({
         text: `UPDATE ${DB_SCHEMA}._config SET "value" = $2 WHERE "key" = $1`,
         values: [key, value]
       })
     } catch (err) {
-      this.app.log.error(`failed to updateConfigValueInDB config key "${err}"`)
+      this.logger.error(`failed to updateConfigValueInDB config key "${err}"`)
       throw new Error('cannot updateConfigValueInDB config value')
     }
   }

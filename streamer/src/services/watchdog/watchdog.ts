@@ -1,6 +1,13 @@
 import { environment } from '../../environment'
-import { TBlockHash, IBlock, IEra, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
-import { FastifyInstance } from 'fastify'
+import {
+  TBlockHash,
+  IBlock,
+  IEra,
+  VerifierStatus,
+  IWatchdogService,
+  IWatchdogStatus,
+  IWatchdogRestartResponse
+} from './watchdog.types'
 import StakingService from '../staking/staking'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
@@ -8,6 +15,10 @@ import { EventRecord, SignedBlock } from '@polkadot/types/interfaces'
 import { ApiPromise } from '@polkadot/api'
 import { Pool } from 'pg'
 import { Vec } from '@polkadot/types'
+import { PostgresModule } from '../../modules/postgres.module'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
 const { DB_SCHEMA } = environment
 
@@ -15,8 +26,11 @@ const WATCHDOG_CONCURRENCY = 10
 
 export default class WatchdogService implements IWatchdogService {
   static instance: WatchdogService
-  private readonly app: FastifyInstance
-  private readonly polkadotConnector: ApiPromise
+
+  private readonly repository: Pool = PostgresModule.inject()
+  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
+
   private resolve: { (arg0: number): void; (value: number | PromiseLike<number>): void } | undefined
   private concurrency: number
   private status: VerifierStatus
@@ -25,24 +39,20 @@ export default class WatchdogService implements IWatchdogService {
   private currentEraId: number
   private lastCheckedBlockId: number
   private restartBlockId: number
-  private postgresConnector: Pool
 
-  constructor(app: FastifyInstance) {
-    this.app = app
-    this.polkadotConnector = app.polkadotConnector
-    this.postgresConnector = app.postgresConnector
+  constructor() {
     this.concurrency = WATCHDOG_CONCURRENCY
     this.status = VerifierStatus.NEW
-    this.blocksService = new BlocksService(app)
-    this.configService = new ConfigService(app)
+    this.blocksService = new BlocksService()
+    this.configService = new ConfigService()
     this.currentEraId = -1
     this.lastCheckedBlockId = -1
     this.restartBlockId = -1
   }
 
-  static getInstance(app: FastifyInstance): WatchdogService {
+  static getInstance(): WatchdogService {
     if (!WatchdogService.instance) {
-      WatchdogService.instance = new WatchdogService(app)
+      WatchdogService.instance = new WatchdogService()
     }
 
     return WatchdogService.instance
@@ -64,11 +74,11 @@ export default class WatchdogService implements IWatchdogService {
     const isStartValid = await this.isStartParamsValid(startBlockId)
 
     if (!isStartValid) {
-      this.app.log.error('Starting conditions is not valid, exit')
+      this.logger.error('Starting conditions is not valid, exit')
       process.exit(0)
     }
 
-    this.app.log.info(`Watchdog start from blockId ${startBlockId}`)
+    this.logger.info(`Watchdog start from blockId ${startBlockId}`)
 
     this.lastCheckedBlockId = startBlockId - 1
 
@@ -92,24 +102,24 @@ export default class WatchdogService implements IWatchdogService {
     const blockFromDB = await this.getBlockFromDB(blockId)
 
     if (!blockFromDB) {
-      this.app.log.debug(`Block is not exists in DB: ${blockId}`)
+      this.logger.debug(`Block is not exists in DB: ${blockId}`)
       await this.blocksService.processBlock(blockId)
       return
     }
 
-    const blockFromChain = await this.polkadotConnector.rpc.chain.getBlock(blockFromDB.hash)
+    const blockFromChain = await this.polkadotApi.rpc.chain.getBlock(blockFromDB.hash)
 
-    this.app.log.debug(`Validate block ${blockId}`)
+    this.logger.debug(`Validate block ${blockId}`)
 
     const isBlockValidResult = await this.isBlockValid(blockFromDB, blockFromChain)
 
     if (!isBlockValidResult) {
       try {
-        this.app.log.debug(`Block ${blockId} is not valid, resync.`)
+        this.logger.debug(`Block ${blockId} is not valid, resync.`)
         await this.blocksService.processBlock(blockId)
         return
       } catch (error) {
-        this.app.log.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
+        this.logger.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
       }
     }
 
@@ -118,20 +128,20 @@ export default class WatchdogService implements IWatchdogService {
 
   async getEraFromDB(eraId: number): Promise<IEra> {
     try {
-      const { rows } = await this.postgresConnector.query({
+      const { rows } = await this.repository.query({
         text: `SELECT * FROM ${DB_SCHEMA}.eras WHERE "era" = $1::int`,
         values: [eraId]
       })
 
       return rows[0]
     } catch (err) {
-      this.app.log.error(`failed to get era by id ${eraId}, error: ${err}`)
+      this.logger.error(`failed to get era by id ${eraId}, error: ${err}`)
       throw new Error(`cannot get era by id ${eraId}`)
     }
   }
 
   async validateEraPayout(blockFromDB: IBlock): Promise<void> {
-    const events = await this.polkadotConnector.query.system.events.at(blockFromDB.hash)
+    const events = await this.polkadotApi.query.system.events.at(blockFromDB.hash)
 
     const findEraPayoutEvent = (events: Vec<EventRecord>) => {
       return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
@@ -148,7 +158,7 @@ export default class WatchdogService implements IWatchdogService {
     const eraFromDb = await this.getEraFromDB(+eraId)
 
     if (!eraFromDb) {
-      StakingService.getInstance(this.app).addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
+      StakingService.getInstance().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
       return
     }
 
@@ -164,7 +174,7 @@ export default class WatchdogService implements IWatchdogService {
     const isParentHashValid = blockFromDB.parent_hash === blockFromChain.block.header.parentHash.toString()
 
     if (!isEventsExists || !isExtrinsicsExists || !isParentHashValid) {
-      this.app.log.debug(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
+      this.logger.debug(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
       return false
     }
 
@@ -175,16 +185,16 @@ export default class WatchdogService implements IWatchdogService {
     try {
       const {
         rows: [{ count }]
-      } = await this.postgresConnector.query({
+      } = await this.repository.query({
         text: `SELECT count(*) FROM ${DB_SCHEMA}.events WHERE "block_id" = $1::int`,
         values: [block.id]
       })
 
-      const eventsInBlockchainCount = await this.polkadotConnector.query.system.eventCount.at(block.hash)
+      const eventsInBlockchainCount = await this.polkadotApi.query.system.eventCount.at(block.hash)
 
       return +count === eventsInBlockchainCount.toNumber()
     } catch (err) {
-      this.app.log.error(`failed to get events for block ${block.id}, error: ${err}`)
+      this.logger.error(`failed to get events for block ${block.id}, error: ${err}`)
       throw new Error(`cannot check events for block ${block.id}`)
     }
   }
@@ -232,14 +242,14 @@ export default class WatchdogService implements IWatchdogService {
 
   async getBlockFromDB(blockId: number): Promise<IBlock> {
     try {
-      const { rows } = await this.postgresConnector.query({
+      const { rows } = await this.repository.query({
         text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "id" = $1::int`,
         values: [blockId]
       })
 
       return rows[0]
     } catch (err) {
-      this.app.log.error(`failed to get block by id ${blockId}, error: ${err}`)
+      this.logger.error(`failed to get block by id ${blockId}, error: ${err}`)
       throw new Error('cannot getblock by id')
     }
   }
@@ -248,7 +258,7 @@ export default class WatchdogService implements IWatchdogService {
     const isStartBlockValid = await this.isStartHeightValid(startBlockId)
 
     if (!isStartBlockValid) {
-      this.app.log.error(
+      this.logger.error(
         `Attempt to run verification with blockId ${startBlockId} greater than current watchdog_verify_height. Exit with error.`
       )
       return false
@@ -257,7 +267,7 @@ export default class WatchdogService implements IWatchdogService {
     const dbEmptyCheck = await this.isDBEmpty()
 
     if (dbEmptyCheck) {
-      this.app.log.error('Blocks table in DB is empty, exit')
+      this.logger.error('Blocks table in DB is empty, exit')
       return false
     }
     return true
@@ -265,14 +275,14 @@ export default class WatchdogService implements IWatchdogService {
 
   async isDBEmpty(): Promise<boolean> {
     try {
-      const { rows } = await this.postgresConnector.query({
+      const { rows } = await this.repository.query({
         text: `SELECT count (*) FROM ${DB_SCHEMA}.blocks`
       })
       const blocksInDBCount = +rows[0].count
 
       return blocksInDBCount === 0
     } catch (err) {
-      this.app.log.error(`Error check is db empty`)
+      this.logger.error(`Error check is db empty`)
       throw new Error('Error check is db empty')
     }
   }
@@ -314,7 +324,7 @@ export default class WatchdogService implements IWatchdogService {
 
   async isStartHeightValid(startBlockId: number): Promise<boolean> {
     const watchdogVerifyHeight = await this.configService.getConfigValueFromDB('watchdog_verify_height')
-    this.app.log.debug(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
+    this.logger.debug(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
 
     return startBlockId >= 0 && startBlockId - 1 <= +watchdogVerifyHeight
   }
@@ -323,7 +333,7 @@ export default class WatchdogService implements IWatchdogService {
     try {
       const {
         rows: [{ count }]
-      } = await this.postgresConnector.query({
+      } = await this.repository.query({
         text: `SELECT count(*) FROM ${DB_SCHEMA}.extrinsics WHERE "block_id" = $1::int`,
         values: [block.id]
       })
@@ -344,7 +354,7 @@ export default class WatchdogService implements IWatchdogService {
 
       return +count === extrinsicsCount
     } catch (err) {
-      this.app.log.error(`failed to get extrinsics for block ${block.id}, error: ${err}`)
+      this.logger.error(`failed to get extrinsics for block ${block.id}, error: ${err}`)
       throw new Error(`cannot check extrinsics for block ${block.id}`)
     }
   }
@@ -353,7 +363,7 @@ export default class WatchdogService implements IWatchdogService {
     const block = await this.getBlockFromDB(blockId)
 
     if (!block) {
-      return await this.polkadotConnector.rpc.chain.getBlockHash(blockId)
+      return await this.polkadotApi.rpc.chain.getBlockHash(blockId)
     } else {
       return block.hash
     }

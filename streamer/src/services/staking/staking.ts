@@ -9,11 +9,15 @@ import {
   IStakingService,
   IProcessEraPayload
 } from './staking.types'
-import { FastifyInstance } from 'fastify'
 import { ApiPromise } from '@polkadot/api'
 import { Producer } from 'kafkajs'
 import fastq from 'fastq'
 import { Pool } from 'pg'
+import { PostgresModule } from '../../modules/postgres.module'
+import { KafkaModule } from '../../modules/kafka.module'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
 const {
   environment: { KAFKA_PREFIX, DB_SCHEMA }
@@ -21,23 +25,19 @@ const {
 
 export default class StakingService implements IStakingService {
   static instance: StakingService
-  private readonly app: FastifyInstance
-  private readonly polkadotConnector: ApiPromise
-  private readonly kafkaProducer: Producer
+  private readonly repository: Pool = PostgresModule.inject()
+  private readonly kafkaProducer: Producer = KafkaModule.inject()
+  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
   private readonly queue: any
-  private postgresConnector: Pool
 
-  constructor(app: FastifyInstance) {
-    this.app = app
-    this.polkadotConnector = app.polkadotConnector
-    this.kafkaProducer = app.kafkaProducer
-    this.postgresConnector = app.postgresConnector
+  constructor() {
     this.queue = fastq(this, this.processEraPayout, 1)
   }
 
-  static getInstance(app: FastifyInstance): StakingService {
+  static getInstance(): StakingService {
     if (!StakingService.instance) {
-      StakingService.instance = new StakingService(app)
+      StakingService.instance = new StakingService()
     }
 
     return StakingService.instance
@@ -49,10 +49,10 @@ export default class StakingService implements IStakingService {
 
   async getEraData({ eraId, blockHash }: IBlockEraParams): Promise<IEraData> {
     const [totalReward, erasRewardPoints, totalStake, sessionStart] = await Promise.all([
-      this.polkadotConnector.query.staking.erasValidatorReward.at(blockHash, eraId),
-      this.polkadotConnector.query.staking.erasRewardPoints.at(blockHash, eraId),
-      this.polkadotConnector.query.staking.erasTotalStake.at(blockHash, eraId),
-      this.polkadotConnector.query.staking.erasStartSessionIndex.at(blockHash, eraId)
+      this.polkadotApi.query.staking.erasValidatorReward.at(blockHash, eraId),
+      this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, eraId),
+      this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
+      this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId)
     ])
 
     return {
@@ -66,14 +66,14 @@ export default class StakingService implements IStakingService {
 
   async getFirstBlockInSession(sessionId: number): Promise<IBlock> {
     try {
-      const { rows } = await this.postgresConnector.query({
+      const { rows } = await this.repository.query({
         text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "session_id" = $1::int order by "id" limit 1`,
         values: [sessionId]
       })
 
       return rows[0]
     } catch (err) {
-      this.app.log.error(`failed to get first block of session ${sessionId}, error: ${err}`)
+      this.logger.error(`failed to get first block of session ${sessionId}, error: ${err}`)
       throw new Error('cannot find first era block')
     }
   }
@@ -85,17 +85,17 @@ export default class StakingService implements IStakingService {
     const nominators: INominator[] = []
     const validators: IValidator[] = []
 
-    const eraRewardPointsRaw = await this.polkadotConnector.query.staking.erasRewardPoints.at(blockHash, +eraId)
-    const sessionStart = await this.polkadotConnector.query.staking.erasStartSessionIndex(+eraId)
+    const eraRewardPointsRaw = await this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, +eraId)
+    const sessionStart = await this.polkadotApi.query.staking.erasStartSessionIndex(+eraId)
 
     const firstBlockOfEra = await this.getFirstBlockInSession(+sessionStart)
 
     if (!firstBlockOfEra) {
-      this.app.log.error(`first block of era ${eraId} not found in DB`)
+      this.logger.error(`first block of era ${eraId} not found in DB`)
       throw new Error(`first block of ${eraId} not found in DB`)
     }
 
-    const validatorsStartedEra = await this.polkadotConnector.query.session.validators.at(firstBlockOfEra.hash)
+    const validatorsStartedEra = await this.polkadotApi.query.session.validators.at(firstBlockOfEra.hash)
 
     validatorsStartedEra.forEach((accountId) => {
       validatorsAccountIdSet.add(accountId.toString())
@@ -106,9 +106,9 @@ export default class StakingService implements IStakingService {
     })
 
     const processValidator = async (validatorAccountId: string, stakers: Exposure, stakersClipped: Exposure) => {
-      const prefs = await this.polkadotConnector.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId)
+      const prefs = await this.polkadotApi.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId)
 
-      this.app.log.debug(
+      this.logger.debug(
         `[validators][getStakersByValidator] Loaded stakers: ${stakers.others.length} for validator "${validatorAccountId}"`
       )
 
@@ -126,7 +126,7 @@ export default class StakingService implements IStakingService {
             value: staker.value.toString()
           }
 
-          const payee = await this.polkadotConnector.query.staking.payee.at(blockHash, staker.who.toString())
+          const payee = await this.polkadotApi.query.staking.payee.at(blockHash, staker.who.toString())
           if (payee) {
             if (!payee.isAccount) {
               nominator.reward_dest = payee.toString()
@@ -138,7 +138,7 @@ export default class StakingService implements IStakingService {
 
           nominators.push(nominator)
         } catch (e) {
-          this.app.log.error(`[validators][getValidators] Cannot process staker: ${staker.who} "${e}". Block: ${blockHash}`)
+          this.logger.error(`[validators][getValidators] Cannot process staker: ${staker.who} "${e}". Block: ${blockHash}`)
         }
       }
 
@@ -146,7 +146,7 @@ export default class StakingService implements IStakingService {
 
       let validatorRewardDest: string | undefined = undefined
       let validatorRewardAccountId: AccountId | undefined = undefined
-      const validatorPayee = await this.polkadotConnector.query.staking.payee.at(blockHash, validatorAccountId)
+      const validatorPayee = await this.polkadotApi.query.staking.payee.at(blockHash, validatorAccountId)
       if (validatorPayee) {
         if (!validatorPayee.isAccount) {
           validatorRewardDest = validatorPayee.toString()
@@ -155,7 +155,7 @@ export default class StakingService implements IStakingService {
           validatorRewardAccountId = validatorPayee.asAccount
         }
       } else {
-        this.app.log.warn(`failed to get payee for era: "${eraId}" validator: "${validatorAccountId}". Block: ${blockHash} `)
+        this.logger.warn(`failed to get payee for era: "${eraId}" validator: "${validatorAccountId}". Block: ${blockHash} `)
       }
 
       const pointsFromMap = eraRewardPointsMap.get(validatorAccountId) ?? 0
@@ -176,8 +176,8 @@ export default class StakingService implements IStakingService {
 
     for (const validatorAccountId of validatorsAccountIdSet) {
       const [stakers, stakersClipped] = await Promise.all([
-        this.polkadotConnector.query.staking.erasStakers.at(blockHash, eraId, validatorAccountId),
-        this.polkadotConnector.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId)
+        this.polkadotApi.query.staking.erasStakers.at(blockHash, eraId, validatorAccountId),
+        this.polkadotApi.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId)
       ])
 
       await processValidator(validatorAccountId, stakers, stakersClipped)
@@ -193,9 +193,9 @@ export default class StakingService implements IStakingService {
     try {
       const [eraId] = eraPayoutEvent.event.data
 
-      this.app.log.debug(`Process payout for era: ${eraId}`)
+      this.logger.debug(`Process payout for era: ${eraId}`)
 
-      const blockTime = await this.polkadotConnector.query.timestamp.now.at(blockHash)
+      const blockTime = await this.polkadotApi.query.timestamp.now.at(blockHash)
 
       const eraData = await this.getEraData({ blockHash, eraId: +eraId })
 
@@ -212,7 +212,7 @@ export default class StakingService implements IStakingService {
           ]
         })
       } catch (error: any) {
-        this.app.log.error(`failed to push era data: `, error)
+        this.logger.error(`failed to push era data: `, error)
         throw new Error('cannot push session data to Kafka')
       }
 
@@ -232,13 +232,13 @@ export default class StakingService implements IStakingService {
           ]
         })
       } catch (error: any) {
-        this.app.log.error(`failed to push session data: `, error)
+        this.logger.error(`failed to push session data: `, error)
         throw new Error('cannot push session data to Kafka')
       }
 
-      this.app.log.debug(`Era ${eraId.toString()} staking processing finished`)
+      this.logger.debug(`Era ${eraId.toString()} staking processing finished`)
     } catch (error) {
-      this.app.log.error(`error in processing era staking: ${error}`)
+      this.logger.error(`error in processing era staking: ${error}`)
     }
 
     cb(null)

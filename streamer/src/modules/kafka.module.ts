@@ -5,6 +5,18 @@ const { APP_CLIENT_ID, KAFKA_URI } = environment
 
 export class KafkaModule {
 	private static instance: KafkaModule
+
+	private kafka: Kafka
+	private producer: Producer
+	private ready = false
+	private constructor() {
+		this.kafka = new Kafka({
+			clientId: APP_CLIENT_ID,
+			brokers: [KAFKA_URI]
+		})
+		this.producer = this.kafka.producer()
+	}
+
 	static async init(): Promise<void> {
 		if (!KafkaModule.instance) {
 			KafkaModule.instance = new KafkaModule()
@@ -18,16 +30,5 @@ export class KafkaModule {
 		}
 
 		return KafkaModule.instance.producer
-	}
-
-	private kafka: Kafka
-	private producer: Producer
-	private ready = false
-	private constructor() {
-		this.kafka = new Kafka({
-			clientId: APP_CLIENT_ID,
-			brokers: [KAFKA_URI]
-		})
-		this.producer = this.kafka.producer()
 	}
 }

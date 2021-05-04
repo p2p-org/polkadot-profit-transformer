@@ -2,12 +2,6 @@ import Fastify, { FastifyInstance } from 'fastify'
 import { RunnerService } from './services/runner/runner'
 import routes from './routes'
 import {
-  registerKafkaPlugin,
-  registerPolkadotPlugin,
-  registerPostgresPlugin
-} from './plugins'
-import {
-  environment,
   validateEnv
 } from './environment'
 import yargs from 'yargs'
@@ -15,6 +9,7 @@ import prometheus from './routes/api/prometheus'
 import { PolkadotModule } from './modules/polkadot.module'
 import { KafkaModule } from './modules/kafka.module'
 import { PostgresModule } from './modules/postgres.module'
+import { LoggerModule } from './modules/logger.module'
 
 const { argv } = yargs
   .option('sync', {
@@ -65,6 +60,7 @@ const { argv } = yargs
   .help()
 
 const initModules = async(): Promise<void> => {
+  await LoggerModule.init()
   await PostgresModule.init()
   await PolkadotModule.init()
   await KafkaModule.init()
@@ -74,10 +70,7 @@ const build = async (): Promise<FastifyInstance> => {
   await initModules()
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
-    logger: {
-      level: environment.LOG_LEVEL,
-      prettyPrint: true
-    }
+    logger: LoggerModule.inject()
   })
 
   try {
@@ -90,17 +83,6 @@ const build = async (): Promise<FastifyInstance> => {
 
   fastify.log.info(`Init plugins...`)
 
-  // plugins
-  try {
-    await registerPostgresPlugin(fastify, {})
-    await registerKafkaPlugin(fastify, {})
-    await registerPolkadotPlugin(fastify, {})
-  } catch (err) {
-    fastify.log.error(`Cannot init plugin: "${err.message}"`)
-    fastify.log.error(`Stopping instance...`)
-    process.exit(1)
-  }
-
   if (!argv['disable-rpc']) {
     try {
       await fastify.register(routes, { prefix: 'api' })
@@ -112,29 +94,8 @@ const build = async (): Promise<FastifyInstance> => {
     }
   }
 
-  // hooks
-  fastify.addHook('onClose', (instance) => {
-    //  stop sync, disconnect
-    const { postgresConnector } = instance
-    postgresConnector.end()
-
-    const { polkadotConnector } = instance
-    polkadotConnector.disconnect()
-  })
-
   try {
     await fastify.ready()
-    const runner = new RunnerService(fastify)
-    await runner.sync({
-      optionSync: argv['sync-force'] ? false : argv.sync,
-      optionSyncForce: argv['sync-force'],
-      optionSyncValidators: argv['sync-stakers'],
-      optionSyncStartBlockNumber: argv.start,
-      optionSubscribeFinHead: argv['sub-fin-head'],
-      optionStartWatchdog: argv['watchdog'],
-      optionWatchdogStartBlockNumber: argv['watchdog-start'],
-      optionWatchdogConcurrency: argv['watchdog-concurrency']
-    })
   } catch (err) {
     throw err
     // fastify.log.info(`Fastify ready error: ${err}`)
@@ -143,4 +104,18 @@ const build = async (): Promise<FastifyInstance> => {
   return fastify
 }
 
-export { build }
+const runner = async(): Promise<void> => {
+  const runner = new RunnerService()
+  await runner.sync({
+    optionSync: argv['sync-force'] ? false : argv.sync,
+    optionSyncForce: argv['sync-force'],
+    optionSyncValidators: argv['sync-stakers'],
+    optionSyncStartBlockNumber: argv.start,
+    optionSubscribeFinHead: argv['sub-fin-head'],
+    optionStartWatchdog: argv['watchdog'],
+    optionWatchdogStartBlockNumber: argv['watchdog-start'],
+    optionWatchdogConcurrency: argv['watchdog-concurrency']
+  })
+}
+
+export { build, runner }

@@ -1,31 +1,19 @@
 import { IConsumerService } from './consumer.types'
-import { FastifyInstance } from 'fastify'
 import { SyncStatus } from '../index'
 import { BlocksService } from '../blocks/blocks'
 import { Header } from '@polkadot/types/interfaces'
+import { ApiPromise } from '@polkadot/api'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
 /**
  * Provides blocks streamer service
  * @class
  */
 class ConsumerService implements IConsumerService {
-  private readonly app: FastifyInstance;
-  /**
-   * Creates an instance of ConsumerService.
-   * @constructor
-   * @param {object} app - The fastify instance object
-   */
-  constructor(app: FastifyInstance) {
-    /** @private */
-    this.app = app
-
-    /** @private */
-    const { polkadotConnector } = this.app
-
-    if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.')
-    }
-  }
+  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
 
   /**
    * Subscribe to finalized heads stream
@@ -34,24 +22,22 @@ class ConsumerService implements IConsumerService {
    * @returns {Promise<void>}
    */
   async subscribeFinalizedHeads(): Promise<void> {
-    const { polkadotConnector } = this.app
-
     if (SyncStatus.isLocked()) {
-      this.app.log.error(`failed setup "subscribeFinalizedHeads": sync in process`)
+      this.logger.error(`failed setup "subscribeFinalizedHeads": sync in process`)
       return
     }
 
-    this.app.log.info(`Starting subscribeFinalizedHeads`)
+    this.logger.info(`Starting subscribeFinalizedHeads`)
 
-    const blocksService = new BlocksService(this.app)
+    const blocksService = new BlocksService()
 
     const blockNumberFromDB = await blocksService.getLastProcessedBlock()
 
     if (blockNumberFromDB === 0) {
-      this.app.log.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `)
+      this.logger.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `)
     }
 
-    polkadotConnector.rpc.chain.subscribeFinalizedHeads((header) => {
+    this.polkadotApi.rpc.chain.subscribeFinalizedHeads((header) => {
       return this.onFinalizedHead(header)
     })
   }
@@ -65,7 +51,7 @@ class ConsumerService implements IConsumerService {
    * @returns {Promise<void>}
    */
   private async onFinalizedHead(blockHash: Header): Promise<void> {
-    const blocksService = new BlocksService(this.app)
+    const blocksService = new BlocksService()
 
     const blockNumberFromDB = await blocksService.getLastProcessedBlock()
 
@@ -73,15 +59,15 @@ class ConsumerService implements IConsumerService {
       return
     }
 
-    this.app.log.info(`Captured block "${blockHash.number}" with hash ${blockHash.hash}`)
+    this.logger.info(`Captured block "${blockHash.number}" with hash ${blockHash.hash}`)
 
     if (blockHash.number.toNumber() < blockNumberFromDB) {
-      this.app.log.info(`stash operation detected`)
+      this.logger.info(`stash operation detected`)
       await blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
     }
 
     blocksService.processBlock(blockHash.number.toNumber()).catch((error) => {
-      this.app.log.error(`failed to process captured block #${blockHash}:`, error)
+      this.logger.error(`failed to process captured block #${blockHash}:`, error)
     })
   }
 }

@@ -1,5 +1,4 @@
 import { IRunnerService } from './runner.types'
-import { FastifyInstance } from 'fastify'
 import { IBlocksService } from '../blocks/blocks.types'
 import { IConfigService } from '../config/config.types'
 import { IWatchdogService } from '../watchdog/watchdog.types'
@@ -16,27 +15,17 @@ const { BlocksService } = require('../blocks/blocks')
  * @class
  */
 class RunnerService implements IRunnerService {
-  private readonly app: FastifyInstance
-
   private readonly blocksService: IBlocksService
   private readonly consumerService: IConsumerService
   private readonly configService: IConfigService
   private readonly watchdogService: IWatchdogService
 
-  constructor(app: FastifyInstance) {
-    /** @private */
-    this.app = app
+  constructor() {
+    this.blocksService = new BlocksService()
+    this.consumerService = new ConsumerService()
+    this.configService = new ConfigService()
 
-    /** @private */
-    this.blocksService = new BlocksService(app)
-
-    /** @private */
-    this.consumerService = new ConsumerService(app)
-
-    /** @private */
-    this.configService = new ConfigService(app)
-
-    this.watchdogService = WatchdogService.getInstance(app)
+    this.watchdogService = WatchdogService.getInstance()
   }
 
   /**

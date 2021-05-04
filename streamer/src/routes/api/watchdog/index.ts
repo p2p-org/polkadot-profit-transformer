@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify'
 
 const apiBlocks = async (app: FastifyInstance) => {
   app.get('/status', { schema: getStatusSchema }, async () => {
-    const watchdogService = WatchdogService.getInstance(app)
+    const watchdogService = WatchdogService.getInstance()
     return watchdogService.getStatus()
   })
 
@@ -14,7 +14,7 @@ const apiBlocks = async (app: FastifyInstance) => {
       // @ts-ignore
       params: { blockId }
     } = request
-    const watchdogService = WatchdogService.getInstance(app)
+    const watchdogService = WatchdogService.getInstance()
     return watchdogService.restartFromBlockId(+blockId)
   })
 }
