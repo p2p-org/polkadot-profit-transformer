@@ -5,30 +5,18 @@ const totalRewardThreshold = 1000000
 const totalRewardPointsThreshold = 20
 
 
-async function getQuery(postgres, queryString) {
-    let queryResult
-    try {
-        queryResult = await postgres.query(queryString)
-        return queryResult
-    } catch (error) {
-        console.log(error.stack)
-        throw new Error(`Error executing query`)
-    }
-}
-
 async function getMissedBlocksCount(postgres) {
-    const missedBlocksCount = await getQuery(postgres, `SELECT max(id)-count(*) as missedBlocks FROM ${DB_SCHEMA}.blocks`)
+    const missedBlocksCount = await postgres.query(`SELECT max(id)-count(*) as missedBlocks FROM ${DB_SCHEMA}.blocks`)
     return missedBlocksCount.rows[0].missedblocks
 }
 
 async function getTopBlock(postgres) {
-    const topBlock = await getQuery(postgres, `SELECT max(id) as topBlock FROM ${DB_SCHEMA}.blocks`)
+    const topBlock = await postgres.query(`SELECT max(id) as topBlock FROM ${DB_SCHEMA}.blocks`)
     return topBlock.rows[0].topblock
 }
 
 async function getMissedValidators(postgres) {
-    const missedValidators = await getQuery(
-        postgres,
+    const missedValidators = await postgres.query(
         `SELECT era FROM( 
          SELECT ${DB_SCHEMA}.eras.era,count(${DB_SCHEMA}.validators.era) 
          FROM ${DB_SCHEMA}.validators 
@@ -44,8 +32,7 @@ async function getMissedValidators(postgres) {
 }
 
 async function getMissedNominators(postgres) {
-    const missedNominators = await getQuery(
-        postgres,
+    const missedNominators = await postgres.query(
         `SELECT era FROM(
          SELECT ${DB_SCHEMA}.eras.era,count(distinct ${DB_SCHEMA}.nominators.account_id)
          FROM ${DB_SCHEMA}.nominators
@@ -61,7 +48,7 @@ async function getMissedNominators(postgres) {
 }
 
 async function getErasWithLowTotalStake(postgres) {
-    const erasWithLowTotalStack = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_stake<${totalStakeThreshold} and era != 0`)
+    const erasWithLowTotalStack = await postgres.query(`SELECT era FROM ${DB_SCHEMA}.eras WHERE total_stake<${totalStakeThreshold} and era != 0`)
     return {
         erasCount: erasWithLowTotalStack.rows.length,
         eras: erasWithLowTotalStack.rows
@@ -69,7 +56,7 @@ async function getErasWithLowTotalStake(postgres) {
 }
 
 async function getErasWithLowTotalReward(postgres) {
-    const erasWithLowTotalReward = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward<${totalRewardThreshold} and era != 0`)
+    const erasWithLowTotalReward = await postgres.query(`SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward<${totalRewardThreshold} and era != 0`)
     return {
         erasCount: erasWithLowTotalReward.rows.length,
         eras: erasWithLowTotalReward.rows
@@ -77,7 +64,7 @@ async function getErasWithLowTotalReward(postgres) {
 }
 
 async function getErasWithLowTotalRewardPoints(postgres) {
-    const erasWithLowTotalRewardsPoints = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward_points<${totalRewardPointsThreshold} and era != 0`)
+    const erasWithLowTotalRewardsPoints = await postgres.query(`SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward_points<${totalRewardPointsThreshold} and era != 0`)
     return {
         erasCount: erasWithLowTotalRewardsPoints.rows.length,
         eras: erasWithLowTotalRewardsPoints.rows
@@ -85,8 +72,7 @@ async function getErasWithLowTotalRewardPoints(postgres) {
 }
 
 async function getMissedHashesForSequenceOfBlocks(postgres) {
-    const missedHashes = await getQuery(
-        postgres,
+    const missedHashes = await postgres.query(
         `SELECT id,parent_hash, prv_id,Prv_hash
          FROM
         (SELECT id,parent_hash,
@@ -103,8 +89,7 @@ async function getMissedHashesForSequenceOfBlocks(postgres) {
 }
 
 async function getErasWithRewardPointsInconsistencies(postgres) {
-    const inconsistencies = await getQuery(
-        postgres,
+    const inconsistencies = await postgres.query(
         `SELECT era FROM(
          SELECT ${DB_SCHEMA}.eras.era,count( ${DB_SCHEMA}.nominators.era),${DB_SCHEMA}.eras.nominators_active 
          FROM ${DB_SCHEMA}.nominators 
