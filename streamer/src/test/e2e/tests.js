@@ -70,7 +70,7 @@ describe('Init', () => {
     })
 
     it('Check eras for low total stake', async () => {
-        const erasCountWithLowTotalStake = await postgresQueries.getErasWithLowTotalStack(postgres)
+        const erasCountWithLowTotalStake = await postgresQueries.getErasWithLowTotalStake(postgres)
         equal(erasCountWithLowTotalStake.erasCount, 0,
             `There is ${JSON.stringify(erasCountWithLowTotalStake.eras)} eras with low total stake`)
     })

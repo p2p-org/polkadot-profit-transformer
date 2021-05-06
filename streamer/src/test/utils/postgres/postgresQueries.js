@@ -60,13 +60,8 @@ async function getMissedNominators(postgres) {
     }
 }
 
-async function getErasWithLowTotalStack(postgres) {
-    const erasWithLowTotalStack = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_stake<${totalStakeThreshold}`)
-    if (erasWithLowTotalStack.rows.length === 1 && erasWithLowTotalStack.rows[0].era === 0) {
-        return {
-            erasCount: 0
-        }
-    }
+async function getErasWithLowTotalStake(postgres) {
+    const erasWithLowTotalStack = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_stake<${totalStakeThreshold} and era != 0`)
     return {
         erasCount: erasWithLowTotalStack.rows.length,
         eras: erasWithLowTotalStack.rows
@@ -74,12 +69,7 @@ async function getErasWithLowTotalStack(postgres) {
 }
 
 async function getErasWithLowTotalReward(postgres) {
-    const erasWithLowTotalReward = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward<${totalRewardThreshold}`)
-    if (erasWithLowTotalReward.rows.length === 1 && erasWithLowTotalReward.rows[0].era === 0) {
-        return {
-            erasCount: 0
-        }
-    }
+    const erasWithLowTotalReward = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward<${totalRewardThreshold} and era != 0`)
     return {
         erasCount: erasWithLowTotalReward.rows.length,
         eras: erasWithLowTotalReward.rows
@@ -87,12 +77,7 @@ async function getErasWithLowTotalReward(postgres) {
 }
 
 async function getErasWithLowTotalRewardPoints(postgres) {
-    const erasWithLowTotalRewardsPoints = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward_points<${totalRewardPointsThreshold}`)
-    if (erasWithLowTotalRewardsPoints.rows.length === 1 && erasWithLowTotalRewardsPoints.rows[0].era === 0) {
-        return {
-            erasCount: 0
-        }
-    }
+    const erasWithLowTotalRewardsPoints = await getQuery(postgres, `SELECT era FROM ${DB_SCHEMA}.eras WHERE total_reward_points<${totalRewardPointsThreshold} and era != 0`)
     return {
         erasCount: erasWithLowTotalRewardsPoints.rows.length,
         eras: erasWithLowTotalRewardsPoints.rows
@@ -139,7 +124,7 @@ module.exports = {
     getMissedBlocksCount,
     getMissedValidators,
     getMissedNominators,
-    getErasWithLowTotalStack,
+    getErasWithLowTotalStake,
     getErasWithLowTotalReward,
     getErasWithLowTotalRewardPoints,
     getMissedHashesForSequenceOfBlocks,
