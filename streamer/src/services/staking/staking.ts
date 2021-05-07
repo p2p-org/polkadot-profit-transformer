@@ -78,6 +78,20 @@ export default class StakingService implements IStakingService {
     }
   }
 
+  async getFirstBlockInEra(eraId: number): Promise<IBlock> {
+    try {
+      const { rows } = await this.repository.query({
+        text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "era" = $1::int order by "id" limit 1`,
+        values: [eraId]
+      })
+
+      return rows[0]
+    } catch (err) {
+      this.logger.error(`failed to get first block of session ${eraId}, error: ${err}`)
+      throw new Error('cannot find first era block')
+    }
+  }
+
   async getValidatorsAndNominatorsData({ blockHash, eraId }: IBlockEraParams): Promise<IGetValidatorsNominatorsResult> {
     const validatorsAccountIdSet: Set<string> = new Set()
     const eraRewardPointsMap: Map<string, number> = new Map()
@@ -86,9 +100,8 @@ export default class StakingService implements IStakingService {
     const validators: IValidator[] = []
 
     const eraRewardPointsRaw = await this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, +eraId)
-    const sessionStart = await this.polkadotApi.query.staking.erasStartSessionIndex(+eraId)
 
-    const firstBlockOfEra = await this.getFirstBlockInSession(+sessionStart)
+    const firstBlockOfEra = await this.getFirstBlockInEra(+eraId)
 
     if (!firstBlockOfEra) {
       this.logger.error(`first block of era ${eraId} not found in DB`)
