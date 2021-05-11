@@ -1,20 +1,17 @@
-import { environment } from '../../environment'
 import { IConfigService } from './config.types'
-import { Pool } from 'pg'
-import { PostgresModule } from '../../modules/postgres.module'
 import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
+import { ConfigRepository } from '../../repositores/config.repository'
 
-const { DB_SCHEMA } = environment
 const INITIAL_VERIFY_HEIGHT = -1
 /**
  * Provides config operations
  * @class
  */
 class ConfigService implements IConfigService {
-  private readonly repository: Pool = PostgresModule.inject()
+  private readonly configRepository: ConfigRepository = new ConfigRepository()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
 
@@ -79,49 +76,15 @@ class ConfigService implements IConfigService {
       throw new Error(`setConfigValueToDB "value" for key ${key} is empty`)
     }
 
-    try {
-      await this.repository.query({
-        text: `INSERT INTO  ${DB_SCHEMA}._config VALUES ($1, $2)`,
-        values: [key, valueToSave]
-      })
-    } catch (err) {
-      this.logger.error(`failed to set config key "${err}"`)
-      throw new Error('cannot set config value')
-    }
+    await this.configRepository.insert(key, valueToSave)
   }
 
   async getConfigValueFromDB(key: string): Promise<string> {
-    if (!key.length) {
-      throw new Error('"key" is empty')
-    }
-
-    try {
-      const result = await this.repository.query({
-        text: `SELECT "value" FROM ${DB_SCHEMA}._config WHERE "key" = $1 LIMIT 1`,
-        values: [key]
-      })
-
-      return result.rows[0]?.value
-    } catch (err) {
-      this.logger.error(`failed to get config key "${err}"`)
-      throw new Error('cannot get config value')
-    }
+    return this.configRepository.find(key)
   }
 
   async updateConfigValueInDB(key: string, value: string | number): Promise<void> {
-    if (!key.length) {
-      throw new Error('updateConfigValueInDB "key" is empty')
-    }
-
-    try {
-      await this.repository.query({
-        text: `UPDATE ${DB_SCHEMA}._config SET "value" = $2 WHERE "key" = $1`,
-        values: [key, value]
-      })
-    } catch (err) {
-      this.logger.error(`failed to updateConfigValueInDB config key "${err}"`)
-      throw new Error('cannot updateConfigValueInDB config value')
-    }
+    return this.configRepository.update(key, value)
   }
 }
 

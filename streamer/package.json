@@ -13,7 +13,7 @@
     "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
     "dev": "npx ts-node src/main.ts --sync",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
-    "lint:fix": "npx eslint . --fix",
+    "lint:fix": "npx eslint ./src --fix",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
     "prepare": "cd .. && husky install streamer/.husky",
     "lint-staged": "lint-staged"

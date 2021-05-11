@@ -15,6 +15,7 @@ import { KafkaModule } from '../../modules/kafka.module'
 import { LoggerModule } from '../../modules/logger.module'
 import { BlockRepository } from '../../repositores/block.repository'
 import { BlockServiceError, EBlockServiceError } from '../../common/errors/blocks.error'
+import { IBlock } from '../watchdog/watchdog.types'
 
 const { KAFKA_PREFIX } = environment
 
@@ -23,7 +24,9 @@ const { KAFKA_PREFIX } = environment
  * @class
  */
 class BlocksService {
-  private readonly blockRepository: BlockRepository = new BlockRepository()
+  private static instance: BlocksService
+
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
@@ -36,6 +39,13 @@ class BlocksService {
     this.stakingService = StakingService.getInstance()
   }
 
+  static inject(): BlocksService {
+    if (!BlocksService.instance) {
+      BlocksService.instance = new BlocksService()
+    }
+
+    return BlocksService.instance
+  }
   /**
    * Update one block
    *
@@ -223,6 +233,7 @@ class BlocksService {
       result.fin_height_diff = lastHeader.number.toNumber() - lastBlockNumber
     } catch (err) {
       this.logger.error(`failed to get block diff: ${err}`)
+
     }
 
     return result

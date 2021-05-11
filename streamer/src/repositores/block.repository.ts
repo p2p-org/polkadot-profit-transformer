@@ -3,14 +3,24 @@ import { Pool } from 'pg'
 import { PostgresModule } from '../modules/postgres.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../modules/logger.module'
+import { IBlock } from '../services/watchdog/watchdog.types'
 
 const { DB_SCHEMA } = environment
 
 export class BlockRepository {
 	static schema: string = DB_SCHEMA
+	private static instance: BlockRepository
 
 	private readonly connectionProvider: Pool = PostgresModule.inject()
 	private readonly logger: Logger = LoggerModule.inject()
+
+	static inject(): BlockRepository {
+		if (!BlockRepository.instance) {
+			BlockRepository.instance = new BlockRepository()
+		}
+
+		return BlockRepository.instance
+	}
 
 	async getLastProcessedBlock(): Promise<number> {
 		let blockNumberFromDB = 0
@@ -28,6 +38,15 @@ export class BlockRepository {
 		}
 
 		return blockNumberFromDB
+	}
+
+	async getFirstBlockInSession(sessionId: number): Promise<IBlock> {
+		const { rows } = await this.connectionProvider.query({
+			text: `SELECT * FROM ${BlockRepository.schema}.blocks WHERE "session_id" = $1::int order by "id" limit 1`,
+			values: [sessionId]
+		})
+
+		return rows[0]
 	}
 
 	async removeBlockData(blockNumbers: number[]): Promise<void> {

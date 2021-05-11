@@ -1,31 +1,30 @@
-import { IBlock } from './../watchdog/watchdog.types'
 import { AccountId, Exposure, IndividualExposure } from '@polkadot/types/interfaces'
 import {
-  IGetValidatorsNominatorsResult,
   IBlockEraParams,
-  INominator,
-  IValidator,
   IEraData,
+  IGetValidatorsNominatorsResult,
+  INominator,
+  IProcessEraPayload,
   IStakingService,
-  IProcessEraPayload
+  IValidator
 } from './staking.types'
 import { ApiPromise } from '@polkadot/api'
 import { Producer } from 'kafkajs'
 import fastq from 'fastq'
-import { Pool } from 'pg'
-import { PostgresModule } from '../../modules/postgres.module'
 import { KafkaModule } from '../../modules/kafka.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
+import { IBlock } from '../watchdog/watchdog.types'
+import { BlockRepository } from '../../repositores/block.repository'
 
 const {
-  environment: { KAFKA_PREFIX, DB_SCHEMA }
+  environment: { KAFKA_PREFIX }
 } = require('../../environment')
 
 export default class StakingService implements IStakingService {
   static instance: StakingService
-  private readonly repository: Pool = PostgresModule.inject()
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
@@ -66,13 +65,8 @@ export default class StakingService implements IStakingService {
 
   async getFirstBlockInSession(sessionId: number): Promise<IBlock> {
     try {
-      const { rows } = await this.repository.query({
-        text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "session_id" = $1::int order by "id" limit 1`,
-        values: [sessionId]
-      })
-
-      return rows[0]
-    } catch (err) {
+      return await this.blockRepository.getFirstBlockInSession(sessionId)
+    } catch(err) {
       this.logger.error(`failed to get first block of session ${sessionId}, error: ${err}`)
       throw new Error('cannot find first era block')
     }
@@ -88,7 +82,7 @@ export default class StakingService implements IStakingService {
     const eraRewardPointsRaw = await this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, +eraId)
     const sessionStart = await this.polkadotApi.query.staking.erasStartSessionIndex(+eraId)
 
-    const firstBlockOfEra = await this.getFirstBlockInSession(+sessionStart)
+    const firstBlockOfEra = await this.blockRepository.getFirstBlockInSession(+sessionStart)
 
     if (!firstBlockOfEra) {
       this.logger.error(`first block of era ${eraId} not found in DB`)
@@ -158,8 +152,7 @@ export default class StakingService implements IStakingService {
         this.logger.warn(`failed to get payee for era: "${eraId}" validator: "${validatorAccountId}". Block: ${blockHash} `)
       }
 
-      const pointsFromMap = eraRewardPointsMap.get(validatorAccountId) ?? 0
-      const reward_points = pointsFromMap
+      const reward_points = eraRewardPointsMap.get(validatorAccountId) ?? 0
 
       validators.push({
         era: eraId,
@@ -211,7 +204,7 @@ export default class StakingService implements IStakingService {
             }
           ]
         })
-      } catch (error: any) {
+      } catch (error) {
         this.logger.error(`failed to push era data: `, error)
         throw new Error('cannot push session data to Kafka')
       }

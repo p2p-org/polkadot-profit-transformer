@@ -10,8 +10,23 @@ export class LoggerModule {
 	private constructor() {
 		this.logger = pino({
 			level: LOG_LEVEL,
-			prettyPrint: true
+			prettyPrint: true,
+			formatters: {
+				log(object) {
+					console.log('object', object)
+					return object
+				},
+				bindings(bindings) {
+					console.log('bindings', bindings)
+					return {
+						...bindings,
+						caller: LoggerModule.instance.logger.caller
+					}
+				}
+			}
 		})
+
+		this.logger.bindings()
 	}
 
 	static async init(): Promise<void> {
