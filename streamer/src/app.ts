@@ -1,9 +1,7 @@
 import Fastify, { FastifyInstance } from 'fastify'
 import { RunnerService } from './services/runner/runner'
 import routes from './routes'
-import {
-  validateEnv
-} from './environment'
+import { validateEnv } from './environment'
 import yargs from 'yargs'
 import prometheus from './routes/api/prometheus'
 import { PolkadotModule } from './modules/polkadot.module'
@@ -22,11 +20,6 @@ const { argv } = yargs
     default: false,
     description: 'Run synchronization all blocks'
   })
-  .option('sync-stakers', {
-    type: 'boolean',
-    default: false,
-    description: 'Run synchronization stakers'
-  })
   .option('start', {
     type: 'number',
     default: 0,
@@ -36,11 +29,6 @@ const { argv } = yargs
     type: 'boolean',
     default: false,
     description: 'Run watchdog'
-  })
-  .option('watchdog-concurrency', {
-    type: 'number',
-    default: 10,
-    description: 'Concurrency of watchdog threads'
   })
   .option('watchdog-start', {
     type: 'number',
@@ -59,7 +47,7 @@ const { argv } = yargs
   })
   .help()
 
-const initModules = async(): Promise<void> => {
+const initModules = async (): Promise<void> => {
   await LoggerModule.init()
   await PostgresModule.init()
   await PolkadotModule.init()
@@ -104,17 +92,15 @@ const build = async (): Promise<FastifyInstance> => {
   return fastify
 }
 
-const runner = async(): Promise<void> => {
+const runner = async (): Promise<void> => {
   const runner = new RunnerService()
   await runner.sync({
     optionSync: argv['sync-force'] ? false : argv.sync,
     optionSyncForce: argv['sync-force'],
-    optionSyncValidators: argv['sync-stakers'],
     optionSyncStartBlockNumber: argv.start,
     optionSubscribeFinHead: argv['sub-fin-head'],
     optionStartWatchdog: argv['watchdog'],
-    optionWatchdogStartBlockNumber: argv['watchdog-start'],
-    optionWatchdogConcurrency: argv['watchdog-concurrency']
+    optionWatchdogStartBlockNumber: argv['watchdog-start']
   })
 }
 

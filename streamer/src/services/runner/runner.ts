@@ -49,16 +49,15 @@ class RunnerService implements IRunnerService {
   async sync(options: Parameters<IRunnerService['sync']>[0]): Promise<void> {
     await this.configService.bootstrapConfig()
 
-    if (options.optionSync) {
-      this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-    }
-
-    if (options.optionSyncForce) {
-      await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
+    if (options.optionSync || options.optionSyncForce) {
+      const startBlock: number = options.optionSyncForce ? 0 : options.optionSyncStartBlockNumber
+      this.blocksService.processBlocks(startBlock, options.optionSubscribeFinHead)
+      return
     }
 
     if (options.optionSubscribeFinHead) {
-      await this.consumerService.subscribeFinalizedHeads()
+      this.consumerService.subscribeFinalizedHeads()
+      return
     }
 
     if (options.optionStartWatchdog) {

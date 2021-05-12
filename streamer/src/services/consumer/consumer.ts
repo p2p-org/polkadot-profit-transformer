@@ -72,6 +72,4 @@ class ConsumerService implements IConsumerService {
   }
 }
 
-export {
-  ConsumerService
-}
+export { ConsumerService }

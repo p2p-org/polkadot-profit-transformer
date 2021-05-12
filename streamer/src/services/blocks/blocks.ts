@@ -2,7 +2,7 @@ import { SyncStatus } from '../index'
 import StakingService from '../staking/staking'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { environment } from '../../environment'
-import { u32, Vec } from '@polkadot/types'
+import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
 import { IBlocksStatusResult } from './blocks.types'
@@ -15,8 +15,11 @@ import { PostgresModule } from '../../modules/postgres.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { KafkaModule } from '../../modules/kafka.module'
 import { LoggerModule } from '../../modules/logger.module'
+import { IConsumerService } from '../consumer/consumer.types'
 
 const { KAFKA_PREFIX, DB_SCHEMA } = environment
+
+const { ConsumerService } = require('../consumer/consumer')
 
 /**
  * Provides block operations
@@ -28,30 +31,16 @@ class BlocksService {
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
 
-  private readonly currentSpecVersion: u32
   private readonly extrinsicsService: ExtrinsicsService
   private readonly stakingService: StakingService
+  private readonly consumerService: IConsumerService = new ConsumerService()
 
   constructor() {
-    this.currentSpecVersion = this.polkadotApi.createType('u32', 0)
     this.extrinsicsService = new ExtrinsicsService()
     this.stakingService = StakingService.getInstance()
   }
 
-  /**
-   * Update one block
-   *
-   * @public
-   * @async
-   * @param {number} blockNumber
-   * @returns {Promise<boolean>}
-   */
   async updateOneBlock(blockNumber: number): Promise<true> {
-    if (SyncStatus.isLocked()) {
-      this.logger.error(`failed execute "updateOneBlock": sync in process`)
-      throw new Error('sync in process')
-    }
-
     await this.processBlock(blockNumber).catch((error) => {
       this.logger.error(`failed to process block #${blockNumber}: ${error}`)
       throw new Error('cannot process block')
@@ -159,44 +148,38 @@ class BlocksService {
    * @param startBlockNumber
    * @returns {Promise<void>}
    */
-  async processBlocks(startBlockNumber: number | null = null): Promise<void> {
-    await SyncStatus.acquire()
+  async processBlocks(startBlockNumber: number | null = null, optionSubscribeFinHead: boolean | null = null): Promise<void> {
+    this.logger.info(`Starting processBlocks from ${startBlockNumber}`)
 
-    try {
-      this.logger.info(`Starting processBlocks`)
-
-      if (!startBlockNumber) {
-        startBlockNumber = await this.getLastProcessedBlock()
-      }
-
-      let lastBlockNumber = await this.getFinBlockNumber()
-
-      this.logger.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
-
-      for (let i = startBlockNumber; i <= lastBlockNumber; i += 10) {
-        await Promise.all([
-          this.runBlocksWorker(1, i),
-          this.runBlocksWorker(2, i + 1),
-          this.runBlocksWorker(3, i + 2),
-          this.runBlocksWorker(4, i + 3),
-          this.runBlocksWorker(5, i + 4),
-          this.runBlocksWorker(6, i + 5),
-          this.runBlocksWorker(7, i + 6),
-          this.runBlocksWorker(8, i + 7),
-          this.runBlocksWorker(9, i + 8),
-          this.runBlocksWorker(10, i + 9)
-        ])
-
-        if (i === lastBlockNumber) {
-          lastBlockNumber = await this.getFinBlockNumber()
-        }
-      }
-    } finally {
-      // Please read and understand the WARNING above before using this API.
-      SyncStatus.release()
+    if (startBlockNumber === null) {
+      startBlockNumber = await this.getLastProcessedBlock()
     }
-  }
 
+    let lastBlockNumber = await this.getFinBlockNumber()
+
+    this.logger.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
+
+    let blockNumber: number = startBlockNumber
+
+    while (blockNumber <= lastBlockNumber) {
+      const chunk = lastBlockNumber - blockNumber >= 10 ? 10 : (lastBlockNumber - blockNumber) % 10
+      const processTasks = Array(chunk)
+        .fill('')
+        .map((_, i) => this.runBlocksWorker(i + 1, blockNumber + i))
+
+      await Promise.all(processTasks)
+
+      blockNumber += 10
+
+      if (blockNumber > lastBlockNumber) {
+        lastBlockNumber = await this.getFinBlockNumber()
+      }
+    }
+
+    SyncStatus.release()
+
+    if (optionSubscribeFinHead) this.consumerService.subscribeFinalizedHeads()
+  }
 
   /**
    * Returns last processed block number from database
@@ -341,29 +324,6 @@ class BlocksService {
   }
 
   /**
-   * Update specs version metadata
-   *
-   * @private
-   * @async
-   * @param {BlockHash} blockHash - The block hash
-   */
-  private async updateMetaData(blockHash: any): Promise<void> {
-    /** @type {RuntimeVersion} */
-    const runtimeVersion = await this.polkadotApi.rpc.state.getRuntimeVersion(blockHash)
-
-    /** @type {u32} */
-    const newSpecVersion = runtimeVersion.specVersion
-
-    if (newSpecVersion.gt(this.currentSpecVersion)) {
-      this.logger.info(`bumped spec version to ${newSpecVersion}, fetching new metadata`)
-
-      const rpcMeta = await this.polkadotApi.rpc.state.getMetadata(blockHash)
-
-      this.polkadotApi.registry.setMetadata(rpcMeta)
-    }
-  }
-
-  /**
    *
    * @private
    * @async
@@ -453,8 +413,6 @@ class BlocksService {
 
       return acc
     }
-
-    return events.reduce(processEvent, [])
   }
 }
 

@@ -1,13 +1,5 @@
 import { environment } from '../../environment'
-import {
-  TBlockHash,
-  IBlock,
-  IEra,
-  VerifierStatus,
-  IWatchdogService,
-  IWatchdogStatus,
-  IWatchdogRestartResponse
-} from './watchdog.types'
+import { TBlockHash, IBlock, IEra, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
 import StakingService from '../staking/staking'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
@@ -140,6 +132,24 @@ export default class WatchdogService implements IWatchdogService {
     }
   }
 
+  async getEraStakingDiff(eraId: number) {
+    try {
+      const { rows } = await this.repository.query({
+        text: `select e.era as era, e.total_stake  - sum(v.total) as diff from dot_polka.eras e 
+  join dot_polka.validators v
+  on v.era = e.era
+  where e.era = $1::int
+  group by e.era`,
+        values: [eraId]
+      })
+
+      return rows[0]
+    } catch (err) {
+      this.logger.error(`failed to get staking diff by id ${eraId}, error: ${err}`)
+      throw new Error(`failed to get staking diff by id ${eraId}`)
+    }
+  }
+
   async validateEraPayout(blockFromDB: IBlock): Promise<void> {
     const events = await this.polkadotApi.query.system.events.at(blockFromDB.hash)
 
@@ -162,10 +172,13 @@ export default class WatchdogService implements IWatchdogService {
       return
     }
 
-    // TODO validate sum of stakes from db.nominators, db.valdators
-    // and total_stake from blockchain.era data
-    // will use bignumbers
-    // const [diff] = await this.getEraStakeDiffsFromDb(+eraId)
+    const diff = await this.getEraStakingDiff(+eraId)
+
+    console.log({ diff })
+
+    if (+diff !== 0) {
+      StakingService.getInstance().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
+    }
   }
 
   async isBlockValid(blockFromDB: IBlock, blockFromChain: SignedBlock): Promise<boolean> {
