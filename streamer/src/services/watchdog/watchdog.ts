@@ -218,7 +218,6 @@ export default class WatchdogService implements IWatchdogService {
     const result = {
       status: this.status,
       current_height: this.lastCheckedBlockId,
-      last_era_checked: this.currentEraId,
       finished_at: undefined
     }
 
