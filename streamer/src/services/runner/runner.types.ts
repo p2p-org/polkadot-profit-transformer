@@ -2,7 +2,7 @@ export interface IRunnerService {
   sync(options: {
     optionSync: boolean
     optionSyncForce: boolean
-    optionSyncStartBlockNumber: number
+    optionSyncStartBlockNumber: number | undefined
     optionSubscribeFinHead: boolean
     optionStartWatchdog: boolean
     optionWatchdogStartBlockNumber: number | undefined

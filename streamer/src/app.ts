@@ -22,7 +22,6 @@ const { argv } = yargs
   })
   .option('start', {
     type: 'number',
-    default: 0,
     description: 'Start synchronization from block number'
   })
   .option('watchdog', {

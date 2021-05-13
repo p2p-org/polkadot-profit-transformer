@@ -50,7 +50,7 @@ class RunnerService implements IRunnerService {
     await this.configService.bootstrapConfig()
 
     if (options.optionSync || options.optionSyncForce) {
-      const startBlock: number = options.optionSyncForce ? 0 : options.optionSyncStartBlockNumber
+      const startBlock: number | undefined = options.optionSyncForce ? 0 : options.optionSyncStartBlockNumber
       this.blocksService.processBlocks(startBlock, options.optionSubscribeFinHead)
       return
     }
