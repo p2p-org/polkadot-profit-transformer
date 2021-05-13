@@ -174,9 +174,8 @@ export default class WatchdogService implements IWatchdogService {
 
     const diff = await this.getEraStakingDiff(+eraId)
 
-    console.log({ diff })
-
-    if (+diff !== 0) {
+    if (+diff.diff !== 0) {
+      this.logger.debug(`Era staking diff is not zero: ${+diff.diff}. Resync era ${eraId}.`)
       StakingService.getInstance().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
     }
   }
