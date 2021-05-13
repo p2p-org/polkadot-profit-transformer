@@ -413,6 +413,8 @@ class BlocksService {
 
       return acc
     }
+
+    return events.reduce(processEvent, [])
   }
 }
 
