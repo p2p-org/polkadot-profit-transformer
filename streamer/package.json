@@ -18,11 +18,11 @@
     "prepare": "cd .. && husky install streamer/.husky"
   },
   "dependencies": {
-    "@polkadot/api": "4.1.1",
-    "@polkadot/api-derive": "4.1.1",
-    "@polkadot/rpc-core": "4.1.1",
-    "@polkadot/types-known": "4.1.1",
-    "@polkadot/util": "6.0.5",
+    "@polkadot/api": "^4.1.1",
+    "@polkadot/api-derive": "^4.1.1",
+    "@polkadot/rpc-core": "^4.1.1",
+    "@polkadot/types-known": "^4.1.1",
+    "@polkadot/util": "^6.0.5",
     "async-mutex": "^0.2.6",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
@@ -39,7 +39,7 @@
     "yargs": "^16.2.0"
   },
   "devDependencies": {
-    "@polkadot/types": "4.1.1",
+    "@polkadot/types": "^4.1.1",
     "@types/dotenv": "^8.2.0",
     "@types/pg": "^7.14.11",
     "@types/pino": "^6.3.8",
