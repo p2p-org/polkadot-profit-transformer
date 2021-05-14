@@ -25,9 +25,10 @@
     "@typescript-eslint/ban-ts-ignore": "off",
     "@typescript-eslint/no-unused-vars": ["error"],
     "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/member-ordering": ["error"],
     "max-len": ["error", { "code": 140, "ignoreUrls": true }],
     "no-undef": 1,
-    "no-unused-vars": 1,
+    "no-unused-vars": "off",
     "camelcase": 0,
     "eol-last": 1,
     "no-multiple-empty-lines": 1,
@@ -36,6 +37,7 @@
     "jsx-quotes": [2, "prefer-single"],
     "no-useless-escape": 0,
     "valid-jsdoc": 0,
-    "linebreak-style": [ "error", "unix" ]
+    "linebreak-style": [ "error", "unix" ],
+    "semi": ["error", "never"],
   }
 }

@@ -12,6 +12,7 @@ CREATE TYPE substrate_block AS
     "author" VARCHAR(66),
     "session_id" INT,
     "era" INT,
+    "current_era" INT,
     "last_log" VARCHAR(100),
     "digest" JSONB,
     "block_time" TIMESTAMP
@@ -29,6 +30,7 @@ SELECT b.id,
        b.author,
        b.session_id,
        b.era,
+       b.current_era,
        b.last_log,
        b.digest,
        b.block_time
@@ -49,6 +51,7 @@ SELECT b.id,
        b.author,
        b.session_id,
        b.era,
+       b.current_era,
        b.last_log,
        b.digest,
        b.block_time

@@ -1,4 +1,4 @@
-const { errorResponse } = require('../../swagger/defaultSchema')
+import { errorResponse } from '../../swagger/defaultSchema'
 
 // Tags
 const tags = ['block']
@@ -86,9 +86,25 @@ const postTrimSchema = {
   }
 }
 
-module.exports = {
+const watchdogRestartSchema = {
+  tags,
+  params: paramsJsonSchema,
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        result: { type: 'boolean' }
+      }
+    },
+    400: errorResponse,
+    500: errorResponse
+  }
+}
+
+export {
   getOneSchema,
   getStatusSchema,
   postDeleteBlocksSchema,
-  postTrimSchema
+  postTrimSchema,
+  watchdogRestartSchema
 }

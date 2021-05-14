@@ -1,127 +1,127 @@
-import { environment } from '../../environment';
-import { IConfigService } from './config.types';
-import { FastifyInstance } from 'fastify';
+import { environment } from '../../environment'
+import { IConfigService } from './config.types'
+import { Pool } from 'pg'
+import { PostgresModule } from '../../modules/postgres.module'
+import { ApiPromise } from '@polkadot/api'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
-const { DB_SCHEMA } = environment;
+const { DB_SCHEMA } = environment
+const INITIAL_VERIFY_HEIGHT = -1
 /**
  * Provides config operations
  * @class
  */
 class ConfigService implements IConfigService {
-  private readonly app: FastifyInstance;
-  /**
-   * Creates an instance of ConfigsService.
-   * @param {object} app fastify app
-   */
-  constructor(app: FastifyInstance) {
-    if (!app.ready) throw new Error(`can't get .ready from fastify app.`)
+  private readonly repository: Pool = PostgresModule.inject()
+  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
 
-    /** @private */
-    this.app = app
+  async bootstrapConfig(): Promise<void> {
+    const [currentChain, currentChainType] = (
+      await Promise.all([
+        this.polkadotApi.rpc.system.chain(), // Polkadot
+        this.polkadotApi.rpc.system.chainType() // Live
+      ])
+    ).map((value) => value.toString().trim())
 
-    const { polkadotConnector } = this.app
-
-    if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.')
-    }
-
-    const { postgresConnector } = this.app
-
-    if (!postgresConnector) {
-      throw new Error('cant get .postgresConnector from fastify app.')
-    }
-  }
-
-  async bootstrapConfig(): Promise<true | undefined> {
-    const { polkadotConnector } = this.app
-
-    const [currentChainRaw, currentChainTypeRaw] = await Promise.all([
-      await polkadotConnector.rpc.system.chain(), // Polkadot
-      await polkadotConnector.rpc.system.chainType() // Live
-    ])
-
-    const currentChain = currentChainRaw.toString().trim()
-    const currentChainType = currentChainTypeRaw.toString().trim()
-
-    if (!currentChain.length) {
+    if (!currentChain) {
       throw new Error('Node returns empty "system.chain" value')
     }
 
-    if (!currentChainType.length) {
+    if (!currentChainType) {
       throw new Error('Node returns empty "system.chainType" value')
     }
 
-    const [dbChain, dbChainType] = await Promise.all([
-      await this.getConfigValueFromDB('chain'),
-      await this.getConfigValueFromDB('chain_type')
+    const [dbChain, dbChainType] = await Promise.all([this.getConfigValueFromDB('chain'), this.getConfigValueFromDB('chain_type')])
+
+    if (!dbChain && !dbChainType) {
+      this.logger.info(`Init new chain config: chain="${currentChain}", chain_type="${currentChainType}"`)
+      await Promise.all([this.setConfigValueToDB('chain', currentChain), this.setConfigValueToDB('chain_type', currentChainType)])
+    } else {
+      if (dbChain !== currentChain) {
+        throw new Error(`Node "system.chain" not compare to saved type: "${currentChain}" and "${dbChain}"`)
+      }
+
+      if (dbChainType !== currentChainType) {
+        throw new Error(`Node "system.chainType" not compare to saved type: "${currentChainType}" and "${dbChainType}"`)
+      }
+    }
+
+    const [watchdogVerifyHeight, watchdogStartedAt, watchdogFinishedAt] = await Promise.all([
+      this.getConfigValueFromDB('watchdog_verify_height'),
+      this.getConfigValueFromDB('watchdog_started_at'),
+      this.getConfigValueFromDB('watchdog_finished_at')
     ])
 
-    if (!dbChain.length && !dbChainType.length) {
-      this.app.log.info(`Init new chain config: chain="${currentChain}", chain_type="${currentChainType}"`)
-      await Promise.all([
-        await this.setConfigValueToDB('chain', currentChain),
-        await this.setConfigValueToDB('chain_type', currentChainType)
-      ])
-      return true
+    if (!watchdogVerifyHeight) {
+      await this.setConfigValueToDB('watchdog_verify_height', INITIAL_VERIFY_HEIGHT)
     }
 
-    if (dbChain !== currentChain) {
-      throw new Error(`Node "system.chain" not compare to saved type: "${currentChain}" and "${dbChain}"`)
+    if (!watchdogStartedAt) {
+      await this.setConfigValueToDB('watchdog_started_at', 0)
     }
 
-    if (dbChainType !== currentChainType) {
-      throw new Error(`Node "system.chainType" not compare to saved type: "${currentChainType}" and "${dbChainType}"`)
+    if (!watchdogFinishedAt) {
+      await this.setConfigValueToDB('watchdog_finished_at', 0)
     }
   }
 
-  private async setConfigValueToDB(key: string, value: string) {
-    const { postgresConnector } = this.app
+  async setConfigValueToDB(key: string, value: string | number): Promise<void> {
+    const valueToSave = value.toString()
 
     if (!key.length) {
       throw new Error('"key" is empty')
     }
 
-    if (!value.length) {
-      throw new Error('"value" is empty')
+    if (!valueToSave.length) {
+      throw new Error(`setConfigValueToDB "value" for key ${key} is empty`)
     }
 
     try {
-      await postgresConnector
-          .query({
-            text: `INSERT INTO  ${DB_SCHEMA}._config VALUES ($1, $2)`,
-            values: [key, value]
-          })
+      await this.repository.query({
+        text: `INSERT INTO  ${DB_SCHEMA}._config VALUES ($1, $2)`,
+        values: [key, valueToSave]
+      })
     } catch (err) {
-      this.app.log.error(`failed to set config key "${err}"`)
+      this.logger.error(`failed to set config key "${err}"`)
       throw new Error('cannot set config value')
     }
-
-    return true
   }
 
-  private async getConfigValueFromDB(key: string) {
-    const { postgresConnector } = this.app
-    let value = ''
-
+  async getConfigValueFromDB(key: string): Promise<string> {
     if (!key.length) {
       throw new Error('"key" is empty')
     }
 
     try {
-      const { rows } = await postgresConnector.query({
+      const result = await this.repository.query({
         text: `SELECT "value" FROM ${DB_SCHEMA}._config WHERE "key" = $1 LIMIT 1`,
         values: [key]
-      });
+      })
 
-      if (rows.length) {
-        value = rows[0].value;
-      }
+      return result.rows[0]?.value
     } catch (err) {
-      this.app.log.error(`failed to get config key "${err}"`)
+      this.logger.error(`failed to get config key "${err}"`)
       throw new Error('cannot get config value')
     }
+  }
 
-    return value
+  async updateConfigValueInDB(key: string, value: string | number): Promise<void> {
+    if (!key.length) {
+      throw new Error('updateConfigValueInDB "key" is empty')
+    }
+
+    try {
+      await this.repository.query({
+        text: `UPDATE ${DB_SCHEMA}._config SET "value" = $2 WHERE "key" = $1`,
+        values: [key, value]
+      })
+    } catch (err) {
+      this.logger.error(`failed to updateConfigValueInDB config key "${err}"`)
+      throw new Error('cannot updateConfigValueInDB config value')
+    }
   }
 }
 
@@ -129,6 +129,4 @@ class ConfigService implements IConfigService {
  *
  * @type {{ConfigService: ConfigService}}
  */
-export {
-  ConfigService
-}
+export { ConfigService }

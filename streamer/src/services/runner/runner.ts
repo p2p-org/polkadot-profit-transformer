@@ -1,42 +1,31 @@
-import { IRunnerService } from './runner.types';
-import { FastifyInstance } from 'fastify';
-import { IBlocksService } from '../blocks/blocks.types';
-import { IStakingService } from '../staking/staking.types';
-import { IConfigService } from '../config/config.types';
-import { IConsumerService } from '../consumer/consumer.types';
+import { IRunnerService } from './runner.types'
+import { IBlocksService } from '../blocks/blocks.types'
+import { IConfigService } from '../config/config.types'
+import { IWatchdogService } from '../watchdog/watchdog.types'
+import { IConsumerService } from '../consumer/consumer.types'
+
+import WatchdogService from '../watchdog/watchdog'
 
 const { ConfigService } = require('../config/config')
 const { ConsumerService } = require('../consumer/consumer')
 const { BlocksService } = require('../blocks/blocks')
-const { StakingService } = require('../staking/staking')
 
 /**
  * Provides cli operations
  * @class
  */
 class RunnerService implements IRunnerService {
-  private readonly app: FastifyInstance;
+  private readonly blocksService: IBlocksService
+  private readonly consumerService: IConsumerService
+  private readonly configService: IConfigService
+  private readonly watchdogService: IWatchdogService
 
-  private readonly blocksService: IBlocksService;
-  private readonly consumerService: IConsumerService;
-  private readonly stakingService: IStakingService;
-  private readonly configService: IConfigService;
+  constructor() {
+    this.blocksService = new BlocksService()
+    this.consumerService = new ConsumerService()
+    this.configService = new ConfigService()
 
-  constructor(app: FastifyInstance) {
-    /** @private */
-    this.app = app
-
-    /** @private */
-    this.blocksService = new BlocksService(app)
-
-    /** @private */
-    this.consumerService = new ConsumerService(app)
-
-    /** @private */
-    this.stakingService = new StakingService(app)
-
-    /** @private */
-    this.configService = new ConfigService(app)
+    this.watchdogService = WatchdogService.getInstance()
   }
 
   /**
@@ -60,22 +49,21 @@ class RunnerService implements IRunnerService {
   async sync(options: Parameters<IRunnerService['sync']>[0]): Promise<void> {
     await this.configService.bootstrapConfig()
 
-    if (options.optionSyncValidators) {
-      await this.stakingService.syncValidators(options.optionSyncStartBlockNumber)
-    } else {
-      if (options.optionSync) {
-        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-      } else if (options.optionSyncForce) {
-        await this.blocksService.processBlocks(options.optionSyncStartBlockNumber)
-      }
+    if (options.optionSync || options.optionSyncForce) {
+      const startBlock: number | undefined = options.optionSyncForce ? 0 : options.optionSyncStartBlockNumber
+      this.blocksService.processBlocks(startBlock, options.optionSubscribeFinHead)
+      return
+    }
 
-      if (options.optionSubscribeFinHead) {
-        await this.consumerService.subscribeFinalizedHeads()
-      }
+    if (options.optionSubscribeFinHead) {
+      this.consumerService.subscribeFinalizedHeads()
+      return
+    }
+
+    if (options.optionStartWatchdog) {
+      this.watchdogService.run(options.optionWatchdogStartBlockNumber)
     }
   }
 }
 
-export {
-  RunnerService
-}
+export { RunnerService }

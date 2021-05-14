@@ -1,107 +1,54 @@
-import {
-	AccountId,
-	BlockHash,
-	EraIndex,
-	Moment,
-	RewardPoint,
-	SessionIndex,
-	ValidatorId
-} from '@polkadot/types/interfaces';
-import { ApiPromise } from '@polkadot/api';
-import { Producer } from 'kafkajs';
-import { Pool } from 'pg';
-import { AnyJson } from '@polkadot/types/types';
+import { AccountId, BlockHash, EraIndex, EventRecord } from '@polkadot/types/interfaces'
+import { AnyJson } from '@polkadot/types/types'
+
+export type TBlockHash = string | BlockHash | Uint8Array
+export type TBlockEra = number | string | EraIndex | Uint8Array
+
+export interface IProcessEraPayload {
+  eraPayoutEvent: EventRecord
+  blockHash: TBlockHash
+}
+
+export interface IBlockEraParams {
+  eraId: number
+  blockHash: TBlockHash
+}
+
+export interface IGetValidatorsNominatorsResult {
+  nominators: INominator[]
+  validators: IValidator[]
+}
 
 export interface IStakingService {
-	syncValidators(blockNumber: number): Promise<void>;
-
-	extractStakers(era: TBlockEra, blockData: TBlockHash): Promise<void>;
-
-	getValidators(
-		blockHash: TBlockHash,
-		sessionId: SessionIndex,
-		blockTime: Moment,
-		blockEra: TBlockEra
-	): Promise<IGetValidatorsResult>;
-
-	getStakersByValidator(
-		blockHash: TBlockHash,
-		sessionId: SessionIndex,
-		blockTime: Moment,
-		blockEra: TBlockEra,
-		erasRewardPointsMap: Map<AccountId, RewardPoint>,
-		validators: ValidatorId[],
-		isEnabled: boolean
-	): Promise<IGetStakersByValidator>;
-
-	getFirstBlockFromDB(era: number, offset: number): Promise<Pick<IBlockModel, 'id' | 'hash'>>;
-
-	getLastEraFromDB(): Promise<IBlockModel['era']>;
-
-	updateMetaData(blockHash: TBlockHash): Promise<void>;
-}
-
-export interface IBlockModel {
-	id: string;
-	hash: string;
-	era: number;
-}
-
-export interface IGetStakersByValidator {
-	validators: IValidator[];
-	nominators: INominator[];
-	nominators_active: number;
-}
-export interface IGetValidatorsResult {
-	validators: IValidator[];
-	stakers: IStaker[];
-	era_data: IEraData;
-	nominators: INominator[];
-	nominators_active: number;
+  addToQueue(payload: IProcessEraPayload): void
 }
 
 export interface IValidator {
-	session_id: number;
-	account_id: string;
-	era: number;
-	is_enabled: boolean;
-	total: string;
-	own: string;
-	nominators_count: number;
-	reward_points: string;
-	reward_dest?: string;
-	reward_account_id?: string;
-	prefs: Record<string, AnyJson>;
-	block_time: number;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IStaker {
-
+  account_id: string
+  era: number
+  total: string
+  own: string
+  nominators_count: number
+  reward_points: number
+  reward_dest?: string
+  reward_account_id?: string
+  prefs: Record<string, AnyJson>
 }
 
 export interface INominator {
-	account_id: string;
-	era: number;
-	session_id: number;
-	validator: string;
-	is_enabled: boolean;
-	is_clipped: boolean;
-	value: string;
-	block_time: number;
-	reward_dest?: string;
-	reward_account_id?: AccountId;
+  account_id: string
+  era: number
+  validator: string
+  is_clipped: boolean
+  value: string
+  reward_dest?: string
+  reward_account_id?: AccountId
 }
 
 export interface IEraData {
-	era: number;
-	session_start: number;
-	validators_active: number;
-	nominators_active: number;
-	total_reward: string;
-	total_stake: string;
-	total_reward_points: number;
+  era: number
+  session_start: number
+  total_reward: string
+  total_stake: string
+  total_reward_points: number
 }
-
-export type TBlockHash = string | BlockHash | Uint8Array;
-export type TBlockEra = number | string | EraIndex | Uint8Array;

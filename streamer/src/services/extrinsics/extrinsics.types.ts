@@ -1,6 +1,6 @@
-import { BlockNumber, EventRecord } from '@polkadot/types/interfaces';
-import { Compact, Vec } from '@polkadot/types';
-import { GenericExtrinsic } from '@polkadot/types/extrinsic/Extrinsic';
+import { BlockNumber, EventRecord } from '@polkadot/types/interfaces'
+import { Compact, Vec } from '@polkadot/types'
+import { GenericExtrinsic } from '@polkadot/types/extrinsic/Extrinsic'
 
 export interface IExtrinsicsService {
 	extractExtrinsics(

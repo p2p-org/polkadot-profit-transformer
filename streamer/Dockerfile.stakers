@@ -12,4 +12,4 @@ COPY ./src .
 
 EXPOSE 8080
 
-ENTRYPOINT node index.js --sync-stakers --start 0
+ENTRYPOINT node index.ts --sync-stakers --start 0

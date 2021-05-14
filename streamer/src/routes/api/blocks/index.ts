@@ -1,19 +1,20 @@
-const { BlocksService } = require('../../../services/blocks/blocks')
-const { getOneSchema, getStatusSchema, postDeleteBlocksSchema, postTrimSchema } = require('./schemas')
+import { BlocksService } from '../../../services/blocks/blocks'
+import { getOneSchema, getStatusSchema, postDeleteBlocksSchema, postTrimSchema } from './schemas'
+import { FastifyInstance } from 'fastify'
+import { HttpError } from '../../../common/errors'
 
-const apiBlocks = async (app) => {
-  const blocksService = new BlocksService(app)
+const apiBlocks = async (app: FastifyInstance) => {
+  const blocksService = new BlocksService()
 
   app.get('/update/:blockId', { schema: getOneSchema }, async (request) => {
     const {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       params: { blockId }
     } = request
 
     if (blockId == null) {
-      const err = new Error()
-      err.code = 400
-      err.message = 'param :blockId is required'
-      throw err
+      throw new HttpError('param :blockId is required', 400)
     }
 
     await blocksService.updateOneBlock(parseInt(blockId))
@@ -27,11 +28,15 @@ const apiBlocks = async (app) => {
 
   app.post('/delete', { schema: postDeleteBlocksSchema }, async (request) => {
     const { body } = request
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     return await blocksService.removeBlocks(body.block_numbers)
   })
 
   app.get('/update_trim/:blockId', { schema: postTrimSchema }, async (request) => {
     const {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       params: { blockId }
     } = request
     return await blocksService.trimAndUpdateToFinalized(parseInt(blockId))

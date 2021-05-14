@@ -1,8 +1,6 @@
 CREATE STREAM {APP_PREFIX}_STAKING_ERAS_DATA(
     "era" INT,
     "session_start" INT,
-    "validators_active" INT,
-    "nominators_active" INT,
     "total_reward" VARCHAR,
     "total_stake" VARCHAR,
     "total_reward_points" BIGINT
@@ -16,8 +14,6 @@ CREATE STREAM {APP_PREFIX}_STAKING_ERAS_DATA(
 CREATE STREAM {APP_PREFIX}_STAKING_ERAS (
     "era" INT,
     "session_start" INT,
-    "validators_active" INT,
-    "nominators_active" INT,
     "total_reward" VARCHAR,
     "total_stake" VARCHAR,
     "total_reward_points" BIGINT

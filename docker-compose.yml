@@ -26,8 +26,23 @@ services:
     env_file:
       - docker/env/.enrichments_processor.env
 
+  watchdog:
+    build:
+      context: ./streamer
+      dockerfile: ./Dockerfile.watchdog
+    restart: always
+    ports:
+      - 8087:8080
+    depends_on:
+      - zookeeper
+      - broker
+      - schema-registry
+      - db
+    env_file:
+      - docker/env/.streamer.env
+
   db:
-    build: "./db"
+    build: './db'
     restart: always
     container_name: postgres
     hostname: postgres

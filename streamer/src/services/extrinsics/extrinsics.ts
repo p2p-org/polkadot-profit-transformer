@@ -1,8 +1,11 @@
-import { environment } from '../../environment';
-import { FastifyInstance } from 'fastify';
-import { IExtrinsic, IExtrinsicsService } from './extrinsics.types';
+import { environment } from '../../environment'
+import { IExtrinsic, IExtrinsicsService } from './extrinsics.types'
+import { Producer } from 'kafkajs'
+import { KafkaModule } from '../../modules/kafka.module'
+import { Logger } from 'pino'
+import { LoggerModule } from '../../modules/logger.module'
 
-const {KAFKA_PREFIX} = environment;
+const {KAFKA_PREFIX} = environment
 
 /**
  * Provides extrinsics extraction methods
@@ -10,50 +13,8 @@ const {KAFKA_PREFIX} = environment;
  */
 
 class ExtrinsicsService implements IExtrinsicsService {
-  private readonly app: FastifyInstance;
-
-  /**
-   * Creates an instance of ExtrinsicsService.
-   * @param {object} app fastify app
-   */
-  constructor(app: FastifyInstance) {
-    if (!app.ready) throw new Error(`can't get .ready from fastify app.`);
-
-    /** @private */
-    this.app = app;
-
-    const {polkadotConnector} = this.app;
-
-    if (!polkadotConnector) {
-      throw new Error('cant get .polkadotConnector from fastify app.');
-    }
-
-    const {kafkaProducer} = this.app;
-
-    if (!kafkaProducer) {
-      throw new Error('cant get .kafkaProducer from fastify app.');
-    }
-
-    const {postgresConnector} = this.app;
-
-    if (!postgresConnector) {
-      throw new Error('cant get .postgresConnector from fastify app.');
-    }
-
-    postgresConnector.connect((err, client, release) => {
-      if (err) {
-        this.app.log.error(`Error acquiring client: ${err.toString()}`);
-        throw new Error(`Error acquiring client`);
-      }
-      client.query('SELECT NOW()', (err) => {
-        release();
-        if (err) {
-          this.app.log.error(`Error executing query: ${err.toString()}`);
-          throw new Error(`Error executing query`);
-        }
-      });
-    });
-  }
+  private readonly kafkaProducer: Producer = KafkaModule.inject()
+  private readonly logger: Logger = LoggerModule.inject()
 
   async extractExtrinsics(...args: Parameters<IExtrinsicsService['extractExtrinsics']>): Promise<void> {
     const [
@@ -62,9 +23,7 @@ class ExtrinsicsService implements IExtrinsicsService {
       blockNumber,
       events,
       extrinsicsVec
-    ] = args;
-
-    const {kafkaProducer} = this.app;
+    ] = args
 
     const extrinsics: IExtrinsic[] = []
 
@@ -75,7 +34,8 @@ class ExtrinsicsService implements IExtrinsicsService {
 
       if (extrinsic.method.method === 'batch') {
         //fix it later, most probably something bad is going on here
-        //@ts-ignore
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         extrinsic.method.args[0].forEach((batchExtrinsicEntry, batchExIndex) => {
           extrinsics.push({
             id: `${blockNumber}-${exIndex}-${batchExIndex}`,
@@ -119,7 +79,7 @@ class ExtrinsicsService implements IExtrinsicsService {
       })
     })
 
-    await kafkaProducer
+    await this.kafkaProducer
       .send({
         topic: KAFKA_PREFIX + '_EXTRINSICS_DATA',
         messages: [
@@ -132,7 +92,7 @@ class ExtrinsicsService implements IExtrinsicsService {
         ]
       })
       .catch((error) => {
-        this.app.log.error(`failed to push block: `, error)
+        this.logger.error(`failed to push block: `, error)
         throw new Error('cannot push block to Kafka')
       })
   }
