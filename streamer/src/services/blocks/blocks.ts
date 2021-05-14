@@ -128,7 +128,7 @@ class BlocksService {
     )
 
     const findEraPayoutEvent = (events: Vec<EventRecord>) => {
-      return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
+      return events.find((event: { event: { section: string; method: string } }) => event.event.section === 'staking' && event.event.method === 'EraPayout')
     }
 
     const eraPayoutEvent = findEraPayoutEvent(events)
