@@ -141,25 +141,93 @@ class BlocksService {
   }
 
   /**
+   * Check responses from storage, depended from HISTORY_DEPTH
+   *
+   * @public
+   * @async
+   * @param blockNumber
+   * @returns {Promise<boolean>}
+   */
+  async checkHistoryDepthAvailableData(blockNumber: number): Promise<boolean> {
+
+    const blockHash = await this.polkadotApi.rpc.chain.getBlockHash(blockNumber)
+
+    if (!blockHash) {
+      this.logger.error(`Cannot get block hash: ${blockNumber}`)
+      return false
+    }
+
+    const historyDepth = await this.polkadotApi.query.staking.historyDepth.at(blockHash)
+
+    const currentRawEra = await this.polkadotApi.query.staking.currentEra()
+    const blockRawEra = await this.polkadotApi.query.staking.currentEra.at(blockHash)
+
+    if (blockRawEra == null) {
+      this.logger.error(`Cannot get currentEra by hash: ${blockHash}`)
+      return false
+    }
+
+    const blockEra = parseInt(blockRawEra.toString(), 10)
+
+    if (currentRawEra.unwrap().toNumber() - blockEra > historyDepth.toNumber()) {
+      this.logger.info(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
+
+      const [sessionId, activeEra, extHeader] = await Promise.all([
+        this.polkadotApi.query.session.currentIndex.at(blockHash),
+        this.polkadotApi.query.staking.activeEra.at(blockHash),
+        this.polkadotApi.derive.chain.getHeader(blockHash)
+      ])
+
+      let hasError = false
+      if (sessionId == null) {
+        hasError = true
+        this.logger.error(`Cannot get "sessionId" for block ${blockNumber} by hash: ${blockHash}`)
+      }
+
+      if (activeEra == null || activeEra.isNone) {
+        hasError = true
+        this.logger.error(`Cannot get "activeEra" for block ${blockNumber} by hash: ${blockHash}`)
+      }
+
+      if (extHeader == null || extHeader.isEmpty) {
+        hasError = true
+        this.logger.error(`Cannot get "extHeader" for block ${blockNumber} by hash: ${blockHash}`)
+      }
+
+      if (hasError) {
+        return false
+      }
+    }
+    return true
+  }
+
+  /**
    * Process all blocks with head
    *
    * @public
    * @async
    * @param startBlockNumber
+   * @param optionSubscribeFinHead
    * @returns {Promise<void>}
    */
   async processBlocks(startBlockNumber: number | null = null, optionSubscribeFinHead: boolean | null = null): Promise<void> {
-    this.logger.info(`Starting processBlocks from ${startBlockNumber}`)
-
     if (startBlockNumber === null) {
       startBlockNumber = await this.getLastProcessedBlock()
     }
+
+    this.logger.info(`Starting processBlocks from ${startBlockNumber}`)
 
     let lastBlockNumber = await this.getFinBlockNumber()
 
     this.logger.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
     let blockNumber: number = startBlockNumber
+
+    if (!await this.checkHistoryDepthAvailableData(startBlockNumber)) {
+      this.logger.error('Cannot receive storage data older than HISTORY_DEPTH')
+      SyncStatus.release()
+      return
+    }
 
     while (blockNumber <= lastBlockNumber) {
       const chunk = lastBlockNumber - blockNumber >= 10 ? 10 : (lastBlockNumber - blockNumber) % 10
