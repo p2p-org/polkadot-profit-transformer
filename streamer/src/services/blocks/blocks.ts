@@ -128,7 +128,9 @@ class BlocksService {
     )
 
     const findEraPayoutEvent = (events: Vec<EventRecord>) => {
-      return events.find((event: { event: { section: string; method: string } }) => event.event.section === 'staking' && event.event.method === 'EraPayout')
+      return events.find(
+        (event: { event: { section: string; method: string } }) => event.event.section === 'staking' && event.event.method === 'EraPayout'
+      )
     }
 
     const eraPayoutEvent = findEraPayoutEvent(events)
@@ -149,7 +151,6 @@ class BlocksService {
    * @returns {Promise<boolean>}
    */
   async checkHistoryDepthAvailableData(blockNumber: number): Promise<boolean> {
-
     const blockHash = await this.polkadotApi.rpc.chain.getBlockHash(blockNumber)
 
     if (!blockHash) {
@@ -211,6 +212,8 @@ class BlocksService {
    * @returns {Promise<void>}
    */
   async processBlocks(startBlockNumber: number | null = null, optionSubscribeFinHead: boolean | null = null): Promise<void> {
+    const release = await SyncStatus.acquire()
+
     if (startBlockNumber === null) {
       startBlockNumber = await this.getLastProcessedBlock()
     }
@@ -223,9 +226,9 @@ class BlocksService {
 
     let blockNumber: number = startBlockNumber
 
-    if (!await this.checkHistoryDepthAvailableData(startBlockNumber)) {
+    if (!(await this.checkHistoryDepthAvailableData(startBlockNumber))) {
       this.logger.error('Cannot receive storage data older than HISTORY_DEPTH')
-      SyncStatus.release()
+      release()
       return
     }
 
@@ -244,7 +247,7 @@ class BlocksService {
       }
     }
 
-    SyncStatus.release()
+    release()
 
     if (optionSubscribeFinHead) this.consumerService.subscribeFinalizedHeads()
   }
