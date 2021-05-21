@@ -221,15 +221,25 @@ done
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile
 
-docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server
+docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server redash-scheduler redash-worker
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-server create_db
 
-curl -sX "POST" 'http://localhost:5000/setup' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
-  --cookie-jar cookies.txt \
-  --data-raw 'name=admin&email=admin%40example.org&password=supersecret123&org_name=organization' \
-  --compressed
+# curl -sX "POST" 'http://localhost:5000/setup' \
+#   -H 'Content-Type: application/x-www-form-urlencoded' \
+#   -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
+#   --cookie-jar cookies.txt \
+#   --data-raw 'name=admin&email=admin%40example.org&password=supersecret123&org_name=organization' \
+#   --compressed
+
+echo "Setting up Redash"
+
+cp ./redash_dashboard/example.env  ./redash_dashboard/.env
+pip3 install requests python-dotenv redash-api-client
+
+cd ./redash_dashboard
+sh ./create.sh
+
+echo "Redash is up and running: http://localhost:5000"
