@@ -20,6 +20,7 @@ entity "Blocks" as block {
     *author: VARCHAR(66)
     *session_id: INT
     *era: INT
+    *current_era: INT
     *last_log: VARCHAR(100)
     *digest: JSONB
     *block_time: TIMESTAMP
