@@ -29,17 +29,6 @@ class RunnerService implements IRunnerService {
   }
 
   /**
-   * Synchronization jobs options
-   *
-   * @typedef {Object} SyncOptions
-   * @property {boolean} optionSync
-   * @property {boolean} optionSyncForce
-   * @property {boolean} optionSyncValidators
-   * @property {number} optionSyncStartBlockNumber
-   * @property {boolean} optionSubscribeFinHead
-   */
-
-  /**
    * Run synchronization blocks
    *
    * @async

@@ -13,7 +13,8 @@
     "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
     "dev": "npx ts-node src/main.ts --sync",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
-    "lint:fix": "npx eslint . --fix",
+    "lint:fix": "npx eslint ./src --fix",
+    "lint-staged": "lint-staged",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
     "test-new": "npx jest --no-cache",
     "prepare": "cd .. && husky install streamer/.husky"
@@ -76,7 +77,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npx lint-staged",
+      "pre-commit": "npm lint-staged",
       "pre-push": "npm run type-coverage && npm run build"
     }
   },

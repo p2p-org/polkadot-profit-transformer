@@ -75,6 +75,7 @@ const build = async (): Promise<FastifyInstance> => {
       await fastify.register(routes, { prefix: 'api' })
       await fastify.register(prometheus, { prefix: '/' })
     } catch (err) {
+      console.log(err)
       fastify.log.error(`Cannot init endpoint: "${err.message}"`)
       fastify.log.error(`Stopping instance...`)
       process.exit(1)
