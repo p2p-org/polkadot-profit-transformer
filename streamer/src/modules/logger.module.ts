@@ -1,12 +1,12 @@
 import { environment } from '../environment'
-import pino, { Logger } from 'pino'
+import pino, { BaseLogger } from 'pino'
 
 const { LOG_LEVEL } = environment
 
 export class LoggerModule {
 	private static instance: LoggerModule
 
-	private logger: Logger
+	private logger: BaseLogger
 	private constructor() {
 		this.logger = pino({
 			level: LOG_LEVEL,
@@ -19,7 +19,7 @@ export class LoggerModule {
 			LoggerModule.instance = new LoggerModule()
 		}
 	}
-	static inject(): Logger {
+	static inject(): BaseLogger {
 		if (!LoggerModule.instance.logger) {
 			throw new Error(`You haven't initialized LoggerModule`)
 		}

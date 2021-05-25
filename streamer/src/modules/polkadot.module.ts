@@ -1,4 +1,4 @@
-import { ApiPromise, WsProvider } from '@polkadot/api'
+import { ApiPromise, WsProvider } from '@polkadot/api/index'
 import { environment } from '../environment'
 
 const { SUBSTRATE_URI } = environment

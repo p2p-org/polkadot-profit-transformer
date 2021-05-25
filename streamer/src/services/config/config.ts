@@ -4,7 +4,7 @@ import { Pool } from 'pg'
 import { PostgresModule } from '../../modules/postgres.module'
 import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { Logger } from 'pino'
+import { BaseLogger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
 
 const { DB_SCHEMA } = environment
@@ -16,7 +16,13 @@ const INITIAL_VERIFY_HEIGHT = -1
 class ConfigService implements IConfigService {
   private readonly repository: Pool = PostgresModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly logger: BaseLogger = LoggerModule.inject()
+
+  constructor(repository?: Pool, polkadotApi?: ApiPromise, logger?: BaseLogger) {
+    this.repository = repository ?? PostgresModule.inject()
+    this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
+    this.logger = logger ?? LoggerModule.inject()
+  }
 
   async bootstrapConfig(): Promise<void> {
     const [currentChain, currentChainType] = (
