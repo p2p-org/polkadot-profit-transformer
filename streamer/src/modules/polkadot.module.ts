@@ -19,7 +19,7 @@ export class PolkadotModule {
     }
   }
   static inject(): ApiPromise {
-    if (!PolkadotModule.instance.api) {
+    if (!PolkadotModule.instance?.api) {
       throw new Error(`You haven't initiated polkadot module`)
     }
 

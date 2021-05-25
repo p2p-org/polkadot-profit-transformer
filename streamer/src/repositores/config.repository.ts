@@ -13,10 +13,6 @@ export class ConfigRepository {
 	private readonly logger: Logger = LoggerModule.inject()
 
 	async update(key: string, value: string | number): Promise<void> {
-		if (!key.length) {
-			throw new Error('updateConfigValueInDB "key" is empty')
-		}
-
 		try {
 			await this.connectionProvider.query({
 				text: `UPDATE ${ConfigRepository.schema}._config SET "value" = $2 WHERE "key" = $1`,
@@ -28,11 +24,7 @@ export class ConfigRepository {
 		}
 	}
 
-	async find(key: string): Promise<string> {
-		if (!key.length) {
-			throw new Error('"key" is empty')
-		}
-
+	async find(key: string): Promise<string | undefined> {
 		try {
 			const result = await this.connectionProvider.query({
 				text: `SELECT "value" FROM ${ConfigRepository.schema}._config WHERE "key" = $1 LIMIT 1`,

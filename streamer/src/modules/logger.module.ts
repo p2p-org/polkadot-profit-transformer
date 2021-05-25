@@ -1,32 +1,17 @@
 import { environment } from '../environment'
-import pino, { BaseLogger } from 'pino'
+import pino, { Logger } from 'pino'
 
 const { LOG_LEVEL } = environment
 
 export class LoggerModule {
 	private static instance: LoggerModule
 
-	private logger: BaseLogger
+	private logger: Logger
 	private constructor() {
 		this.logger = pino({
 			level: LOG_LEVEL,
-			prettyPrint: true,
-			formatters: {
-				log(object) {
-					console.log('object', object)
-					return object
-				},
-				bindings(bindings) {
-					console.log('bindings', bindings)
-					return {
-						...bindings,
-						caller: LoggerModule.instance.logger.caller
-					}
-				}
-			}
+			prettyPrint: true
 		})
-
-		this.logger.bindings()
 	}
 
 	static async init(): Promise<void> {
@@ -34,8 +19,8 @@ export class LoggerModule {
 			LoggerModule.instance = new LoggerModule()
 		}
 	}
-	static inject(): BaseLogger {
-		if (!LoggerModule.instance.logger) {
+	static inject(): Logger {
+		if (!LoggerModule.instance?.logger) {
 			throw new Error(`You haven't initialized LoggerModule`)
 		}
 

@@ -1,7 +1,7 @@
 import { IConfigService } from './config.types'
 import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { BaseLogger } from 'pino'
+import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
 import { ConfigRepository } from '../../repositores/config.repository'
 
@@ -11,12 +11,12 @@ const INITIAL_VERIFY_HEIGHT = -1
  * @class
  */
 class ConfigService implements IConfigService {
-  private readonly configRepository: ConfigRepository = new ConfigRepository()
-  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  private readonly logger: BaseLogger = LoggerModule.inject()
+  private readonly configRepository: ConfigRepository
+  private readonly polkadotApi: ApiPromise
+  private readonly logger: Logger
 
-  constructor(repository?: Pool, polkadotApi?: ApiPromise, logger?: BaseLogger) {
-    this.repository = repository ?? PostgresModule.inject()
+  constructor(repository?: ConfigRepository, polkadotApi?: ApiPromise, logger?: Logger) {
+    this.configRepository = repository ?? new ConfigRepository()
     this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
     this.logger = logger ?? LoggerModule.inject()
   }
@@ -29,13 +29,17 @@ class ConfigService implements IConfigService {
       ])
     ).map((value) => value.toString().trim())
 
+    /*
+    It should never happen according to typings
     if (!currentChain) {
       throw new Error('Node returns empty "system.chain" value')
-    }
+    }*/
 
+    /*
+    It should never happen according to typings
     if (!currentChainType) {
       throw new Error('Node returns empty "system.chainType" value')
-    }
+    }*/
 
     const [dbChain, dbChainType] = await Promise.all([this.getConfigValueFromDB('chain'), this.getConfigValueFromDB('chain_type')])
 
@@ -85,11 +89,19 @@ class ConfigService implements IConfigService {
     await this.configRepository.insert(key, valueToSave)
   }
 
-  async getConfigValueFromDB(key: string): Promise<string> {
+  async getConfigValueFromDB(key: string): Promise<string | undefined> {
+    if (!key.length) {
+      throw new Error('"key" is empty')
+    }
+
     return this.configRepository.find(key)
   }
 
   async updateConfigValueInDB(key: string, value: string | number): Promise<void> {
+    if (!key.length) {
+      throw new Error('updateConfigValueInDB "key" is empty')
+    }
+
     return this.configRepository.update(key, value)
   }
 }

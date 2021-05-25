@@ -97,7 +97,9 @@
       "./**/*.{js,ts}",
       "!./**/*.types.ts"
     ],
-    "coverageReporters": ["text"],
+    "coverageReporters": [
+      "text"
+    ],
     "coverageDirectory": "../coverage",
     "moduleFileExtensions": [
       "js",
