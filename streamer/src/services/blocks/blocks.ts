@@ -7,10 +7,9 @@ import { Codec } from '@polkadot/types/types'
 import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
 import { ApiPromise } from '@polkadot/api'
-import { Logger } from 'pino'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { KafkaModule } from '../../modules/kafka.module'
-import { LoggerModule } from '../../modules/logger.module'
+import { IKafkaModule, KafkaModule } from '../../modules/kafka.module'
+import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
 import { IConsumerService } from '../consumer/consumer.types'
 import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
 import { IStakingService } from '../staking/staking.types'
@@ -24,9 +23,9 @@ const { ConsumerService } = require('../consumer/consumer')
  */
 class BlocksService implements IBlocksService {
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
-  private readonly kafka: KafkaModule = KafkaModule.inject()
+  private readonly kafka: IKafkaModule = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
 
   private readonly extrinsicsService: IExtrinsicsService
   private readonly stakingService: IStakingService

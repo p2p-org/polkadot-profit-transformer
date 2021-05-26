@@ -1,8 +1,7 @@
 import { IConfigService } from './config.types'
 import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { Logger } from 'pino'
-import { LoggerModule } from '../../modules/logger.module'
+import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
 import { ConfigRepository } from '../../repositores/config.repository'
 
 const INITIAL_VERIFY_HEIGHT = -1
@@ -13,9 +12,9 @@ const INITIAL_VERIFY_HEIGHT = -1
 class ConfigService implements IConfigService {
   private readonly configRepository: ConfigRepository
   private readonly polkadotApi: ApiPromise
-  private readonly logger: Logger
+  private readonly logger: ILoggerModule
 
-  constructor(repository?: ConfigRepository, polkadotApi?: ApiPromise, logger?: Logger) {
+  constructor(repository?: ConfigRepository, polkadotApi?: ApiPromise, logger?: ILoggerModule) {
     this.configRepository = repository ?? new ConfigRepository()
     this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
     this.logger = logger ?? LoggerModule.inject()

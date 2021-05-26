@@ -3,7 +3,15 @@ import pino, { Logger } from 'pino'
 
 const { LOG_LEVEL } = environment
 
-export class LoggerModule {
+export interface ILoggerModule {
+	trace(msg: string): void;
+	debug(msg: string): void;
+	info(msg: string): void;
+	warn(msg: string): void;
+	error(msg: string, err?: any): void;
+}
+
+export class LoggerModule implements ILoggerModule{
 	private static instance: LoggerModule
 
 	private logger: Logger
@@ -25,5 +33,25 @@ export class LoggerModule {
 		}
 
 		return LoggerModule.instance.logger
+	}
+
+	trace(msg: string): void {
+		this.logger.trace(msg)
+	}
+
+	debug(msg: string): void {
+		this.logger.debug(msg)
+	}
+
+	info(msg: string): void {
+		this.logger.info(msg)
+	}
+
+	warn(msg: string): void {
+		this.logger.warn(msg)
+	}
+
+	error(msg: string, err?: any): void {
+		this.logger.error(msg, err)
 	}
 }

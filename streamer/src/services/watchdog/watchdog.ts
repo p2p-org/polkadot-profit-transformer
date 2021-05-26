@@ -9,8 +9,7 @@ import { Pool } from 'pg'
 import { Vec } from '@polkadot/types'
 import { PostgresModule } from '../../modules/postgres.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { Logger } from 'pino'
-import { LoggerModule } from '../../modules/logger.module'
+import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
 import { BlockRepository } from '../../repositores/block.repository'
 
 const { DB_SCHEMA } = environment
@@ -23,7 +22,7 @@ export default class WatchdogService implements IWatchdogService {
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly repository: Pool = PostgresModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
 
   private resolve: { (arg0: number): void; (value: number | PromiseLike<number>): void } | undefined
   private concurrency: number
