@@ -168,7 +168,7 @@ export default class WatchdogService implements IWatchdogService {
     const eraFromDb = await this.getEraFromDB(+eraId)
 
     if (!eraFromDb) {
-      StakingService.getInstance().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
+      StakingService.inject().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
       return
     }
 
@@ -176,7 +176,7 @@ export default class WatchdogService implements IWatchdogService {
 
     if (+diff.diff !== 0) {
       this.logger.debug(`Era staking diff is not zero: ${+diff.diff}. Resync era ${eraId}.`)
-      StakingService.getInstance().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
+      StakingService.inject().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
     }
   }
 

@@ -40,7 +40,7 @@ class BlocksService implements IBlocksService {
   constructor() {
     this.extrinsicsService = new ExtrinsicsService()
     this.consumerService = new ConsumerService()
-    this.stakingService = StakingService.getInstance()
+    this.stakingService = StakingService.inject()
   }
 
   async updateOneBlock(blockNumber: number): Promise<true> {

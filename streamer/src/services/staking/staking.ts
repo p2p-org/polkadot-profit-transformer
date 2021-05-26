@@ -24,7 +24,7 @@ const {
 } = require('../../environment')
 
 export default class StakingService implements IStakingService {
-  static instance: StakingService
+  private static instance: StakingService
   private readonly repository: Pool = PostgresModule.inject()
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
@@ -35,7 +35,7 @@ export default class StakingService implements IStakingService {
     this.queue = fastq(this, this.processEraPayout, 1)
   }
 
-  static getInstance(): StakingService {
+  static inject(): StakingService {
     if (!StakingService.instance) {
       StakingService.instance = new StakingService()
     }
