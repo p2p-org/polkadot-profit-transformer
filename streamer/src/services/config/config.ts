@@ -29,18 +29,6 @@ class ConfigService implements IConfigService {
       ])
     ).map((value) => value.toString().trim())
 
-    /*
-    It should never happen according to typings
-    if (!currentChain) {
-      throw new Error('Node returns empty "system.chain" value')
-    }*/
-
-    /*
-    It should never happen according to typings
-    if (!currentChainType) {
-      throw new Error('Node returns empty "system.chainType" value')
-    }*/
-
     const [dbChain, dbChainType] = await Promise.all([this.getConfigValueFromDB('chain'), this.getConfigValueFromDB('chain_type')])
 
     if (!dbChain && !dbChainType) {

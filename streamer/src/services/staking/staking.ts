@@ -29,7 +29,7 @@ export default class StakingService implements IStakingService {
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
-  private readonly queue: any
+  private readonly queue: fastq.queue<IProcessEraPayload, any>;
 
   constructor() {
     this.queue = fastq(this, this.processEraPayout, 1)
@@ -61,20 +61,6 @@ export default class StakingService implements IStakingService {
       total_stake: totalStake.toString(),
       total_reward_points: +erasRewardPoints.total.toString(),
       session_start: sessionStart.unwrap().toNumber()
-    }
-  }
-
-  async getFirstBlockInSession(sessionId: number): Promise<IBlock> {
-    try {
-      const { rows } = await this.repository.query({
-        text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "session_id" = $1::int order by "id" limit 1`,
-        values: [sessionId]
-      })
-
-      return rows[0]
-    } catch (err) {
-      this.logger.error(`failed to get first block of session ${sessionId}, error: ${err}`)
-      throw new Error('cannot find first era block')
     }
   }
 
@@ -171,8 +157,7 @@ export default class StakingService implements IStakingService {
         this.logger.warn(`failed to get payee for era: "${eraId}" validator: "${validatorAccountId}". Block: ${blockHash} `)
       }
 
-      const pointsFromMap = eraRewardPointsMap.get(validatorAccountId) ?? 0
-      const reward_points = pointsFromMap
+      const reward_points = eraRewardPointsMap.get(validatorAccountId) ?? 0
 
       validators.push({
         era: eraId,
