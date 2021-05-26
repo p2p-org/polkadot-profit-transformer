@@ -1,22 +1,25 @@
-import { environment } from '../../environment'
 import { IConfigService } from './config.types'
-import { Pool } from 'pg'
-import { PostgresModule } from '../../modules/postgres.module'
 import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
+import { ConfigRepository } from '../../repositores/config.repository'
 
-const { DB_SCHEMA } = environment
 const INITIAL_VERIFY_HEIGHT = -1
 /**
  * Provides config operations
  * @class
  */
 class ConfigService implements IConfigService {
-  private readonly repository: Pool = PostgresModule.inject()
-  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly configRepository: ConfigRepository
+  private readonly polkadotApi: ApiPromise
+  private readonly logger: Logger
+
+  constructor(repository?: ConfigRepository, polkadotApi?: ApiPromise, logger?: Logger) {
+    this.configRepository = repository ?? new ConfigRepository()
+    this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
+    this.logger = logger ?? LoggerModule.inject()
+  }
 
   async bootstrapConfig(): Promise<void> {
     const [currentChain, currentChainType] = (
@@ -26,13 +29,17 @@ class ConfigService implements IConfigService {
       ])
     ).map((value) => value.toString().trim())
 
+    /*
+    It should never happen according to typings
     if (!currentChain) {
       throw new Error('Node returns empty "system.chain" value')
-    }
+    }*/
 
+    /*
+    It should never happen according to typings
     if (!currentChainType) {
       throw new Error('Node returns empty "system.chainType" value')
-    }
+    }*/
 
     const [dbChain, dbChainType] = await Promise.all([this.getConfigValueFromDB('chain'), this.getConfigValueFromDB('chain_type')])
 
@@ -79,33 +86,15 @@ class ConfigService implements IConfigService {
       throw new Error(`setConfigValueToDB "value" for key ${key} is empty`)
     }
 
-    try {
-      await this.repository.query({
-        text: `INSERT INTO  ${DB_SCHEMA}._config VALUES ($1, $2)`,
-        values: [key, valueToSave]
-      })
-    } catch (err) {
-      this.logger.error(`failed to set config key "${err}"`)
-      throw new Error('cannot set config value')
-    }
+    await this.configRepository.insert(key, valueToSave)
   }
 
-  async getConfigValueFromDB(key: string): Promise<string> {
+  async getConfigValueFromDB(key: string): Promise<string | undefined> {
     if (!key.length) {
       throw new Error('"key" is empty')
     }
 
-    try {
-      const result = await this.repository.query({
-        text: `SELECT "value" FROM ${DB_SCHEMA}._config WHERE "key" = $1 LIMIT 1`,
-        values: [key]
-      })
-
-      return result.rows[0]?.value
-    } catch (err) {
-      this.logger.error(`failed to get config key "${err}"`)
-      throw new Error('cannot get config value')
-    }
+    return this.configRepository.find(key)
   }
 
   async updateConfigValueInDB(key: string, value: string | number): Promise<void> {
@@ -113,15 +102,7 @@ class ConfigService implements IConfigService {
       throw new Error('updateConfigValueInDB "key" is empty')
     }
 
-    try {
-      await this.repository.query({
-        text: `UPDATE ${DB_SCHEMA}._config SET "value" = $2 WHERE "key" = $1`,
-        values: [key, value]
-      })
-    } catch (err) {
-      this.logger.error(`failed to updateConfigValueInDB config key "${err}"`)
-      throw new Error('cannot updateConfigValueInDB config value')
-    }
+    return this.configRepository.update(key, value)
   }
 }
 

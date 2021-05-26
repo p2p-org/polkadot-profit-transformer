@@ -20,7 +20,7 @@ export class LoggerModule {
 		}
 	}
 	static inject(): Logger {
-		if (!LoggerModule.instance.logger) {
+		if (!LoggerModule.instance?.logger) {
 			throw new Error(`You haven't initialized LoggerModule`)
 		}
 

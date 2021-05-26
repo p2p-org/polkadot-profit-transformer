@@ -5,7 +5,7 @@ import { environment } from '../../environment'
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { AnyJson, Codec } from '@polkadot/types/types'
-import { IBlocksStatusResult } from './blocks.types'
+import { IBlocksService, IBlocksStatusResult } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
 import { Pool } from 'pg'
 import { Producer } from 'kafkajs'
@@ -16,6 +16,8 @@ import { PolkadotModule } from '../../modules/polkadot.module'
 import { KafkaModule } from '../../modules/kafka.module'
 import { LoggerModule } from '../../modules/logger.module'
 import { IConsumerService } from '../consumer/consumer.types'
+import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
+import { IStakingService } from '../staking/staking.types'
 
 const { KAFKA_PREFIX, DB_SCHEMA } = environment
 
@@ -25,18 +27,19 @@ const { ConsumerService } = require('../consumer/consumer')
  * Provides block operations
  * @class
  */
-class BlocksService {
+class BlocksService implements IBlocksService {
   private readonly repository: Pool = PostgresModule.inject()
   private readonly kafkaProducer: Producer = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
 
-  private readonly extrinsicsService: ExtrinsicsService
-  private readonly stakingService: StakingService
-  private readonly consumerService: IConsumerService = new ConsumerService()
+  private readonly extrinsicsService: IExtrinsicsService
+  private readonly stakingService: IStakingService
+  private readonly consumerService: IConsumerService
 
   constructor() {
     this.extrinsicsService = new ExtrinsicsService()
+    this.consumerService = new ConsumerService()
     this.stakingService = StakingService.getInstance()
   }
 
