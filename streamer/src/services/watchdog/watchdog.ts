@@ -11,6 +11,7 @@ import { PostgresModule } from '../../modules/postgres.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
+import { BlockRepository } from '../../repositores/block.repository'
 
 const { DB_SCHEMA } = environment
 
@@ -19,6 +20,7 @@ const WATCHDOG_CONCURRENCY = 10
 export default class WatchdogService implements IWatchdogService {
   static instance: WatchdogService
 
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly repository: Pool = PostgresModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
@@ -307,14 +309,14 @@ export default class WatchdogService implements IWatchdogService {
   }
 
   async getNextBlocksCount(currentBlockId: number): Promise<number> {
-    const lastProcessedBlockId = await this.blocksService.getLastProcessedBlock()
+    const lastProcessedBlockId = await this.blockRepository.getLastProcessedBlock()
 
     if (lastProcessedBlockId - currentBlockId > this.concurrency) return this.concurrency
     return lastProcessedBlockId - currentBlockId
   }
 
   async updateLastCheckedBlockIdIfRestartOrBlocksEnd(lastCheckedBlockId: number): Promise<number> {
-    const lastProcessedBlockId = await this.blocksService.getLastProcessedBlock()
+    const lastProcessedBlockId = await this.blockRepository.getLastProcessedBlock()
 
     const isLastBlock = () => lastCheckedBlockId === lastProcessedBlockId
 

@@ -1,11 +1,6 @@
-import { environment } from '../../environment'
 import { IExtrinsic, IExtrinsicsService } from './extrinsics.types'
-import { Producer } from 'kafkajs'
 import { KafkaModule } from '../../modules/kafka.module'
-import { Logger } from 'pino'
-import { LoggerModule } from '../../modules/logger.module'
 
-const {KAFKA_PREFIX} = environment
 
 /**
  * Provides extrinsics extraction methods
@@ -13,8 +8,7 @@ const {KAFKA_PREFIX} = environment
  */
 
 class ExtrinsicsService implements IExtrinsicsService {
-  private readonly kafkaProducer: Producer = KafkaModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly kafka: KafkaModule = KafkaModule.inject()
 
   async extractExtrinsics(...args: Parameters<IExtrinsicsService['extractExtrinsics']>): Promise<void> {
     const [
@@ -79,22 +73,7 @@ class ExtrinsicsService implements IExtrinsicsService {
       })
     })
 
-    await this.kafkaProducer
-      .send({
-        topic: KAFKA_PREFIX + '_EXTRINSICS_DATA',
-        messages: [
-          {
-            key: blockNumber.toString(),
-            value: JSON.stringify({
-              extrinsics: extrinsics
-            })
-          }
-        ]
-      })
-      .catch((error) => {
-        this.logger.error(`failed to push block: `, error)
-        throw new Error('cannot push block to Kafka')
-      })
+    await this.kafka.sendExtrinsicsData(blockNumber.toString(), extrinsics)
   }
 }
 

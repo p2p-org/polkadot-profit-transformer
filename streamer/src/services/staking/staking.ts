@@ -1,4 +1,3 @@
-import { IBlock } from './../watchdog/watchdog.types'
 import { AccountId, Exposure, IndividualExposure } from '@polkadot/types/interfaces'
 import {
   IGetValidatorsNominatorsResult,
@@ -10,23 +9,18 @@ import {
   IProcessEraPayload
 } from './staking.types'
 import { ApiPromise } from '@polkadot/api'
-import { Producer } from 'kafkajs'
 import fastq from 'fastq'
-import { Pool } from 'pg'
-import { PostgresModule } from '../../modules/postgres.module'
 import { KafkaModule } from '../../modules/kafka.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
-
-const {
-  environment: { KAFKA_PREFIX, DB_SCHEMA }
-} = require('../../environment')
+import { BlockRepository } from '../../repositores/block.repository'
 
 export default class StakingService implements IStakingService {
   private static instance: StakingService
-  private readonly repository: Pool = PostgresModule.inject()
-  private readonly kafkaProducer: Producer = KafkaModule.inject()
+
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
+  private readonly kafka: KafkaModule = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
   private readonly queue: fastq.queue<IProcessEraPayload, any>;
@@ -64,20 +58,6 @@ export default class StakingService implements IStakingService {
     }
   }
 
-  async getFirstBlockInEra(eraId: number): Promise<IBlock> {
-    try {
-      const { rows } = await this.repository.query({
-        text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "era" = $1::int order by "id" limit 1`,
-        values: [eraId]
-      })
-
-      return rows[0]
-    } catch (err) {
-      this.logger.error(`failed to get first block of session ${eraId}, error: ${err}`)
-      throw new Error('cannot find first era block')
-    }
-  }
-
   async getValidatorsAndNominatorsData({ blockHash, eraId }: IBlockEraParams): Promise<IGetValidatorsNominatorsResult> {
     const validatorsAccountIdSet: Set<string> = new Set()
     const eraRewardPointsMap: Map<string, number> = new Map()
@@ -87,7 +67,7 @@ export default class StakingService implements IStakingService {
 
     const eraRewardPointsRaw = await this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, +eraId)
 
-    const firstBlockOfEra = await this.getFirstBlockInEra(+eraId)
+    const firstBlockOfEra = await this.blockRepository.getFirstBlockInEra(+eraId)
 
     if (!firstBlockOfEra) {
       this.logger.error(`first block of era ${eraId} not found in DB`)
@@ -199,40 +179,8 @@ export default class StakingService implements IStakingService {
 
       const { validators, nominators } = await this.getValidatorsAndNominatorsData({ blockHash, eraId: +eraId })
 
-      try {
-        await this.kafkaProducer.send({
-          topic: KAFKA_PREFIX + '_STAKING_ERAS_DATA',
-          messages: [
-            {
-              key: eraData.era.toString(),
-              value: JSON.stringify(eraData)
-            }
-          ]
-        })
-      } catch (error: any) {
-        this.logger.error(`failed to push era data: `, error)
-        throw new Error('cannot push session data to Kafka')
-      }
-
-      try {
-        await this.kafkaProducer.send({
-          topic: KAFKA_PREFIX + '_SESSION_DATA',
-          messages: [
-            {
-              // key: blockData.block.header.number.toString(),
-              value: JSON.stringify({
-                era: +eraId.toString(),
-                validators: validators.map((validator) => ({ ...validator, block_time: blockTime.toNumber() })),
-                nominators: nominators.map((nominator) => ({ ...nominator, block_time: blockTime.toNumber() })),
-                block_time: blockTime.toNumber()
-              })
-            }
-          ]
-        })
-      } catch (error: any) {
-        this.logger.error(`failed to push session data: `, error)
-        throw new Error('cannot push session data to Kafka')
-      }
+      await this.kafka.sendStakingErasData(eraData)
+      await this.kafka.sendSessionData(+eraId, validators, nominators, blockTime)
 
       this.logger.debug(`Era ${eraId.toString()} staking processing finished`)
     } catch (error) {
