@@ -6,12 +6,14 @@ import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { Logger } from 'pino'
 import { LoggerModule } from '../../modules/logger.module'
+import { BlockRepository } from '../../repositores/block.repository'
 
 /**
  * Provides blocks streamer service
  * @class
  */
 class ConsumerService implements IConsumerService {
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
 
@@ -29,9 +31,7 @@ class ConsumerService implements IConsumerService {
 
     this.logger.info(`Starting subscribeFinalizedHeads`)
 
-    const blocksService = new BlocksService()
-
-    const blockNumberFromDB = await blocksService.getLastProcessedBlock()
+    const blockNumberFromDB = await this.blockRepository.getLastProcessedBlock()
 
     if (blockNumberFromDB === 0) {
       this.logger.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `)
@@ -53,7 +53,7 @@ class ConsumerService implements IConsumerService {
   private async onFinalizedHead(blockHash: Header): Promise<void> {
     const blocksService = new BlocksService()
 
-    const blockNumberFromDB = await blocksService.getLastProcessedBlock()
+    const blockNumberFromDB = await this.blockRepository.getLastProcessedBlock()
 
     if (blockHash.number.toNumber() === blockNumberFromDB) {
       return

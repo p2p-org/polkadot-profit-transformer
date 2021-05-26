@@ -1,25 +1,20 @@
 import { SyncStatus } from '../index'
 import StakingService from '../staking/staking'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
-import { environment } from '../../environment'
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
-import { AnyJson, Codec } from '@polkadot/types/types'
-import { IBlocksService, IBlocksStatusResult } from './blocks.types'
+import { Codec } from '@polkadot/types/types'
+import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
-import { Pool } from 'pg'
-import { Producer } from 'kafkajs'
 import { ApiPromise } from '@polkadot/api'
 import { Logger } from 'pino'
-import { PostgresModule } from '../../modules/postgres.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { KafkaModule } from '../../modules/kafka.module'
 import { LoggerModule } from '../../modules/logger.module'
 import { IConsumerService } from '../consumer/consumer.types'
 import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
 import { IStakingService } from '../staking/staking.types'
-
-const { KAFKA_PREFIX, DB_SCHEMA } = environment
+import { BlockRepository } from '../../repositores/block.repository'
 
 const { ConsumerService } = require('../consumer/consumer')
 
@@ -28,8 +23,8 @@ const { ConsumerService } = require('../consumer/consumer')
  * @class
  */
 class BlocksService implements IBlocksService {
-  private readonly repository: Pool = PostgresModule.inject()
-  private readonly kafkaProducer: Producer = KafkaModule.inject()
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
+  private readonly kafka: KafkaModule = KafkaModule.inject()
   private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
   private readonly logger: Logger = LoggerModule.inject()
 
@@ -40,7 +35,7 @@ class BlocksService implements IBlocksService {
   constructor() {
     this.extrinsicsService = new ExtrinsicsService()
     this.consumerService = new ConsumerService()
-    this.stakingService = StakingService.getInstance()
+    this.stakingService = StakingService.inject()
   }
 
   async updateOneBlock(blockNumber: number): Promise<true> {
@@ -85,7 +80,7 @@ class BlocksService implements IBlocksService {
 
     const lastDigestLogEntry = signedBlock.block.header.digest.logs.length - 1
 
-    const blockData = {
+    const blockData: IBlockData = {
       block: {
         header: {
           number: signedBlock.block.header.number.toNumber(),
@@ -106,21 +101,8 @@ class BlocksService implements IBlocksService {
     }
 
     this.logger.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
-
-    try {
-      await this.kafkaProducer.send({
-        topic: KAFKA_PREFIX + '_BLOCK_DATA',
-        messages: [
-          {
-            key: blockData.block.header.number.toString(),
-            value: JSON.stringify(blockData)
-          }
-        ]
-      })
-    } catch (error) {
-      this.logger.error(`failed to push block: `, error)
-      throw new Error('cannot push block to Kafka')
-    }
+    
+    await this.kafka.sendBlockData(blockData)
 
     await this.extrinsicsService.extractExtrinsics(
       era,
@@ -218,7 +200,7 @@ class BlocksService implements IBlocksService {
     const release = await SyncStatus.acquire()
 
     if (startBlockNumber === null) {
-      startBlockNumber = await this.getLastProcessedBlock()
+      startBlockNumber = await this.blockRepository.getLastProcessedBlock()
     }
 
     this.logger.info(`Starting processBlocks from ${startBlockNumber}`)
@@ -253,30 +235,6 @@ class BlocksService implements IBlocksService {
     release()
 
     if (optionSubscribeFinHead) this.consumerService.subscribeFinalizedHeads()
-  }
-
-  /**
-   * Returns last processed block number from database
-   *
-   * @public
-   * @async
-   * @returns {Promise<number>}
-   */
-  async getLastProcessedBlock(): Promise<number> {
-    let blockNumberFromDB = 0
-
-    try {
-      const { rows } = await this.repository.query(`SELECT id AS last_number FROM ${DB_SCHEMA}.blocks ORDER BY id DESC LIMIT 1`)
-
-      if (rows.length && rows[0].last_number) {
-        blockNumberFromDB = parseInt(rows[0].last_number)
-      }
-    } catch (err) {
-      this.logger.error(`failed to get last synchronized block number: ${err}`)
-      throw new Error('cannot get last block number')
-    }
-
-    return blockNumberFromDB
   }
 
   async getFinBlockNumber(): Promise<number> {
@@ -318,7 +276,7 @@ class BlocksService implements IBlocksService {
     try {
       const lastBlockNumber = await this.getFinBlockNumber()
       const lastHeader = await this.polkadotApi.rpc.chain.getHeader()
-      const lastLocalNumber = await this.getLastProcessedBlock()
+      const lastLocalNumber = await this.blockRepository.getLastProcessedBlock()
 
       result.height_diff = lastBlockNumber - lastLocalNumber
       result.fin_height_diff = lastHeader.number.toNumber() - lastBlockNumber
@@ -338,29 +296,7 @@ class BlocksService implements IBlocksService {
    * @returns {Promise<{result: boolean}>}
    */
   async removeBlocks(blockNumbers: number[]): Promise<{ result: true }> {
-    const transaction = await this.repository.connect()
-
-    try {
-      await transaction.query({
-        text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" = ANY($1::int[])`,
-        values: [blockNumbers]
-      })
-
-      for (const tbl of ['balances', 'events', 'extrinsics']) {
-        await transaction.query({
-          text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "block_id" = ANY($1::int[])`,
-          values: [blockNumbers]
-        })
-      }
-
-      await transaction.query('COMMIT')
-      transaction.release()
-    } catch (err) {
-      this.logger.error(`failed to remove block from table: ${err}`)
-      await transaction.query('ROLLBACK')
-      transaction.release()
-      throw new Error('cannot remove blocks')
-    }
+    await this.blockRepository.removeBlockData(blockNumbers)
 
     return { result: true }
   }
@@ -378,7 +314,7 @@ class BlocksService implements IBlocksService {
     }
 
     try {
-      await this.trimBlocks(startBlockNumber)
+      await this.blockRepository.trimBlocksFrom(startBlockNumber)
       await this.processBlocks(startBlockNumber)
     } catch (err) {
       this.logger.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
@@ -422,51 +358,7 @@ class BlocksService implements IBlocksService {
     return false
   }
 
-  /**
-   * Remove blocks data from database from start
-   *
-   * @async
-   * @private
-   * @param {number} startBlockNumber
-   * @returns {Promise<void>}
-   */
-  private async trimBlocks(startBlockNumber: number): Promise<void> {
-    const transaction = await this.repository.connect()
-
-    try {
-      await transaction.query({
-        text: `DELETE FROM "${DB_SCHEMA}.blocks" WHERE "id" >= $1::int`,
-        values: [startBlockNumber]
-      })
-
-      for (const tbl of ['balances', 'events', 'extrinsics']) {
-        await transaction.query({
-          text: `DELETE FROM "${DB_SCHEMA}.${tbl}" WHERE "id" >= $1::int`,
-          values: [startBlockNumber]
-        })
-      }
-
-      await transaction.query('COMMIT')
-      transaction.release()
-    } catch (err) {
-      this.logger.error(`failed to remove blocks from table: ${err}`)
-      await transaction.query('ROLLBACK')
-      transaction.release()
-      throw new Error('cannot remove blocks')
-    }
-  }
-
   private async processEvents(blockNumber: number, events: Vec<EventRecord>) {
-    interface IEvent {
-      id: string
-      section: string
-      method: string
-      phase: AnyJson
-      meta: Record<string, AnyJson>
-      data: any[]
-      event: Record<string, AnyJson>
-    }
-
     const processEvent = (acc: Array<IEvent>, record: EventRecord, eventIndex: number): Array<IEvent> => {
       const { event, phase } = record
 

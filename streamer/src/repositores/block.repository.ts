@@ -40,6 +40,20 @@ export class BlockRepository {
 		return blockNumberFromDB
 	}
 
+	async getFirstBlockInEra(eraId: number): Promise<IBlock> {
+		try {
+			const { rows } = await this.connectionProvider.query({
+				text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "era" = $1::int order by "id" limit 1`,
+				values: [eraId]
+			})
+
+			return rows[0]
+		} catch (err) {
+			this.logger.error(`failed to get first block of session ${eraId}, error: ${err}`)
+			throw new Error('cannot find first era block')
+		}
+	}
+
 	async getFirstBlockInSession(sessionId: number): Promise<IBlock> {
 		const { rows } = await this.connectionProvider.query({
 			text: `SELECT * FROM ${BlockRepository.schema}.blocks WHERE "session_id" = $1::int order by "id" limit 1`,
@@ -69,6 +83,7 @@ export class BlockRepository {
 		} catch (err) {
 			this.logger.error(`failed to remove block from table: ${err}`)
 			await transaction.query('ROLLBACK')
+			throw new Error('cannot remove blocks')
 		} finally {
 			transaction.release()
 		}
@@ -94,6 +109,7 @@ export class BlockRepository {
 		} catch (err) {
 			this.logger.error(`failed to remove blocks from table: ${err}`)
 			await transaction.query('ROLLBACK')
+			throw new Error('cannot remove blocks')
 		} finally {
 			transaction.release()
 		}
