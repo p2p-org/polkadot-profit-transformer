@@ -1,8 +1,7 @@
 import { IConfigService } from './config.types'
-import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
-import { ConfigRepository } from '../../repositores/config.repository'
+import { ConfigRepository } from '../../repositories/config.repository'
 
 const INITIAL_VERIFY_HEIGHT = -1
 /**
@@ -10,23 +9,12 @@ const INITIAL_VERIFY_HEIGHT = -1
  * @class
  */
 class ConfigService implements IConfigService {
-  private readonly configRepository: ConfigRepository
-  private readonly polkadotApi: ApiPromise
-  private readonly logger: ILoggerModule
-
-  constructor(repository?: ConfigRepository, polkadotApi?: ApiPromise, logger?: ILoggerModule) {
-    this.configRepository = repository ?? new ConfigRepository()
-    this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
-    this.logger = logger ?? LoggerModule.inject()
-  }
+  private readonly configRepository: ConfigRepository = new ConfigRepository()
+  private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
 
   async bootstrapConfig(): Promise<void> {
-    const [currentChain, currentChainType] = (
-      await Promise.all([
-        this.polkadotApi.rpc.system.chain(), // Polkadot
-        this.polkadotApi.rpc.system.chainType() // Live
-      ])
-    ).map((value) => value.toString().trim())
+    const [currentChain, currentChainType] = await this.polkadotApi.getChainInfo()
 
     const [dbChain, dbChainType] = await Promise.all([this.getConfigValueFromDB('chain'), this.getConfigValueFromDB('chain_type')])
 

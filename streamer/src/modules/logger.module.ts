@@ -1,21 +1,23 @@
 import { environment } from '../environment'
-import pino, { Logger } from 'pino'
+import pino, { Bindings, Logger, LogFn } from 'pino'
 
 const { LOG_LEVEL } = environment
 
 export interface ILoggerModule {
-	trace(msg: string): void;
-	debug(msg: string): void;
-	info(msg: string): void;
-	warn(msg: string): void;
-	error(msg: string, err?: any): void;
+	trace: LogFn
+	debug: LogFn
+	info: LogFn
+	warn: LogFn
+	error: LogFn
+	fatal: LogFn
+	child(bindings: Bindings): pino.Logger;
 }
 
-export class LoggerModule implements ILoggerModule{
+export class LoggerModule implements ILoggerModule {
 	private static instance: LoggerModule
 
 	private logger: Logger
-	private constructor() {
+	constructor() {
 		this.logger = pino({
 			level: LOG_LEVEL,
 			prettyPrint: true
@@ -27,31 +29,45 @@ export class LoggerModule implements ILoggerModule{
 			LoggerModule.instance = new LoggerModule()
 		}
 	}
-	static inject(): Logger {
+	static inject(): LoggerModule {
 		if (!LoggerModule.instance?.logger) {
 			throw new Error(`You haven't initialized LoggerModule`)
 		}
 
-		return LoggerModule.instance.logger
+		return LoggerModule.instance
 	}
 
-	trace(msg: string): void {
-		this.logger.trace(msg)
+	trace(...params: Parameters<LogFn>): void {
+		const [msg, ...args] = params
+		this.logger.trace(msg, args)
 	}
 
-	debug(msg: string): void {
-		this.logger.debug(msg)
+	debug(...params: Parameters<LogFn>): void {
+		const [msg, ...args] = params
+		this.logger.debug(msg, args)
 	}
 
-	info(msg: string): void {
-		this.logger.info(msg)
+	info(...params: Parameters<LogFn>): void {
+		const [msg, ...args] = params
+		this.logger.info(msg, args)
 	}
 
-	warn(msg: string): void {
-		this.logger.warn(msg)
+	warn(...params: Parameters<LogFn>): void {
+		const [msg, ...args] = params
+		this.logger.warn(msg, args)
 	}
 
-	error(msg: string, err?: any): void {
-		this.logger.error(msg, err)
+	error(...params: Parameters<LogFn>): void {
+		const [msg, ...args] = params
+		this.logger.error(msg, args)
+	}
+
+	fatal(...params: Parameters<LogFn>): void {
+		const [msg, ...args] = params
+		this.logger.fatal(msg, args)
+	}
+
+	child(bindings: Bindings): pino.Logger {
+		return this.logger.child(bindings)
 	}
 }

@@ -1,6 +1,5 @@
 import { Pool } from 'pg'
 import { PostgresModule } from '../modules/postgres.module'
-import { Logger } from 'pino'
 import { LoggerModule } from '../modules/logger.module'
 import { environment } from '../environment'
 
@@ -10,7 +9,7 @@ export class ConfigRepository {
 	static schema: string = DB_SCHEMA
 
 	private readonly connectionProvider: Pool = PostgresModule.inject()
-	private readonly logger: Logger = LoggerModule.inject()
+	private readonly logger: LoggerModule = LoggerModule.inject()
 
 	async update(key: string, value: string | number): Promise<void> {
 		try {

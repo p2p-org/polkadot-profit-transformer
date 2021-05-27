@@ -1,19 +1,18 @@
 import { SyncStatus } from '../index'
-import StakingService from '../staking/staking'
+import { StakingService } from '../staking/staking'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { Codec } from '@polkadot/types/types'
 import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
-import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { IKafkaModule, KafkaModule } from '../../modules/kafka.module'
 import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
 import { IConsumerService } from '../consumer/consumer.types'
 import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
 import { IStakingService } from '../staking/staking.types'
-import { BlockRepository } from '../../repositores/block.repository'
+import { BlockRepository } from '../../repositories/block.repository'
 
 const { ConsumerService } = require('../consumer/consumer')
 
@@ -24,7 +23,7 @@ const { ConsumerService } = require('../consumer/consumer')
 class BlocksService implements IBlocksService {
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly kafka: IKafkaModule = KafkaModule.inject()
-  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
+  private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
 
   private readonly extrinsicsService: IExtrinsicsService
@@ -52,21 +51,21 @@ class BlocksService implements IBlocksService {
       throw new Error('empty height and blockHash')
     }
 
-    blockHash = await this.polkadotApi.rpc.chain.getBlockHash(height)
+    blockHash = await this.polkadotApi.getBlockHashByHeight(height)
 
     if (!blockHash) {
       throw new Error('cannot get block hash')
     }
 
-    const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
-      this.polkadotApi.query.session.currentIndex.at(blockHash),
-      this.polkadotApi.query.staking.currentEra.at(blockHash),
-      this.polkadotApi.query.staking.activeEra.at(blockHash),
-      this.polkadotApi.rpc.chain.getBlock(blockHash),
-      this.polkadotApi.derive.chain.getHeader(blockHash),
-      this.polkadotApi.query.timestamp.now.at(blockHash),
-      this.polkadotApi.query.system.events.at(blockHash)
-    ])
+    const [
+      sessionId,
+      blockCurrentEra,
+      activeEra,
+      signedBlock,
+      extHeader,
+      blockTime,
+      events
+    ] = await this.polkadotApi.getInfoToProcessBlock(blockHash)
 
     const currentEra = parseInt(blockCurrentEra.toString(), 10)
     const era = Number(activeEra.unwrap().get('index'))
@@ -135,17 +134,17 @@ class BlocksService implements IBlocksService {
    * @returns {Promise<boolean>}
    */
   async checkHistoryDepthAvailableData(blockNumber: number): Promise<boolean> {
-    const blockHash = await this.polkadotApi.rpc.chain.getBlockHash(blockNumber)
+    const blockHash = await this.polkadotApi.getBlockHashByHeight(blockNumber)
 
     if (!blockHash) {
       this.logger.error(`Cannot get block hash: ${blockNumber}`)
       return false
     }
 
-    const historyDepth = await this.polkadotApi.query.staking.historyDepth.at(blockHash)
+    const historyDepth = await this.polkadotApi.getHistoryDepth(blockHash)
 
-    const currentRawEra = await this.polkadotApi.query.staking.currentEra()
-    const blockRawEra = await this.polkadotApi.query.staking.currentEra.at(blockHash)
+    const currentRawEra = await this.polkadotApi.getCurrentRawEra()
+    const blockRawEra = await this.polkadotApi.getCurrentRawEra(blockHash)
 
     if (blockRawEra == null) {
       this.logger.error(`Cannot get currentEra by hash: ${blockHash}`)
@@ -157,11 +156,7 @@ class BlocksService implements IBlocksService {
     if (currentRawEra.unwrap().toNumber() - blockEra > historyDepth.toNumber()) {
       this.logger.info(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
 
-      const [sessionId, activeEra, extHeader] = await Promise.all([
-        this.polkadotApi.query.session.currentIndex.at(blockHash),
-        this.polkadotApi.query.staking.activeEra.at(blockHash),
-        this.polkadotApi.derive.chain.getHeader(blockHash)
-      ])
+      const [sessionId, activeEra, extHeader] = await this.polkadotApi.getInfoToCheckHistoryDepth(blockHash)
 
       let hasError = false
       if (sessionId == null) {
@@ -204,7 +199,7 @@ class BlocksService implements IBlocksService {
 
     this.logger.info(`Starting processBlocks from ${startBlockNumber}`)
 
-    let lastBlockNumber = await this.getFinBlockNumber()
+    let lastBlockNumber = await this.polkadotApi.getFinBlockNumber()
 
     this.logger.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
@@ -227,20 +222,13 @@ class BlocksService implements IBlocksService {
       blockNumber += 10
 
       if (blockNumber > lastBlockNumber) {
-        lastBlockNumber = await this.getFinBlockNumber()
+        lastBlockNumber = await this.polkadotApi.getFinBlockNumber()
       }
     }
 
     release()
 
     if (optionSubscribeFinHead) this.consumerService.subscribeFinalizedHeads()
-  }
-
-  async getFinBlockNumber(): Promise<number> {
-    const lastFinHeader = await this.polkadotApi.rpc.chain.getFinalizedHead()
-    const lastFinBlock = await this.polkadotApi.rpc.chain.getBlock(lastFinHeader)
-
-    return lastFinBlock.block.header.number.toNumber()
   }
 
   /**
@@ -273,8 +261,8 @@ class BlocksService implements IBlocksService {
     }
 
     try {
-      const lastBlockNumber = await this.getFinBlockNumber()
-      const lastHeader = await this.polkadotApi.rpc.chain.getHeader()
+      const lastBlockNumber = await this.polkadotApi.getFinBlockNumber()
+      const lastHeader = await this.polkadotApi.getHeader()
       const lastLocalNumber = await this.blockRepository.getLastProcessedBlock()
 
       result.height_diff = lastBlockNumber - lastLocalNumber
