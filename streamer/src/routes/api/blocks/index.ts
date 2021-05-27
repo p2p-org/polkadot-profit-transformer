@@ -17,7 +17,7 @@ const apiBlocks = async (app: FastifyInstance) => {
       throw new HttpError('param :blockId is required', 400)
     }
 
-    await blocksService.updateOneBlock(parseInt(blockId))
+    await blocksService.processBlock(parseInt(blockId))
 
     return { result: true }
   })

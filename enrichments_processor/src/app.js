@@ -3,14 +3,6 @@ const { RunnerService } = require('./services/runner')
 
 const { environment: { LOG_LEVEL }, validateEnv } = require('./environment')
 
-const argv = require('yargs')
-  .option('disable-rpc', {
-    alias: 'disable-rpc',
-    type: 'boolean',
-    default: false,
-    description: 'Disable api'
-  })
-  .help().argv
 
 const build = async () => {
   const fastify = Fastify({
@@ -55,9 +47,6 @@ const build = async () => {
     process.exit(1)
   }
 
-  if (!argv['disable-rpc']) {
-    await fastify.register(require('./routes'), { prefix: 'api' })
-  }
 
   // hooks
   fastify.addHook('onClose', (instance, done) => {
