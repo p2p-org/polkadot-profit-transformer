@@ -1,13 +1,13 @@
 import { ConfigService } from './config'
-import { ConfigRepository } from '../../repositores/config.repository'
-import { ApiPromise } from '@polkadot/api/index'
-import { Logger } from 'pino'
+import { ConfigRepository } from '../../repositories/config.repository'
+import { PolkadotModule } from '../../modules/polkadot.module'
+import { LoggerModule } from '../../modules/logger.module'
 
-const mockConfigRepository = jest.createMockFromModule<ConfigRepository>('../../repositores/config.repository')
+jest.mock('../../repositories/config.repository')
+jest.mock('../../modules/polkadot.module')
+jest.mock('../../modules/logger.module')
 
-const data: Array<{ key: string; value: string | number }> = []
-
-mockConfigRepository.update = jest.fn(async (key: string, value: string | number) => {
+ConfigRepository.prototype.update = jest.fn(async (key: string, value: string | number) => {
   const index = data.findIndex((row) => row.key === key)
   data[index] = {
     ...data[index],
@@ -15,7 +15,7 @@ mockConfigRepository.update = jest.fn(async (key: string, value: string | number
   }
 })
 
-mockConfigRepository.insert = jest.fn(async (key: string, value: string | number) => {
+ConfigRepository.prototype.insert = jest.fn(async (key: string, value: string | number) => {
   const index = data.findIndex((row) => row.key === key)
 
   if (index !== -1) throw new Error(`unique violoation`)
@@ -26,42 +26,27 @@ mockConfigRepository.insert = jest.fn(async (key: string, value: string | number
   })
 })
 
-mockConfigRepository.find = jest.fn(async (key: string): Promise<string | undefined> => {
+ConfigRepository.prototype.find = jest.fn(async (key: string): Promise<string | undefined> => {
   const record = data.find((row) => row.key === key)
 
   return record?.value.toString()
 })
 
-const mockPolkadotApi = jest.createMockFromModule<ApiPromise>('@polkadot/api/index')
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-mockPolkadotApi.rpc = {
-  system: {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    chain: jest.fn(async (): Promise<string> => {
-      return 'my_awesome_chain'
-    }),
-    chainType: jest.fn(async (): Promise<string> => {
-      return 'my_awesome_chain_type'
-    })
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const mockLogger = jest.createMockFromModule<Logger>('pino')
-mockLogger.info = jest.fn(() => {
-  1 + 1
+PolkadotModule.inject = jest.fn(() => new PolkadotModule())
+PolkadotModule.prototype.getChainInfo = jest.fn(async (): Promise<[string, string]> => {
+  return ['my_awesome_chain', 'my_awesome_chain_type']
 })
+LoggerModule.inject = jest.fn(() => new LoggerModule())
+
+const data: Array<{ key: string; value: string | number }> = []
 
 test('constructor', async () => {
-  const configService = new ConfigService(mockConfigRepository, mockPolkadotApi, mockLogger)
+  const configService = new ConfigService()
   expect(configService).toBeInstanceOf(ConfigService)
 })
 
 test('setConfigValueToDB', async () => {
-  const configService = new ConfigService(mockConfigRepository, mockPolkadotApi, mockLogger)
+  const configService = new ConfigService()
 
   await configService.setConfigValueToDB('test1', 5)
   const dbValue = await configService.getConfigValueFromDB('test1')
@@ -75,7 +60,7 @@ test('setConfigValueToDB', async () => {
 })
 
 test('getConfigValueFromDB', async () => {
-  const configService = new ConfigService(mockConfigRepository, mockPolkadotApi, mockLogger)
+  const configService = new ConfigService()
 
   await configService.setConfigValueToDB('test2', 55)
   const dbValue = await configService.getConfigValueFromDB('test2')
@@ -85,7 +70,7 @@ test('getConfigValueFromDB', async () => {
 })
 
 test('updateConfigValueInDB', async () => {
-  const configService = new ConfigService(mockConfigRepository, mockPolkadotApi, mockLogger)
+  const configService = new ConfigService()
 
   await configService.setConfigValueToDB('test3', 5)
   await configService.updateConfigValueInDB('test3', 19)
@@ -96,7 +81,7 @@ test('updateConfigValueInDB', async () => {
 })
 
 test('bootstrapConfig', async () => {
-  const configService = new ConfigService(mockConfigRepository, mockPolkadotApi, mockLogger)
+  const configService = new ConfigService()
 
   await configService.bootstrapConfig()
 

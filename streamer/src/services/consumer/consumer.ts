@@ -2,11 +2,9 @@ import { IConsumerService } from './consumer.types'
 import { SyncStatus } from '../index'
 import { BlocksService } from '../blocks/blocks'
 import { Header } from '@polkadot/types/interfaces'
-import { ApiPromise } from '@polkadot/api'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { Logger } from 'pino'
-import { LoggerModule } from '../../modules/logger.module'
-import { BlockRepository } from '../../repositores/block.repository'
+import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
+import { BlockRepository } from '../../repositories/block.repository'
 
 /**
  * Provides blocks streamer service
@@ -14,8 +12,8 @@ import { BlockRepository } from '../../repositores/block.repository'
  */
 class ConsumerService implements IConsumerService {
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
-  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
 
   /**
    * Subscribe to finalized heads stream
@@ -37,7 +35,7 @@ class ConsumerService implements IConsumerService {
       this.logger.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `)
     }
 
-    await this.polkadotApi.rpc.chain.subscribeFinalizedHeads((header) => {
+    await this.polkadotApi.subscribeFinalizedHeads((header) => {
       return this.onFinalizedHead(header)
     })
   }

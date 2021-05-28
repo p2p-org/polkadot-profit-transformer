@@ -7,7 +7,25 @@ import { IBlockData } from '../services/blocks/blocks.types'
 
 const { APP_CLIENT_ID, KAFKA_URI, KAFKA_PREFIX } = environment
 
-export class KafkaModule {
+export interface IKafkaModule {
+	sendStakingErasData(eraData: IEraData): Promise<void>
+
+	sendSessionData(
+		eraId: number,
+		validators: IValidator[],
+		nominators: INominator[],
+		blockTime: Moment
+	): Promise<void>
+
+	sendExtrinsicsData(
+		blockNumber: string,
+		extrinsics: IExtrinsic[]
+	): Promise<void>
+
+	sendBlockData(blockData: IBlockData): Promise<void>
+}
+
+export class KafkaModule implements IKafkaModule {
 	private static instance: KafkaModule
 
 	private kafka: Kafka
