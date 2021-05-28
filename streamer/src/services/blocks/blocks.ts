@@ -1,39 +1,46 @@
 import { SyncStatus } from '../index'
-import { StakingService } from '../staking/staking'
-import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { Codec } from '@polkadot/types/types'
 import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { IKafkaModule, KafkaModule } from '../../modules/kafka.module'
+import { KafkaModule } from '../../modules/kafka.module'
 import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
+import { ExtrinsicsService } from '../extrinsics/extrinsics'
 import { IConsumerService } from '../consumer/consumer.types'
 import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
+import { StakingService } from '../staking/staking'
 import { IStakingService } from '../staking/staking.types'
 import { BlockRepository } from '../../repositories/block.repository'
+import { ConsumerService } from '../consumer/consumer'
 
-const { ConsumerService } = require('../consumer/consumer')
-
-/**
- * Provides block operations
- * @class
- */
 class BlocksService implements IBlocksService {
-  private readonly blockRepository: BlockRepository = BlockRepository.inject()
-  private readonly kafka: IKafkaModule = KafkaModule.inject()
-  private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
-  private readonly logger: ILoggerModule = LoggerModule.inject()
+  private readonly blockRepository: BlockRepository
+  private readonly kafka: KafkaModule
+  private readonly polkadotApi: PolkadotModule
+  private readonly logger: ILoggerModule
 
   private readonly extrinsicsService: IExtrinsicsService
   private readonly stakingService: IStakingService
   private readonly consumerService: IConsumerService
 
-  constructor() {
-    this.extrinsicsService = new ExtrinsicsService()
-    this.consumerService = new ConsumerService()
-    this.stakingService = StakingService.inject()
+  constructor(
+    repository?: BlockRepository,
+    polkadotApi?: PolkadotModule,
+    logger?: ILoggerModule,
+    kafka?: KafkaModule,
+    extrinsicsService?: IExtrinsicsService,
+    stakingService?: IStakingService,
+    consumerService?: IConsumerService
+  ) {
+    this.blockRepository = repository ?? BlockRepository.inject()
+    this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
+    this.logger = logger ?? LoggerModule.inject()
+    this.kafka = kafka ?? KafkaModule.inject()
+    this.extrinsicsService = extrinsicsService ?? new ExtrinsicsService()
+    this.stakingService = stakingService ?? StakingService.inject()
+    this.consumerService = consumerService ?? new ConsumerService()
   }
 
   async updateOneBlock(blockNumber: number): Promise<true> {

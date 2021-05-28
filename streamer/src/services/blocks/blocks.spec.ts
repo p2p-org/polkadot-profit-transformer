@@ -3,13 +3,17 @@ import { KafkaModule } from './../../modules/kafka.module'
 import { BlockHash, EraIndex } from '@polkadot/types/interfaces'
 import { IBlock } from './../watchdog/watchdog.types'
 import { BlocksService } from './blocks'
-import { BlockRepository } from '../../repositores/block.repository'
-import { ApiPromise } from '@polkadot/api/index'
+import { BlockRepository } from '../../repositories/block.repository'
 import { Logger } from 'pino'
 import { Option } from '@polkadot/types'
 import { HeaderExtended } from '@polkadot/api-derive/types'
 import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
 import { IConsumerService } from '../consumer/consumer.types'
+import { PolkadotModule } from '../../modules/polkadot.module'
+
+jest.mock('../../repositories/block.repository')
+jest.mock('../../modules/polkadot.module')
+jest.mock('../../modules/logger.module')
 
 const mockKafka = {
   instance: {
@@ -36,7 +40,7 @@ const mockConsumerService: IConsumerService = {
   })
 }
 
-const mockBlocksRepository = jest.createMockFromModule<BlockRepository>('../../repositores/block.repository')
+const mockBlocksRepository = jest.createMockFromModule<BlockRepository>('../../repositories/block.repository')
 
 const blockMock: IBlock = {
   id: '123',
@@ -76,7 +80,7 @@ mockBlocksRepository.trimBlocksFrom = jest.fn(async (startBlockNumber: number) =
   return
 })
 
-const mockPolkadotApi = jest.createMockFromModule<ApiPromise>('@polkadot/api/index')
+const mockPolkadotApi = jest.createMockFromModule<PolkadotModule>('@polkadot/api/index')
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 mockPolkadotApi.query = {
