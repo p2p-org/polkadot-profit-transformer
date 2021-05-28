@@ -57,6 +57,8 @@ const build = async (): Promise<FastifyInstance> => {
   await initModules()
   const fastify = Fastify({
     bodyLimit: 1048576 * 2,
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     logger: LoggerModule.inject()
   })
 
@@ -89,6 +91,8 @@ const build = async (): Promise<FastifyInstance> => {
     // fastify.log.info(`Fastify ready error: ${err}`)
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   return fastify
 }
 

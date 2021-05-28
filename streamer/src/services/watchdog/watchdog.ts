@@ -1,17 +1,15 @@
 import { environment } from '../../environment'
-import { TBlockHash, IBlock, IEra, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
-import StakingService from '../staking/staking'
+import { IBlock, IEra, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
+import { StakingService } from '../staking/staking'
 import { ConfigService } from '../config/config'
 import { BlocksService } from '../blocks/blocks'
 import { EventRecord, SignedBlock } from '@polkadot/types/interfaces'
-import { ApiPromise } from '@polkadot/api'
 import { Pool } from 'pg'
 import { Vec } from '@polkadot/types'
 import { PostgresModule } from '../../modules/postgres.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { Logger } from 'pino'
-import { LoggerModule } from '../../modules/logger.module'
-import { BlockRepository } from '../../repositores/block.repository'
+import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
+import { BlockRepository } from '../../repositories/block.repository'
 
 const { DB_SCHEMA } = environment
 
@@ -22,8 +20,8 @@ export default class WatchdogService implements IWatchdogService {
 
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly repository: Pool = PostgresModule.inject()
-  private readonly polkadotApi: ApiPromise = PolkadotModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
 
   private resolve: { (arg0: number): void; (value: number | PromiseLike<number>): void } | undefined
   private concurrency: number
@@ -101,7 +99,7 @@ export default class WatchdogService implements IWatchdogService {
       return
     }
 
-    const blockFromChain = await this.polkadotApi.rpc.chain.getBlock(blockFromDB.hash)
+    const blockFromChain = await this.polkadotApi.getBlockData(blockFromDB.hash)
 
     this.logger.debug(`Validate block ${blockId}`)
 
@@ -153,7 +151,7 @@ export default class WatchdogService implements IWatchdogService {
   }
 
   async validateEraPayout(blockFromDB: IBlock): Promise<void> {
-    const events = await this.polkadotApi.query.system.events.at(blockFromDB.hash)
+    const events = await this.polkadotApi.getSystemEvents(blockFromDB.hash)
 
     const findEraPayoutEvent = (events: Vec<EventRecord>) => {
       return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
@@ -204,7 +202,7 @@ export default class WatchdogService implements IWatchdogService {
         values: [block.id]
       })
 
-      const eventsInBlockchainCount = await this.polkadotApi.query.system.eventCount.at(block.hash)
+      const eventsInBlockchainCount = await this.polkadotApi.getSystemEventsCount(block.hash)
 
       return +count === eventsInBlockchainCount.toNumber()
     } catch (err) {
@@ -369,16 +367,6 @@ export default class WatchdogService implements IWatchdogService {
     } catch (err) {
       this.logger.error(`failed to get extrinsics for block ${block.id}, error: ${err}`)
       throw new Error(`cannot check extrinsics for block ${block.id}`)
-    }
-  }
-
-  async getBlockIdHash(blockId: number): Promise<TBlockHash> {
-    const block = await this.getBlockFromDB(blockId)
-
-    if (!block) {
-      return await this.polkadotApi.rpc.chain.getBlockHash(blockId)
-    } else {
-      return block.hash
     }
   }
 }

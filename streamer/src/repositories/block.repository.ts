@@ -12,7 +12,7 @@ export class BlockRepository {
   private static instance: BlockRepository
 
   private readonly connectionProvider: Pool = PostgresModule.inject()
-  private readonly logger: Logger = LoggerModule.inject()
+  private readonly logger: LoggerModule = LoggerModule.inject()
 
   static inject(): BlockRepository {
     if (!BlockRepository.instance) {
