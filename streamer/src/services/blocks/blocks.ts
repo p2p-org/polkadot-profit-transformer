@@ -55,7 +55,7 @@ class BlocksService implements IBlocksService {
     )
 
     const currentEra = parseInt(blockCurrentEra.toString(), 10)
-    const era = Number(activeEra.unwrap().get('index'))
+    const era = activeEra.isNone ? currentEra : Number(activeEra.unwrap().get('index'))
 
     if (!signedBlock) {
       throw new Error('cannot get block')
