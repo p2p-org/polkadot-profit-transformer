@@ -15,8 +15,8 @@ import { BlockRepository } from '../../repositories/block.repository'
 import { ConsumerService } from '../consumer/consumer'
 
 class BlocksService implements IBlocksService {
-  private static instance: BlocksService
   private static status: SyncStatus
+  private static instance: BlocksService
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly kafka: KafkaModule = KafkaModule.inject()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
@@ -31,6 +31,14 @@ class BlocksService implements IBlocksService {
     }
 
     BlocksService.instance = this
+  }
+
+  static isSyncComplete(): boolean {
+    return BlocksService.status === SyncStatus.SUBSCRIPTION
+  }
+
+  isSyncComplete(): boolean {
+    throw new Error('Method not implemented.')
   }
 
   async processBlock(height: number): Promise<void> {
@@ -171,7 +179,7 @@ class BlocksService implements IBlocksService {
       fin_height_diff: -1
     }
 
-    if (BlocksService.status === SyncStatus.SYNC) {
+    if (!BlocksService.isSyncComplete()) {
       result.status = 'synchronization'
     } else {
       result.status = 'synchronized'
@@ -212,7 +220,7 @@ class BlocksService implements IBlocksService {
    * @returns {Promise<{result: boolean}>}
    */
   async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
-    if (BlocksService.status === SyncStatus.SYNC) {
+    if (BlocksService.isSyncComplete()) {
       this.logger.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
       return { result: false }
     }
