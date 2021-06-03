@@ -36,6 +36,11 @@ export interface IEvent {
   event: Record<string, AnyJson>
 }
 
+export enum SyncStatus {
+  SYNC,
+  SUBSCRIPTION
+}
+
 export interface IBlocksService {
   processBlock(blockNumber: number, fromWatchdog: boolean): Promise<void>
   processBlocks(startBlockNumber: number | undefined, optionSubscribeFinHead: boolean | null): Promise<void>

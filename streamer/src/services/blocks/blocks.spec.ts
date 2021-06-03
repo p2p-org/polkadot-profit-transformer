@@ -1,46 +1,33 @@
 import { IStakingService } from './../staking/staking.types'
-import { KafkaModule } from './../../modules/kafka.module'
-import { BlockHash, EraIndex } from '@polkadot/types/interfaces'
 import { IBlock } from './../watchdog/watchdog.types'
-import { BlocksService } from './blocks'
-import { BlockRepository } from '../../repositories/block.repository'
-import { Logger } from 'pino'
+import { Block, BlockHash, EraIndex } from '@polkadot/types/interfaces'
 import { Option } from '@polkadot/types'
 import { HeaderExtended } from '@polkadot/api-derive/types'
 import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
 import { IConsumerService } from '../consumer/consumer.types'
+
+import { BlocksService } from './blocks'
+import { BlockRepository } from '../../repositories/block.repository'
+import { KafkaModule } from './../../modules/kafka.module'
+import { LoggerModule } from '../../modules/logger.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
+import { ExtrinsicsService } from '../extrinsics/extrinsics'
+import { StakingService } from '../staking/staking'
+import { ConsumerService } from '../consumer/consumer'
 
 jest.mock('../../repositories/block.repository')
 jest.mock('../../modules/polkadot.module')
 jest.mock('../../modules/logger.module')
+jest.mock('../../modules/kafka.module')
+jest.mock('../extrinsics/extrinsics')
+jest.mock('../staking/staking')
+jest.mock('../consumer/consumer')
 
-const mockKafka = {
-  instance: {
-    ready: true
-  },
-  sendBlockData: () => true
-}
-
-const mockExtrinsicsService: IExtrinsicsService = {
-  extractExtrinsics: jest.fn(async () => {
-    return
-  })
-}
-
-const mockStakingService: IStakingService = {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  addToQueue: jest.fn(async ({ eraPayoutEvent, blockHash }) => {
-    return
-  })
-}
-const mockConsumerService: IConsumerService = {
-  subscribeFinalizedHeads: jest.fn(async () => {
-    return
-  })
-}
-
-const mockBlocksRepository = jest.createMockFromModule<BlockRepository>('../../repositories/block.repository')
+LoggerModule.inject = jest.fn(() => new LoggerModule())
+KafkaModule.inject = jest.fn(() => new KafkaModule())
+PolkadotModule.inject = jest.fn(() => new PolkadotModule())
+StakingService.inject = jest.fn(() => new StakingService())
+BlockRepository.inject = jest.fn(() => new BlockRepository())
 
 const blockMock: IBlock = {
   id: '123',
@@ -56,197 +43,130 @@ const blockMock: IBlock = {
   block_time: new Date()
 }
 
-mockBlocksRepository.getLastProcessedBlock = jest.fn(async () => {
-  return 100
+BlockRepository.prototype.getLastProcessedBlock = jest.fn(async () => {
+  return 10
 })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-mockBlocksRepository.getFirstBlockInEra = jest.fn(async (eraId: number) => {
+BlockRepository.prototype.getFirstBlockInEra = jest.fn(async (eraId: number) => {
   return blockMock
 })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-mockBlocksRepository.getFirstBlockInSession = jest.fn(async (sessionId: number) => {
+BlockRepository.prototype.getFirstBlockInSession = jest.fn(async (sessionId: number) => {
   return blockMock
 })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-mockBlocksRepository.removeBlockData = jest.fn(async (blockNumbers: number[]) => {
+BlockRepository.prototype.removeBlockData = jest.fn(async (blockNumbers: number[]) => {
   return
 })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-mockBlocksRepository.trimBlocksFrom = jest.fn(async (startBlockNumber: number) => {
+BlockRepository.prototype.trimBlocksFrom = jest.fn(async (startBlockNumber: number) => {
   return
 })
 
-const mockPolkadotApi = jest.createMockFromModule<PolkadotModule>('@polkadot/api/index')
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-mockPolkadotApi.query = {
-  session: {
-    currentIndex: {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      at: jest.fn(async (blockHash: BlockHash) => {
-        return {
-          toNumber: () => 1
-        }
-      })
+PolkadotModule.prototype.getBlockHashByHeight = jest.fn(async (height: number): Promise<BlockHash> => {
+  return height.toString() as unknown as BlockHash
+})
+
+PolkadotModule.prototype.getFinBlockNumber = jest.fn(async () => {
+  return 15
+})
+
+PolkadotModule.prototype.getHeader = jest.fn(async () => {
+  return {
+    number: {
+      toNumber: () => 2
     }
-  },
-  staking: {
-    currentEra: {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      at: jest.fn(async (blockHash: BlockHash): Promise<Option<EraIndex>> => {
-        return (<unknown>'12') as Option<EraIndex>
-      })
+  }
+})
+
+PolkadotModule.prototype.getInfoToProcessBlock = jest.fn(async (height: number) => {
+  return [
+    {
+      toNumber: () => blockMock
     },
-    activeEra: {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      at: jest.fn(async (blockHash: BlockHash) => {
+    '12',
+    {
+      unwrap: () => {
         return {
-          unwrap: () => {
-            return {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              get: (param: string) => {
-                return 1
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          get: (param: string) => {
+            return 1
+          }
+        }
+      }
+    },
+    {
+      block: {
+        header: {
+          stateRoot: {
+            toHex: () => 0x111
+          },
+
+          hash: {
+            toHex: () => 0x222
+          },
+          extrinsicsRoot: {
+            toHex: () => 0x333
+          },
+          parentHash: {
+            toHex: () => 0x444
+          },
+          number: {
+            toNumber: () => 5
+          },
+          digest: {
+            logs: [
+              {
+                type: 'events'
               }
-            }
-          }
-        }
-      })
-    }
-  },
-  timestamp: {
-    now: {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      at: jest.fn(async (blockHash: BlockHash) => {
-        return {
-          toNumber: () => 12345678
-        }
-      })
-    }
-  },
-  system: {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    events: {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      at: jest.fn(async (blockHash: BlockHash) => {
-        return [
-          {
-            phase: { toJSON: () => ({ json: true }) },
-            event: {
-              toJSON: () => ({ json: true }),
-              section: 'staking',
-              method: 'EraPayout',
-              meta: {
-                toJSON: () => ({ json: true })
-              },
-              data: []
-            }
-          }
-        ]
-      })
-    }
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-mockPolkadotApi.rpc = {
-  chain: {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getBlock: jest.fn(async (blockHash: BlockHash) => {
-      return {
-        block: {
-          header: {
-            stateRoot: {
-              toHex: () => 0x111
-            },
-
-            hash: {
-              toHex: () => 0x222
-            },
-            extrinsicsRoot: {
-              toHex: () => 0x333
-            },
-            parentHash: {
-              toHex: () => 0x444
-            },
-            number: {
-              toNumber: () => 5
-            },
-            digest: {
-              logs: [
-                {
-                  type: 'events'
-                }
-              ]
-            }
+            ]
           }
         }
       }
-    }),
-    getBlockHash: jest.fn(async (height: number) => {
-      return height === -1 ? null : 'hash'
-    }),
-    getFinalizedHead: () => 1,
-    getHeader: () => {
-      return {
-        number: {
-          toNumber: () => 2
+    },
+    {
+      number: {
+        toNumber: () => 2
+      }
+    },
+    {
+      toNumber: () => 12345678
+    },
+
+    [
+      {
+        phase: { toJSON: () => ({ json: true }) },
+        event: {
+          toJSON: () => ({ json: true }),
+          section: 'staking',
+          method: 'EraPayout',
+          meta: {
+            toJSON: () => ({ json: true })
+          },
+          data: []
         }
       }
-    }
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-mockPolkadotApi.derive = {
-  chain: {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getHeader: jest.fn(async (blockHash: BlockHash): Promise<HeaderExtended | undefined> => {
-      return (<unknown>'1111111') as HeaderExtended | undefined
-    })
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const mockLogger = jest.createMockFromModule<Logger>('pino')
-mockLogger.info = jest.fn(() => {
-  1 + 1
+    ]
+  ]
 })
 
-mockLogger.error = jest.fn(() => {
-  1 + 1
+PolkadotModule.prototype.getBlockHashByHeight = jest.fn(async (height: number) => {
+  return height === -1 ? null : 'hash'
 })
+
+StakingService.prototype.addToQueue = jest.fn(async () => true)
 
 test('constructor', async () => {
-  const blocksService = new BlocksService(
-    mockBlocksRepository,
-    mockPolkadotApi,
-    mockLogger,
-    mockKafka as unknown as KafkaModule,
-    mockExtrinsicsService,
-    mockStakingService,
-    mockConsumerService
-  )
+  const blocksService = new BlocksService()
   expect(blocksService).toBeInstanceOf(BlocksService)
 })
 
 test('processBlock', async () => {
-  const blocksService = new BlocksService(
-    mockBlocksRepository,
-    mockPolkadotApi,
-    mockLogger,
-    mockKafka as unknown as KafkaModule,
-    mockExtrinsicsService,
-    mockStakingService,
-    mockConsumerService
-  )
+  const blocksService = new BlocksService()
 
   const existingBlockHeight = 1
   const notExistingBlockHeight = -1
@@ -257,59 +177,27 @@ test('processBlock', async () => {
 })
 
 test('processBlocks from 0', async () => {
-  const blocksService = new BlocksService(
-    mockBlocksRepository,
-    mockPolkadotApi,
-    mockLogger,
-    mockKafka as unknown as KafkaModule,
-    mockExtrinsicsService,
-    mockStakingService,
-    mockConsumerService
-  )
+  const blocksService = new BlocksService()
 
   await blocksService.processBlocks()
 })
 
 // todo - check if invoked inside IF statement in  processBlocks while loop
 test('processBlocks from pre-last', async () => {
-  const blocksService = new BlocksService(
-    mockBlocksRepository,
-    mockPolkadotApi,
-    mockLogger,
-    mockKafka as unknown as KafkaModule,
-    mockExtrinsicsService,
-    mockStakingService,
-    mockConsumerService
-  )
+  const blocksService = new BlocksService()
 
   await blocksService.processBlocks(1)
 })
 
 // todo - check if consumerService.subscribeFinalizedHeads() invoked
 test('processBlockswith finalized head', async () => {
-  const blocksService = new BlocksService(
-    mockBlocksRepository,
-    mockPolkadotApi,
-    mockLogger,
-    mockKafka as unknown as KafkaModule,
-    mockExtrinsicsService,
-    mockStakingService,
-    mockConsumerService
-  )
+  const blocksService = new BlocksService()
 
   await blocksService.processBlocks(1, true)
 })
 
 test('getBlocksStatus', async () => {
-  const blocksService = new BlocksService(
-    mockBlocksRepository,
-    mockPolkadotApi,
-    mockLogger,
-    mockKafka as unknown as KafkaModule,
-    mockExtrinsicsService,
-    mockStakingService,
-    mockConsumerService
-  )
+  const blocksService = new BlocksService()
 
   const status = await blocksService.getBlocksStatus()
 

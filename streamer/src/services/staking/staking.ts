@@ -20,9 +20,9 @@ export class StakingService implements IStakingService {
   private readonly kafka: IKafkaModule = KafkaModule.inject()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
-  private readonly queue: fastq.queue<IProcessEraPayload>;
+  private readonly queue: fastq.queue<IProcessEraPayload>
 
-  private constructor() {
+  constructor() {
     this.queue = fastq(this, this.processEraPayout, 1)
   }
 
@@ -64,19 +64,18 @@ export class StakingService implements IStakingService {
       eraRewardPointsMap.set(accountId.toString(), rewardPoints.toNumber())
     })
 
-
     for (const validatorAccountId of validatorsAccountIdSet) {
       const [stakers, stakersClipped] = await this.polkadotApi.getStakersInfo(blockHash, eraId, validatorAccountId)
 
       await this.processValidator(
-          validatorAccountId,
-          stakers,
-          stakersClipped,
-          blockHash.toString(),
-          eraId,
-          nominators,
-          validators,
-          eraRewardPointsMap
+        validatorAccountId,
+        stakers,
+        stakersClipped,
+        blockHash.toString(),
+        eraId,
+        nominators,
+        validators,
+        eraRewardPointsMap
       )
     }
 
@@ -110,29 +109,22 @@ export class StakingService implements IStakingService {
   }
 
   private async processValidator(
-      validatorAccountId: string,
-      stakers: Exposure,
-      stakersClipped: Exposure,
-      blockHash: string,
-      eraId: number,
-      nominators: INominator[],
-      validators: IValidator[],
-      eraRewardPointsMap: Map<string, number>
+    validatorAccountId: string,
+    stakers: Exposure,
+    stakersClipped: Exposure,
+    blockHash: string,
+    eraId: number,
+    nominators: INominator[],
+    validators: IValidator[],
+    eraRewardPointsMap: Map<string, number>
   ) {
     const prefs = await this.polkadotApi.getStakingPrefs(blockHash, eraId, validatorAccountId)
 
-    this.logger.debug(
-        `[validators][getStakersByValidator] Loaded stakers: ${stakers.others.length} for validator "${validatorAccountId}"`
-    )
+    this.logger.debug(`[validators][getStakersByValidator] Loaded stakers: ${stakers.others.length} for validator "${validatorAccountId}"`)
 
-    await Promise.all(stakers.others.map((staker) => this.processStaker(
-        staker,
-        stakersClipped,
-        eraId,
-        validatorAccountId,
-        blockHash,
-        nominators
-    )))
+    await Promise.all(
+      stakers.others.map((staker) => this.processStaker(staker, stakersClipped, eraId, validatorAccountId, blockHash, nominators))
+    )
 
     let validatorRewardDest: string | undefined = undefined
     let validatorRewardAccountId: AccountId | undefined = undefined
@@ -164,12 +156,12 @@ export class StakingService implements IStakingService {
   }
 
   private async processStaker(
-      staker: IndividualExposure,
-      stakersClipped: Exposure,
-      eraId: number,
-      validatorAccountId: string,
-      blockHash: string,
-      nominators: INominator[]
+    staker: IndividualExposure,
+    stakersClipped: Exposure,
+    eraId: number,
+    validatorAccountId: string,
+    blockHash: string,
+    nominators: INominator[]
   ) {
     try {
       const isClipped = stakersClipped.others.find((e: { who: { toString: () => any } }) => {

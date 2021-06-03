@@ -3,13 +3,17 @@ import { environment } from '../environment'
 import { IBlockEraParams, IEraData, TBlockHash } from '../services/staking/staking.types'
 import {
   ActiveEraInfo,
-  BlockHash, EraIndex,
-  EraRewardPoints, EventIndex,
+  BlockHash,
+  EraIndex,
+  EraRewardPoints,
+  EventIndex,
   EventRecord,
   Exposure,
   Header,
   Moment,
-  RewardDestination, SessionIndex, SignedBlock,
+  RewardDestination,
+  SessionIndex,
+  SignedBlock,
   ValidatorId,
   ValidatorPrefs
 } from '@polkadot/types/interfaces'
@@ -18,9 +22,7 @@ import { HeaderExtended } from '@polkadot/api-derive/types'
 
 const { SUBSTRATE_URI } = environment
 
-export interface IPolkadotModule {
-
-}
+export interface IPolkadotModule {}
 
 export class PolkadotModule {
   private static instance: PolkadotModule
@@ -53,10 +55,10 @@ export class PolkadotModule {
 
   async getChainInfo(): Promise<[string, string]> {
     const [currentChain, currentChainType] = (
-        await Promise.all([
-          this.api!.rpc.system.chain(), // Polkadot
-          this.api!.rpc.system.chainType() // Live
-        ])
+      await Promise.all([
+        this.api!.rpc.system.chain(), // Polkadot
+        this.api!.rpc.system.chainType() // Live
+      ])
     ).map((value) => value.toString().trim())
 
     return [currentChain, currentChainType]
@@ -128,15 +130,9 @@ export class PolkadotModule {
     return this.api!.rpc.chain.getBlockHash(height)
   }
 
-  async getInfoToProcessBlock(blockHash: TBlockHash): Promise<[
-      SessionIndex,
-      Option<EraIndex>,
-      Option<ActiveEraInfo>,
-      SignedBlock,
-      HeaderExtended | undefined,
-      Moment,
-      Vec<EventRecord>
-  ]> {
+  async getInfoToProcessBlock(
+    blockHash: TBlockHash
+  ): Promise<[SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
     const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
       this.api!.query.session.currentIndex.at(blockHash),
       this.api!.query.staking.currentEra.at(blockHash),
@@ -170,15 +166,5 @@ export class PolkadotModule {
 
   async getHeader(): Promise<Header> {
     return this.api!.rpc.chain.getHeader()
-  }
-
-  async getInfoToCheckHistoryDepth(blockHash: TBlockHash): Promise<[SessionIndex, Option<ActiveEraInfo>, HeaderExtended | undefined]> {
-    const [sessionId, activeEra, extHeader] = await Promise.all([
-      this.api!.query.session.currentIndex.at(blockHash),
-      this.api!.query.staking.activeEra.at(blockHash),
-      this.api!.derive.chain.getHeader(blockHash)
-    ])
-
-    return [sessionId, activeEra, extHeader]
   }
 }

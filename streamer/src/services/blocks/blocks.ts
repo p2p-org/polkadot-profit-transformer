@@ -1,8 +1,7 @@
-import { SyncStatus } from '../index'
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { Codec } from '@polkadot/types/types'
-import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent } from './blocks.types'
+import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent, SyncStatus } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { KafkaModule } from '../../modules/kafka.module'
@@ -16,47 +15,26 @@ import { BlockRepository } from '../../repositories/block.repository'
 import { ConsumerService } from '../consumer/consumer'
 
 class BlocksService implements IBlocksService {
-  private readonly blockRepository: BlockRepository
-  private readonly kafka: KafkaModule
-  private readonly polkadotApi: PolkadotModule
-  private readonly logger: ILoggerModule
+  private static instance: BlocksService
+  private static status: SyncStatus
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
+  private readonly kafka: KafkaModule = KafkaModule.inject()
+  private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
+  private readonly extrinsicsService: IExtrinsicsService = new ExtrinsicsService()
+  private readonly stakingService: IStakingService = StakingService.inject()
+  private readonly consumerService: IConsumerService = new ConsumerService()
 
-  private readonly extrinsicsService: IExtrinsicsService
-  private readonly stakingService: IStakingService
-  private readonly consumerService: IConsumerService
+  constructor() {
+    if (BlocksService.instance) {
+      return BlocksService.instance
+    }
 
-  constructor(
-    repository?: BlockRepository,
-    polkadotApi?: PolkadotModule,
-    logger?: ILoggerModule,
-    kafka?: KafkaModule,
-    extrinsicsService?: IExtrinsicsService,
-    stakingService?: IStakingService,
-    consumerService?: IConsumerService
-  ) {
-    this.blockRepository = repository ?? BlockRepository.inject()
-    this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
-    this.logger = logger ?? LoggerModule.inject()
-    this.kafka = kafka ?? KafkaModule.inject()
-    this.extrinsicsService = extrinsicsService ?? new ExtrinsicsService()
-    this.stakingService = stakingService ?? StakingService.inject()
-    this.consumerService = consumerService ?? new ConsumerService()
-  }
-
-  async updateOneBlock(blockNumber: number): Promise<true> {
-    await this.processBlock(blockNumber).catch((error) => {
-      this.logger.error(`failed to process block #${blockNumber}: ${error}`)
-      throw new Error('cannot process block')
-    })
-    return true
+    BlocksService.instance = this
   }
 
   async processBlock(height: number): Promise<void> {
     let blockHash = null
-
-    if (height == null) {
-      throw new Error('empty height and blockHash')
-    }
 
     blockHash = await this.polkadotApi.getBlockHashByHeight(height)
 
@@ -127,62 +105,6 @@ class BlocksService implements IBlocksService {
   }
 
   /**
-   * Check responses from storage, depended from HISTORY_DEPTH
-   *
-   * @public
-   * @async
-   * @param blockNumber
-   * @returns {Promise<boolean>}
-   */
-  async checkHistoryDepthAvailableData(blockNumber: number): Promise<boolean> {
-    const blockHash = await this.polkadotApi.getBlockHashByHeight(blockNumber)
-
-    if (!blockHash) {
-      this.logger.error(`Cannot get block hash: ${blockNumber}`)
-      return false
-    }
-
-    const historyDepth = await this.polkadotApi.getHistoryDepth(blockHash)
-
-    const currentRawEra = await this.polkadotApi.getCurrentRawEra()
-    const blockRawEra = await this.polkadotApi.getCurrentRawEra(blockHash)
-
-    if (blockRawEra == null) {
-      this.logger.error(`Cannot get currentEra by hash: ${blockHash}`)
-      return false
-    }
-
-    const blockEra = parseInt(blockRawEra.toString(), 10)
-
-    if (currentRawEra.unwrap().toNumber() - blockEra > historyDepth.toNumber()) {
-      this.logger.info(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
-
-      const [sessionId, activeEra, extHeader] = await this.polkadotApi.getInfoToCheckHistoryDepth(blockHash)
-
-      let hasError = false
-      if (sessionId == null) {
-        hasError = true
-        this.logger.error(`Cannot get "sessionId" for block ${blockNumber} by hash: ${blockHash}`)
-      }
-
-      if (activeEra == null || activeEra.isNone) {
-        hasError = true
-        this.logger.error(`Cannot get "activeEra" for block ${blockNumber} by hash: ${blockHash}`)
-      }
-
-      if (extHeader == null || extHeader.isEmpty) {
-        hasError = true
-        this.logger.error(`Cannot get "extHeader" for block ${blockNumber} by hash: ${blockHash}`)
-      }
-
-      if (hasError) {
-        return false
-      }
-    }
-    return true
-  }
-
-  /**
    * Process all blocks with head
    *
    * @public
@@ -192,7 +114,7 @@ class BlocksService implements IBlocksService {
    * @returns {Promise<void>}
    */
   async processBlocks(startBlockNumber: number | null = null, optionSubscribeFinHead: boolean | null = null): Promise<void> {
-    const release = await SyncStatus.acquire()
+    BlocksService.status = SyncStatus.SYNC
 
     if (startBlockNumber === null) {
       startBlockNumber = await this.blockRepository.getLastProcessedBlock()
@@ -205,12 +127,6 @@ class BlocksService implements IBlocksService {
     this.logger.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
     let blockNumber: number = startBlockNumber
-
-    if (!(await this.checkHistoryDepthAvailableData(startBlockNumber))) {
-      this.logger.error('Cannot receive storage data older than HISTORY_DEPTH')
-      release()
-      return
-    }
 
     while (blockNumber <= lastBlockNumber) {
       const chunk = lastBlockNumber - blockNumber >= 10 ? 10 : (lastBlockNumber - blockNumber) % 10
@@ -227,7 +143,7 @@ class BlocksService implements IBlocksService {
       }
     }
 
-    release()
+    BlocksService.status = SyncStatus.SUBSCRIPTION
 
     if (optionSubscribeFinHead) this.consumerService.subscribeFinalizedHeads()
   }
@@ -255,7 +171,7 @@ class BlocksService implements IBlocksService {
       fin_height_diff: -1
     }
 
-    if (SyncStatus.isLocked()) {
+    if (BlocksService.status === SyncStatus.SYNC) {
       result.status = 'synchronization'
     } else {
       result.status = 'synchronized'
@@ -296,7 +212,7 @@ class BlocksService implements IBlocksService {
    * @returns {Promise<{result: boolean}>}
    */
   async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
-    if (SyncStatus.isLocked()) {
+    if (BlocksService.status === SyncStatus.SYNC) {
       this.logger.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
       return { result: false }
     }
