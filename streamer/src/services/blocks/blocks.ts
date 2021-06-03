@@ -37,10 +37,6 @@ class BlocksService implements IBlocksService {
     return BlocksService.status === SyncStatus.SUBSCRIPTION
   }
 
-  isSyncComplete(): boolean {
-    throw new Error('Method not implemented.')
-  }
-
   async processBlock(height: number): Promise<void> {
     let blockHash = null
 
@@ -56,10 +52,6 @@ class BlocksService implements IBlocksService {
 
     const currentEra = parseInt(blockCurrentEra.toString(), 10)
     const era = activeEra.isNone ? currentEra : Number(activeEra.unwrap().get('index'))
-
-    if (!signedBlock) {
-      throw new Error('cannot get block')
-    }
 
     const processedEvents = await this.processEvents(signedBlock.block.header.number.toNumber(), events)
 
@@ -124,7 +116,7 @@ class BlocksService implements IBlocksService {
   async processBlocks(startBlockNumber: number | null = null, optionSubscribeFinHead: boolean | null = null): Promise<void> {
     BlocksService.status = SyncStatus.SYNC
 
-    if (startBlockNumber === null) {
+    if (!startBlockNumber) {
       startBlockNumber = await this.blockRepository.getLastProcessedBlock()
     }
 
@@ -199,26 +191,12 @@ class BlocksService implements IBlocksService {
     return result
   }
 
-  /**
-   * Remove blocks data from database by numbers
-   *
-   * @public
-   * @async
-   * @param {number[]} blockNumbers
-   * @returns {Promise<{result: boolean}>}
-   */
   async removeBlocks(blockNumbers: number[]): Promise<{ result: true }> {
     await this.blockRepository.removeBlockData(blockNumbers)
 
     return { result: true }
   }
 
-  /**
-   * Trim last blocks and update up to finalized head
-   *
-   * @param {number} startBlockNumber
-   * @returns {Promise<{result: boolean}>}
-   */
   async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
     if (BlocksService.isSyncComplete()) {
       this.logger.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
@@ -234,26 +212,13 @@ class BlocksService implements IBlocksService {
     return { result: true }
   }
 
-  /**
-   *
-   * @param {number} ms
-   * @returns {Promise<>}
-   */
   async sleep(ms: number): Promise<any> {
     return new Promise((resolve) => {
       setTimeout(resolve, ms)
     })
   }
 
-  /**
-   *
-   * @private
-   * @async
-   * @param workerId
-   * @param blockNumber
-   * @returns {Promise<boolean>}
-   */
-  private async runBlocksWorker(workerId: number, blockNumber: number) {
+  async runBlocksWorker(workerId: number, blockNumber: number): Promise<boolean> {
     for (let attempts = 5; attempts > 0; attempts--) {
       let lastError = null
       await this.processBlock(blockNumber).catch((error) => {

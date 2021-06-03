@@ -1,11 +1,6 @@
-import { IStakingService } from './../staking/staking.types'
+import { IBlockData } from './blocks.types'
 import { IBlock } from './../watchdog/watchdog.types'
-import { Block, BlockHash, EraIndex } from '@polkadot/types/interfaces'
-import { Option } from '@polkadot/types'
-import { HeaderExtended } from '@polkadot/api-derive/types'
-import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
-import { IConsumerService } from '../consumer/consumer.types'
-
+import { BlockHash } from '@polkadot/types/interfaces'
 import { BlocksService } from './blocks'
 import { BlockRepository } from '../../repositories/block.repository'
 import { KafkaModule } from './../../modules/kafka.module'
@@ -43,9 +38,7 @@ const blockMock: IBlock = {
   block_time: new Date()
 }
 
-BlockRepository.prototype.getLastProcessedBlock = jest.fn(async () => {
-  return 10
-})
+BlockRepository.prototype.getLastProcessedBlock = jest.fn(async () => 2)
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 BlockRepository.prototype.getFirstBlockInEra = jest.fn(async (eraId: number) => {
@@ -83,10 +76,10 @@ PolkadotModule.prototype.getHeader = jest.fn(async () => {
   }
 })
 
-PolkadotModule.prototype.getInfoToProcessBlock = jest.fn(async (height: number) => {
+PolkadotModule.prototype.getInfoToProcessBlock = jest.fn(async (blockHash: BlockHash) => {
   return [
     {
-      toNumber: () => blockMock
+      toNumber: () => 123
     },
     '12',
     {
@@ -119,16 +112,23 @@ PolkadotModule.prototype.getInfoToProcessBlock = jest.fn(async (height: number) 
             toNumber: () => 5
           },
           digest: {
+            toString: () => {
+              return `{ type: 'events' }`
+            },
             logs: [
               {
                 type: 'events'
               }
             ]
           }
-        }
+        },
+        extrinsics: [1, 2, 3]
       }
     },
     {
+      author: {
+        toString: () => 'author'
+      },
       number: {
         toNumber: () => 2
       }
@@ -160,40 +160,105 @@ PolkadotModule.prototype.getBlockHashByHeight = jest.fn(async (height: number) =
 
 StakingService.prototype.addToQueue = jest.fn(async () => true)
 
+KafkaModule.prototype.sendBlockData = jest.fn(async (blockData: IBlockData) => {})
+
+ExtrinsicsService.prototype.extractExtrinsics = jest.fn(async (...args) => {})
+
+ConsumerService.prototype.subscribeFinalizedHeads = jest.fn()
+
 test('constructor', async () => {
   const blocksService = new BlocksService()
   expect(blocksService).toBeInstanceOf(BlocksService)
 })
 
-test('processBlock', async () => {
+test('process not existing block', async () => {
   const blocksService = new BlocksService()
 
-  const existingBlockHeight = 1
   const notExistingBlockHeight = -1
 
   await expect(blocksService.processBlock(notExistingBlockHeight)).rejects.toThrow('cannot get block hash')
+})
+
+test('send block data to kafka ', async () => {
+  const blocksService = new BlocksService()
+
+  const existingBlockHeight = 1
 
   await blocksService.processBlock(existingBlockHeight)
+
+  await expect(KafkaModule.prototype.sendBlockData).lastCalledWith({
+    block: {
+      header: {
+        number: 5,
+        hash: 546,
+        author: 'author',
+        session_id: 123,
+        currentEra: 12,
+        era: 1,
+        stateRoot: 273,
+        extrinsicsRoot: 819,
+        parentHash: 1092,
+        last_log: 'events',
+        digest: "{ type: 'events' }"
+      }
+    },
+    events: [
+      {
+        id: '5-0',
+        section: 'staking',
+        method: 'EraPayout',
+        phase: {
+          json: true
+        },
+        meta: {
+          json: true
+        },
+        data: [],
+        event: {
+          json: true
+        }
+      }
+    ],
+    block_time: 12345678
+  })
+})
+
+test('isSyncComplete method', async () => {
+  await expect(BlocksService.isSyncComplete()).toBe(false)
+})
+
+test('processBlocks without params', async () => {
+  const blocksService = new BlocksService()
+
+  await blocksService.processBlocks()
+
+  await expect(BlockRepository.prototype.getLastProcessedBlock).toBeCalledTimes(1)
 })
 
 test('processBlocks from 0', async () => {
   const blocksService = new BlocksService()
+  blocksService.runBlocksWorker = jest.fn(async () => true)
 
-  await blocksService.processBlocks()
+  await blocksService.processBlocks(0)
+
+  await expect(blocksService.runBlocksWorker).toBeCalledTimes(13)
 })
 
 // todo - check if invoked inside IF statement in  processBlocks while loop
 test('processBlocks from pre-last', async () => {
   const blocksService = new BlocksService()
-
-  await blocksService.processBlocks(1)
+  blocksService.runBlocksWorker = jest.fn(async () => true)
+  await blocksService.processBlocks(14)
+  await expect(blocksService.runBlocksWorker).toBeCalledTimes(1)
 })
 
 // todo - check if consumerService.subscribeFinalizedHeads() invoked
 test('processBlockswith finalized head', async () => {
   const blocksService = new BlocksService()
 
-  await blocksService.processBlocks(1, true)
+  await blocksService.processBlocks(15, true)
+
+  await expect(ConsumerService.prototype.subscribeFinalizedHeads).toBeCalled()
 })
 
 test('getBlocksStatus', async () => {
@@ -201,5 +266,5 @@ test('getBlocksStatus', async () => {
 
   const status = await blocksService.getBlocksStatus()
 
-  expect(status).toBeDefined()
+  await expect(status).toEqual({ status: 'synchronized', height_diff: 13, fin_height_diff: -13 })
 })
