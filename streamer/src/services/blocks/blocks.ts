@@ -69,7 +69,7 @@ class BlocksService implements IBlocksService {
     )
 
     const currentEra = parseInt(blockCurrentEra.toString(), 10)
-    const era = Number(activeEra.unwrap().get('index'))
+    const era = activeEra.isNone ? currentEra : Number(activeEra.unwrap().get('index'))
 
     if (!signedBlock) {
       throw new Error('cannot get block')
@@ -127,62 +127,6 @@ class BlocksService implements IBlocksService {
   }
 
   /**
-   * Check responses from storage, depended from HISTORY_DEPTH
-   *
-   * @public
-   * @async
-   * @param blockNumber
-   * @returns {Promise<boolean>}
-   */
-  async checkHistoryDepthAvailableData(blockNumber: number): Promise<boolean> {
-    const blockHash = await this.polkadotApi.getBlockHashByHeight(blockNumber)
-
-    if (!blockHash) {
-      this.logger.error(`Cannot get block hash: ${blockNumber}`)
-      return false
-    }
-
-    const historyDepth = await this.polkadotApi.getHistoryDepth(blockHash)
-
-    const currentRawEra = await this.polkadotApi.getCurrentRawEra()
-    const blockRawEra = await this.polkadotApi.getCurrentRawEra(blockHash)
-
-    if (blockRawEra == null) {
-      this.logger.error(`Cannot get currentEra by hash: ${blockHash}`)
-      return false
-    }
-
-    const blockEra = parseInt(blockRawEra.toString(), 10)
-
-    if (currentRawEra.unwrap().toNumber() - blockEra > historyDepth.toNumber()) {
-      this.logger.info(`The block height less than HISTORY_DEPTH value: ${historyDepth.toNumber()}`)
-
-      const [sessionId, activeEra, extHeader] = await this.polkadotApi.getInfoToCheckHistoryDepth(blockHash)
-
-      let hasError = false
-      if (sessionId == null) {
-        hasError = true
-        this.logger.error(`Cannot get "sessionId" for block ${blockNumber} by hash: ${blockHash}`)
-      }
-
-      if (activeEra == null || activeEra.isNone) {
-        hasError = true
-        this.logger.error(`Cannot get "activeEra" for block ${blockNumber} by hash: ${blockHash}`)
-      }
-
-      if (extHeader == null || extHeader.isEmpty) {
-        hasError = true
-        this.logger.error(`Cannot get "extHeader" for block ${blockNumber} by hash: ${blockHash}`)
-      }
-
-      if (hasError) {
-        return false
-      }
-    }
-    return true
-  }
-
-  /**
    * Process all blocks with head
    *
    * @public
@@ -205,12 +149,6 @@ class BlocksService implements IBlocksService {
     this.logger.info(`Processing blocks from ${startBlockNumber} to head: ${lastBlockNumber}`)
 
     let blockNumber: number = startBlockNumber
-
-    if (!(await this.checkHistoryDepthAvailableData(startBlockNumber))) {
-      this.logger.error('Cannot receive storage data older than HISTORY_DEPTH')
-      release()
-      return
-    }
 
     while (blockNumber <= lastBlockNumber) {
       const chunk = lastBlockNumber - blockNumber >= 10 ? 10 : (lastBlockNumber - blockNumber) % 10
