@@ -1,7 +1,6 @@
 import { Kafka, Producer } from 'kafkajs'
 import { environment } from '../environment'
 import { IEraData, INominator, IValidator } from '../services/staking/staking.types'
-import { Moment } from '@polkadot/types/interfaces'
 import { IExtrinsic } from '../services/extrinsics/extrinsics.types'
 import { IBlockData } from '../services/blocks/blocks.types'
 
@@ -14,7 +13,7 @@ export interface IKafkaModule {
 		eraId: number,
 		validators: IValidator[],
 		nominators: INominator[],
-		blockTime: Moment
+		blockTime: number
 	): Promise<void>
 
 	sendExtrinsicsData(
@@ -28,15 +27,21 @@ export interface IKafkaModule {
 export class KafkaModule implements IKafkaModule {
 	private static instance: KafkaModule
 
-	private kafka: Kafka
-	private producer: Producer
+	private kafka!: Kafka
+	private producer!: Producer
 	private ready = false
-	private constructor() {
-		this.kafka = new Kafka({
-			clientId: APP_CLIENT_ID,
-			brokers: [KAFKA_URI]
-		})
-		this.producer = this.kafka.producer()
+	constructor() {
+		if (!KafkaModule.instance) {
+			KafkaModule.instance = this
+			
+			this.kafka = new Kafka({
+				clientId: APP_CLIENT_ID,
+				brokers: [KAFKA_URI]
+			})
+			this.producer = this.kafka.producer()	
+		}
+		
+		return KafkaModule.instance
 	}
 
 	static async init(): Promise<void> {
@@ -74,7 +79,7 @@ export class KafkaModule implements IKafkaModule {
 		eraId: number,
 		validators: IValidator[],
 		nominators: INominator[],
-		blockTime: Moment
+		blockTime: number
 	): Promise<void> {
 		try {
 			await this.producer.send({
@@ -86,7 +91,7 @@ export class KafkaModule implements IKafkaModule {
 							era: +eraId.toString(),
 							validators: validators.map((validator) => ({ ...validator, block_time: blockTime.toNumber() })),
 							nominators: nominators.map((nominator) => ({ ...nominator, block_time: blockTime.toNumber() })),
-							block_time: blockTime.toNumber()
+							block_time: blockTime
 						})
 					}
 				]

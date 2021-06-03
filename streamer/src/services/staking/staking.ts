@@ -39,13 +39,11 @@ export class StakingService implements IStakingService {
   }
 
   async getValidatorsAndNominatorsData({ blockHash, eraId }: IBlockEraParams): Promise<IGetValidatorsNominatorsResult> {
-    const validatorsAccountIdSet: Set<string> = new Set()
-    const eraRewardPointsMap: Map<string, number> = new Map()
+    const eraRewardPointsMap: Map<string, number> = await this.polkadotApi.getRewardPoints(blockHash, +eraId)
 
     const nominators: INominator[] = []
     const validators: IValidator[] = []
 
-    const eraRewardPointsRaw = await this.polkadotApi.getRewardPoints(blockHash, +eraId)
 
     const firstBlockOfEra = await this.blockRepository.getFirstBlockInEra(+eraId)
 
@@ -54,30 +52,38 @@ export class StakingService implements IStakingService {
       throw new Error(`first block of ${eraId} not found in DB`)
     }
 
-    const validatorsStartedEra = await this.polkadotApi.getValidatorsStartedEra(firstBlockOfEra.hash)
-
-    validatorsStartedEra.forEach((accountId) => {
-      validatorsAccountIdSet.add(accountId.toString())
-    })
-
-    eraRewardPointsRaw.individual.forEach((rewardPoints, accountId) => {
-      eraRewardPointsMap.set(accountId.toString(), rewardPoints.toNumber())
-    })
-
+    const validatorsAccountIdSet: Set<string> = await this.polkadotApi.getDistinctValidatorsAccountsByEra(firstBlockOfEra.hash)
 
     for (const validatorAccountId of validatorsAccountIdSet) {
-      const [stakers, stakersClipped] = await this.polkadotApi.getStakersInfo(blockHash, eraId, validatorAccountId)
+      const [
+        { total, own, others },
+        { others: othersClipped },
+        prefs
+      ] = await this.polkadotApi.getStakersInfo(blockHash, eraId, validatorAccountId)
 
-      await this.processValidator(
-          validatorAccountId,
-          stakers,
-          stakersClipped,
-          blockHash.toString(),
-          eraId,
-          nominators,
-          validators,
-          eraRewardPointsMap
-      )
+      const newNominators = await Promise.all(others.map(async ({ who, value }) => {
+        return {
+          account_id: who.toString(),
+          value: value.toString(),
+          is_clipped: !!othersClipped.indexOf(who.toString()),
+          era: eraId,
+          validator: validatorAccountId,
+          ...await this.polkadotApi.getStakingPayee(blockHash, who.toString())
+        }
+      }))
+
+      nominators.push(...newNominators)
+
+      validators.push({
+        era: eraId,
+        account_id: validatorAccountId,
+        total: total.toString(),
+        own: own.toString(),
+        nominators_count: nominators.length,
+        reward_points: eraRewardPointsMap.get(validatorAccountId) || 0,
+        ...await this.polkadotApi.getStakingPayee(blockHash, validatorAccountId),
+        prefs: prefs.toJSON()
+      })
     }
 
     return {
@@ -107,96 +113,5 @@ export class StakingService implements IStakingService {
     }
 
     cb(null)
-  }
-
-  private async processValidator(
-      validatorAccountId: string,
-      stakers: Exposure,
-      stakersClipped: Exposure,
-      blockHash: string,
-      eraId: number,
-      nominators: INominator[],
-      validators: IValidator[],
-      eraRewardPointsMap: Map<string, number>
-  ) {
-    const prefs = await this.polkadotApi.getStakingPrefs(blockHash, eraId, validatorAccountId)
-
-    this.logger.debug(
-        `[validators][getStakersByValidator] Loaded stakers: ${stakers.others.length} for validator "${validatorAccountId}"`
-    )
-
-    await Promise.all(stakers.others.map((staker) => this.processStaker(
-        staker,
-        stakersClipped,
-        eraId,
-        validatorAccountId,
-        blockHash,
-        nominators
-    )))
-
-    let validatorRewardDest: string | undefined = undefined
-    let validatorRewardAccountId: AccountId | undefined = undefined
-    const validatorPayee = await this.polkadotApi.getStakingPayee(blockHash, validatorAccountId)
-    if (validatorPayee) {
-      if (!validatorPayee.isAccount) {
-        validatorRewardDest = validatorPayee.toString()
-      } else {
-        validatorRewardDest = 'Account'
-        validatorRewardAccountId = validatorPayee.asAccount
-      }
-    } else {
-      this.logger.warn(`failed to get payee for era: "${eraId}" validator: "${validatorAccountId}". Block: ${blockHash} `)
-    }
-
-    const reward_points = eraRewardPointsMap.get(validatorAccountId) ?? 0
-
-    validators.push({
-      era: eraId,
-      account_id: validatorAccountId,
-      total: stakers.total.toString(),
-      own: stakers.own.toString(),
-      nominators_count: stakers.others.length,
-      reward_points,
-      reward_dest: validatorRewardDest,
-      reward_account_id: validatorRewardAccountId?.toString(),
-      prefs: prefs.toJSON()
-    })
-  }
-
-  private async processStaker(
-      staker: IndividualExposure,
-      stakersClipped: Exposure,
-      eraId: number,
-      validatorAccountId: string,
-      blockHash: string,
-      nominators: INominator[]
-  ) {
-    try {
-      const isClipped = stakersClipped.others.find((e: { who: { toString: () => any } }) => {
-        return e.who.toString() === staker.who.toString()
-      })
-
-      const nominator: INominator = {
-        era: eraId,
-        account_id: staker.who.toString(),
-        validator: validatorAccountId,
-        is_clipped: !!isClipped,
-        value: staker.value.toString()
-      }
-
-      const payee = await this.polkadotApi.getStakingPayee(blockHash, staker.who.toString())
-      if (payee) {
-        if (!payee.isAccount) {
-          nominator.reward_dest = payee.toString()
-        } else {
-          nominator.reward_dest = 'Account'
-          nominator.reward_account_id = payee.asAccount
-        }
-      }
-
-      nominators.push(nominator)
-    } catch (e) {
-      this.logger.error(`[validators][getValidators] Cannot process staker: ${staker.who} "${e}". Block: ${blockHash}`)
-    }
   }
 }

@@ -42,7 +42,7 @@ export interface INominator {
   is_clipped: boolean
   value: string
   reward_dest?: string
-  reward_account_id?: AccountId
+  reward_account_id?: string
 }
 
 export interface IEraData {
