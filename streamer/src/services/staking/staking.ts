@@ -20,7 +20,7 @@ export class StakingService implements IStakingService {
   private readonly kafka: IKafkaModule = KafkaModule.inject()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
-  private readonly queue: fastq.queue<IProcessEraPayload>;
+  private readonly queue: fastq.queue<IProcessEraPayload>
 
   private constructor() {
     this.queue = fastq(this, this.processEraPayout, 1)
@@ -44,7 +44,6 @@ export class StakingService implements IStakingService {
     const nominators: INominator[] = []
     const validators: IValidator[] = []
 
-
     const firstBlockOfEra = await this.blockRepository.getFirstBlockInEra(+eraId)
 
     if (!firstBlockOfEra) {
@@ -55,22 +54,27 @@ export class StakingService implements IStakingService {
     const validatorsAccountIdSet: Set<string> = await this.polkadotApi.getDistinctValidatorsAccountsByEra(firstBlockOfEra.hash)
 
     for (const validatorAccountId of validatorsAccountIdSet) {
-      const [
-        { total, own, others },
-        { others: othersClipped },
-        prefs
-      ] = await this.polkadotApi.getStakersInfo(blockHash, eraId, validatorAccountId)
+      this.logger.debug(`Process staking for validator ${validatorAccountId} `)
+      const [{ total, own, others }, { others: othersClipped }, prefs] = await this.polkadotApi.getStakersInfo(
+        blockHash,
+        eraId,
+        validatorAccountId
+      )
 
-      const newNominators = await Promise.all(others.map(async ({ who, value }) => {
-        return {
-          account_id: who.toString(),
-          value: value.toString(),
-          is_clipped: !!othersClipped.indexOf(who.toString()),
-          era: eraId,
-          validator: validatorAccountId,
-          ...await this.polkadotApi.getStakingPayee(blockHash, who.toString())
-        }
-      }))
+      const newNominators = await Promise.all(
+        others.map(async ({ who, value }) => {
+          return {
+            account_id: who.toString(),
+            value: value.toString(),
+            is_clipped: !!othersClipped.find((e: { who: { toString: () => any } }) => {
+              return e.who.toString() === who.toString()
+            }),
+            era: eraId,
+            validator: validatorAccountId,
+            ...(await this.polkadotApi.getStakingPayee(blockHash, who.toString()))
+          }
+        })
+      )
 
       nominators.push(...newNominators)
 
@@ -81,7 +85,7 @@ export class StakingService implements IStakingService {
         own: own.toString(),
         nominators_count: nominators.length,
         reward_points: eraRewardPointsMap.get(validatorAccountId) || 0,
-        ...await this.polkadotApi.getStakingPayee(blockHash, validatorAccountId),
+        ...(await this.polkadotApi.getStakingPayee(blockHash, validatorAccountId)),
         prefs: prefs.toJSON()
       })
     }

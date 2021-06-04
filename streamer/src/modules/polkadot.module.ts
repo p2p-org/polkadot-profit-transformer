@@ -50,10 +50,10 @@ export class PolkadotModule {
 
   async getChainInfo(): Promise<[string, string]> {
     const [currentChain, currentChainType] = (
-        await Promise.all([
-          this.api!.rpc.system.chain(), // Polkadot
-          this.api!.rpc.system.chainType() // Live
-        ])
+      await Promise.all([
+        this.api!.rpc.system.chain(), // Polkadot
+        this.api!.rpc.system.chainType() // Live
+      ])
     ).map((value) => value.toString().trim())
 
     return [currentChain, currentChainType]
@@ -117,9 +117,12 @@ export class PolkadotModule {
     return this.api!.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId)
   }
 
-  async getStakingPayee(blockHash: TBlockHash, accountId: string): Promise<{
-    reward_dest?: string,
-    reward_account_id?: string,
+  async getStakingPayee(
+    blockHash: TBlockHash,
+    accountId: string
+  ): Promise<{
+    reward_dest?: string
+    reward_account_id?: string
   }> {
     const payee = await this.api!.query.staking.payee.at(blockHash, accountId)
     let reward_dest, reward_account_id
@@ -159,15 +162,9 @@ export class PolkadotModule {
     return this.api!.rpc.chain.getBlockHash(height)
   }
 
-  async getInfoToProcessBlock(blockHash: TBlockHash): Promise<[
-      SessionIndex,
-      Option<EraIndex>,
-      Option<ActiveEraInfo>,
-      SignedBlock,
-      HeaderExtended | undefined,
-      Moment,
-      Vec<EventRecord>
-  ]> {
+  async getInfoToProcessBlock(
+    blockHash: TBlockHash
+  ): Promise<[SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
     const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
       this.api!.query.session.currentIndex.at(blockHash),
       this.api!.query.staking.currentEra.at(blockHash),
