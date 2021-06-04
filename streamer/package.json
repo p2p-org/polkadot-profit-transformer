@@ -1,6 +1,6 @@
 {
   "name": "polkadot-streamer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Stream polkadot blocks and events to Kafka",
   "main": "src/main.ts",
   "repository": "",
