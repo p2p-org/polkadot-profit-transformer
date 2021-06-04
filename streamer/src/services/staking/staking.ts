@@ -22,7 +22,7 @@ export class StakingService implements IStakingService {
   private readonly logger: ILoggerModule = LoggerModule.inject()
   private readonly queue: fastq.queue<IProcessEraPayload>
 
-  private constructor() {
+  constructor() {
     this.queue = fastq(this, this.processEraPayout, 1)
   }
 

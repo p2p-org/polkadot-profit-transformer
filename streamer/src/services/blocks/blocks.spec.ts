@@ -68,6 +68,8 @@ PolkadotModule.prototype.getFinBlockNumber = jest.fn(async () => {
   return 15
 })
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
 PolkadotModule.prototype.getHeader = jest.fn(async () => {
   return {
     number: {
@@ -76,6 +78,8 @@ PolkadotModule.prototype.getHeader = jest.fn(async () => {
   }
 })
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
 PolkadotModule.prototype.getInfoToProcessBlock = jest.fn(async (blockHash: BlockHash) => {
   return [
     {
@@ -154,6 +158,8 @@ PolkadotModule.prototype.getInfoToProcessBlock = jest.fn(async (blockHash: Block
   ]
 })
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
 PolkadotModule.prototype.getBlockHashByHeight = jest.fn(async (height: number) => {
   return height === -1 ? null : 'hash'
 })
