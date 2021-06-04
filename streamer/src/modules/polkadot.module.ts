@@ -3,24 +3,21 @@ import { environment } from '../environment'
 import { IBlockEraParams, IEraData, TBlockHash } from '../services/staking/staking.types'
 import {
   ActiveEraInfo,
-  BlockHash, EraIndex,
-  EraRewardPoints, EventIndex,
+  BlockHash,
+  EraIndex,
+  EventIndex,
   EventRecord,
   Exposure,
   Header,
   Moment,
-  RewardDestination, SessionIndex, SignedBlock,
-  ValidatorId,
+  SessionIndex,
+  SignedBlock,
   ValidatorPrefs
 } from '@polkadot/types/interfaces'
 import { Option, u32, Vec } from '@polkadot/types'
 import { HeaderExtended } from '@polkadot/api-derive/types'
 
 const { SUBSTRATE_URI } = environment
-
-export interface IPolkadotModule {
-
-}
 
 export class PolkadotModule {
   private static instance: PolkadotModule
@@ -79,33 +76,67 @@ export class PolkadotModule {
     }
   }
 
-  async getBlockTime(blockHash: TBlockHash): Promise<Moment> {
-    return this.api!.query.timestamp.now.at(blockHash)
+  async getBlockTime(blockHash: TBlockHash): Promise<number> {
+    const blockTime = await this.api!.query.timestamp.now.at(blockHash)
+    return blockTime.toNumber()
   }
 
-  async getValidatorsStartedEra(blockHash: string): Promise<Vec<ValidatorId>> {
-    return this.api!.query.session.validators.at(blockHash)
+  async getDistinctValidatorsAccountsByEra(blockHash: string): Promise<Set<string>> {
+    const distinctValidators: Set<string> = new Set()
+    const validators = await this.api!.query.session.validators.at(blockHash)
+
+    validators.forEach((accountId) => {
+      distinctValidators.add(accountId.toString())
+    })
+
+    return distinctValidators
   }
 
-  async getRewardPoints(blockHash: TBlockHash, eraId: number): Promise<EraRewardPoints> {
-    return this.api!.query.staking.erasRewardPoints.at(blockHash, eraId)
+  async getRewardPoints(blockHash: TBlockHash, eraId: number): Promise<Map<string, number>> {
+    const { individual } = await this.api!.query.staking.erasRewardPoints.at(blockHash, eraId)
+    const eraRewardPointsMap: Map<string, number> = new Map()
+
+    individual.forEach((rewardPoints, accountId) => {
+      eraRewardPointsMap.set(accountId.toString(), rewardPoints.toNumber())
+    })
+
+    return eraRewardPointsMap
   }
 
-  async getStakersInfo(blockHash: TBlockHash, eraId: number, validatorAccountId: string): Promise<[Exposure, Exposure]> {
-    const [stakers, stakersClipped] = await Promise.all([
+  async getStakersInfo(blockHash: TBlockHash, eraId: number, validatorAccountId: string): Promise<[Exposure, Exposure, ValidatorPrefs]> {
+    const [staking, stakingClipped, prefs] = await Promise.all([
       this.api!.query.staking.erasStakers.at(blockHash, eraId, validatorAccountId),
-      this.api!.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId)
+      this.api!.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId),
+      this.api!.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId)
     ])
 
-    return [stakers, stakersClipped]
+    return [staking, stakingClipped, prefs]
   }
 
   async getStakingPrefs(blockHash: TBlockHash, eraId: number, validatorAccountId: string): Promise<ValidatorPrefs> {
     return this.api!.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId)
   }
 
-  async getStakingPayee(blockHash: TBlockHash, validatorAccountId: string): Promise<RewardDestination> {
-    return this.api!.query.staking.payee.at(blockHash, validatorAccountId)
+  async getStakingPayee(blockHash: TBlockHash, accountId: string): Promise<{
+    reward_dest?: string,
+    reward_account_id?: string,
+  }> {
+    const payee = await this.api!.query.staking.payee.at(blockHash, accountId)
+    let reward_dest, reward_account_id
+    if (payee) {
+      if (payee) {
+        if (!payee.isAccount) {
+          reward_dest = payee.toString()
+        } else {
+          reward_dest = 'Account'
+          reward_account_id = payee.asAccount.toString()
+        }
+      }
+    }
+    return {
+      reward_dest,
+      reward_account_id
+    }
   }
 
   async subscribeFinalizedHeads(cb: (header: Header) => Promise<void>) {

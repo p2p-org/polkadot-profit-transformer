@@ -1,7 +1,6 @@
 import { environment } from '../environment'
 import { Pool } from 'pg'
 import { PostgresModule } from '../modules/postgres.module'
-import { Logger } from 'pino'
 import { LoggerModule } from '../modules/logger.module'
 import { IBlock } from '../services/watchdog/watchdog.types'
 

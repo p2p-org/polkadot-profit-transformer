@@ -1,8 +1,7 @@
-import { SyncStatus } from '../index'
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 import { Codec } from '@polkadot/types/types'
-import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent } from './blocks.types'
+import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent, SyncStatus } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { KafkaModule } from '../../modules/kafka.module'
@@ -16,47 +15,30 @@ import { BlockRepository } from '../../repositories/block.repository'
 import { ConsumerService } from '../consumer/consumer'
 
 class BlocksService implements IBlocksService {
-  private readonly blockRepository: BlockRepository
-  private readonly kafka: KafkaModule
-  private readonly polkadotApi: PolkadotModule
-  private readonly logger: ILoggerModule
+  private static status: SyncStatus
+  private static instance: BlocksService
+  private readonly blockRepository: BlockRepository = BlockRepository.inject()
+  private readonly kafka: KafkaModule = KafkaModule.inject()
+  private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
+  private readonly extrinsicsService: IExtrinsicsService = new ExtrinsicsService()
+  private readonly stakingService: IStakingService = StakingService.inject()
+  private readonly consumerService: IConsumerService = new ConsumerService()
 
-  private readonly extrinsicsService: IExtrinsicsService
-  private readonly stakingService: IStakingService
-  private readonly consumerService: IConsumerService
+  constructor() {
+    if (BlocksService.instance) {
+      return BlocksService.instance
+    }
 
-  constructor(
-    repository?: BlockRepository,
-    polkadotApi?: PolkadotModule,
-    logger?: ILoggerModule,
-    kafka?: KafkaModule,
-    extrinsicsService?: IExtrinsicsService,
-    stakingService?: IStakingService,
-    consumerService?: IConsumerService
-  ) {
-    this.blockRepository = repository ?? BlockRepository.inject()
-    this.polkadotApi = polkadotApi ?? PolkadotModule.inject()
-    this.logger = logger ?? LoggerModule.inject()
-    this.kafka = kafka ?? KafkaModule.inject()
-    this.extrinsicsService = extrinsicsService ?? new ExtrinsicsService()
-    this.stakingService = stakingService ?? StakingService.inject()
-    this.consumerService = consumerService ?? new ConsumerService()
+    BlocksService.instance = this
   }
 
-  async updateOneBlock(blockNumber: number): Promise<true> {
-    await this.processBlock(blockNumber).catch((error) => {
-      this.logger.error(`failed to process block #${blockNumber}: ${error}`)
-      throw new Error('cannot process block')
-    })
-    return true
+  static isSyncComplete(): boolean {
+    return BlocksService.status === SyncStatus.SUBSCRIPTION
   }
 
   async processBlock(height: number): Promise<void> {
     let blockHash = null
-
-    if (height == null) {
-      throw new Error('empty height and blockHash')
-    }
 
     blockHash = await this.polkadotApi.getBlockHashByHeight(height)
 
@@ -70,10 +52,6 @@ class BlocksService implements IBlocksService {
 
     const currentEra = parseInt(blockCurrentEra.toString(), 10)
     const era = activeEra.isNone ? currentEra : Number(activeEra.unwrap().get('index'))
-
-    if (!signedBlock) {
-      throw new Error('cannot get block')
-    }
 
     const processedEvents = await this.processEvents(signedBlock.block.header.number.toNumber(), events)
 
@@ -136,9 +114,9 @@ class BlocksService implements IBlocksService {
    * @returns {Promise<void>}
    */
   async processBlocks(startBlockNumber: number | null = null, optionSubscribeFinHead: boolean | null = null): Promise<void> {
-    const release = await SyncStatus.acquire()
+    BlocksService.status = SyncStatus.SYNC
 
-    if (startBlockNumber === null) {
+    if (!startBlockNumber) {
       startBlockNumber = await this.blockRepository.getLastProcessedBlock()
     }
 
@@ -165,7 +143,7 @@ class BlocksService implements IBlocksService {
       }
     }
 
-    release()
+    BlocksService.status = SyncStatus.SUBSCRIPTION
 
     if (optionSubscribeFinHead) this.consumerService.subscribeFinalizedHeads()
   }
@@ -193,7 +171,7 @@ class BlocksService implements IBlocksService {
       fin_height_diff: -1
     }
 
-    if (SyncStatus.isLocked()) {
+    if (!BlocksService.isSyncComplete()) {
       result.status = 'synchronization'
     } else {
       result.status = 'synchronized'
@@ -213,28 +191,14 @@ class BlocksService implements IBlocksService {
     return result
   }
 
-  /**
-   * Remove blocks data from database by numbers
-   *
-   * @public
-   * @async
-   * @param {number[]} blockNumbers
-   * @returns {Promise<{result: boolean}>}
-   */
   async removeBlocks(blockNumbers: number[]): Promise<{ result: true }> {
     await this.blockRepository.removeBlockData(blockNumbers)
 
     return { result: true }
   }
 
-  /**
-   * Trim last blocks and update up to finalized head
-   *
-   * @param {number} startBlockNumber
-   * @returns {Promise<{result: boolean}>}
-   */
   async trimAndUpdateToFinalized(startBlockNumber: number): Promise<{ result: boolean }> {
-    if (SyncStatus.isLocked()) {
+    if (BlocksService.isSyncComplete()) {
       this.logger.error(`failed setup "trimAndUpdateToFinalized": sync in process`)
       return { result: false }
     }
@@ -248,26 +212,13 @@ class BlocksService implements IBlocksService {
     return { result: true }
   }
 
-  /**
-   *
-   * @param {number} ms
-   * @returns {Promise<>}
-   */
   async sleep(ms: number): Promise<any> {
     return new Promise((resolve) => {
       setTimeout(resolve, ms)
     })
   }
 
-  /**
-   *
-   * @private
-   * @async
-   * @param workerId
-   * @param blockNumber
-   * @returns {Promise<boolean>}
-   */
-  private async runBlocksWorker(workerId: number, blockNumber: number) {
+  async runBlocksWorker(workerId: number, blockNumber: number): Promise<boolean> {
     for (let attempts = 5; attempts > 0; attempts--) {
       let lastError = null
       await this.processBlock(blockNumber).catch((error) => {

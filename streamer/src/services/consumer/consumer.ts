@@ -1,5 +1,6 @@
+import {} from './../blocks/blocks.types'
 import { IConsumerService } from './consumer.types'
-import { SyncStatus } from '../index'
+import { IBlocksService } from '../blocks/blocks.types'
 import { BlocksService } from '../blocks/blocks'
 import { Header } from '@polkadot/types/interfaces'
 import { PolkadotModule } from '../../modules/polkadot.module'
@@ -14,7 +15,7 @@ class ConsumerService implements IConsumerService {
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
-
+  private readonly blocksService: IBlocksService = new BlocksService()
   /**
    * Subscribe to finalized heads stream
    *
@@ -22,7 +23,7 @@ class ConsumerService implements IConsumerService {
    * @returns {Promise<void>}
    */
   async subscribeFinalizedHeads(): Promise<void> {
-    if (SyncStatus.isLocked()) {
+    if (!BlocksService.isSyncComplete()) {
       this.logger.error(`failed setup "subscribeFinalizedHeads": sync in process`)
       return
     }
@@ -49,8 +50,6 @@ class ConsumerService implements IConsumerService {
    * @returns {Promise<void>}
    */
   private async onFinalizedHead(blockHash: Header): Promise<void> {
-    const blocksService = new BlocksService()
-
     const blockNumberFromDB = await this.blockRepository.getLastProcessedBlock()
 
     if (blockHash.number.toNumber() === blockNumberFromDB) {
@@ -61,12 +60,12 @@ class ConsumerService implements IConsumerService {
 
     if (blockHash.number.toNumber() < blockNumberFromDB) {
       this.logger.info(`stash operation detected`)
-      await blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
+      await this.blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
     }
 
     try {
-      await blocksService.processBlock(blockHash.number.toNumber())
-    } catch(error) {
+      await this.blocksService.processBlock(blockHash.number.toNumber(), false)
+    } catch (error) {
       this.logger.error(`failed to process captured block #${blockHash}:`, error)
     }
   }
