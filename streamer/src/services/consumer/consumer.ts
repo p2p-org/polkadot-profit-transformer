@@ -15,7 +15,6 @@ class ConsumerService implements IConsumerService {
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
-  private readonly blocksService: IBlocksService = new BlocksService()
   /**
    * Subscribe to finalized heads stream
    *
@@ -50,6 +49,8 @@ class ConsumerService implements IConsumerService {
    * @returns {Promise<void>}
    */
   private async onFinalizedHead(blockHash: Header): Promise<void> {
+    const blocksService: IBlocksService = new BlocksService()
+
     const blockNumberFromDB = await this.blockRepository.getLastProcessedBlock()
 
     if (blockHash.number.toNumber() === blockNumberFromDB) {
@@ -60,11 +61,11 @@ class ConsumerService implements IConsumerService {
 
     if (blockHash.number.toNumber() < blockNumberFromDB) {
       this.logger.info(`stash operation detected`)
-      await this.blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
+      await blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
     }
 
     try {
-      await this.blocksService.processBlock(blockHash.number.toNumber(), false)
+      await blocksService.processBlock(blockHash.number.toNumber(), false)
     } catch (error) {
       this.logger.error(`failed to process captured block #${blockHash}:`, error)
     }
