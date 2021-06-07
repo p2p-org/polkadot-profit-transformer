@@ -43,10 +43,10 @@ const validateEnv = async (app) => {
     }
   })
 
-  const kafkaHostPattern = new RegExp('^\\w+:\\d+$')
-  if (!kafkaHostPattern.exec(process.env.KAFKA_URI)) {
-    throw new Error(`KAFKA_URI should be set as pattern "hostname:port"`)
-  }
+  // const kafkaHostPattern = new RegExp('^\\w+:\\d+$')
+  // if (!kafkaHostPattern.exec(process.env.KAFKA_URI)) {
+  //   throw new Error(`KAFKA_URI should be set as pattern "hostname:port"`)
+  // }
 }
 
 module.exports = {
