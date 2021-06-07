@@ -659,3 +659,24 @@ WHERE e.section = 'staking' AND e.method IN ('Bonded', 'Reward', 'Slash', 'Unbon
 ORDER BY e.block_id DESC WITH DATA;
 
 REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking;
+
+CREATE MATERIALIZED VIEW dot_polka.nominator_validator_apy AS 
+
+SELECT era, nominator, 
+        era_rewards * validator_points / era_points * (1 - commission/ 100) / validator_total * nominator_stake  as nominator_income,
+        (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * (1 - commission/ 100) as nom_APY,
+        (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 12*365 * (1 - commission/ 100)  as nom_MPY,
+        (era_rewards * validator_points / era_points  / validator_total * nominator_stake) / nominator_stake* 52*365 * (1 - commission/ 100)   as nom_WPY
+FROM (
+        SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, n.reward_dest, is_clipped, n.block_time,
+              validator, (v.total/10^10)::float as validator_total, (v.own/10^10)::float as validator_own, (SUM(v.reward_points))::float as validator_points, 
+              v.reward_dest as validator_dest, v.reward_account_id, (prefs->'commission')::float/10^7 as commission ,
+              (e.total_reward / 10^10)::float as era_rewards, (e.total_stake / 10^10)::float as era_stake, (total_reward_points)::float as era_points
+        FROM dot_polka.nominators as n
+            INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
+            INNER JOIN dot_polka.eras as e ON e.era = n.era 
+        WHERE n.era =309
+        GROUP BY n.block_time, n.era, n.account_id, validator, n.reward_dest, v.reward_dest, v.reward_account_id, e.total_reward, e.total_stake, total_reward_points, v.total, own, prefs
+    ) as data
+
+REFRESH MATERIALIZED VIEW dot_polka.nominator_validator_apy;
