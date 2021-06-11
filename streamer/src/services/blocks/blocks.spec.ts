@@ -3,7 +3,7 @@ import { IBlock } from './../watchdog/watchdog.types'
 import { BlockHash } from '@polkadot/types/interfaces'
 import { BlocksService } from './blocks'
 import { BlockRepository } from '../../repositories/block.repository'
-import { KafkaModule } from './../../modules/kafka.module'
+import { KafkaModule } from '../../modules/kafka'
 import { LoggerModule } from '../../modules/logger.module'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { ExtrinsicsService } from '../extrinsics/extrinsics'
@@ -13,7 +13,7 @@ import { ConsumerService } from '../consumer/consumer'
 jest.mock('../../repositories/block.repository')
 jest.mock('../../modules/polkadot.module')
 jest.mock('../../modules/logger.module')
-jest.mock('../../modules/kafka.module')
+jest.mock('../../modules/kafka')
 jest.mock('../extrinsics/extrinsics')
 jest.mock('../staking/staking')
 jest.mock('../consumer/consumer')

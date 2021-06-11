@@ -16,7 +16,7 @@
     "lint:fix": "npx eslint ./src --fix",
     "lint-staged": "lint-staged",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
-    "test-new": "npx jest --no-cache",
+    "test-new": "npx jest --maxWorkers=1",
     "prepare": "cd .. && husky install streamer/.husky"
   },
   "dependencies": {
@@ -95,7 +95,11 @@
     "collectCoverage": true,
     "collectCoverageFrom": [
       "./**/*.{js,ts}",
-      "!./**/*.types.ts"
+      "!./**/*.types.ts",
+      "!./**/polkadot.module.ts",
+      "!./**/logger.module.ts",
+      "!./**/postgres.module.ts",
+      "!./routes/**/*"
     ],
     "coverageReporters": [
       "text"

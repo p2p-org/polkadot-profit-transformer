@@ -39,7 +39,7 @@ export class BlockRepository {
     return blockNumberFromDB
   }
 
-  async getFirstBlockInEra(eraId: number): Promise<IBlock> {
+  async getFirstBlockInEra(eraId: number): Promise<IBlock | null> {
     try {
       const { rows } = await this.connectionProvider.query({
         text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "era" = $1::int order by "id" limit 1`,
@@ -49,7 +49,7 @@ export class BlockRepository {
       return rows[0]
     } catch (err) {
       this.logger.error(`failed to get first block of session ${eraId}, error: ${err}`)
-      throw new Error('cannot find first era block')
+      return null
     }
   }
 

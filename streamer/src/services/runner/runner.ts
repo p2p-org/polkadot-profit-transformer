@@ -1,14 +1,8 @@
 import { IRunnerService } from './runner.types'
-import { IBlocksService } from '../blocks/blocks.types'
-import { IConfigService } from '../config/config.types'
-import { IWatchdogService } from '../watchdog/watchdog.types'
-import { IConsumerService } from '../consumer/consumer.types'
-
-import WatchdogService from '../watchdog/watchdog'
-
-const { ConfigService } = require('../config/config')
-const { ConsumerService } = require('../consumer/consumer')
-const { BlocksService } = require('../blocks/blocks')
+import { IBlocksService, BlocksService } from '../blocks'
+import { IConfigService, ConfigService } from '../config'
+import { IWatchdogService, WatchdogService } from '../watchdog/'
+import { IConsumerService, ConsumerService } from '../consumer'
 
 /**
  * Provides cli operations
@@ -24,7 +18,6 @@ class RunnerService implements IRunnerService {
     this.blocksService = new BlocksService()
     this.consumerService = new ConsumerService()
     this.configService = new ConfigService()
-
     this.watchdogService = WatchdogService.getInstance()
   }
 

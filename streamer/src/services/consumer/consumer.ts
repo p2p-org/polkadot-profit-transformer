@@ -1,7 +1,5 @@
-import {} from './../blocks/blocks.types'
 import { IConsumerService } from './consumer.types'
-import { IBlocksService } from '../blocks/blocks.types'
-import { BlocksService } from '../blocks/blocks'
+import { IBlocksService, BlocksService } from '../blocks'
 import { Header } from '@polkadot/types/interfaces'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
@@ -53,6 +51,8 @@ class ConsumerService implements IConsumerService {
 
     const blockNumberFromDB = await this.blockRepository.getLastProcessedBlock()
 
+    console.log('blockHash.number.toNumber()', blockHash.number.toNumber())
+    console.log('blockNumberFromDB', blockNumberFromDB)
     if (blockHash.number.toNumber() === blockNumberFromDB) {
       return
     }

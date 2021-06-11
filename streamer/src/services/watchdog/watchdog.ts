@@ -1,8 +1,8 @@
 import { environment } from '../../environment'
 import { IBlock, IEra, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
-import { StakingService } from '../staking/staking'
-import { ConfigService } from '../config/config'
-import { BlocksService } from '../blocks/blocks'
+import { StakingService } from '../staking'
+import { ConfigService } from '../config'
+import { BlocksService } from '../blocks'
 import { EventRecord, SignedBlock } from '@polkadot/types/interfaces'
 import { Pool } from 'pg'
 import { Vec } from '@polkadot/types'
@@ -15,7 +15,7 @@ const { DB_SCHEMA } = environment
 
 const WATCHDOG_CONCURRENCY = 10
 
-export default class WatchdogService implements IWatchdogService {
+export class WatchdogService implements IWatchdogService {
   static instance: WatchdogService
 
   private readonly blockRepository: BlockRepository = BlockRepository.inject()

@@ -4,15 +4,12 @@ import { Codec } from '@polkadot/types/types'
 import { IBlockData, IBlocksService, IBlocksStatusResult, IEvent, SyncStatus } from './blocks.types'
 import { counter } from '../statcollector/statcollector'
 import { PolkadotModule } from '../../modules/polkadot.module'
-import { KafkaModule } from '../../modules/kafka.module'
+import { KafkaModule } from '../../modules/kafka'
 import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
-import { ExtrinsicsService } from '../extrinsics/extrinsics'
-import { IConsumerService } from '../consumer/consumer.types'
-import { IExtrinsicsService } from '../extrinsics/extrinsics.types'
-import { StakingService } from '../staking/staking'
-import { IStakingService } from '../staking/staking.types'
+import { IExtrinsicsService, ExtrinsicsService } from '../extrinsics'
+import { IConsumerService, ConsumerService } from '../consumer'
+import { IStakingService, StakingService } from '../staking'
 import { BlockRepository } from '../../repositories/block.repository'
-import { ConsumerService } from '../consumer/consumer'
 
 class BlocksService implements IBlocksService {
   private static status: SyncStatus
@@ -98,7 +95,8 @@ class BlocksService implements IBlocksService {
     const eraPayoutEvent = findEraPayoutEvent(events)
 
     if (eraPayoutEvent) {
-      this.stakingService.addToQueue({ eraPayoutEvent, blockHash })
+      const [eraId] = eraPayoutEvent.event.data
+      this.stakingService.addToQueue({ eraId: eraId?.toString(), blockHash })
     }
 
     counter.inc(1)

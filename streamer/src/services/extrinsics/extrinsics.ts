@@ -1,5 +1,5 @@
 import { IExtrinsic, IExtrinsicsService } from './extrinsics.types'
-import { IKafkaModule, KafkaModule } from '../../modules/kafka.module'
+import { IKafkaModule, KafkaModule } from '../../modules/kafka'
 
 
 /**

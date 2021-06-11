@@ -1,20 +1,11 @@
 import { Kafka, Producer } from 'kafkajs'
-import { environment } from '../environment'
-import { IEraData, INominator, IValidator } from '../services/staking/staking.types'
-import { IExtrinsic } from '../services/extrinsics/extrinsics.types'
-import { IBlockData } from '../services/blocks/blocks.types'
+import { environment } from '../../environment'
+import { IEraData, INominator, IValidator } from '../../services/staking/staking.types'
+import { IExtrinsic } from '../../services/extrinsics/extrinsics.types'
+import { IBlockData } from '../../services/blocks/blocks.types'
+import { IKafkaModule } from './kafka.types'
 
 const { APP_CLIENT_ID, KAFKA_URI, KAFKA_PREFIX } = environment
-
-export interface IKafkaModule {
-  sendStakingErasData(eraData: IEraData): Promise<void>
-
-  sendSessionData(eraId: number, validators: IValidator[], nominators: INominator[], blockTime: number): Promise<void>
-
-  sendExtrinsicsData(blockNumber: string, extrinsics: IExtrinsic[]): Promise<void>
-
-  sendBlockData(blockData: IBlockData): Promise<void>
-}
 
 export class KafkaModule implements IKafkaModule {
   private static instance: KafkaModule
@@ -39,16 +30,20 @@ export class KafkaModule implements IKafkaModule {
   static async init(): Promise<void> {
     if (!KafkaModule.instance) {
       KafkaModule.instance = new KafkaModule()
+    }
+
+    if (!KafkaModule.instance.ready) {
       await KafkaModule.instance.producer.connect()
       KafkaModule.instance.ready = true
     }
   }
+
   static inject(): KafkaModule {
-    if (!KafkaModule.instance.ready) {
-      throw new Error(`You haven't initialized KafkaModule`)
+    if (KafkaModule.instance && KafkaModule.instance.ready) {
+      return KafkaModule.instance
     }
 
-    return KafkaModule.instance
+    throw new Error(`You haven't initialized KafkaModule`)
   }
 
   async sendStakingErasData(eraData: IEraData): Promise<void> {

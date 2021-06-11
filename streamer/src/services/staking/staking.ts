@@ -1,4 +1,3 @@
-import { AccountId, Exposure, IndividualExposure } from '@polkadot/types/interfaces'
 import {
   IGetValidatorsNominatorsResult,
   IBlockEraParams,
@@ -8,7 +7,7 @@ import {
   IProcessEraPayload
 } from './staking.types'
 import fastq from 'fastq'
-import { IKafkaModule, KafkaModule } from '../../modules/kafka.module'
+import { IKafkaModule, KafkaModule } from '../../modules/kafka'
 import { PolkadotModule } from '../../modules/polkadot.module'
 import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
 import { BlockRepository } from '../../repositories/block.repository'
@@ -34,8 +33,8 @@ export class StakingService implements IStakingService {
     return StakingService.instance
   }
 
-  addToQueue({ eraPayoutEvent, blockHash }: IProcessEraPayload): void {
-    this.queue.push({ eraPayoutEvent, blockHash })
+  addToQueue({ eraId, blockHash }: IProcessEraPayload): void {
+    this.queue.push({ eraId, blockHash })
   }
 
   async getValidatorsAndNominatorsData({ blockHash, eraId }: IBlockEraParams): Promise<IGetValidatorsNominatorsResult> {
@@ -96,10 +95,8 @@ export class StakingService implements IStakingService {
     }
   }
 
-  async processEraPayout({ eraPayoutEvent, blockHash }: IProcessEraPayload, cb: (arg0: null) => void): Promise<void> {
+  async processEraPayout({ eraId, blockHash }: IProcessEraPayload, cb: (arg0: null) => void): Promise<void> {
     try {
-      const [eraId] = eraPayoutEvent.event.data
-
       this.logger.debug(`Process payout for era: ${eraId}`)
 
       const blockTime = await this.polkadotApi.getBlockTime(blockHash)
