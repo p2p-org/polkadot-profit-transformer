@@ -185,6 +185,10 @@ This framework provides extractions blocks and subscription to updates (with reo
 
 - [@enrichments_processor](enrichments_processor) - The enrichments transformation service, provides extractions and consumer subscriptions operations for [ksqlDB pipelines](streamer/docs/SPECS.md)
 
+## Sequence interaction
+
+![Sequence](docs/img/sequence_streamer.png 'Sequence interaction')
+
 ### Additional modules:
 
 - [@run.sh](run.sh) - Bootstrap script: creates topics from [@ksql_config.json](ksql_config.json), reads ksql migration files from [@ksql](ksql) directory and run containers
