@@ -1,15 +1,12 @@
 @startuml ER-diagram
-
 ' hIde the spot
 hIde circle
-
 ' avoId problems with angled crows feet
 skinparam {
     Linetype ortho
     Shadowing false
     RoundCorner 10
 }
-
 entity "Blocks" as block {
     *id: BIGINT : PK
     --
@@ -25,7 +22,6 @@ entity "Blocks" as block {
     *digest: JSONB
     *block_time: TIMESTAMP
 }
-
 entity "Events" as events {
     *id: VARCHAR(150): PK
     --
@@ -37,7 +33,6 @@ entity "Events" as events {
     *data: JSONB
     *event: JSONB
 }
-
 entity "Extrinsics" as ex {
     --Composite PK --
     *id: VARCHAR(150): + FK Blocks.id
@@ -59,7 +54,6 @@ entity "Extrinsics" as ex {
     *extrinsic: JSONB
     *args: JSONB
 }
-
 entity "Eras" as era {
     *era: INT: PK
     --
@@ -70,7 +64,6 @@ entity "Eras" as era {
     *total_stake: BIGINT
     *total_reward_points: INT
 }
-
 entity "Validators" as val {
     --Composite PK --
     era.era: INT: era.era
@@ -88,7 +81,6 @@ entity "Validators" as val {
     *prefs: JSONB
     *block_time: TIMESTAMP
 }
-
 entity "Nominators" as nom {
     --Composite PK --
     era.era: INT: era.era
@@ -104,7 +96,6 @@ entity "Nominators" as nom {
     *reward_account_id: VARCHAR (150)
     *block_time: TIMESTAMP
 }
-
 entity "Identity" as ac {
     *account_id: varchar(50): PK
     --
@@ -120,28 +111,13 @@ entity "Identity" as ac {
     *created_at: BIGINT
     *killed_at: BIGINT
 }
-
-entity "balances" as balances {
-    *block_id: INTEGER NOT NULL: FK block.id
-    *account_id: TEXT
-    *balance: DOUBLE PRECISION
-    *method: VARCHAR(30)
-    *is_validator: BOOLEAN
-    *block_time: TIMESTAMP : FK block.id
-}
-
-nom ||.right.|| ac
-era }|..|{ nom
-val }|..|{ era
+nom ||..|| ac
+era ||..|{ nom
+era ||..|{ val
 val }|..|{ nom
 val ||..|| ac
-balances ||..|| ac
-balances ||..|| nom
-balances ||..|| val
-balances }|.left.|| block
-' block }|..|| era не вижу явной связи
-block ||..|{ events
+era ||..|{ block
+block |o..|{ events
+events ||..|{ ex
 block ||..|{ ex
-ex }|.right.|| events
-
 @enduml
