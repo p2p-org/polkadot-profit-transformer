@@ -59,7 +59,7 @@ export default class WatchdogService implements IWatchdogService {
     await this.configService.updateConfigValueInDB('watchdog_started_at', Date.now())
 
     if (!startBlockId) {
-      const watchdogVerifyHeight = await this.configService.getConfigValueFromDB('watchdog_verify_height') || -1
+      const watchdogVerifyHeight = (await this.configService.getConfigValueFromDB('watchdog_verify_height')) || -1
       startBlockId = +watchdogVerifyHeight + 1
     }
 
@@ -91,6 +91,7 @@ export default class WatchdogService implements IWatchdogService {
   }
 
   async verifyBlock(blockId: number): Promise<void> {
+    this.logger.info(`Watchdog verify block ${blockId}`)
     const blockFromDB = await this.getBlockFromDB(blockId)
 
     if (!blockFromDB) {
@@ -334,7 +335,7 @@ export default class WatchdogService implements IWatchdogService {
   }
 
   async isStartHeightValid(startBlockId: number): Promise<boolean> {
-    const watchdogVerifyHeight = await this.configService.getConfigValueFromDB('watchdog_verify_height') || -1
+    const watchdogVerifyHeight = (await this.configService.getConfigValueFromDB('watchdog_verify_height')) || -1
     this.logger.debug(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
 
     return startBlockId >= 0 && startBlockId - 1 <= +watchdogVerifyHeight
