@@ -7,10 +7,10 @@ import {
   IProcessEraPayload
 } from './staking.types'
 import fastq from 'fastq'
-import { IKafkaModule, KafkaModule } from '../../modules/kafka'
-import { PolkadotModule } from '../../modules/polkadot.module'
-import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
-import { BlockRepository } from '../../repositories/block.repository'
+import { IKafkaModule, KafkaModule } from '@modules/kafka'
+import { PolkadotModule } from '@modules/polkadot.module'
+import { ILoggerModule, LoggerModule } from '@modules/logger.module'
+import { BlockRepository } from '@repositories/block.repository'
 
 export class StakingService implements IStakingService {
   private static instance: StakingService

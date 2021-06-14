@@ -1,22 +1,22 @@
 import { IBlockData } from './blocks.types'
-import { IBlock } from './../watchdog/watchdog.types'
 import { BlockHash } from '@polkadot/types/interfaces'
 import { BlocksService } from './blocks'
-import { BlockRepository } from '../../repositories/block.repository'
-import { KafkaModule } from '../../modules/kafka'
-import { LoggerModule } from '../../modules/logger.module'
-import { PolkadotModule } from '../../modules/polkadot.module'
-import { ExtrinsicsService } from '../extrinsics/extrinsics'
-import { StakingService } from '../staking/staking'
-import { ConsumerService } from '../consumer/consumer'
+import { BlockRepository } from '@repositories/block.repository'
+import { KafkaModule } from '@modules/kafka'
+import { LoggerModule } from '@modules/logger.module'
+import { PolkadotModule } from '@modules/polkadot.module'
+import { IBlock } from '@services/watchdog'
+import { ExtrinsicsService } from '@services/extrinsics/'
+import { StakingService } from '@services/staking/'
+import { ConsumerService } from '@services/consumer/'
 
-jest.mock('../../repositories/block.repository')
-jest.mock('../../modules/polkadot.module')
-jest.mock('../../modules/logger.module')
-jest.mock('../../modules/kafka')
-jest.mock('../extrinsics/extrinsics')
-jest.mock('../staking/staking')
-jest.mock('../consumer/consumer')
+jest.mock('@repositories/block.repository')
+jest.mock('@modules/polkadot.module')
+jest.mock('@modules/logger.module')
+jest.mock('@modules/kafka')
+jest.mock('@services/extrinsics')
+jest.mock('@services/staking')
+jest.mock('@services/consumer')
 
 LoggerModule.inject = jest.fn(() => new LoggerModule())
 KafkaModule.inject = jest.fn(() => new KafkaModule())
@@ -229,48 +229,66 @@ test('send block data to kafka ', async () => {
   })
 })
 
-test('isSyncComplete method', async () => {
-  await expect(BlocksService.isSyncComplete()).toBe(false)
-})
+describe('BlockService', () => {
+  test('isSyncComplete method', async () => {
+    await expect(BlocksService.isSyncComplete()).toBe(false)
+  })
 
-test('processBlocks without params', async () => {
-  const blocksService = new BlocksService()
+  test('processBlocks without params', async () => {
+    const blocksService = new BlocksService()
+    const status = await blocksService.getBlocksStatus()
+    await expect(status).toEqual({ status: 'synchronization', height_diff: 13, fin_height_diff: -13 })
 
-  await blocksService.processBlocks()
+    await blocksService.processBlocks()
 
-  await expect(BlockRepository.prototype.getLastProcessedBlock).toBeCalledTimes(1)
-})
+    await expect(BlockRepository.prototype.getLastProcessedBlock).toBeCalledTimes(2)
+  })
 
-test('processBlocks from 0', async () => {
-  const blocksService = new BlocksService()
-  blocksService.runBlocksWorker = jest.fn(async () => true)
+  test('processBlocks from 0', async () => {
+    const blocksService = new BlocksService()
+    blocksService.runBlocksWorker = jest.fn(async () => true)
 
-  await blocksService.processBlocks(0)
+    await blocksService.processBlocks(0)
 
-  await expect(blocksService.runBlocksWorker).toBeCalledTimes(13)
-})
+    await expect(blocksService.runBlocksWorker).toBeCalledTimes(13)
+  })
 
 // todo - check if invoked inside IF statement in  processBlocks while loop
-test('processBlocks from pre-last', async () => {
-  const blocksService = new BlocksService()
-  blocksService.runBlocksWorker = jest.fn(async () => true)
-  await blocksService.processBlocks(14)
-  await expect(blocksService.runBlocksWorker).toBeCalledTimes(1)
-})
+  test('processBlocks from pre-last', async () => {
+    const blocksService = new BlocksService()
+    blocksService.runBlocksWorker = jest.fn(async () => true)
+    await blocksService.processBlocks(14)
+    await expect(blocksService.runBlocksWorker).toBeCalledTimes(1)
+  })
 
 // todo - check if consumerService.subscribeFinalizedHeads() invoked
-test('processBlockswith finalized head', async () => {
-  const blocksService = new BlocksService()
+  test('processBlockswith finalized head', async () => {
+    const blocksService = new BlocksService()
 
-  await blocksService.processBlocks(15, true)
+    await blocksService.processBlocks(15, true)
 
-  await expect(ConsumerService.prototype.subscribeFinalizedHeads).toBeCalled()
-})
+    await expect(ConsumerService.prototype.subscribeFinalizedHeads).toBeCalled()
+    const { result } = await blocksService.trimAndUpdateToFinalized(100)
+    expect(result).toBeFalsy()
+  })
 
-test('getBlocksStatus', async () => {
-  const blocksService = new BlocksService()
+  test('getBlocksStatus', async () => {
+    const blocksService = new BlocksService()
 
-  const status = await blocksService.getBlocksStatus()
+    const status = await blocksService.getBlocksStatus()
 
-  await expect(status).toEqual({ status: 'synchronized', height_diff: 13, fin_height_diff: -13 })
+    await expect(status).toEqual({ status: 'synchronized', height_diff: 13, fin_height_diff: -13 })
+  })
+
+  test('removeBlocks', async () => {
+    const service = new BlocksService()
+    const { result } = await service.removeBlocks([1,2,3])
+    expect(result).toBeTruthy()
+  })
+
+  test('trimAndUpdateToFinalized', async () => {
+    const service = new BlocksService()
+    const { result } = await service.trimAndUpdateToFinalized(100)
+    expect(result).toBeFalsy()
+  })
 })

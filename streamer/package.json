@@ -96,6 +96,7 @@
     "collectCoverageFrom": [
       "./**/*.{js,ts}",
       "!./**/*.types.ts",
+      "!./repositories/**/*",
       "!./**/polkadot.module.ts",
       "!./**/logger.module.ts",
       "!./**/postgres.module.ts",
@@ -110,6 +111,11 @@
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "@services/(.*)": "<rootDir>/services/$1",
+      "@modules/(.*)": "<rootDir>/modules/$1",
+      "@repositories/(.*)": "<rootDir>/repositories/$1"
+    },
     "transform": {
       "^.+\\.(js|ts)$": "babel-jest"
     },

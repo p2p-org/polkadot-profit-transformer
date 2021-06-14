@@ -1,8 +1,8 @@
 import { IRunnerService } from './runner.types'
-import { IBlocksService, BlocksService } from '../blocks'
-import { IConfigService, ConfigService } from '../config'
-import { IWatchdogService, WatchdogService } from '../watchdog/'
-import { IConsumerService, ConsumerService } from '../consumer'
+import { IBlocksService, BlocksService } from '@services/blocks'
+import { IConfigService, ConfigService } from '@services/config'
+import { IWatchdogService, WatchdogService } from '@services/watchdog/'
+import { IConsumerService, ConsumerService } from '@services/consumer'
 
 /**
  * Provides cli operations

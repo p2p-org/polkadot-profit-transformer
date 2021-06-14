@@ -1,17 +1,15 @@
-import { environment } from '../../environment'
-import { IBlock, IEra, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
+import { IBlock, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
 import { StakingService } from '../staking'
 import { ConfigService } from '../config'
 import { BlocksService } from '../blocks'
 import { EventRecord, SignedBlock } from '@polkadot/types/interfaces'
-import { Pool } from 'pg'
 import { Vec } from '@polkadot/types'
-import { PostgresModule } from '../../modules/postgres.module'
-import { PolkadotModule } from '../../modules/polkadot.module'
-import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
-import { BlockRepository } from '../../repositories/block.repository'
-
-const { DB_SCHEMA } = environment
+import { PolkadotModule } from '@modules/polkadot.module'
+import { ILoggerModule, LoggerModule } from '@modules/logger.module'
+import { BlockRepository } from '@repositories/block.repository'
+import { EraRepository } from '@repositories/era.repository'
+import { EventRepository } from '@repositories/event.repository'
+import { ExtrinsicRepository } from '@repositories/extrinsic.repository'
 
 const WATCHDOG_CONCURRENCY = 10
 
@@ -19,7 +17,9 @@ export class WatchdogService implements IWatchdogService {
   static instance: WatchdogService
 
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
-  private readonly repository: Pool = PostgresModule.inject()
+  private readonly eraRepository: EraRepository = new EraRepository()
+  private readonly eventRepository: EventRepository = new EventRepository()
+  private readonly extrinsicRepository: ExtrinsicRepository = new ExtrinsicRepository()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
 
@@ -90,128 +90,6 @@ export class WatchdogService implements IWatchdogService {
     }
   }
 
-  async verifyBlock(blockId: number): Promise<void> {
-    this.logger.info(`Watchdog verify block ${blockId}`)
-    const blockFromDB = await this.getBlockFromDB(blockId)
-
-    if (!blockFromDB) {
-      this.logger.debug(`Block is not exists in DB: ${blockId}`)
-      await this.blocksService.processBlock(blockId)
-      return
-    }
-
-    const blockFromChain = await this.polkadotApi.getBlockData(blockFromDB.hash)
-
-    this.logger.debug(`Validate block ${blockId}`)
-
-    const isBlockValidResult = await this.isBlockValid(blockFromDB, blockFromChain)
-
-    if (!isBlockValidResult) {
-      try {
-        this.logger.debug(`Block ${blockId} is not valid, resync.`)
-        await this.blocksService.processBlock(blockId)
-        return
-      } catch (error) {
-        this.logger.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
-      }
-    }
-
-    this.validateEraPayout(blockFromDB)
-  }
-
-  async getEraFromDB(eraId: number): Promise<IEra> {
-    try {
-      const { rows } = await this.repository.query({
-        text: `SELECT * FROM ${DB_SCHEMA}.eras WHERE "era" = $1::int`,
-        values: [eraId]
-      })
-
-      return rows[0]
-    } catch (err) {
-      this.logger.error(`failed to get era by id ${eraId}, error: ${err}`)
-      throw new Error(`cannot get era by id ${eraId}`)
-    }
-  }
-
-  async getEraStakingDiff(eraId: number) {
-    try {
-      const { rows } = await this.repository.query({
-        text: `select e.era as era, e.total_stake  - sum(v.total) as diff from dot_polka.eras e 
-  join dot_polka.validators v
-  on v.era = e.era
-  where e.era = $1::int
-  group by e.era`,
-        values: [eraId]
-      })
-
-      return rows[0]
-    } catch (err) {
-      this.logger.error(`failed to get staking diff by id ${eraId}, error: ${err}`)
-      throw new Error(`failed to get staking diff by id ${eraId}`)
-    }
-  }
-
-  async validateEraPayout(blockFromDB: IBlock): Promise<void> {
-    const events = await this.polkadotApi.getSystemEvents(blockFromDB.hash)
-
-    const findEraPayoutEvent = (events: Vec<EventRecord>) => {
-      return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
-    }
-
-    const eraPayoutEvent = findEraPayoutEvent(events)
-
-    if (!eraPayoutEvent) {
-      return
-    }
-
-    const [eraId] = eraPayoutEvent.event.data
-
-    const eraFromDb = await this.getEraFromDB(+eraId)
-
-    if (!eraFromDb) {
-      StakingService.inject().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
-      return
-    }
-
-    const diff = await this.getEraStakingDiff(+eraId)
-
-    if (+diff.diff !== 0) {
-      this.logger.debug(`Era staking diff is not zero: ${+diff.diff}. Resync era ${eraId}.`)
-      StakingService.inject().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
-    }
-  }
-
-  async isBlockValid(blockFromDB: IBlock, blockFromChain: SignedBlock): Promise<boolean> {
-    const isEventsExists = await this.isEventsExist(blockFromDB)
-    const isExtrinsicsExists = await this.isExtrinsicsExist(blockFromDB, blockFromChain)
-    const isParentHashValid = blockFromDB.parent_hash === blockFromChain.block.header.parentHash.toString()
-
-    if (!isEventsExists || !isExtrinsicsExists || !isParentHashValid) {
-      this.logger.debug(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
-      return false
-    }
-
-    return true
-  }
-
-  async isEventsExist(block: IBlock): Promise<boolean> {
-    try {
-      const {
-        rows: [{ count }]
-      } = await this.repository.query({
-        text: `SELECT count(*) FROM ${DB_SCHEMA}.events WHERE "block_id" = $1::int`,
-        values: [block.id]
-      })
-
-      const eventsInBlockchainCount = await this.polkadotApi.getSystemEventsCount(block.hash)
-
-      return +count === eventsInBlockchainCount.toNumber()
-    } catch (err) {
-      this.logger.error(`failed to get events for block ${block.id}, error: ${err}`)
-      throw new Error(`cannot check events for block ${block.id}`)
-    }
-  }
-
   /**
    * invoked by REST /api/watchdog/status request
    */
@@ -252,21 +130,92 @@ export class WatchdogService implements IWatchdogService {
     return { result: true }
   }
 
-  async getBlockFromDB(blockId: number): Promise<IBlock> {
-    try {
-      const { rows } = await this.repository.query({
-        text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "id" = $1::int`,
-        values: [blockId]
-      })
+  private async verifyBlock(blockId: number): Promise<void> {
+    this.logger.info(`Watchdog verify block ${blockId}`)
+    const blockFromDB = await this.blockRepository.getBlockById(blockId)
 
-      return rows[0]
-    } catch (err) {
-      this.logger.error(`failed to get block by id ${blockId}, error: ${err}`)
-      throw new Error('cannot getblock by id')
+    if (!blockFromDB) {
+      this.logger.debug(`Block is not exists in DB: ${blockId}`)
+      await this.blocksService.processBlock(blockId)
+      return
+    }
+
+    const blockFromChain = await this.polkadotApi.getBlockData(blockFromDB.hash)
+
+    this.logger.debug(`Validate block ${blockId}`)
+
+    const isBlockValidResult = await this.isBlockValid(blockFromDB, blockFromChain)
+
+    if (!isBlockValidResult) {
+      try {
+        this.logger.debug(`Block ${blockId} is not valid, resync.`)
+        await this.blocksService.processBlock(blockId)
+        return
+      } catch (error) {
+        this.logger.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
+      }
+    }
+
+    this.validateEraPayout(blockFromDB)
+  }
+
+  private async validateEraPayout(blockFromDB: IBlock): Promise<void> {
+    const events = await this.polkadotApi.getSystemEvents(blockFromDB.hash)
+
+    const findEraPayoutEvent = (events: Vec<EventRecord>) => {
+      return events.find((event) => event.event.section === 'staking' && event.event.method === 'EraPayout')
+    }
+
+    const eraPayoutEvent = findEraPayoutEvent(events)
+
+    if (!eraPayoutEvent) {
+      return
+    }
+
+    const [eraId] = eraPayoutEvent.event.data
+
+    const eraFromDb = await this.eraRepository.getEra(+eraId)
+
+    if (!eraFromDb) {
+      StakingService.inject().addToQueue({ eraId: eraId?.toString(), blockHash: blockFromDB.hash })
+      return
+    }
+
+    const diff = await this.eraRepository.getEraStakingDiff(+eraId)
+
+    if (+diff.diff !== 0) {
+      this.logger.debug(`Era staking diff is not zero: ${+diff.diff}. Resync era ${eraId}.`)
+      StakingService.inject().addToQueue({ eraId: eraId?.toString(), blockHash: blockFromDB.hash })
     }
   }
 
-  async isStartParamsValid(startBlockId: number): Promise<boolean> {
+  private async isBlockValid(blockFromDB: IBlock, blockFromChain: SignedBlock): Promise<boolean> {
+    const isEventsExists = await this.isEventsExist(blockFromDB)
+    const isExtrinsicsExists = await this.isExtrinsicsExist(blockFromDB, blockFromChain)
+    const isParentHashValid = blockFromDB.parent_hash === blockFromChain.block.header.parentHash.toString()
+
+    if (!isEventsExists || !isExtrinsicsExists || !isParentHashValid) {
+      this.logger.debug(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
+      return false
+    }
+
+    return true
+  }
+
+  private async isEventsExist(block: IBlock): Promise<boolean> {
+    try {
+      const count = this.eventRepository.getEventCountByBlock(parseInt(block.id))
+
+      const eventsInBlockchainCount = await this.polkadotApi.getSystemEventsCount(block.hash)
+
+      return +count === eventsInBlockchainCount.toNumber()
+    } catch (err) {
+      this.logger.error(`failed to get events for block ${block.id}, error: ${err}`)
+      throw new Error(`cannot check events for block ${block.id}`)
+    }
+  }
+
+  private async isStartParamsValid(startBlockId: number): Promise<boolean> {
     const isStartBlockValid = await this.isStartHeightValid(startBlockId)
 
     if (!isStartBlockValid) {
@@ -276,7 +225,7 @@ export class WatchdogService implements IWatchdogService {
       return false
     }
 
-    const dbEmptyCheck = await this.isDBEmpty()
+    const dbEmptyCheck = await this.blockRepository.isEmpty()
 
     if (dbEmptyCheck) {
       this.logger.error('Blocks table in DB is empty, exit')
@@ -285,21 +234,7 @@ export class WatchdogService implements IWatchdogService {
     return true
   }
 
-  async isDBEmpty(): Promise<boolean> {
-    try {
-      const { rows } = await this.repository.query({
-        text: `SELECT count (*) FROM ${DB_SCHEMA}.blocks`
-      })
-      const blocksInDBCount = +rows[0].count
-
-      return blocksInDBCount === 0
-    } catch (err) {
-      this.logger.error(`Error check is db empty`)
-      throw new Error('Error check is db empty')
-    }
-  }
-
-  async getNextBlockIdInterval(currentBlockId: number): Promise<Array<number>> {
+  private async getNextBlockIdInterval(currentBlockId: number): Promise<Array<number>> {
     const nextBlocksCount = await this.getNextBlocksCount(currentBlockId)
 
     return Array(nextBlocksCount)
@@ -307,14 +242,14 @@ export class WatchdogService implements IWatchdogService {
       .map((_, i) => currentBlockId + i + 1)
   }
 
-  async getNextBlocksCount(currentBlockId: number): Promise<number> {
+  private async getNextBlocksCount(currentBlockId: number): Promise<number> {
     const lastProcessedBlockId = await this.blockRepository.getLastProcessedBlock()
 
     if (lastProcessedBlockId - currentBlockId > this.concurrency) return this.concurrency
     return lastProcessedBlockId - currentBlockId
   }
 
-  async updateLastCheckedBlockIdIfRestartOrBlocksEnd(lastCheckedBlockId: number): Promise<number> {
+  private async updateLastCheckedBlockIdIfRestartOrBlocksEnd(lastCheckedBlockId: number): Promise<number> {
     const lastProcessedBlockId = await this.blockRepository.getLastProcessedBlock()
 
     const isLastBlock = () => lastCheckedBlockId === lastProcessedBlockId
@@ -334,21 +269,16 @@ export class WatchdogService implements IWatchdogService {
     return resultBlockId
   }
 
-  async isStartHeightValid(startBlockId: number): Promise<boolean> {
+  private async isStartHeightValid(startBlockId: number): Promise<boolean> {
     const watchdogVerifyHeight = (await this.configService.getConfigValueFromDB('watchdog_verify_height')) || -1
     this.logger.debug(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
 
     return startBlockId >= 0 && startBlockId - 1 <= +watchdogVerifyHeight
   }
 
-  async isExtrinsicsExist(block: IBlock, blockFromChain: SignedBlock): Promise<boolean> {
+  private async isExtrinsicsExist(block: IBlock, blockFromChain: SignedBlock): Promise<boolean> {
     try {
-      const {
-        rows: [{ count }]
-      } = await this.repository.query({
-        text: `SELECT count(*) FROM ${DB_SCHEMA}.extrinsics WHERE "block_id" = $1::int`,
-        values: [block.id]
-      })
+      const count = this.extrinsicRepository.getExtrinsicsCountByBlock(parseInt(block.id))
 
       const calculateExtrinsicsCountWithNestedBatch = (extrinsics: any) => {
         const reducer = (acc: number, extrinsic: { method: { method: string; args: (string | any[])[] } }) => {
