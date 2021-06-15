@@ -1,6 +1,5 @@
 import { IExtrinsic, IExtrinsicsService } from './extrinsics.types'
-import { IKafkaModule, KafkaModule } from '../../modules/kafka.module'
-
+import { IKafkaModule, KafkaModule } from '@modules/kafka'
 
 /**
  * Provides extrinsics extraction methods
@@ -8,7 +7,17 @@ import { IKafkaModule, KafkaModule } from '../../modules/kafka.module'
  */
 
 class ExtrinsicsService implements IExtrinsicsService {
+  private static instance: ExtrinsicsService
+
   private readonly kafka: IKafkaModule = KafkaModule.inject()
+
+  constructor() {
+    if (ExtrinsicsService.instance) {
+      return ExtrinsicsService.instance
+    }
+
+    ExtrinsicsService.instance = this
+  }
 
   async extractExtrinsics(...args: Parameters<IExtrinsicsService['extractExtrinsics']>): Promise<void> {
     const [
