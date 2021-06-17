@@ -19,6 +19,7 @@ Multi blockchain ETL solution is an interoperability-first data warehouse with g
 - Docker (allocate memory at least 8 GB in docker settings)
 - Docker Compose
 - Make (optional)
+- python3, pip3 (to install dashboard in redash)
 
 # Ram requirements
 
@@ -40,6 +41,9 @@ git clone https://github.com/p2p-org/polkadot-profit-transformer.git
 cd polkadot-profit-transformer
 
 # Now fill up SUBSTRATE_URI and APP_NETWORK in docker/env/.streamer.env, docker/env/.enrichments_processor.env
+
+# !!! Add next line to the /etc/hosts
+# 127.0.0.1 broker
 
 make up
 ```
