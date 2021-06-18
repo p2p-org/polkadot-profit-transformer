@@ -31,7 +31,7 @@
       "config": {
         "topics": "{APP_PREFIX}_BLOCK",
         "insert.mode": "UPSERT",
-        "table.name.format": "dot_polka._blocks",
+        "table.name.format": "{POSTGRES_SCHEMA}._blocks",
         "pk.mode": "record_value",
         "pk.fields": "id"
       }
@@ -41,7 +41,7 @@
       "config": {
         "topics": "{APP_PREFIX}_EVENT_EXTRACTION",
         "insert.mode": "INSERT",
-        "table.name.format": "dot_polka._events",
+        "table.name.format": "{POSTGRES_SCHEMA}._events",
         "pk.mode": "none"
       }
     },
@@ -50,7 +50,7 @@
       "config": {
         "topics": "{APP_PREFIX}_EXTRINSIC_EXTRACTION",
         "insert.mode": "INSERT",
-        "table.name.format": "dot_polka._extrinsics",
+        "table.name.format": "{POSTGRES_SCHEMA}._extrinsics",
         "pk.mode": "none"
       }
     },
@@ -59,7 +59,7 @@
       "config": {
         "topics": "{APP_PREFIX}_STAKING_NOMINATOR_EXTRACTION",
         "insert.mode": "INSERT",
-        "table.name.format": "dot_polka._nominators",
+        "table.name.format": "{POSTGRES_SCHEMA}._nominators",
         "pk.mode": "none"
       }
     },
@@ -68,7 +68,7 @@
       "config": {
         "topics": "{APP_PREFIX}_STAKING_VALIDATOR_EXTRACTION",
         "insert.mode": "INSERT",
-        "table.name.format": "dot_polka._validators",
+        "table.name.format": "{POSTGRES_SCHEMA}._validators",
         "pk.mode": "none"
       }
     },
@@ -77,7 +77,7 @@
       "config": {
         "topics": "{APP_PREFIX}_STAKING_ERAS",
         "insert.mode": "INSERT",
-        "table.name.format": "dot_polka._eras",
+        "table.name.format": "{POSTGRES_SCHEMA}._eras",
         "pk.mode": "none"
       }
     },
@@ -86,7 +86,7 @@
       "config": {
         "topics": "{APP_PREFIX}_IDENTITY_ENRICHMENT",
         "insert.mode": "UPSERT",
-        "table.name.format": "dot_polka.account_identity",
+        "table.name.format": "{POSTGRES_SCHEMA}.account_identity",
         "pk.mode": "record_value",
         "pk.fields": "account_id"
       }

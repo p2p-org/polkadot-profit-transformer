@@ -690,6 +690,6 @@ FROM (
             INNER JOIN dot_polka.eras as e ON e.era = n.era 
         WHERE n.era =309
         GROUP BY n.block_time, n.era, n.account_id, validator, n.reward_dest, v.reward_dest, v.reward_account_id, e.total_reward, e.total_stake, total_reward_points, v.total, own, prefs
-    ) as data
+    ) as data;
 
 REFRESH MATERIALIZED VIEW dot_polka.nominator_validator_apy;
