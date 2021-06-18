@@ -19,6 +19,7 @@ Multi blockchain ETL solution is an interoperability-first data warehouse with g
 - Docker (allocate memory at least 8 GB in docker settings)
 - Docker Compose
 - Make (optional)
+- Python
 
 # Ram requirements
 
@@ -31,11 +32,88 @@ _For launching all stack on a single machine, 16Gb RAM and 30Gb disk space for p
 
 You need Polkadot or Kusama node **in archive mode** with an open websocket interface.
 
-# Quick Start
+
 
 Docker service should be started first. Please allocate 12GB of RAM in Docker settings.
 
-```bash
+Also python need to be installed installed.
+
+## Docker installation
+
+```
+1. Update package:
+sudo apt update
+
+2. Install package for HTTPS:
+
+sudo apt install apt-transport-https ca-certificates curl software-properties-common
+3. Add GPG-key for Docker:
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+4. Add repository for Docker:
+
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+
+5. Update package:
+
+sudo apt update
+6. Switc to Docker repository and install:
+
+apt-cache policy docker-ce
+
+7.Check version of Docker:
+
+ubuntu docker-ce
+
+8. Install Docker:
+
+sudo apt install docker-ce
+
+9. Check installation:
+
+sudo systemctl status docker
+
+Output info:
+docker install ubuntu
+Docker install Ubuntu
+
+9. Add user to Docker group (not required):
+
+sudo usermod -aG docker ${user}
+
+10. Input (not required):
+
+su - ${user}
+
+Add user password (not required):
+
+12. Check Docker image:
+
+docker run hello-world
+
+You must see «Hello from Docker!»
+
+```
+
+## Python installation 
+
+``` 
+1. Update package:
+sudo apt update
+
+2. Install python:
+sudo apt install python3-pip
+
+3. Check version:
+python3 -V
+
+Output
+Python 3.8.2
+```
+
+# Quick Start
+
+```
 git clone https://github.com/p2p-org/polkadot-profit-transformer.git
 cd polkadot-profit-transformer
 
