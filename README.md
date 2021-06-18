@@ -119,6 +119,9 @@ cd polkadot-profit-transformer
 
 # Now fill up SUBSTRATE_URI and APP_NETWORK in docker/env/.streamer.env, docker/env/.enrichments_processor.env
 
+# !!! Add next line to the /etc/hosts
+# 127.0.0.1 broker
+
 make up
 ```
 

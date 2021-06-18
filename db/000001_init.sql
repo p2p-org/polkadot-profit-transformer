@@ -398,6 +398,19 @@ CREATE INDEX dot_polka_balances_account_id_method_idx ON dot_polka.balances ("ac
 
 CREATE INDEX dot_polka_account_identity_account_id_idx ON dot_polka.account_identity (account_id);
 
+CREATE INDEX events_block_id ON dot_polka.events(block_id);
+
+CREATE INDEX blocks_era ON dot_polka.blocks(era);
+
+CREATE INDEX blocks_session_id ON dot_polka.blocks(session_id);
+
+CREATE INDEX extrinsics_block_id ON dot_polka.extrinsics(block_id);
+
+
+
+
+
+
 -- Validators
 
 

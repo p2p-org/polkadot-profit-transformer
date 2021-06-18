@@ -136,8 +136,8 @@ export default class WatchdogService implements IWatchdogService {
   async getEraStakingDiff(eraId: number) {
     try {
       const { rows } = await this.repository.query({
-        text: `select e.era as era, e.total_stake  - sum(v.total) as diff from dot_polka.eras e 
-  join dot_polka.validators v
+        text: `select e.era as era, e.total_stake  - sum(v.total) as diff from ${DB_SCHEMA}.eras e 
+  join ${DB_SCHEMA}.validators v
   on v.era = e.era
   where e.era = $1::int
   group by e.era`,
