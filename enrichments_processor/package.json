@@ -24,6 +24,8 @@
     "@polkadot/rpc-core": "^4.9.2",
     "@polkadot/types-known": "^4.9.2",
     "async-mutex": "^0.2.6",
+    "class-transformer": "^0.4.0",
+    "class-validator": "^0.13.1",
     "dotenv": "^8.2.0",
     "fastify": "^3.9.2",
     "fastify-swagger": "^3.5.0",
