@@ -1,17 +1,15 @@
 import dotenv from 'dotenv'
 import { resolve } from 'path'
-import { IsNotEmpty, IsNumber, IsPort, IsString, IsUrl, Matches, MinLength, validate } from 'class-validator'
+import { IsNotEmpty, IsPort, IsString, IsUrl, Matches, MinLength, validate } from 'class-validator'
 import { plainToClass } from 'class-transformer'
 
 dotenv.config({ path: resolve(__dirname, '.env') })
 
-const applicationId = 'substrate_streamer'
+const applicationId = 'enrichments_processor'
 
 class EnvironmentVariableConfig {
   @IsString()
-  @IsNotEmpty()
-  @MinLength(3)
-  APP_ID!: string
+  APP_ID: string = applicationId
 
   get APP_CLIENT_ID(): string {
     return `mbelt-${applicationId}-${this.APP_MODE.toLowerCase()}-${this.APP_NETWORK.toLowerCase()}`
@@ -52,33 +50,6 @@ class EnvironmentVariableConfig {
   get KAFKA_PREFIX(): string {
     return `SUBSTRATE_STREAMER_${this.APP_MODE.toUpperCase()}_${this.APP_NETWORK.toUpperCase()}`
   }
-
-  // Postgres
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(3)
-  DB_HOST = 'localhost'
-
-  @IsPort()
-  DB_PORT = '5432'
-
-  @IsNotEmpty()
-  @MinLength(3)
-  DB_NAME = 'postgres'
-
-  @IsNotEmpty()
-  @MinLength(3)
-  DB_USER!: string
-
-  @IsString()
-  DB_PASSWORD = ''
-
-  @IsString()
-  DB_SCHEMA = 'public'
-
-  //App config
-  @IsNumber()
-  ERA_EXTRACTION_OFFSET = 4
 }
 
 const environment = plainToClass(EnvironmentVariableConfig, process.env)

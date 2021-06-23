@@ -6,27 +6,19 @@ import { IConsumerService } from '../consumer/consumer.types'
 
 import WatchdogService from '../watchdog/watchdog'
 
-const { ConfigService } = require('../config/config')
-const { ConsumerService } = require('../consumer/consumer')
-const { BlocksService } = require('../blocks/blocks')
+import { ConfigService } from '../config/config'
+import { ConsumerService } from '../consumer/consumer'
+import { BlocksService } from '../blocks/blocks'
 
 /**
  * Provides cli operations
  * @class
  */
 class RunnerService implements IRunnerService {
-  private readonly blocksService: IBlocksService
-  private readonly consumerService: IConsumerService
-  private readonly configService: IConfigService
-  private readonly watchdogService: IWatchdogService
-
-  constructor() {
-    this.blocksService = new BlocksService()
-    this.consumerService = new ConsumerService()
-    this.configService = new ConfigService()
-
-    this.watchdogService = WatchdogService.getInstance()
-  }
+  private readonly blocksService: IBlocksService = new BlocksService()
+  private readonly consumerService: IConsumerService = new ConsumerService()
+  private readonly configService: IConfigService = new ConfigService()
+  private readonly watchdogService: IWatchdogService = WatchdogService.getInstance()
 
   /**
    * Run synchronization blocks
