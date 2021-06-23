@@ -9,7 +9,6 @@ KAFKA_CONNECT_URL='http://localhost:8083'
 KAFKA_SCHEMA_URL='http://schema-registry:8081'
 KAFKA_KSQL_DB_URL='http://localhost:8088'
 DB_CONNECTION_URL='jdbc:postgresql://db:5432/raw?user=sink&password=d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x'
-POSTGRES_SCHEMA=dot_polka
 
 
 APP_MODE=dev
@@ -199,7 +198,7 @@ read -r -d '' KAFKA_FILE_CONNECTOR_TEMPLATE <<-EOM
 EOM
 
 for kafka_connector in $(jq -c '.connectors[]' <<<"$KSQL_CONFIG"); do
-  for param in {APP_ID,APP_MODE,APP_NETWORK,APP_PREFIX,POSTGRES_SCHEMA}; do
+  for param in {APP_ID,APP_MODE,APP_NETWORK,APP_PREFIX}; do
     kafka_connector=${kafka_connector//\{$param\}/${!param}}
   done
   # Merge config with template

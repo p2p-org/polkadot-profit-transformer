@@ -88,7 +88,6 @@ const build = async (): Promise<FastifyInstance> => {
     await fastify.ready()
   } catch (err) {
     throw err
-    // fastify.log.info(`Fastify ready error: ${err}`)
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
