@@ -56,7 +56,4 @@ const environment = plainToClass(EnvironmentVariableConfig, process.env)
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 const validateEnv = async () => await validate(environment)
 
-module.exports = {
-  environment,
-  validateEnv
-}
+export { environment, validateEnv }
