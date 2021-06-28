@@ -89,16 +89,18 @@ class IdentityProcessorService implements IIdentityProcessorService {
 
     for (const extrinsic of extrinsics) {
       if (isValidIdentityExtrinsic(extrinsic)) {
-        return this.updateAccountIdentity(extrinsic)
+        await this.updateAccountIdentity(extrinsic)
+        continue
       }
 
       if (isValidSubsExtrinsic(extrinsic)) {
-        return this.updateSubAccounts(extrinsic)
+        await this.updateSubAccounts(extrinsic)
+        continue
       }
     }
   }
 
-  async updateAccountIdentity({ id: key, signer: accountId }: IExtrinsic): Promise<void> {
+  async updateAccountIdentity({ id: key, signer: accountId }: Pick<IExtrinsic, 'id' | 'signer'>): Promise<void> {
     this.logger.debug(`Process updateAccountIdentity with id ${key}`)
 
     const identityRaw: Option<Registration> = await this.polkadotApi.getIdentity(accountId)
@@ -132,17 +134,17 @@ class IdentityProcessorService implements IIdentityProcessorService {
     })
   }
 
+  sendToPushEnrichmentSubs({ key, accountId, rootAccountId }: ISubsEntry): Promise<void> {
+    return this.pushEnrichment(key, {
+      account_id: accountId,
+      root_account_id: rootAccountId
+    })
+  }
+
   async updateSubAccounts(extrinsic: IExtrinsic): Promise<void> {
     this.logger.debug(`Process updateSubAccounts`)
 
     const { method, args } = extrinsic
-
-    const sendToPushEnrichmentSubs = ({ key, accountId, rootAccountId }: ISubsEntry) => {
-      return this.pushEnrichment(key, {
-        account_id: accountId,
-        root_account_id: rootAccountId
-      })
-    }
 
     /**
      * Adds the given account to the sender's subs.
@@ -152,7 +154,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
       const accountId = typeof rawArg === 'string' ? rawArg : rawArg.id
       const rootAccountId = extrinsic.signer
       const key = extrinsic.id
-      return sendToPushEnrichmentSubs({ key, accountId, rootAccountId })
+      return this.sendToPushEnrichmentSubs({ key, accountId, rootAccountId })
     }
 
     /**
@@ -164,7 +166,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
       const key = extrinsic.id
       return Promise.all(
         rawSubs.map(([accountId]: string, index: number) =>
-          sendToPushEnrichmentSubs({
+          this.sendToPushEnrichmentSubs({
             key: `${key}_${index}`,
             accountId,
             rootAccountId
@@ -187,7 +189,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
       const [rawArg] = extrinsic.args
       const key = extrinsic.id
       const accountId = typeof rawArg === 'string' ? rawArg : rawArg.id
-      return sendToPushEnrichmentSubs({ key, accountId, rootAccountId: '' })
+      return this.sendToPushEnrichmentSubs({ key, accountId, rootAccountId: '' })
     }
 
     /**
@@ -196,7 +198,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
     const quitSub = async (extrinsic: IExtrinsic): Promise<void> => {
       const key = extrinsic.id
       const accountId = extrinsic.signer
-      return sendToPushEnrichmentSubs({ key, accountId, rootAccountId: '' })
+      return this.sendToPushEnrichmentSubs({ key, accountId, rootAccountId: '' })
     }
 
     switch (method) {
