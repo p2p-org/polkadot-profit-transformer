@@ -16,7 +16,8 @@
     "lint:fix": "npx eslint ./src  --fix",
     "lint-staged": "lint-staged",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
-    "test-new": "npx jest --no-cache"
+    "test-new": "npx jest --no-cache",
+    "test-dev": "npx jest --no-cache --watch"
   },
   "dependencies": {
     "@polkadot/api": "^4.9.2",

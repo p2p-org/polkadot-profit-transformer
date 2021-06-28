@@ -66,4 +66,6 @@ export interface IIdentityProcessorService {
   updateSubAccounts(extrinsic: IExtrinsic): Promise<void>
 
   pushEnrichment(key: string, data: IEnrichmentEntry): Promise<void>
+
+  sendToPushEnrichmentSubs({ key, accountId, rootAccountId }: ISubsEntry): Promise<void>
 }
