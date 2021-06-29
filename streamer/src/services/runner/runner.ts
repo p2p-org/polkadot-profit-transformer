@@ -32,17 +32,18 @@ class RunnerService implements IRunnerService {
 
     if (options.optionSync || options.optionSyncForce) {
       const startBlock: number | undefined = options.optionSyncForce ? 0 : options.optionSyncStartBlockNumber
-      this.blocksService.processBlocks(startBlock, options.optionSubscribeFinHead)
+      await this.blocksService.processBlocks(startBlock, options.optionSubscribeFinHead)
       return
     }
 
     if (options.optionSubscribeFinHead) {
-      this.consumerService.subscribeFinalizedHeads()
+      await this.consumerService.subscribeFinalizedHeads()
       return
     }
 
     if (options.optionStartWatchdog) {
-      this.watchdogService.run(options.optionWatchdogStartBlockNumber)
+      await this.watchdogService.run(options.optionWatchdogStartBlockNumber)
+      return
     }
   }
 }
