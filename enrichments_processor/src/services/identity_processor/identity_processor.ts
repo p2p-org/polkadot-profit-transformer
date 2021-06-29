@@ -90,12 +90,10 @@ class IdentityProcessorService implements IIdentityProcessorService {
     for (const extrinsic of extrinsics) {
       if (isValidIdentityExtrinsic(extrinsic)) {
         await this.updateAccountIdentity(extrinsic)
-        continue
       }
 
       if (isValidSubsExtrinsic(extrinsic)) {
         await this.updateSubAccounts(extrinsic)
-        continue
       }
     }
   }
