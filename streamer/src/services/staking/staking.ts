@@ -53,7 +53,7 @@ export class StakingService implements IStakingService {
 
     const validatorsAccountIdSet: Set<string> = await this.polkadotApi.getDistinctValidatorsAccountsByEra(firstBlockOfEra.hash)
 
-    for (const validatorAccountId of validatorsAccountIdSet) {
+    const processValidator = async (validatorAccountId: string): Promise<void> => {
       this.logger.debug(`Process staking for validator ${validatorAccountId} `)
       const [{ total, own, others }, { others: othersClipped }, prefs] = await this.polkadotApi.getStakersInfo(
         blockHash,
@@ -89,6 +89,8 @@ export class StakingService implements IStakingService {
         prefs: prefs.toJSON()
       })
     }
+
+    await Promise.all(Array.from(validatorsAccountIdSet).map(processValidator))
 
     return {
       validators,
