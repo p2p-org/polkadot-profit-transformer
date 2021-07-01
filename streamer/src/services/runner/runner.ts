@@ -6,27 +6,19 @@ import { IConsumerService } from '../consumer/consumer.types'
 
 import WatchdogService from '../watchdog/watchdog'
 
-const { ConfigService } = require('../config/config')
-const { ConsumerService } = require('../consumer/consumer')
-const { BlocksService } = require('../blocks/blocks')
+import { ConfigService } from '../config/config'
+import { ConsumerService } from '../consumer/consumer'
+import { BlocksService } from '../blocks/blocks'
 
 /**
  * Provides cli operations
  * @class
  */
 class RunnerService implements IRunnerService {
-  private readonly blocksService: IBlocksService
-  private readonly consumerService: IConsumerService
-  private readonly configService: IConfigService
-  private readonly watchdogService: IWatchdogService
-
-  constructor() {
-    this.blocksService = new BlocksService()
-    this.consumerService = new ConsumerService()
-    this.configService = new ConfigService()
-
-    this.watchdogService = WatchdogService.getInstance()
-  }
+  private readonly blocksService: IBlocksService = new BlocksService()
+  private readonly consumerService: IConsumerService = new ConsumerService()
+  private readonly configService: IConfigService = new ConfigService()
+  private readonly watchdogService: IWatchdogService = WatchdogService.getInstance()
 
   /**
    * Run synchronization blocks
@@ -40,17 +32,18 @@ class RunnerService implements IRunnerService {
 
     if (options.optionSync || options.optionSyncForce) {
       const startBlock: number | undefined = options.optionSyncForce ? 0 : options.optionSyncStartBlockNumber
-      this.blocksService.processBlocks(startBlock, options.optionSubscribeFinHead)
+      await this.blocksService.processBlocks(startBlock, options.optionSubscribeFinHead)
       return
     }
 
     if (options.optionSubscribeFinHead) {
-      this.consumerService.subscribeFinalizedHeads()
+      await this.consumerService.subscribeFinalizedHeads()
       return
     }
 
     if (options.optionStartWatchdog) {
-      this.watchdogService.run(options.optionWatchdogStartBlockNumber)
+      await this.watchdogService.run(options.optionWatchdogStartBlockNumber)
+      return
     }
   }
 }

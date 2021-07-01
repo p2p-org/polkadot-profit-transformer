@@ -9,11 +9,15 @@
   "private": false,
   "scripts": {
     "build": "npx tsc",
-    "start": "npx ts-node --trace-warnings ./src/main.js",
+    "start": "npx ts-node ./src/main.js",
     "start:prod": "node --trace-warnings ./dist/main.js",
-    "dev": "npx ts-node ./src/main.js",
-    "lint": "npx eslint --ext .js,.ts ./src/main.js",
-    "lint:fix": "npx eslint .  --fix"
+    "dev": "npx ts-node ./src/main.ts",
+    "lint": "npx eslint --ext .js,.ts ./src/main.ts",
+    "lint:fix": "npx eslint ./src  --fix",
+    "lint-staged": "lint-staged",
+    "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
+    "test-new": "npx jest --no-cache",
+    "test-dev": "npx jest --no-cache --watch"
   },
   "dependencies": {
     "@polkadot/api": "^4.9.2",
@@ -21,20 +25,35 @@
     "@polkadot/rpc-core": "^4.9.2",
     "@polkadot/types-known": "^4.9.2",
     "async-mutex": "^0.2.6",
+    "class-transformer": "^0.4.0",
+    "class-validator": "^0.13.1",
     "dotenv": "^8.2.0",
     "fastify": "^3.9.2",
     "fastify-swagger": "^3.5.0",
     "kafkajs": "^1.15.0",
     "pg": "^8.5.1",
+    "pino": "^6.11.3",
     "pino-pretty": "^4.2.1",
+    "prom-client": "^13.1.0",
+    "reflect-metadata": "^0.1.13",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/plugin-proposal-class-properties": "^7.13.0",
+    "@babel/plugin-proposal-decorators": "^7.14.2",
+    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-typescript": "^7.13.0",
     "@polkadot/types": "4.9.2",
+    "@types/dotenv": "^8.2.0",
+    "@types/jest": "^26.0.23",
     "@types/pg": "^7.14.11",
+    "@types/pino": "^6.3.8",
+    "@types/yargs": "^16.0.1",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
     "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.6.3",
     "eslint": "7.9.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-config-standard": "14.1.1",
@@ -43,10 +62,49 @@
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.0.1",
+    "jest": "^27.0.0-next.9",
+    "lint-staged": "^10.5.4",
     "mocha": "^8.2.1",
     "nodemon": "2.0.4",
     "prettier": "^2.1.2",
+    "ts-jest": "^27.0.0-next.12",
     "ts-node": "^9.1.1",
+    "type-coverage": "^2.17.2",
     "typescript": "^4.2.3"
+  },
+  "lint-staged": {
+    "*.(ts)": [
+      "prettier --write",
+      "eslint --fix",
+      "git add"
+    ],
+    "*.(json|js)": [
+      "prettier --write"
+    ]
+  },
+  "jest": {
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "./**/*.{js,ts}",
+      "!./**/*.types.ts"
+    ],
+    "coverageReporters": [
+      "text"
+    ],
+    "coverageDirectory": "../coverage",
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "transform": {
+      "^.+\\.(js|ts)$": "babel-jest"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(@polkadot/|@babel/runtime/helpers/esm/))"
+    ],
+    "rootDir": "src",
+    "testRegex": ".spec.ts$",
+    "testEnvironment": "node"
   }
 }

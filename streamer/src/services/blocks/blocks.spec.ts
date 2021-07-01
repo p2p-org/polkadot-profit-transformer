@@ -243,19 +243,19 @@ test('processBlocks without params', async () => {
 
 test('processBlocks from 0', async () => {
   const blocksService = new BlocksService()
-  blocksService.runBlocksWorker = jest.fn(async () => true)
+  blocksService.runBlocksWorker = jest.fn()
 
   await blocksService.processBlocks(0)
 
-  await expect(blocksService.runBlocksWorker).toBeCalledTimes(13)
+  await expect(blocksService.runBlocksWorker).toBeCalledTimes(20)
 })
 
 // todo - check if invoked inside IF statement in  processBlocks while loop
 test('processBlocks from pre-last', async () => {
   const blocksService = new BlocksService()
-  blocksService.runBlocksWorker = jest.fn(async () => true)
+  blocksService.runBlocksWorker = jest.fn()
   await blocksService.processBlocks(14)
-  await expect(blocksService.runBlocksWorker).toBeCalledTimes(1)
+  await expect(blocksService.runBlocksWorker).toBeCalledTimes(10)
 })
 
 // todo - check if consumerService.subscribeFinalizedHeads() invoked

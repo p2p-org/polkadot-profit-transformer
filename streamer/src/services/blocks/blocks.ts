@@ -46,6 +46,8 @@ class BlocksService implements IBlocksService {
       throw new Error('cannot get block hash')
     }
 
+    this.logger.info(`Process block "${height}" with hash ${blockHash}`)
+
     const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await this.polkadotApi.getInfoToProcessBlock(
       blockHash
     )
@@ -76,8 +78,6 @@ class BlocksService implements IBlocksService {
       events: processedEvents,
       block_time: blockTime.toNumber()
     }
-
-    this.logger.info(`Process block "${blockData.block.header.number}" with hash ${blockData.block.header.hash}`)
 
     await this.kafka.sendBlockData(blockData)
 
@@ -129,7 +129,7 @@ class BlocksService implements IBlocksService {
     let blockNumber: number = startBlockNumber
 
     while (blockNumber <= lastBlockNumber) {
-      const chunk = lastBlockNumber - blockNumber >= 10 ? 10 : (lastBlockNumber - blockNumber) % 10
+      const chunk = 10
       const processTasks = Array(chunk)
         .fill('')
         .map((_, i) => this.runBlocksWorker(i + 1, blockNumber + i))
@@ -138,9 +138,7 @@ class BlocksService implements IBlocksService {
 
       blockNumber += 10
 
-      if (blockNumber > lastBlockNumber) {
-        lastBlockNumber = await this.polkadotApi.getFinBlockNumber()
-      }
+      lastBlockNumber = await this.polkadotApi.getFinBlockNumber()
     }
 
     BlocksService.status = SyncStatus.SUBSCRIPTION
@@ -218,21 +216,17 @@ class BlocksService implements IBlocksService {
     })
   }
 
-  async runBlocksWorker(workerId: number, blockNumber: number): Promise<boolean> {
-    for (let attempts = 5; attempts > 0; attempts--) {
-      let lastError = null
-      await this.processBlock(blockNumber).catch((error) => {
-        lastError = error
-        this.logger.error(`Worker id: "${workerId}" Failed to process block #${blockNumber}: ${error}`)
-      })
-
-      if (!lastError) {
-        return true
+  async runBlocksWorker(workerId: number, blockNumber: number): Promise<void> {
+    for (let attempts = 0; attempts < 5; attempts++) {
+      try {
+        await this.processBlock(blockNumber)
+        return
+      } catch (error) {
+        this.logger.error(`Worker id: "${workerId}" Failed attempt ${attempts} to process block #${blockNumber}: ${error}`)
+        if (error.message === 'Unable to retrieve header and parent from supplied hash') return
+        await this.sleep(2000)
       }
-
-      await this.sleep(2000)
     }
-    return false
   }
 
   private async processEvents(blockNumber: number, events: Vec<EventRecord>) {

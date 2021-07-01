@@ -1,7 +1,5 @@
 import { ApiPromise } from '@polkadot/api'
 import { Producer } from 'kafkajs'
-import { Option } from '@polkadot/types'
-import { Registration } from '@polkadot/types/interfaces'
 
 export interface IApplication {
   polkadotConnector: ApiPromise
@@ -69,5 +67,5 @@ export interface IIdentityProcessorService {
 
   pushEnrichment(key: string, data: IEnrichmentEntry): Promise<void>
 
-  // getIdentity(accountId: string): Promise<Option<Registration>>
+  sendToPushEnrichmentSubs({ key, accountId, rootAccountId }: ISubsEntry): Promise<void>
 }
