@@ -653,9 +653,6 @@ ORDER BY e.block_id DESC WITH DATA;
 
 REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance;
 
-
-
-
 CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking AS
 SELECT
            e.session_id,
@@ -699,6 +696,7 @@ FROM (
     GROUP BY n.era, n.block_time, n.account_id, validator,prefs
     ) as grouped
 
+REFRESH MATERIALIZED VIEW dot_polka.nominator_validator_apy;
 
 
 CREATE MATERIALIZED VIEW dot_polka.nominator_apy AS 
@@ -725,27 +723,27 @@ FROM (
                     INNER JOIN dot_polka.eras as e ON e.era = n.era 
                 GROUP BY n.era, n.account_id, validator, prefs
             ) as data
-    ) as d
-INNER JOIN  (SELECT era, MAX(apy) as max_apy, AVG(APY) as avg_apy, min(apy) as min_apy
-            FROM (SELECT era,
-                         CASE WHEN nominator_stake>0 AND validator_points>0 
-                            THEN CASE WHEN commission = 0 
-                                THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
-                                ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
-                            ELSE 0 END as APY
-            FROM (
-                    SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake,
-                      validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
-                      MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
-                    FROM dot_polka.nominators as n
-                        INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
-                        INNER JOIN dot_polka.eras as e ON e.era = n.era 
-                    GROUP BY n.block_time, n.era, n.account_id, validator, prefs
-                        ) as pre_max_min
-            ) as max_min 
+                ) as d
+            INNER JOIN  (SELECT era, MAX(apy) as max_apy, AVG(APY) as avg_apy, min(apy) as min_apy
+                        FROM (SELECT era,
+                                    CASE WHEN nominator_stake>0 AND validator_points>0 
+                                        THEN CASE WHEN commission = 0 
+                                            THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
+                                            ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
+                                        ELSE 0 END as APY
+                        FROM (
+                                SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake,
+                                validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
+                                MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
+                                FROM dot_polka.nominators as n
+                                    INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
+                                    INNER JOIN dot_polka.eras as e ON e.era = n.era 
+                                GROUP BY n.block_time, n.era, n.account_id, validator, prefs
+                                    ) as pre_max_min
+                        ) as max_min 
             GROUP by era ) as max_min_grouped
             ON max_min_grouped.era=d.era
 ORDER by d.era desc
 
 
-REFRESH MATERIALIZED VIEW dot_polka.nominator_validator_apy;
+REFRESH MATERIALIZED VIEW dot_polka.nominator_apy;
