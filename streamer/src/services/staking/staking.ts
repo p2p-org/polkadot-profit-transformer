@@ -1,4 +1,3 @@
-import { AccountId, Exposure, IndividualExposure } from '@polkadot/types/interfaces'
 import {
   IGetValidatorsNominatorsResult,
   IBlockEraParams,
