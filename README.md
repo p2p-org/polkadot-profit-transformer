@@ -61,15 +61,11 @@ sudo apt update
 
 apt-cache policy docker-ce
 
-7.Check version of Docker:
-
-ubuntu docker-ce
-
-8. Install Docker:
+7. Install Docker:
 
 sudo apt install docker-ce
 
-9. Check installation:
+8. Check installation:
 
 sudo systemctl status docker
 
@@ -77,11 +73,11 @@ Output info:
 docker install ubuntu
 Docker install Ubuntu
 
-9. Add user to Docker group (not required):
+10. Add user to Docker group (not required):
 
 sudo usermod -aG docker ${user}
 
-10. Input (not required):
+11. Input (not required):
 
 su - ${user}
 
@@ -110,6 +106,19 @@ python3 -V
 Output
 Python 3.8.2
 ```
+## Other package
+In additional following package also must to be installed
+```
+git:
+sudo apt install git
+
+docker-compose:
+pip install docker-compose
+
+jg:
+sudo apt-get install jq
+```
+
 
 # Quick Start
 
@@ -138,6 +147,8 @@ Port is described in [@docker-compose.yml](docker-compose.yml)
 On sync in progress, you'll see `{status: "syncronization"}`
 
 After sync completed `{status: "syncronized"}`, the streamer will switch to the finalized blocks listening, and Redash starts with pre-set datasource and dashboard.
+
+Also you can take a look in logs by enter followinf command `docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml logs -tf --tail=10 streamer`. In logs you'll see last block processing and its hash.
 
 ### Redash
 
