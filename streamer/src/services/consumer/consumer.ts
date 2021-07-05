@@ -7,47 +7,28 @@ import { PolkadotModule } from '../../modules/polkadot.module'
 import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
 import { BlockRepository } from '../../repositories/block.repository'
 
-/**
- * Provides blocks streamer service
- * @class
- */
 class ConsumerService implements IConsumerService {
   private readonly blockRepository: BlockRepository = BlockRepository.inject()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
-  /**
-   * Subscribe to finalized heads stream
-   *
-   * @async
-   * @returns {Promise<void>}
-   */
+
   async subscribeFinalizedHeads(): Promise<void> {
-    if (!BlocksService.isSyncComplete()) {
-      this.logger.error(`failed setup "subscribeFinalizedHeads": sync in process`)
-      return
-    }
+    return new Promise((resolve, reject) => {
+      if (!BlocksService.isSyncComplete()) {
+        throw new Error(`failed setup "subscribeFinalizedHeads": sync is not completed`)
+      }
 
-    this.logger.info(`Starting subscribeFinalizedHeads`)
+      this.logger.info(`Starting subscribeFinalizedHeads`)
 
-    const blockNumberFromDB = await this.blockRepository.getLastProcessedBlock()
-
-    if (blockNumberFromDB === 0) {
-      this.logger.warn(`"subscribeFinalizedHeads" capture enabled but, not synchronized blocks `)
-    }
-
-    await this.polkadotApi.subscribeFinalizedHeads((header) => {
-      return this.onFinalizedHead(header)
+      this.polkadotApi.subscribeFinalizedHeads((header) => {
+        return this.onFinalizedHead(header).catch((error) => {
+          console.log(error)
+          reject(error)
+        })
+      })
     })
   }
 
-  /**
-   * Finalized headers capture handler
-   *
-   * @async
-   * @private
-   * @param {BlockHash} blockHash
-   * @returns {Promise<void>}
-   */
   private async onFinalizedHead(blockHash: Header): Promise<void> {
     const blocksService: IBlocksService = new BlocksService()
 
