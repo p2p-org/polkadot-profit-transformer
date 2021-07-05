@@ -13,15 +13,19 @@ class ConsumerService implements IConsumerService {
   private readonly logger: ILoggerModule = LoggerModule.inject()
 
   async subscribeFinalizedHeads(): Promise<void> {
-    if (!BlocksService.isSyncComplete()) {
-      this.logger.error(`failed setup "subscribeFinalizedHeads": sync in process`)
-      return
-    }
+    return new Promise((resolve, reject) => {
+      if (!BlocksService.isSyncComplete()) {
+        throw new Error(`failed setup "subscribeFinalizedHeads": sync is not completed`)
+      }
 
-    this.logger.info(`Starting subscribeFinalizedHeads`)
+      this.logger.info(`Starting subscribeFinalizedHeads`)
 
-    await this.polkadotApi.subscribeFinalizedHeads((header) => {
-      return this.onFinalizedHead(header)
+      this.polkadotApi.subscribeFinalizedHeads((header) => {
+        return this.onFinalizedHead(header).catch((error) => {
+          console.log(error)
+          reject(error)
+        })
+      })
     })
   }
 

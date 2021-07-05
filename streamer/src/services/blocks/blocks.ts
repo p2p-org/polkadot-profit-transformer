@@ -104,15 +104,6 @@ class BlocksService implements IBlocksService {
     counter.inc(1)
   }
 
-  /**
-   * Process all blocks with head
-   *
-   * @public
-   * @async
-   * @param startBlockNumber
-   * @param optionSubscribeFinHead
-   * @returns {Promise<void>}
-   */
   async processBlocks(startBlockNumber: number | null = null, optionSubscribeFinHead: boolean | null = null): Promise<void> {
     BlocksService.status = SyncStatus.SYNC
 
@@ -143,7 +134,7 @@ class BlocksService implements IBlocksService {
 
     BlocksService.status = SyncStatus.SUBSCRIPTION
 
-    if (optionSubscribeFinHead) this.consumerService.subscribeFinalizedHeads()
+    if (optionSubscribeFinHead) return this.consumerService.subscribeFinalizedHeads()
   }
 
   /**
