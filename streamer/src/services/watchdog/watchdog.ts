@@ -1,4 +1,4 @@
-import { IBlock, VerifierStatus, IWatchdogService, IWatchdogStatus, IWatchdogRestartResponse } from './watchdog.types'
+import { IBlock, IWatchdogRestartResponse, IWatchdogService, IWatchdogStatus, VerifierStatus } from './watchdog.types'
 import { StakingService } from '../staking'
 import { ConfigService } from '../config'
 import { BlocksService } from '../blocks'
@@ -23,7 +23,6 @@ export class WatchdogService implements IWatchdogService {
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
 
-  private resolve: { (arg0: number): void; (value: number | PromiseLike<number>): void } | undefined
   private concurrency: number
   private status: VerifierStatus
   private readonly blocksService: BlocksService
@@ -31,6 +30,7 @@ export class WatchdogService implements IWatchdogService {
   private currentEraId: number
   private lastCheckedBlockId: number
   private restartBlockId: number
+  private iterator: AsyncGenerator<unknown, never, number>;
 
   constructor() {
     this.concurrency = WATCHDOG_CONCURRENCY
@@ -40,6 +40,7 @@ export class WatchdogService implements IWatchdogService {
     this.currentEraId = -1
     this.lastCheckedBlockId = -1
     this.restartBlockId = -1
+    this.iterator = this.watchdogGenerate()
   }
 
   static getInstance(): WatchdogService {
@@ -75,19 +76,7 @@ export class WatchdogService implements IWatchdogService {
     this.lastCheckedBlockId = startBlockId - 1
 
     this.status = VerifierStatus.RUNNING
-
-    while (true) {
-      const blocksToCheck = await this.getNextBlockIdInterval(this.lastCheckedBlockId)
-
-      await Promise.all(blocksToCheck.map((blockId) => this.verifyBlock(blockId)))
-
-      this.lastCheckedBlockId = blocksToCheck[blocksToCheck.length - 1]
-
-      await this.configService.updateConfigValueInDB('watchdog_verify_height', this.lastCheckedBlockId)
-
-      // will sleep here if all blocks verified
-      this.lastCheckedBlockId = await this.updateLastCheckedBlockIdIfRestartOrBlocksEnd(this.lastCheckedBlockId)
-    }
+    await this.iterator.next()
   }
 
   /**
@@ -121,13 +110,36 @@ export class WatchdogService implements IWatchdogService {
 
     if (this.status === VerifierStatus.IDLE) {
       // this resolve was saved as "global" object when all blocks verified
-      this.resolve!(newStartBlockId - 1)
+      this.iterator.next(newStartBlockId - 1)
     } else {
       this.restartBlockId = newStartBlockId - 1
       this.status = VerifierStatus.RESTART
     }
 
     return { result: true }
+  }
+
+  private async *watchdogGenerate(): AsyncGenerator<unknown, never, number> {
+    while (true) {
+        const blocksToCheck = await this.getNextBlockIdInterval(this.lastCheckedBlockId)
+
+        await Promise.all(blocksToCheck.map((blockId) => this.verifyBlock(blockId)))
+
+        this.lastCheckedBlockId = blocksToCheck[blocksToCheck.length - 1]
+
+        await this.configService.updateConfigValueInDB('watchdog_verify_height', this.lastCheckedBlockId)
+
+        if (this.lastCheckedBlockId === await this.blockRepository.getLastProcessedBlock()) {
+          this.status = VerifierStatus.IDLE
+          await this.configService.updateConfigValueInDB('watchdog_finished_at', Date.now())
+
+          this.lastCheckedBlockId = yield
+
+        } else if (this.status === VerifierStatus.RESTART) {
+          this.lastCheckedBlockId = this.restartBlockId
+          this.status = VerifierStatus.RUNNING
+        }
+    }
   }
 
   private async verifyBlock(blockId: number): Promise<void> {
@@ -247,26 +259,6 @@ export class WatchdogService implements IWatchdogService {
 
     if (lastProcessedBlockId - currentBlockId > this.concurrency) return this.concurrency
     return lastProcessedBlockId - currentBlockId
-  }
-
-  private async updateLastCheckedBlockIdIfRestartOrBlocksEnd(lastCheckedBlockId: number): Promise<number> {
-    const lastProcessedBlockId = await this.blockRepository.getLastProcessedBlock()
-
-    const isLastBlock = () => lastCheckedBlockId === lastProcessedBlockId
-
-    if (isLastBlock()) {
-      this.status = VerifierStatus.IDLE
-      await this.configService.updateConfigValueInDB('watchdog_finished_at', Date.now())
-      return new Promise((resolveLink) => {
-        this.resolve = resolveLink
-      })
-    }
-
-    const resultBlockId = this.status === VerifierStatus.RESTART ? this.restartBlockId : lastCheckedBlockId
-
-    this.status = VerifierStatus.RUNNING
-
-    return resultBlockId
   }
 
   private async isStartHeightValid(startBlockId: number): Promise<boolean> {

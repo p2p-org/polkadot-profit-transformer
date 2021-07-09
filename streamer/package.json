@@ -38,6 +38,7 @@
     "pino-pretty": "^4.5.0",
     "prom-client": "^13.1.0",
     "reflect-metadata": "^0.1.13",
+    "typedi": "^0.10.0",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
