@@ -95,24 +95,24 @@ export default class WatchdogService implements IWatchdogService {
     const blockFromDB = await this.getBlockFromDB(blockId)
 
     if (!blockFromDB) {
-      this.logger.debug(`Block is not exists in DB: ${blockId}`)
+      this.logger.info(`Block is not exists in DB: ${blockId}`)
       await this.blocksService.processBlock(blockId)
       return
     }
 
     const blockFromChain = await this.polkadotApi.getBlockData(blockFromDB.hash)
 
-    this.logger.debug(`Validate block ${blockId}`)
+    this.logger.info(`Validate block ${blockId}`)
 
     const isBlockValidResult = await this.isBlockValid(blockFromDB, blockFromChain)
 
     if (!isBlockValidResult) {
       try {
-        this.logger.debug(`Block ${blockId} is not valid, resync.`)
+        this.logger.info(`Block ${blockId} is not valid, resync.`)
         await this.blocksService.processBlock(blockId)
         return
       } catch (error) {
-        this.logger.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
+        this.logger.error({ error }, `error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
       }
     }
 
@@ -128,12 +128,12 @@ export default class WatchdogService implements IWatchdogService {
 
       return rows[0]
     } catch (err) {
-      this.logger.error(`failed to get era by id ${eraId}, error: ${err}`)
+      this.logger.error({ err }, `failed to get era by id ${eraId}`)
       throw new Error(`cannot get era by id ${eraId}`)
     }
   }
 
-  async getEraStakingDiff(eraId: number) {
+  async getEraStakingDiff(eraId: number): Promise<any> {
     try {
       const { rows } = await this.repository.query({
         text: `select e.era as era, e.total_stake  - sum(v.total) as diff from ${DB_SCHEMA}.eras e 
@@ -146,7 +146,7 @@ export default class WatchdogService implements IWatchdogService {
 
       return rows[0]
     } catch (err) {
-      this.logger.error(`failed to get staking diff by id ${eraId}, error: ${err}`)
+      this.logger.error({ err }, `failed to get staking diff by id ${eraId}`)
       throw new Error(`failed to get staking diff by id ${eraId}`)
     }
   }
@@ -176,7 +176,7 @@ export default class WatchdogService implements IWatchdogService {
     const diff = await this.getEraStakingDiff(+eraId)
 
     if (+diff.diff !== 0) {
-      this.logger.debug(`Era staking diff is not zero: ${+diff.diff}. Resync era ${eraId}.`)
+      this.logger.info(`Era staking diff is not zero: ${+diff.diff}. Resync era ${eraId}.`)
       StakingService.inject().addToQueue({ eraPayoutEvent, blockHash: blockFromDB.hash })
     }
   }
@@ -187,7 +187,7 @@ export default class WatchdogService implements IWatchdogService {
     const isParentHashValid = blockFromDB.parent_hash === blockFromChain.block.header.parentHash.toString()
 
     if (!isEventsExists || !isExtrinsicsExists || !isParentHashValid) {
-      this.logger.debug(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
+      this.logger.info(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
       return false
     }
 
@@ -207,7 +207,7 @@ export default class WatchdogService implements IWatchdogService {
 
       return +count === eventsInBlockchainCount.toNumber()
     } catch (err) {
-      this.logger.error(`failed to get events for block ${block.id}, error: ${err}`)
+      this.logger.error({ err }, `failed to get events for block ${block.id}`)
       throw new Error(`cannot check events for block ${block.id}`)
     }
   }
@@ -261,7 +261,7 @@ export default class WatchdogService implements IWatchdogService {
 
       return rows[0]
     } catch (err) {
-      this.logger.error(`failed to get block by id ${blockId}, error: ${err}`)
+      this.logger.error({ err }, `failed to get block by id ${blockId}`)
       throw new Error('cannot getblock by id')
     }
   }
@@ -294,8 +294,8 @@ export default class WatchdogService implements IWatchdogService {
 
       return blocksInDBCount === 0
     } catch (err) {
-      this.logger.error(`Error check is db empty`)
-      throw new Error('Error check is db empty')
+      this.logger.error({ err }, `Error check isDBEmpty`)
+      throw new Error('Error check isDBEmpty')
     }
   }
 
@@ -336,7 +336,7 @@ export default class WatchdogService implements IWatchdogService {
 
   async isStartHeightValid(startBlockId: number): Promise<boolean> {
     const watchdogVerifyHeight = (await this.configService.getConfigValueFromDB('watchdog_verify_height')) || -1
-    this.logger.debug(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
+    this.logger.info(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
 
     return startBlockId >= 0 && startBlockId - 1 <= +watchdogVerifyHeight
   }
@@ -366,7 +366,7 @@ export default class WatchdogService implements IWatchdogService {
 
       return +count === extrinsicsCount
     } catch (err) {
-      this.logger.error(`failed to get extrinsics for block ${block.id}, error: ${err}`)
+      this.logger.error({ err }, `failed to get extrinsics for block ${block.id}`)
       throw new Error(`cannot check extrinsics for block ${block.id}`)
     }
   }

@@ -33,22 +33,22 @@ class IdentityProcessorService implements IIdentityProcessorService {
   async processEvent(event: IEvent): Promise<void> {
     switch (event.event) {
       case 'NewAccount':
-        this.logger.debug(`Block ${event.block_id}: Process enrichment NewAccount`)
+        this.logger.info({ block_id: event.block_id }, `Process enrichment NewAccount`)
         return this.onNewAccount(event)
       case 'KilledAccount':
-        this.logger.debug(`Block ${event.block_id}: Process enrichment KilledAccount`)
+        this.logger.info({ block_id: event.block_id }, `Process enrichment KilledAccount`)
         return this.onKilledAccount(event)
       case 'JudgementRequested':
-        this.logger.debug(`Block ${event.block_id}: Process enrichment JudgementRequested`)
+        this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementRequested`)
         return this.onJudgementEvent({ event, status: JudgementStatus.REQUESTED })
       case 'JudgementGiven':
-        this.logger.debug(`Block ${event.block_id}: Process enrichment JudgementGiven`)
+        this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementGiven`)
         return this.onJudgementEvent({ event, status: JudgementStatus.GIVEN })
       case 'JudgementUnrequested':
-        this.logger.debug(`Block ${event.block_id}: Process enrichment JudgementUnrequested`)
+        this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementUnrequested`)
         return this.onJudgementEvent({ event, status: JudgementStatus.UNREQUESTED })
       default:
-        this.logger.error(`failed to process undefined entry with event type "${event.event}"`)
+        this.logger.error({ block_id: event.block_id }, `failed to process undefined entry with event type "${event.event}"`)
     }
   }
 
@@ -99,8 +99,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
   }
 
   async updateAccountIdentity({ id: key, signer: accountId }: Pick<IExtrinsic, 'id' | 'signer'>): Promise<void> {
-    this.logger.debug(`Process updateAccountIdentity with id ${key}`)
-
+    this.logger.info({ key, accountId }, `Process updateAccountIdentity with id ${key}`)
     const identityRaw: Option<Registration> = await this.polkadotApi.getIdentity(accountId)
 
     if (identityRaw.isEmpty || identityRaw.isNone) {
@@ -140,7 +139,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
   }
 
   async updateSubAccounts(extrinsic: IExtrinsic): Promise<void> {
-    this.logger.debug(`Process updateSubAccounts`)
+    this.logger.trace(`Process updateSubAccounts`)
 
     const { method, args } = extrinsic
 
@@ -224,7 +223,7 @@ class IdentityProcessorService implements IIdentityProcessorService {
     try {
       await this.kafka.sendEnrichmentData(key, data)
     } catch (err) {
-      this.logger.error(`failed to push identity enrichment: `, err)
+      this.logger.error({ err }, `Failed to push identity enrichment `)
     }
   }
 }

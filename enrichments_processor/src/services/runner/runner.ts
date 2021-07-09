@@ -30,7 +30,7 @@ class RunnerService implements IRunnerService {
               this.logger.error(`failed to process topic message "${topic}"`)
           }
         } catch (err) {
-          this.logger.error(`cannot process topic message "${err}"`)
+          this.logger.error({ err, topic }, `Cannot process topic message`)
         }
       }
     })
