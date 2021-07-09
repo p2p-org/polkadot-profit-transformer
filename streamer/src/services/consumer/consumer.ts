@@ -38,17 +38,17 @@ class ConsumerService implements IConsumerService {
       return
     }
 
-    this.logger.info(`Captured block "${blockHash.number}" with hash ${blockHash.hash}`)
+    this.logger.info({ blockHash }, `Captured new finalized block `)
 
     if (blockHash.number.toNumber() < blockNumberFromDB) {
-      this.logger.info(`stash operation detected`)
+      this.logger.warn(`stash operation detected`)
       await blocksService.trimAndUpdateToFinalized(blockHash.number.toNumber())
     }
 
     try {
       await blocksService.processBlock(blockHash.number.toNumber(), false)
     } catch (error) {
-      this.logger.error(`failed to process captured block #${blockHash}:`, error)
+      this.logger.error({ error }, `failed to process captured block #${blockHash}:`)
     }
   }
 }

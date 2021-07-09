@@ -1,7 +1,7 @@
 import { environment } from '../environment'
 import { Pool } from 'pg'
 import { PostgresModule } from '../modules/postgres.module'
-import { LoggerModule } from '../modules/logger.module'
+import { LoggerModule, ILoggerModule } from '../modules/logger.module'
 import { IBlock } from '../services/watchdog/watchdog.types'
 
 const { DB_SCHEMA } = environment
@@ -11,7 +11,7 @@ export class BlockRepository {
   private static instance: BlockRepository
 
   private readonly connectionProvider: Pool = PostgresModule.inject()
-  private readonly logger: LoggerModule = LoggerModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
 
   static inject(): BlockRepository {
     if (!BlockRepository.instance) {
@@ -32,7 +32,7 @@ export class BlockRepository {
         blockNumberFromDB = parseInt(rows[0].last_number)
       }
     } catch (err) {
-      this.logger.error(`failed to get last synchronized block number: ${err}`)
+      this.logger.error({ err }, 'failed to get last synchronized block number')
       throw new Error('cannot get last block number')
     }
 
@@ -48,7 +48,7 @@ export class BlockRepository {
 
       return rows[0]
     } catch (err) {
-      this.logger.error(`failed to get first block of session ${eraId}, error: ${err}`)
+      this.logger.error({ err }, `failed to get first block of session`)
       throw new Error('cannot find first era block')
     }
   }
@@ -80,7 +80,7 @@ export class BlockRepository {
 
       await transaction.query('COMMIT')
     } catch (err) {
-      this.logger.error(`failed to remove block from table: ${err}`)
+      this.logger.error({ err }, `failed to remove block from table`)
       await transaction.query('ROLLBACK')
       throw new Error('cannot remove blocks')
     } finally {
@@ -106,7 +106,7 @@ export class BlockRepository {
 
       await transaction.query('COMMIT')
     } catch (err) {
-      this.logger.error(`failed to remove blocks from table: ${err}`)
+      this.logger.error({ err }, `failed to remove blocks from table`)
       await transaction.query('ROLLBACK')
       throw new Error('cannot remove blocks')
     } finally {

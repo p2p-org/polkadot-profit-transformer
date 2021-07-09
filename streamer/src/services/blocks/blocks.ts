@@ -46,12 +46,13 @@ class BlocksService implements IBlocksService {
       throw new Error('cannot get block hash')
     }
 
-    this.logger.info({
-      title: 'Block processing start',
-      block_id: height,
-      hash: blockHash
-    })
-    // this.logger.info(`Process block "${height}" with hash ${blockHash}`)
+    this.logger.info(
+      {
+        block_id: height,
+        hash: blockHash
+      },
+      'Block processing start'
+    )
 
     const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await this.polkadotApi.getInfoToProcessBlock(
       blockHash
@@ -116,8 +117,7 @@ class BlocksService implements IBlocksService {
       startBlockNumber = await this.blockRepository.getLastProcessedBlock()
     }
 
-    this.logger.info({ title: `Starting processBlocks from ${startBlockNumber}`, block_id: startBlockNumber })
-    // this.logger.info(`Starting processBlocks from ${startBlockNumber}`)
+    this.logger.info({ block_id: startBlockNumber }, `Starting processBlocks from ${startBlockNumber}`)
 
     let lastBlockNumber = await this.polkadotApi.getFinBlockNumber()
 
@@ -180,7 +180,7 @@ class BlocksService implements IBlocksService {
       result.height_diff = lastBlockNumber - lastLocalNumber
       result.fin_height_diff = lastHeader.number.toNumber() - lastBlockNumber
     } catch (err) {
-      this.logger.error(`failed to get block diff: ${err}`)
+      this.logger.error({ err }, `failed to get block diff`)
     }
 
     return result
@@ -202,7 +202,7 @@ class BlocksService implements IBlocksService {
       await this.blockRepository.trimBlocksFrom(startBlockNumber)
       await this.processBlocks(startBlockNumber)
     } catch (err) {
-      this.logger.error(`failed to execute trimAndUpdateToFinalized: ${err}`)
+      this.logger.error({ err }, `failed to execute trimAndUpdateToFinalized`)
     }
     return { result: true }
   }
@@ -219,7 +219,7 @@ class BlocksService implements IBlocksService {
         await this.processBlock(blockNumber)
         return
       } catch (error) {
-        this.logger.error(`Worker id: "${workerId}" Failed attempt ${attempts} to process block #${blockNumber}: ${error}`)
+        this.logger.error({ error }, `Worker id: "${workerId}" Failed attempt ${attempts} to process block #${blockNumber}`)
         if (error.message === 'Unable to retrieve header and parent from supplied hash') return
         await this.sleep(2000)
       }

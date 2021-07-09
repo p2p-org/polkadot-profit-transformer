@@ -19,8 +19,8 @@ export class LoggerModule implements ILoggerModule {
   private logger: Logger
   constructor() {
     this.logger = pino({
-      level: LOG_LEVEL,
-      prettyPrint: true
+      level: LOG_LEVEL
+      // prettyPrint: true
     })
   }
 
@@ -44,7 +44,7 @@ export class LoggerModule implements ILoggerModule {
 
   debug(...params: Parameters<LogFn>): void {
     const [msg, ...args] = params
-    this.logger.debug(msg, args)
+    this.logger.info(msg, args)
   }
 
   info(...params: Parameters<LogFn>): void {
