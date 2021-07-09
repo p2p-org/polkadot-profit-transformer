@@ -46,11 +46,13 @@ class BlocksService implements IBlocksService {
       throw new Error('cannot get block hash')
     }
 
-    this.logger.info({
-      title: 'Block processing start',
-      block_id: height,
-      hash: blockHash
-    })
+    this.logger.info(
+      JSON.stringify({
+        title: 'Block processing start',
+        block_id: height,
+        hash: blockHash
+      })
+    )
     // this.logger.info(`Process block "${height}" with hash ${blockHash}`)
 
     const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await this.polkadotApi.getInfoToProcessBlock(
