@@ -125,6 +125,8 @@ class BlocksService implements IBlocksService {
 
     let blockNumber: number = startBlockNumber
 
+    counter.inc(blockNumber)
+
     while (blockNumber <= lastBlockNumber) {
       const chunk = 10
       const processTasks = Array(chunk)
@@ -143,22 +145,6 @@ class BlocksService implements IBlocksService {
     if (optionSubscribeFinHead) return this.consumerService.subscribeFinalizedHeads()
   }
 
-  /**
-   * Synchronization status
-   *
-   * @typedef {Object} SyncSimpleStatus
-   * @property {string} status
-   * @property {number} fin_height_diff
-   * @property {number} height_diff
-   */
-
-  /**
-   *  Returns synchronization status, and diff between head and finalized head
-   *
-   * @public
-   * @async
-   * @returns {Promise<SyncSimpleStatus>}
-   */
   async getBlocksStatus(): Promise<IBlocksStatusResult> {
     const result = {
       status: 'undefined',
