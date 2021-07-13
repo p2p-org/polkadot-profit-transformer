@@ -1,7 +1,7 @@
 import { IConfigService } from './config.types'
-import { PolkadotModule } from '../../modules/polkadot.module'
-import { ILoggerModule, LoggerModule } from '../../modules/logger.module'
-import { ConfigRepository } from '../../repositories/config.repository'
+import { PolkadotModule } from '@modules/polkadot.module'
+import { ILoggerModule, LoggerModule } from '@modules/logger.module'
+import { ConfigRepository } from '@repositories/config.repository'
 
 const INITIAL_VERIFY_HEIGHT = -1
 /**
@@ -9,9 +9,19 @@ const INITIAL_VERIFY_HEIGHT = -1
  * @class
  */
 class ConfigService implements IConfigService {
+  private static instance: ConfigService
+
   private readonly configRepository: ConfigRepository = new ConfigRepository()
   private readonly polkadotApi: PolkadotModule = PolkadotModule.inject()
   private readonly logger: ILoggerModule = LoggerModule.inject()
+
+  constructor() {
+    if (ConfigService.instance) {
+      return ConfigService.instance
+    }
+
+    ConfigService.instance = this
+  }
 
   async bootstrapConfig(): Promise<void> {
     const [currentChain, currentChainType] = await this.polkadotApi.getChainInfo()

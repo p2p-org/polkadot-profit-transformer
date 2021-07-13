@@ -1,11 +1,11 @@
 import Fastify, { FastifyInstance } from 'fastify'
-import { RunnerService } from './services/runner/runner'
+import { RunnerService } from './services/runner'
 import routes from './routes'
 import { validateEnv } from './environment'
 import yargs from 'yargs'
 import prometheus from './routes/api/prometheus'
 import { PolkadotModule } from './modules/polkadot.module'
-import { KafkaModule } from './modules/kafka.module'
+import { KafkaModule } from './modules/kafka'
 import { PostgresModule } from './modules/postgres.module'
 import { LoggerModule } from './modules/logger.module'
 

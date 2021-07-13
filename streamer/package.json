@@ -11,12 +11,13 @@
     "build": "npx tsc",
     "start": "npx ts-node src/main.ts",
     "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
-    "dev": "npx ts-node src/main.ts --sync",
+    "dev": "npx ts-node -r tsconfig-paths/register src/main.ts --sync",
+    "dev:watchdog": "npx ts-node -r tsconfig-paths/register src/main.ts --watchdog",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
     "lint:fix": "npx eslint ./src --fix",
     "lint-staged": "lint-staged",
     "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
-    "test-new": "npx jest --no-cache",
+    "test-new": "npx jest --maxWorkers=1",
     "prepare": "cd .. && husky install streamer/.husky"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
     "pino-pretty": "^4.5.0",
     "prom-client": "^13.1.0",
     "reflect-metadata": "^0.1.13",
+    "typedi": "^0.10.0",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
@@ -72,6 +74,7 @@
     "prettier": "^2.1.2",
     "ts-jest": "^27.0.0-next.12",
     "ts-node": "^9.1.1",
+    "tsconfig-paths": "^3.10.1",
     "type-coverage": "^2.17.2",
     "typescript": "^4.3.5"
   },
@@ -95,7 +98,12 @@
     "collectCoverage": true,
     "collectCoverageFrom": [
       "./**/*.{js,ts}",
-      "!./**/*.types.ts"
+      "!./**/*.types.ts",
+      "!./repositories/**/*",
+      "!./**/polkadot.module.ts",
+      "!./**/logger.module.ts",
+      "!./**/postgres.module.ts",
+      "!./routes/**/*"
     ],
     "coverageReporters": [
       "text"
@@ -106,6 +114,11 @@
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "@services/(.*)": "<rootDir>/services/$1",
+      "@modules/(.*)": "<rootDir>/modules/$1",
+      "@repositories/(.*)": "<rootDir>/repositories/$1"
+    },
     "transform": {
       "^.+\\.(js|ts)$": "babel-jest"
     },

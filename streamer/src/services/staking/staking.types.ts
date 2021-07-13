@@ -1,11 +1,11 @@
-import { AccountId, BlockHash, EraIndex, EventRecord } from '@polkadot/types/interfaces'
+import { BlockHash, EraIndex } from '@polkadot/types/interfaces'
 import { AnyJson } from '@polkadot/types/types'
 
 export type TBlockHash = string | BlockHash | Uint8Array
 export type TBlockEra = number | string | EraIndex | Uint8Array
 
 export interface IProcessEraPayload {
-  eraPayoutEvent: EventRecord
+  eraId: string
   blockHash: TBlockHash
 }
 
