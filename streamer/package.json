@@ -8,9 +8,9 @@
   "license": "Apache 2.0",
   "private": false,
   "scripts": {
-    "build": "npx tsc",
-    "start": "npx ts-node src/main.ts",
-    "start:prod": "node --trace-warnings ./dist/main.js --sync --sub-fin-head",
+    "build": "npx tsc ",
+    "start": "npx ts-node -r tsconfig-paths/register src/main.ts",
+    "start:prod": "node -r ts-node/register -r tsconfig-paths/register --trace-warnings ./dist/main.js --sync --sub-fin-head",
     "dev": "npx ts-node -r tsconfig-paths/register src/main.ts --sync",
     "dev:watchdog": "npx ts-node -r tsconfig-paths/register src/main.ts --watchdog",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
