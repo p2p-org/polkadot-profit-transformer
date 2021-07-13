@@ -30,7 +30,7 @@ export class WatchdogService implements IWatchdogService {
   private currentEraId: number
   private lastCheckedBlockId: number
   private restartBlockId: number
-  private iterator: AsyncGenerator<unknown, never, number>;
+  private iterator: AsyncGenerator<unknown, never, number>
 
   constructor() {
     this.concurrency = WATCHDOG_CONCURRENCY
@@ -121,24 +121,23 @@ export class WatchdogService implements IWatchdogService {
 
   private async *watchdogGenerate(): AsyncGenerator<unknown, never, number> {
     while (true) {
-        const blocksToCheck = await this.getNextBlockIdInterval(this.lastCheckedBlockId)
+      const blocksToCheck = await this.getNextBlockIdInterval(this.lastCheckedBlockId)
 
-        await Promise.all(blocksToCheck.map((blockId) => this.verifyBlock(blockId)))
+      await Promise.all(blocksToCheck.map((blockId) => this.verifyBlock(blockId)))
 
-        this.lastCheckedBlockId = blocksToCheck[blocksToCheck.length - 1]
+      this.lastCheckedBlockId = blocksToCheck[blocksToCheck.length - 1]
 
-        await this.configService.updateConfigValueInDB('watchdog_verify_height', this.lastCheckedBlockId)
+      await this.configService.updateConfigValueInDB('watchdog_verify_height', this.lastCheckedBlockId)
 
-        if (this.lastCheckedBlockId === await this.blockRepository.getLastProcessedBlock()) {
-          this.status = VerifierStatus.IDLE
-          await this.configService.updateConfigValueInDB('watchdog_finished_at', Date.now())
+      if (this.lastCheckedBlockId === (await this.blockRepository.getLastProcessedBlock())) {
+        this.status = VerifierStatus.IDLE
+        await this.configService.updateConfigValueInDB('watchdog_finished_at', Date.now())
 
-          this.lastCheckedBlockId = yield
-
-        } else if (this.status === VerifierStatus.RESTART) {
-          this.lastCheckedBlockId = this.restartBlockId
-          this.status = VerifierStatus.RUNNING
-        }
+        this.lastCheckedBlockId = yield
+      } else if (this.status === VerifierStatus.RESTART) {
+        this.lastCheckedBlockId = this.restartBlockId
+        this.status = VerifierStatus.RUNNING
+      }
     }
   }
 
@@ -147,24 +146,24 @@ export class WatchdogService implements IWatchdogService {
     const blockFromDB = await this.blockRepository.getBlockById(blockId)
 
     if (!blockFromDB) {
-      this.logger.debug(`Block is not exists in DB: ${blockId}`)
+      this.logger.info(`Block is not exists in DB: ${blockId}`)
       await this.blocksService.processBlock(blockId)
       return
     }
 
     const blockFromChain = await this.polkadotApi.getBlockData(blockFromDB.hash)
 
-    this.logger.debug(`Validate block ${blockId}`)
+    this.logger.info(`Validate block ${blockId}`)
 
     const isBlockValidResult = await this.isBlockValid(blockFromDB, blockFromChain)
 
     if (!isBlockValidResult) {
       try {
-        this.logger.debug(`Block ${blockId} is not valid, resync.`)
+        this.logger.info(`Block ${blockId} is not valid, resync.`)
         await this.blocksService.processBlock(blockId)
         return
       } catch (error) {
-        this.logger.error(`error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
+        this.logger.error({ error }, `error in blocksService.processBlock invocation when try to resync missed events for block ${blockId}`)
       }
     }
 
@@ -207,7 +206,7 @@ export class WatchdogService implements IWatchdogService {
     const isParentHashValid = blockFromDB.parent_hash === blockFromChain.block.header.parentHash.toString()
 
     if (!isEventsExists || !isExtrinsicsExists || !isParentHashValid) {
-      this.logger.debug(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
+      this.logger.info(`Events or extrinsics is not exist in DB for block ${blockFromDB.id}`)
       return false
     }
 
@@ -222,7 +221,7 @@ export class WatchdogService implements IWatchdogService {
 
       return +count === eventsInBlockchainCount.toNumber()
     } catch (err) {
-      this.logger.error(`failed to get events for block ${block.id}, error: ${err}`)
+      this.logger.error({ err }, `failed to get events for block ${block.id}`)
       throw new Error(`cannot check events for block ${block.id}`)
     }
   }
@@ -263,7 +262,7 @@ export class WatchdogService implements IWatchdogService {
 
   private async isStartHeightValid(startBlockId: number): Promise<boolean> {
     const watchdogVerifyHeight = (await this.configService.getConfigValueFromDB('watchdog_verify_height')) || -1
-    this.logger.debug(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
+    this.logger.info(`Current db watchdog_verify_height = ${watchdogVerifyHeight}`)
 
     return startBlockId >= 0 && startBlockId - 1 <= +watchdogVerifyHeight
   }
@@ -288,7 +287,7 @@ export class WatchdogService implements IWatchdogService {
 
       return +count === extrinsicsCount
     } catch (err) {
-      this.logger.error(`failed to get extrinsics for block ${block.id}, error: ${err}`)
+      this.logger.error({ err }, `failed to get extrinsics for block ${block.id}`)
       throw new Error(`cannot check extrinsics for block ${block.id}`)
     }
   }

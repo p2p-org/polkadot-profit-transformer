@@ -37,19 +37,18 @@ BlockRepository.prototype.getFirstBlockInEra = jest.fn(async (eraId: number) => 
 
 PolkadotModule.prototype.getBlockTime = jest.fn(async () => Date.now())
 PolkadotModule.prototype.getDistinctValidatorsAccountsByEra = jest.fn(async () => {
-  const accounts = ['aaaaaaaaaaaa','bbbbbbbbbbbb','ccccccccccccc','dddddddddddd']
+  const accounts = ['aaaaaaaaaaaa', 'bbbbbbbbbbbb', 'ccccccccccccc', 'dddddddddddd']
   return new Set(accounts)
 })
 
 PolkadotModule.prototype.getRewardPoints = jest.fn(async () => {
   const accounts: [string, number][] = [
-      ['aaaaaaaaaaaa', 5],
-      ['bbbbbbbbbbbb', 10],
-      ['ccccccccccccc', 1]
+    ['aaaaaaaaaaaa', 5],
+    ['bbbbbbbbbbbb', 10],
+    ['ccccccccccccc', 1]
   ]
   return new Map(accounts)
 })
-
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -65,15 +64,21 @@ PolkadotModule.prototype.getStakersInfo = jest.fn(async () => {
     {
       total: '100',
       own: '100',
-      others: [{
-        who: 'asdfasfasdf',
-        value: 5
-      }]
-    }, {
-      others: [{
-        who: 'asdfasfasdf'
-      }]
-    }, pref
+      others: [
+        {
+          who: 'asdfasfasdf',
+          value: 5
+        }
+      ]
+    },
+    {
+      others: [
+        {
+          who: 'asdfasfasdf'
+        }
+      ]
+    },
+    pref
   ]
 })
 
@@ -84,7 +89,7 @@ test('static inject', () => {
   expect(stakingService).toBe(stakingService2)
 })
 
-test('getValidatorsAndNominatorsData', async() => {
+test('getValidatorsAndNominatorsData', async () => {
   const stakingService = StakingService.inject()
   const exec = stakingService.getValidatorsAndNominatorsData({
     blockHash: 'aaaaaaaaaaaaa',
@@ -103,17 +108,27 @@ test('getValidatorsAndNominatorsData', async() => {
 
 test('processEraPayout', async () => {
   const stakingService = StakingService.inject()
-  const result = await stakingService.processEraPayout({
-    eraId: '100',
-    blockHash: 'aaaaaaaaaaaaaaaaaa'
-  }, () => {1===1})
+  const result = await stakingService.processEraPayout(
+    {
+      eraId: '100',
+      blockHash: 'aaaaaaaaaaaaaaaaaa'
+    },
+    () => {
+      1 === 1
+    }
+  )
 
   expect(result).toBe(undefined)
 
-  const result2 = await stakingService.processEraPayout({
-    eraId: '0',
-    blockHash: 'aaaaaaaaaaaaaaaaaa'
-  }, () => {1===1})
+  const result2 = await stakingService.processEraPayout(
+    {
+      eraId: '0',
+      blockHash: 'aaaaaaaaaaaaaaaaaa'
+    },
+    () => {
+      1 === 1
+    }
+  )
 
   expect(result2).toBe(undefined)
 })

@@ -250,18 +250,18 @@ describe('BlockService', () => {
 
     await blocksService.processBlocks(0)
 
-    await expect(blocksService.runBlocksWorker).toBeCalledTimes(13)
+    await expect(blocksService.runBlocksWorker).toBeCalledTimes(20)
   })
 
-// todo - check if invoked inside IF statement in  processBlocks while loop
+  // todo - check if invoked inside IF statement in  processBlocks while loop
   test('processBlocks from pre-last', async () => {
     const blocksService = new BlocksService()
     blocksService.runBlocksWorker = jest.fn(async () => true)
     await blocksService.processBlocks(14)
-    await expect(blocksService.runBlocksWorker).toBeCalledTimes(1)
+    await expect(blocksService.runBlocksWorker).toBeCalledTimes(10)
   })
 
-// todo - check if consumerService.subscribeFinalizedHeads() invoked
+  // todo - check if consumerService.subscribeFinalizedHeads() invoked
   test('processBlockswith finalized head', async () => {
     const blocksService = new BlocksService()
 
@@ -282,7 +282,7 @@ describe('BlockService', () => {
 
   test('removeBlocks', async () => {
     const service = new BlocksService()
-    const { result } = await service.removeBlocks([1,2,3])
+    const { result } = await service.removeBlocks([1, 2, 3])
     expect(result).toBeTruthy()
   })
 

@@ -20,7 +20,7 @@ export class LoggerModule implements ILoggerModule {
   constructor() {
     this.logger = pino({
       level: LOG_LEVEL
-      //prettyPrint: true
+      // prettyPrint: true
     })
   }
 

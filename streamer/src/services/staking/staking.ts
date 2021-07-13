@@ -52,8 +52,8 @@ export class StakingService implements IStakingService {
 
     const validatorsAccountIdSet: Set<string> = await this.polkadotApi.getDistinctValidatorsAccountsByEra(firstBlockOfEra.hash)
 
-    for (const validatorAccountId of validatorsAccountIdSet) {
-      this.logger.debug(`Process staking for validator ${validatorAccountId} `)
+    const processValidator = async (validatorAccountId: string): Promise<void> => {
+      this.logger.info(`Process staking for validator ${validatorAccountId} `)
       const [{ total, own, others }, { others: othersClipped }, prefs] = await this.polkadotApi.getStakersInfo(
         blockHash,
         eraId,
@@ -89,6 +89,8 @@ export class StakingService implements IStakingService {
       })
     }
 
+    await Promise.all(Array.from(validatorsAccountIdSet).map(processValidator))
+
     return {
       validators,
       nominators
@@ -108,9 +110,9 @@ export class StakingService implements IStakingService {
       await this.kafka.sendStakingErasData(eraData)
       await this.kafka.sendSessionData(+eraId, validators, nominators, blockTime)
 
-      this.logger.debug(`Era ${eraId.toString()} staking processing finished`)
+      this.logger.info(`Era ${eraId.toString()} staking processing finished`)
     } catch (error) {
-      this.logger.error(`error in processing era staking: ${error}`)
+      this.logger.error({ error }, `error in processing era staking`)
     }
 
     cb(null)

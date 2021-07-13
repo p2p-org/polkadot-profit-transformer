@@ -29,7 +29,7 @@ class ConfigService implements IConfigService {
     const [dbChain, dbChainType] = await Promise.all([this.getConfigValueFromDB('chain'), this.getConfigValueFromDB('chain_type')])
 
     if (!dbChain && !dbChainType) {
-      this.logger.info(`Init new chain config: chain="${currentChain}", chain_type="${currentChainType}"`)
+      this.logger.info({ currentChainType, currentChain }, `Init new chain config"`)
       await Promise.all([this.setConfigValueToDB('chain', currentChain), this.setConfigValueToDB('chain_type', currentChainType)])
     } else {
       if (dbChain !== currentChain) {

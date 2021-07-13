@@ -5,10 +5,6 @@ import { PolkadotModule } from '@modules/polkadot.module'
 import { ILoggerModule, LoggerModule } from '@modules/logger.module'
 import { BlockRepository } from '@repositories/block.repository'
 
-/**
- * Provides blocks streamer service
- * @class
- */
 class ConsumerService implements IConsumerService {
   private static instance: ConsumerService
 
@@ -46,14 +42,6 @@ class ConsumerService implements IConsumerService {
     await this.polkadotApi.subscribeFinalizedHeads((header) => this.onFinalizedHead(header))
   }
 
-  /**
-   * Finalized headers capture handler
-   *
-   * @async
-   * @private
-   * @param {BlockHash} blockHash
-   * @returns {Promise<void>}
-   */
   private async onFinalizedHead(blockHash: Header): Promise<void> {
     const blocksService: IBlocksService = new BlocksService()
 
@@ -64,7 +52,7 @@ class ConsumerService implements IConsumerService {
       return
     }
 
-    this.logger.info(`Captured block "${blockHash.number}" with hash ${blockHash.hash}`)
+    this.logger.info({ blockHash }, `Captured new finalized block `)
 
     if (blockNumber < blockNumberFromDB) {
       this.logger.info(`stash operation detected`)
@@ -74,7 +62,7 @@ class ConsumerService implements IConsumerService {
     try {
       await blocksService.processBlock(blockNumber, false)
     } catch (error) {
-      this.logger.error(`failed to process captured block #${blockHash}:`, error)
+      this.logger.error({ error }, `failed to process captured block #${blockHash}:`)
     }
   }
 }

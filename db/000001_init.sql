@@ -398,6 +398,19 @@ CREATE INDEX dot_polka_balances_account_id_method_idx ON dot_polka.balances ("ac
 
 CREATE INDEX dot_polka_account_identity_account_id_idx ON dot_polka.account_identity (account_id);
 
+CREATE INDEX events_block_id ON dot_polka.events(block_id);
+
+CREATE INDEX blocks_era ON dot_polka.blocks(era);
+
+CREATE INDEX blocks_session_id ON dot_polka.blocks(session_id);
+
+CREATE INDEX extrinsics_block_id ON dot_polka.extrinsics(block_id);
+
+
+
+
+
+
 -- Validators
 
 
@@ -640,9 +653,6 @@ ORDER BY e.block_id DESC WITH DATA;
 
 REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance;
 
-
-
-
 CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking AS
 SELECT
            e.session_id,
@@ -662,21 +672,78 @@ REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking;
 
 CREATE MATERIALIZED VIEW dot_polka.nominator_validator_apy AS 
 
-SELECT era, nominator, 
-        era_rewards * validator_points / era_points * (1 - commission/ 100) / validator_total * nominator_stake  as nominator_income,
-        (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * (1 - commission/ 100) as nom_APY,
-        (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 12*365 * (1 - commission/ 100)  as nom_MPY,
-        (era_rewards * validator_points / era_points  / validator_total * nominator_stake) / nominator_stake* 52*365 * (1 - commission/ 100)   as nom_WPY
+SELECT block_time, era, nominator, validator, nominator_stake, commission,
+        validator_points / era_points * era_rewards / validator_total * 365 *100 as validator_APR,
+        era_rewards * validator_points / era_points as val_total_rewards,
+        CASE WHEN nominator_stake>0 AND validator_points>0 
+            THEN CASE WHEN commission = 0 
+                    THEN era_rewards * validator_points / era_points / validator_total * nominator_stake * 1 
+                    ELSE era_rewards * validator_points / era_points / validator_total * nominator_stake * (1 - commission/ 100) END
+            ELSE 0 END as nominator_income,
+        CASE WHEN nominator_stake>0 AND validator_points>0 
+            THEN CASE WHEN commission = 0 
+                THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
+                ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
+            ELSE 0 END as nom_APY
 FROM (
-        SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, n.reward_dest, is_clipped, n.block_time,
-              validator, (v.total/10^10)::float as validator_total, (v.own/10^10)::float as validator_own, (SUM(v.reward_points))::float as validator_points, 
-              v.reward_dest as validator_dest, v.reward_account_id, (prefs->'commission')::float/10^7 as commission ,
-              (e.total_reward / 10^10)::float as era_rewards, (e.total_stake / 10^10)::float as era_stake, (total_reward_points)::float as era_points
-        FROM dot_polka.nominators as n
-            INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
-            INNER JOIN dot_polka.eras as e ON e.era = n.era 
-        WHERE n.era =309
-        GROUP BY n.block_time, n.era, n.account_id, validator, n.reward_dest, v.reward_dest, v.reward_account_id, e.total_reward, e.total_stake, total_reward_points, v.total, own, prefs
-    ) as data
+    SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, n.block_time,
+          validator, SUM((v.total/10^10)::float) as validator_total, SUM((v.own/10^10)::float) as validator_own, (SUM(v.reward_points))::float as validator_points,
+          CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission,
+          MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
+    FROM dot_polka.nominators as n
+        INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
+        INNER JOIN dot_polka.eras as e ON e.era = n.era
+    GROUP BY n.era, n.block_time, n.account_id, validator,prefs
+    ) as grouped
 
 REFRESH MATERIALIZED VIEW dot_polka.nominator_validator_apy;
+
+
+CREATE MATERIALIZED VIEW dot_polka.nominator_apy AS 
+
+SELECT d.era, nominator, nominator_stake, nominator_income, nom_APY, max_APY, avg_APY, min_APY
+FROM (
+        SELECT era, nominator, nominator_stake, commission,
+        CASE WHEN nominator_stake>0 AND validator_points>0 
+            THEN CASE WHEN commission = 0 
+                    THEN era_rewards * validator_points / era_points / validator_total * nominator_stake * 1 
+                    ELSE era_rewards * validator_points / era_points / validator_total * nominator_stake * (1 - commission/ 100) END
+            ELSE 0 END as nominator_income,
+        CASE WHEN nominator_stake>0 AND validator_points>0 
+            THEN CASE WHEN commission = 0 
+                THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
+                ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
+            ELSE 0 END as nom_APY
+        FROM (
+                SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, prefs,
+                      validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
+                      MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
+                FROM dot_polka.nominators as n
+                    INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
+                    INNER JOIN dot_polka.eras as e ON e.era = n.era 
+                GROUP BY n.era, n.account_id, validator, prefs
+            ) as data
+                ) as d
+            INNER JOIN  (SELECT era, MAX(apy) as max_apy, AVG(APY) as avg_apy, min(apy) as min_apy
+                        FROM (SELECT era,
+                                    CASE WHEN nominator_stake>0 AND validator_points>0 
+                                        THEN CASE WHEN commission = 0 
+                                            THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
+                                            ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
+                                        ELSE 0 END as APY
+                        FROM (
+                                SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake,
+                                validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
+                                MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
+                                FROM dot_polka.nominators as n
+                                    INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
+                                    INNER JOIN dot_polka.eras as e ON e.era = n.era 
+                                GROUP BY n.block_time, n.era, n.account_id, validator, prefs
+                                    ) as pre_max_min
+                        ) as max_min 
+            GROUP by era ) as max_min_grouped
+            ON max_min_grouped.era=d.era
+ORDER by d.era desc
+
+
+REFRESH MATERIALIZED VIEW dot_polka.nominator_apy;
