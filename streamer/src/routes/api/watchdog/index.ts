@@ -1,4 +1,4 @@
-import WatchdogService from '../../../services/watchdog/watchdog'
+import { WatchdogService } from '../../../services/watchdog/watchdog'
 import { getStatusSchema, watchdogRestartSchema } from './schemas'
 import { FastifyInstance } from 'fastify'
 

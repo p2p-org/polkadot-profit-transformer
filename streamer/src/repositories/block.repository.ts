@@ -21,6 +21,34 @@ export class BlockRepository {
     return BlockRepository.instance
   }
 
+  async isEmpty(): Promise<boolean> {
+    try {
+      const { rows } = await this.connectionProvider.query({
+        text: `SELECT count (*) FROM ${DB_SCHEMA}.blocks`
+      })
+      const blocksInDBCount = +rows[0].count
+
+      return blocksInDBCount === 0
+    } catch (err) {
+      this.logger.error(`Error check is db empty`)
+      throw new Error('Error check is db empty')
+    }
+  }
+
+  async getBlockById(blockId: number): Promise<any> {
+    try {
+      const { rows } = await this.connectionProvider.query({
+        text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "id" = $1::int`,
+        values: [blockId]
+      })
+
+      return rows[0]
+    } catch (err) {
+      this.logger.error(`failed to get block by id ${blockId}, error: ${err}`)
+      throw new Error('cannot getblock by id')
+    }
+  }
+
   async getLastProcessedBlock(): Promise<number> {
     let blockNumberFromDB = 0
 
@@ -39,7 +67,7 @@ export class BlockRepository {
     return blockNumberFromDB
   }
 
-  async getFirstBlockInEra(eraId: number): Promise<IBlock> {
+  async getFirstBlockInEra(eraId: number): Promise<IBlock | null> {
     try {
       const { rows } = await this.connectionProvider.query({
         text: `SELECT * FROM ${DB_SCHEMA}.blocks WHERE "era" = $1::int order by "id" limit 1`,
