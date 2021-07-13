@@ -246,6 +246,8 @@ describe('BlockService', () => {
 
   test('processBlocks from 0', async () => {
     const blocksService = new BlocksService()
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     blocksService.runBlocksWorker = jest.fn(async () => true)
 
     await blocksService.processBlocks(0)
@@ -256,6 +258,8 @@ describe('BlockService', () => {
   // todo - check if invoked inside IF statement in  processBlocks while loop
   test('processBlocks from pre-last', async () => {
     const blocksService = new BlocksService()
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     blocksService.runBlocksWorker = jest.fn(async () => true)
     await blocksService.processBlocks(14)
     await expect(blocksService.runBlocksWorker).toBeCalledTimes(10)
