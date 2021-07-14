@@ -8,9 +8,9 @@
   "license": "Apache 2.0",
   "private": false,
   "scripts": {
-    "build": "npx tsc ",
+    "build": "npx tsc",
     "start": "npx ts-node -r tsconfig-paths/register src/main.ts",
-    "start:prod": "node -r ts-node/register -r tsconfig-paths/register --trace-warnings ./dist/main.js --sync --sub-fin-head",
+    "start:prod": "node -r ts-node/register/transpile-only -r tsconfig-paths/register --trace-warnings ./dist/main.js --sync --sub-fin-head",
     "dev": "npx ts-node -r tsconfig-paths/register src/main.ts --sync",
     "dev:watchdog": "npx ts-node -r tsconfig-paths/register src/main.ts --watchdog",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
@@ -39,6 +39,7 @@
     "pino-pretty": "^4.5.0",
     "prom-client": "^13.1.0",
     "reflect-metadata": "^0.1.13",
+    "tsconfig-paths": "^3.10.1",
     "typedi": "^0.10.0",
     "yargs": "^16.2.0"
   },
@@ -74,7 +75,6 @@
     "prettier": "^2.1.2",
     "ts-jest": "^27.0.0-next.12",
     "ts-node": "^9.1.1",
-    "tsconfig-paths": "^3.10.1",
     "type-coverage": "^2.17.2",
     "typescript": "^4.3.5"
   },
