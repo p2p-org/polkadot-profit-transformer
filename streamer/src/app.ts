@@ -1,5 +1,5 @@
 import Fastify, { FastifyInstance } from 'fastify'
-import { RunnerService } from './services/runner'
+import { RunnerService } from '@services/runner'
 import routes from './routes'
 import { validateEnv } from './environment'
 import yargs from 'yargs'
