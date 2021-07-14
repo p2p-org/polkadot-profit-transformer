@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { IBlockData } from './blocks.types'
 import { BlockHash } from '@polkadot/types/interfaces'
 import { BlocksService } from './blocks'
