@@ -3,7 +3,7 @@
     "useDefineForClassFields": true,
     "target": "ES2018",
     "module": "commonjs",
-    "lib": ["ESNEXT"],
+    "lib": ["ESNEXT", "dom"],
     "allowJs": false,
     "declaration": false,
     "sourceMap": true,
