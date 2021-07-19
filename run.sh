@@ -54,7 +54,7 @@ docker-compose -f docker-compose.ksql.yml  -f docker-compose.yml up -d zookeeper
 docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d --build schema-registry connect control-center \
   ksqldb-server ksqldb-cli ksql-datagen rest-proxy db
 
-echo "${COLOR_GREEN}Starting ksql containers...${COLOR_NONE}"
+echo "${COLOR_GREEN}Starting ksql containers... Wait ~3 minutes... ${COLOR_NONE}"
 sleep 180s # we should wait a little bit
 
 
