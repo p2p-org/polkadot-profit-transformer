@@ -1,5 +1,11 @@
 ---
 version: '3'
+
+networks:
+  default:
+    external:
+      name: streamer_network
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:6.2.0

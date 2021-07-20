@@ -1,4 +1,10 @@
 version: '3'
+
+networks:
+  default:
+    external:
+      name: streamer_network
+
 services:
   graphile:
     image: graphile/postgraphile

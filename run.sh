@@ -9,7 +9,7 @@ KAFKA_CONNECT_URL='http://localhost:8083'
 KAFKA_SCHEMA_URL='http://schema-registry:8081'
 KAFKA_KSQL_DB_URL='http://localhost:8088'
 DB_CONNECTION_URL='jdbc:postgresql://db:5432/raw?user=sink&password=d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x'
-POSTGRES_SCHEMA=dot_polka
+POSTGRES_SCHEMA='dot_polka'
 
 
 APP_MODE=dev
@@ -18,9 +18,9 @@ APP_NETWORK=polkadot
 APP_ID=substrate_streamer
 APP_PREFIX=$(echo "$APP_ID"_"$APP_MODE"_"$APP_NETWORK" | tr '[:lower:]' '[:upper:]')
 
-COLOR_RED=`tput setaf 1`
-COLOR_GREEN=`tput setaf 2`
-COLOR_NONE=`tput sgr0`
+COLOR_RED=$(tput setaf 1)
+COLOR_GREEN=$(tput setaf 2)
+COLOR_NONE=$(tput sgr0)
 
 # {
 #  "ksql": "",
@@ -50,7 +50,9 @@ if ! type "jq" >/dev/null; then
   exit 1
 fi
 
-docker-compose -f docker-compose.ksql.yml  -f docker-compose.yml up -d zookeeper broker
+docker network create --attachable streamer_network
+
+docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d zookeeper broker
 docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d --build schema-registry connect control-center \
   ksqldb-server ksqldb-cli ksql-datagen rest-proxy db
 
