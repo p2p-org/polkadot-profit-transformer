@@ -148,7 +148,7 @@ for file in "$DIR_KSQL_INIT_CONFIG"/*.sql; do
     GEN_KSQL=${GEN_KSQL//\{$param\}/${!param}}
   done
 
-  GEN_KSQL=$(echo "$GEN_KSQL" | jq -Rs)
+  GEN_KSQL=$(echo "$GEN_KSQL" | jq -Rs .)
   KSQL_INIT="${KSQL_FILE_TEMPLATE//\{KSQL\}/$GEN_KSQL}"
 
   KSQL_RESP_MESSAGE=$(curl -sX "POST" "$KAFKA_KSQL_DB_URL/ksql" \
