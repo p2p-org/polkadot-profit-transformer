@@ -230,12 +230,6 @@ docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer e
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-server create_db
 
-# curl -sX "POST" 'http://localhost:5000/setup' \
-#   -H 'Content-Type: application/x-www-form-urlencoded' \
-#   -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
-#   --cookie-jar cookies.txt \
-#   --data-raw 'name=admin&email=admin%40example.org&password=supersecret123&org_name=organization' \
-#   --compressed
 
 echo "Setting up Redash"
 

@@ -1,11 +1,4 @@
 .idea
-cookies.txt
-streamer/src/.env
-streamer/node_modules
-streamer/dist
-streamer/.husky
-identity_enrichment/node_modules
-
 # mbelt config data
 gen_*
 gen
