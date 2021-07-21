@@ -8,7 +8,7 @@ networks:
 services:
   graphile:
     image: graphile/postgraphile
-    command: --subscriptions --dynamic-json --no-setof-functions-contain-nulls --no-ignore-rbac --show-error-stack=json --graphiql "/"  --export-schema-graphql schema.graphql --enable-query-batching --legacy-relations omit --schema graphql --port 5050 --watch
+    command: --subscriptions --dynamic-json --no-setof-functions-contain-nulls --no-ignore-rbac --show-error-stack=json --graphiql "/"  --export-schema-graphql schema.graphql --enable-query-batching --legacy-relations omit --schema dot_polka --port 5050 --watch
     restart: on-failure
     ports:
       - 4000:5050
