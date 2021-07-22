@@ -694,7 +694,7 @@ FROM (
         INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
         INNER JOIN dot_polka.eras as e ON e.era = n.era
     GROUP BY n.era, n.block_time, n.account_id, validator,prefs
-    ) as grouped
+    ) as grouped;
 
 REFRESH MATERIALIZED VIEW dot_polka.nominator_validator_apy;
 
@@ -743,7 +743,7 @@ FROM (
                         ) as max_min 
             GROUP by era ) as max_min_grouped
             ON max_min_grouped.era=d.era
-ORDER by d.era desc
+ORDER by d.era desc;
 
 
 REFRESH MATERIALIZED VIEW dot_polka.nominator_apy;
