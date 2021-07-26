@@ -82,7 +82,7 @@ export class StakingService implements IStakingService {
         account_id: validatorAccountId,
         total: total.toString(),
         own: own.toString(),
-        nominators_count: nominators.length,
+        nominators_count: newNominators.length,
         reward_points: eraRewardPointsMap.get(validatorAccountId) || 0,
         ...(await this.polkadotApi.getStakingPayee(blockHash, validatorAccountId)),
         prefs: prefs.toJSON()
