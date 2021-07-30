@@ -1,5 +1,12 @@
 version: '3'
 services:
+  redash-init:
+    build: redash_dashboard
+    env_file: 
+      - redash_dashboard/example.env
+    depends_on: 
+      - redash-server
+    restart: "no"
   redash-server:
     image: redash/redash:latest
     command: dev_server

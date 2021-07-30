@@ -233,10 +233,6 @@ docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compos
 
 echo "Setting up Redash"
 
-cp ./redash_dashboard/example.env  ./redash_dashboard/.env
-pip3 install requests python-dotenv redash-api-client
-
-cd ./redash_dashboard
-sh ./create.sh
+docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-init
 
 echo "Redash is up and running: http://localhost:5000"
