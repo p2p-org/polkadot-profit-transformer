@@ -43,7 +43,7 @@ class ConsumerService implements IConsumerService {
   }
 
   private async onFinalizedHead(blockHash: Header): Promise<void> {
-    const blocksService: IBlocksService = new BlocksService()
+    const blocksService: IBlocksService = BlocksService.inject()
 
     const blockNumberFromDB = await this.blockRepository.getLastProcessedBlock()
     const blockNumber = blockHash.number.toNumber()

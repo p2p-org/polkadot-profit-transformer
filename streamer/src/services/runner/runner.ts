@@ -15,7 +15,7 @@ class RunnerService implements IRunnerService {
   private readonly watchdogService: IWatchdogService
 
   constructor() {
-    this.blocksService = new BlocksService()
+    this.blocksService = BlocksService.inject()
     this.consumerService = new ConsumerService()
     this.configService = new ConfigService()
     this.watchdogService = WatchdogService.getInstance()

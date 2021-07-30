@@ -175,12 +175,12 @@ ExtrinsicsService.prototype.extractExtrinsics = jest.fn(async (...args) => {})
 ConsumerService.prototype.subscribeFinalizedHeads = jest.fn()
 
 test('constructor', async () => {
-  const blocksService = new BlocksService()
+  const blocksService = BlocksService.inject()
   expect(blocksService).toBeInstanceOf(BlocksService)
 })
 
 test('process not existing block', async () => {
-  const blocksService = new BlocksService()
+  const blocksService = BlocksService.inject()
 
   const notExistingBlockHeight = -1
 
@@ -188,7 +188,7 @@ test('process not existing block', async () => {
 })
 
 test('send block data to kafka ', async () => {
-  const blocksService = new BlocksService()
+  const blocksService = BlocksService.inject()
 
   const existingBlockHeight = 1
 
@@ -237,7 +237,7 @@ describe('BlockService', () => {
   })
 
   test('processBlocks without params', async () => {
-    const blocksService = new BlocksService()
+    const blocksService = BlocksService.inject()
     const status = await blocksService.getBlocksStatus()
     await expect(status).toEqual({ status: 'synchronization', height_diff: 13, fin_height_diff: -13 })
 
@@ -247,7 +247,7 @@ describe('BlockService', () => {
   })
 
   test('processBlocks from 0', async () => {
-    const blocksService = new BlocksService()
+    const blocksService = BlocksService.inject()
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     blocksService.runBlocksWorker = jest.fn(async () => true)
@@ -259,7 +259,7 @@ describe('BlockService', () => {
 
   // todo - check if invoked inside IF statement in  processBlocks while loop
   test('processBlocks from pre-last', async () => {
-    const blocksService = new BlocksService()
+    const blocksService = BlocksService.inject()
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     blocksService.runBlocksWorker = jest.fn(async () => true)
@@ -269,7 +269,7 @@ describe('BlockService', () => {
 
   // todo - check if consumerService.subscribeFinalizedHeads() invoked
   test('processBlockswith finalized head', async () => {
-    const blocksService = new BlocksService()
+    const blocksService = BlocksService.inject()
 
     await blocksService.processBlocks(15, true)
 
@@ -279,7 +279,7 @@ describe('BlockService', () => {
   })
 
   test('getBlocksStatus', async () => {
-    const blocksService = new BlocksService()
+    const blocksService = BlocksService.inject()
 
     const status = await blocksService.getBlocksStatus()
 
@@ -287,13 +287,13 @@ describe('BlockService', () => {
   })
 
   test('removeBlocks', async () => {
-    const service = new BlocksService()
+    const service = BlocksService.inject()
     const { result } = await service.removeBlocks([1, 2, 3])
     expect(result).toBeTruthy()
   })
 
   test('trimAndUpdateToFinalized', async () => {
-    const service = new BlocksService()
+    const service = BlocksService.inject()
     const { result } = await service.trimAndUpdateToFinalized(100)
     expect(result).toBeFalsy()
   })

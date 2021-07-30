@@ -35,7 +35,7 @@ export class WatchdogService implements IWatchdogService {
   constructor() {
     this.concurrency = WATCHDOG_CONCURRENCY
     this.status = VerifierStatus.NEW
-    this.blocksService = new BlocksService()
+    this.blocksService = BlocksService.inject()
     this.configService = new ConfigService()
     this.currentEraId = -1
     this.lastCheckedBlockId = -1

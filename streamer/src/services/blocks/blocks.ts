@@ -30,6 +30,14 @@ class BlocksService implements IBlocksService {
     BlocksService.instance = this
   }
 
+  static inject(): BlocksService {
+    if (!BlocksService.instance) {
+      BlocksService.instance = new BlocksService()
+    }
+
+    return BlocksService.instance
+  }
+
   static isSyncComplete(): boolean {
     return BlocksService.status === SyncStatus.SUBSCRIPTION
   }

@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { HttpError } from '../../../common/errors'
 
 const apiBlocks = async (app: FastifyInstance) => {
-  const blocksService = new BlocksService()
+  const blocksService = BlocksService.inject()
 
   app.get('/update/:blockId', { schema: getOneSchema }, async (request) => {
     const {
