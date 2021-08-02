@@ -223,7 +223,7 @@ for kafka_connector in $(jq -c '.connectors[]' <<<"$KSQL_CONFIG"); do
 done
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile
-docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
+docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d streamer enrichments_processor
 
 echo "Setting up Redash"
 

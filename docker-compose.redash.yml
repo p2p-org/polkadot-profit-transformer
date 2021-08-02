@@ -5,7 +5,7 @@ volumes:
 x-redash-service: &redash-service
   image: redash/redash:8.0.0.b32245
   depends_on:
-    - postgres
+    - redash-postgres
     - redis
   env_file: docker/env/.redash.env
   restart: always
@@ -52,7 +52,7 @@ services:
       QUEUES: "queries"
       WORKERS_COUNT: 2
 
-  postgres:
+  redash-postgres:
     image: postgres:13-alpine
     env_file: docker/env/.redash.env
     volumes:
