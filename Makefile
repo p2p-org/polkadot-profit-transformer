@@ -22,7 +22,7 @@ redash.recreate: redash.down redash.init
 redash.init: docker.createnetwork redash.up redash.createdatabase redash.createdashboard
 redash.up: docker.createnetwork
 	@echo "Start redash services"
-	docker-compose -f docker-compose.redash.yml up --remove-orphans -d redash-server redash-scheduler redash-scheduled-worker redash-adhoc-worker postgres redis email
+	docker-compose -f docker-compose.redash.yml up -d redash-server redash-scheduler redash-scheduled-worker redash-adhoc-worker postgres redis email
 redash.createdatabase:
 	@echo "Init redash database"
 	docker-compose -f docker-compose.redash.yml run --rm redash-server create_db
