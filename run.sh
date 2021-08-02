@@ -50,7 +50,7 @@ if ! type "jq" >/dev/null; then
   exit 1
 fi
 
-docker network create --attachable streamer_network
+make docker.createnetwork
 
 docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d zookeeper broker
 docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d --build schema-registry connect control-center \
@@ -223,16 +223,10 @@ for kafka_connector in $(jq -c '.connectors[]' <<<"$KSQL_CONFIG"); do
 done
 
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile
-
-docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml up -d redash-server redash-scheduler redash-worker
-
 docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d streamer enrichments_processor
-
-docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-server create_db
-
 
 echo "Setting up Redash"
 
-docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml run --rm redash-init
+make redash.init
 
 echo "Redash is up and running: http://localhost:5000"
