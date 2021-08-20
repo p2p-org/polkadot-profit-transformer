@@ -54,7 +54,8 @@ make docker.createnetwork
 
 docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d zookeeper broker
 docker-compose -f docker-compose.ksql.yml -f docker-compose.yml up -d --build schema-registry connect control-center \
-  ksqldb-server ksqldb-cli ksql-datagen rest-proxy db
+  ksqldb-server ksqldb-cli rest-proxy db
+
 
 echo "${COLOR_GREEN}Starting ksql containers... Wait ~3 minutes... ${COLOR_NONE}"
 sleep 180s # we should wait a little bit
@@ -162,23 +163,6 @@ for file in "$DIR_KSQL_INIT_CONFIG"/*.sql; do
   fi
 done
 
-#{
-#  "name": "",
-#  "config": {
-#    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
-#    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-#    "value.converter": "io.confluent.connect.avro.AvroConverter",
-#    "topics": "BLOCK",
-#    "connection.url": "jdbc:postgresql://db:5432/raw?user=sink&password=d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x",
-#    "dialect.name": "PostgreSqlDatabaseDialect",
-#    "insert.mode": "",
-#    "table.name.format": "",
-#    "pk.mode": "",
-#    "auto.create": false,
-#    "auto.evolve": false,
-#    "value.converter.schema.registry.url": "http://schema-registry:8081"
-#  }
-#}
 
 read -r -d '' KAFKA_FILE_CONNECTOR_TEMPLATE <<-EOM
 {
