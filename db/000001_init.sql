@@ -21,6 +21,8 @@ CREATE TABLE dot_polka.blocks (
     "block_time" TIMESTAMP
 );
 
+
+
 CREATE TABLE dot_polka.events (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
@@ -112,30 +114,10 @@ CREATE TABLE dot_polka.balances (
     "block_time" TIMESTAMP
 );
 
--- Fix for unquoting varchar json
-CREATE OR REPLACE FUNCTION varchar_to_jsonb(varchar) RETURNS jsonb AS
-$$
-SELECT to_jsonb($1)
-$$ LANGUAGE SQL;
 
-CREATE CAST (varchar as jsonb) WITH FUNCTION varchar_to_jsonb(varchar) AS IMPLICIT;
 
 -- Internal tables
 
-CREATE TABLE dot_polka._blocks (
-    "id" BIGINT PRIMARY KEY,
-    "hash" VARCHAR(66),
-    "state_root" VARCHAR(66),
-    "extrinsics_root" VARCHAR(66),
-    "parent_hash" VARCHAR(66),
-    "author" VARCHAR(66),
-    "session_id" INT,
-    "era" INT,
-    "current_era" INT,
-    "last_log" VARCHAR(100),
-    "digest" TEXT,
-    "block_time" BIGINT
-);
 
 CREATE TABLE dot_polka._events (
     "id" VARCHAR(150) PRIMARY KEY,
@@ -213,63 +195,20 @@ CREATE TABLE dot_polka._balances (
 
 -- Blocks
 
-CREATE OR REPLACE FUNCTION dot_polka.sink_blocks_insert()
-    RETURNS trigger AS
+CREATE OR REPLACE FUNCTION  dot_polka.convert_to_jsonb_function()
+RETURNS trigger AS 
 $$
 BEGIN
-    INSERT INTO dot_polka.blocks("id",
-                                "hash",
-                                "state_root",
-                                "extrinsics_root",
-                                "parent_hash",
-                                "author",
-                                "session_id",
-                                "era",
-                                "current_era",
-                                "last_log",
-                                "digest",
-                                "block_time")
-    VALUES (NEW."id",
-            NEW."hash",
-            NEW."state_root",
-            NEW."extrinsics_root",
-            NEW."parent_hash",
-            NEW."author",
-            NEW."session_id",
-            NEW."era",
-            NEW."current_era",
-            NEW."last_log",
-            NEW."digest"::jsonb,
-            to_timestamp(NEW."block_time"))
-    ON CONFLICT DO NOTHING;
-
-    RETURN NEW;
-END ;
-
-$$
-    LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trg_blocks_sink_upsert
-    BEFORE INSERT
-    ON dot_polka._blocks
-    FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_blocks_insert();
-
-CREATE OR REPLACE FUNCTION dot_polka.sink_trim_blocks_after_insert()
-    RETURNS trigger AS
-$$
-BEGIN
-    DELETE FROM dot_polka._blocks WHERE "id" = NEW."id";
-    RETURN NEW;
+    NEW."digest" = cast(NEW."digest" as jsonb);
+  RETURN NEW;
 END;
-$$
-    LANGUAGE 'plpgsql';
+$$ 
+LANGUAGE 'plpgsql';
 
-CREATE TRIGGER trg_blocks_sink_trim_after_upsert
-    AFTER INSERT
-    ON dot_polka._blocks
-    FOR EACH ROW
-EXECUTE PROCEDURE dot_polka.sink_trim_blocks_after_insert();
+CREATE TRIGGER my_trigger
+BEFORE INSERT ON dot_polka.blocks
+FOR EACH ROW
+EXECUTE PROCEDURE  dot_polka.convert_to_jsonb_function();
 
 -- Events
 

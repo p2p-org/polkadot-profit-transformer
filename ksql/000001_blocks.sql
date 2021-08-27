@@ -19,7 +19,7 @@ CREATE STREAM {APP_PREFIX}_BLOCK (
     "current_era" INT,
     "last_log" STRING,
     "digest" STRING,
-    "block_time" BIGINT
+    "block_time" TIMESTAMP
 ) WITH (
     KAFKA_TOPIC='{APP_PREFIX}_BLOCK',
     PARTITIONS=1,
@@ -39,7 +39,7 @@ INSERT INTO {APP_PREFIX}_BLOCK SELECT
                       CAST(EXTRACTJSONFIELD(B."block", '$.header.currentEra') AS INT) "current_era",
                       EXTRACTJSONFIELD(B."block", '$.header.last_log') "last_log",
                       EXTRACTJSONFIELD(B."block", '$.header.digest') "digest",
-                      CAST((B."block_time" / 1000) AS BIGINT)   "block_time"
+                      FROM_UNIXTIME(B."block_time")  "block_time"
 FROM {APP_PREFIX}_BLOCK_DATA B
     EMIT CHANGES;
 

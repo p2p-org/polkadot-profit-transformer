@@ -30,8 +30,8 @@
       "name": "{APP_PREFIX}_block_sink",
       "config": {
         "topics": "{APP_PREFIX}_BLOCK",
-        "insert.mode": "UPSERT",
-        "table.name.format": "{POSTGRES_SCHEMA}._blocks",
+        "insert.mode": "INSERT",
+        "table.name.format": "{POSTGRES_SCHEMA}.blocks",
         "pk.mode": "record_value",
         "pk.fields": "id"
       }
