@@ -90,6 +90,7 @@ class BlocksService implements IBlocksService {
       block_time: blockTime.toNumber()
     }
 
+    this.logger.debug('send block data to kafka: ' + JSON.stringify(blockData))
     await this.kafka.sendBlockData(blockData)
 
     await this.extrinsicsService.extractExtrinsics(
@@ -102,7 +103,8 @@ class BlocksService implements IBlocksService {
 
     const findEraPayoutEvent = (events: Vec<EventRecord>) => {
       return events.find(
-        (event: { event: { section: string; method: string } }) => event.event.section === 'staking' && event.event.method === 'EraPayout'
+        (event: { event: { section: string; method: string } }) =>
+          event.event.section === 'staking' && (event.event.method === 'EraPayout' || event.event.method === 'EraPaid')
       )
     }
 
