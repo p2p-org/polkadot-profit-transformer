@@ -64,7 +64,7 @@ const build = async (): Promise<FastifyInstance> => {
 
   try {
     await validateEnv()
-  } catch (err) {
+  } catch (err: any) {
     fastify.log.error(`Environment variable error: "${err.message}"`)
     fastify.log.error(`Stopping instance...`)
     process.exit(1)
@@ -76,7 +76,7 @@ const build = async (): Promise<FastifyInstance> => {
     try {
       await fastify.register(routes, { prefix: 'api' })
       await fastify.register(prometheus, { prefix: '/' })
-    } catch (err) {
+    } catch (err: any) {
       console.log(err)
       fastify.log.error(`Cannot init endpoint: "${err.message}"`)
       fastify.log.error(`Stopping instance...`)
@@ -86,7 +86,7 @@ const build = async (): Promise<FastifyInstance> => {
 
   try {
     await fastify.ready()
-  } catch (err) {
+  } catch (err: any) {
     throw err
   }
 

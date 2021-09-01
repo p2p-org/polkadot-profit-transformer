@@ -211,7 +211,7 @@ class BlocksService implements IBlocksService {
       try {
         await this.processBlock(blockNumber)
         return
-      } catch (error) {
+      } catch (error: any) {
         this.logger.error({ error }, `Worker id: "${workerId}" Failed attempt ${attempts} to process block #${blockNumber}`)
         if (error.message === 'Unable to retrieve header and parent from supplied hash') return
         await this.sleep(2000)
