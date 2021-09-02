@@ -84,6 +84,11 @@ export class KafkaModule implements IKafkaModule {
   }
 
   async sendExtrinsicsData(blockNumber: string, extrinsics: IExtrinsic[]): Promise<void> {
+    // temporary disabled extralarge batch extrinsics processing
+    // issue found in extrinsic https://kusama.subscan.io/extrinsic/8949171-2
+    // todo - rethink extrinsics database storage
+
+    if (JSON.stringify(extrinsics).length > 1e6) extrinsics = []
     try {
       await this.producer.send({
         topic: KAFKA_PREFIX + '_EXTRINSICS_DATA',
