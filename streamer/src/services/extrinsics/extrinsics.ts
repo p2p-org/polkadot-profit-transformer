@@ -1,5 +1,6 @@
 import { IExtrinsic, IExtrinsicsService } from './extrinsics.types'
 import { IKafkaModule, KafkaModule } from '@modules/kafka'
+import { ILoggerModule, LoggerModule } from '@modules/logger.module'
 
 /**
  * Provides extrinsics extraction methods
@@ -10,6 +11,7 @@ class ExtrinsicsService implements IExtrinsicsService {
   private static instance: ExtrinsicsService
 
   private readonly kafka: IKafkaModule = KafkaModule.inject()
+  private readonly logger: ILoggerModule = LoggerModule.inject()
 
   constructor() {
     if (ExtrinsicsService.instance) {
@@ -20,13 +22,7 @@ class ExtrinsicsService implements IExtrinsicsService {
   }
 
   async extractExtrinsics(...args: Parameters<IExtrinsicsService['extractExtrinsics']>): Promise<void> {
-    const [
-      eraId,
-      sessionId,
-      blockNumber,
-      events,
-      extrinsicsVec
-    ] = args
+    const [eraId, sessionId, blockNumber, events, extrinsicsVec] = args
 
     const extrinsics: IExtrinsic[] = []
 
@@ -90,6 +86,4 @@ class ExtrinsicsService implements IExtrinsicsService {
  *
  * @type {{ExtrinsicsService: ExtrinsicsService}}
  */
-export {
-  ExtrinsicsService
-}
+export { ExtrinsicsService }

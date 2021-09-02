@@ -59,7 +59,7 @@ const build = async (): Promise<FastifyInstance> => {
     bodyLimit: 1048576 * 2,
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
-    logger: LoggerModule.inject()
+    logger: true //LoggerModule.inject()
   })
 
   try {
