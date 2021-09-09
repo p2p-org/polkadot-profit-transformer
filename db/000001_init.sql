@@ -105,13 +105,61 @@ CREATE TABLE dot_polka.account_identity (
     "killed_at" BIGINT
 );
 
-CREATE TABLE dot_polka.balances (
-    "block_id" INTEGER NOT NULL,
-    "account_id" TEXT,
-    "balance" DOUBLE PRECISION,
-    "method" VARCHAR(30),
-    "is_validator" BOOLEAN,
-    "block_time" TIMESTAMP
+
+CREATE TABLE dot_polka.proposal_preimage (
+    "hash" varchar(256),
+    "block_id" BIGINT,
+    "event_id" VARCHAR(150),
+    "extrinsic_id" VARCHAR(150),
+    "event" VARCHAR(150),
+    "data" JSONB,
+    PRIMARY KEY ("hash")
+);
+
+CREATE TABLE dot_polka.technical_committee_proposal (
+    "hash" varchar(256),
+    "id" INTEGER NOT NULL,
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("hash", "event_id")
+);
+
+CREATE TABLE dot_polka.democracy_referenda (
+    "id" INTEGER NOT NULL,
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("id", "event_id", "extrinsic_id")
+);
+
+CREATE TABLE dot_polka.democracy_proposal (
+    "id" INTEGER NOT NULL,
+    "hash" varchar(256),
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("id", "event_id", "extrinsic_id")
+);
+
+
+
+
+CREATE TABLE dot_polka.preimage (
+    "hash" INTEGER NOT NULL,
+    "created_at_block" INTEGER NOT NULL,
+    "updated_at_block" INTEGER NOT NULL,
+    "author" varchar(256),
+    "module" TEXT,
+    "call" TEXT,
+    "deposit" INTEGER,
+    "status" TEXT,
+    PRIMARY KEY ("hash")
 );
 
 

@@ -20,13 +20,7 @@ class ExtrinsicsService implements IExtrinsicsService {
   }
 
   async extractExtrinsics(...args: Parameters<IExtrinsicsService['extractExtrinsics']>): Promise<void> {
-    const [
-      eraId,
-      sessionId,
-      blockNumber,
-      events,
-      extrinsicsVec
-    ] = args
+    const [eraId, sessionId, blockNumber, events, extrinsicsVec] = args
 
     const extrinsics: IExtrinsic[] = []
 
@@ -90,6 +84,4 @@ class ExtrinsicsService implements IExtrinsicsService {
  *
  * @type {{ExtrinsicsService: ExtrinsicsService}}
  */
-export {
-  ExtrinsicsService
-}
+export { ExtrinsicsService }
