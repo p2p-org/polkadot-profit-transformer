@@ -18,7 +18,7 @@ export const ExtrinsicProcessor = (deps: { governanceRepository: GovernanceRepos
     },
     democracy: {
       referenda: {
-        vote: (extrinsic: Extrinsic) => processDemocracyReferendaVoteExtrinsic(extrinsic, governanceRepository, logger),
+        vote: (extrinsic: Extrinsic) => processDemocracyReferendaVoteExtrinsic(extrinsic, governanceRepository, logger, polkadotApi),
       },
       proposal: {
         propose: (extrinsic: Extrinsic) => processDemocracyProposalProposeExtrinsic(extrinsic, governanceRepository, logger, polkadotApi),

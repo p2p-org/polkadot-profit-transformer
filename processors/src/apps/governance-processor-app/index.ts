@@ -28,7 +28,7 @@ const main = async () => {
   const governanceRepository = GovernanceRepository({ knex: pg, logger })
 
   const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi })
-  const eventProcessor = EventProcessor({ governanceRepository, logger })
+  const eventProcessor = EventProcessor({ governanceRepository, logger, polkadotApi })
 
   const governanceProcessor = GovernanceProcessor({ extrinsicProcessor, eventProcessor, logger })
 

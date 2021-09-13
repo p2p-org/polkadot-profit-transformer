@@ -15,12 +15,12 @@ export const processDemocracyProposalProposeExtrinsic = async (
   console.log('EXTRINSIC', JSON.stringify(extrinsic, null, 2))
 
   const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
-  const allRecords = await polkadotApi.query.system.events.at(blockHash)
+  const blockEvents = await polkadotApi.query.system.events.at(blockHash)
 
   const extrinsicIndex = +extrinsic.id.split('-')[1]
   console.log({ extrinsicIndex })
 
-  const events = allRecords.filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex))
+  const events = blockEvents.filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex))
 
   const isExtrinsicSuccess = async (events: EventRecord[]): Promise<boolean> => {
     for (const event of events) {
