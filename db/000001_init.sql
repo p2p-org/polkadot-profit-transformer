@@ -120,10 +120,11 @@ CREATE TABLE dot_polka.technical_committee_proposal (
     "hash" varchar(256),
     "id" INTEGER NOT NULL,
     "block_id" BIGINT,
+    "extrinsic_id" varchar(256),
     "event_id" varchar(256),
     "event" varchar(256),
     "data" JSONB,
-    PRIMARY KEY ("hash", "event_id")
+    PRIMARY KEY ("hash", "extrinsic_id", "event_id")
 );
 
 CREATE TABLE dot_polka.democracy_referenda (
@@ -151,15 +152,13 @@ CREATE TABLE dot_polka.democracy_proposal (
 
 
 CREATE TABLE dot_polka.preimage (
-    "hash" INTEGER NOT NULL,
-    "created_at_block" INTEGER NOT NULL,
-    "updated_at_block" INTEGER NOT NULL,
-    "author" varchar(256),
-    "module" TEXT,
-    "call" TEXT,
-    "deposit" INTEGER,
-    "status" TEXT,
-    PRIMARY KEY ("hash")
+    "proposal_hash" varchar(256),
+    "block_id" int,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("proposal_hash", "block_id", "event_id")
 );
 
 

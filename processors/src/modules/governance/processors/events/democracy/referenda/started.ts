@@ -1,29 +1,56 @@
-import { DemocracyReferendaModel } from './../../../../../../apps/common/infra/postgresql/governance/models/democracyModels'
+import { ApiPromise } from '@polkadot/api'
 import { EventEntry } from '@modules/governance/types'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
+import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/governance/models/democracyModels'
+import { Hash, ProposalIndex, ReferendumIndex, VoteThreshold } from '@polkadot/types/interfaces'
+import { Compact } from '@polkadot/types'
 
 export const processDemocracyReferendaStarted = async (
   event: EventEntry,
   governanceRepository: GovernanceRepository,
   logger: Logger,
+  polkadotApi: ApiPromise,
 ): Promise<void> => {
-  logger.trace({ event }, 'process democracy referenda started event')
+  const blockHash = await polkadotApi.rpc.chain.getBlockHash(event.block_id)
+  const blockEvents = await polkadotApi.query.system.events.at(blockHash)
+  const block = await polkadotApi.rpc.chain.getBlock(blockHash)
 
-  const eventData = JSON.parse(event.data)
-  const referendumIndex = parseInt(eventData[0]['ReferendumIndex'], 16)
-  const voteThreshold = eventData[1]['VoteThreshold']
+  const startedEvent = blockEvents.find((event) => {
+    return event.event.section === 'democracy' && event.event.method === 'Started'
+  })
 
-  console.log(eventData)
-
-  const democracyReferenda: DemocracyReferendaModel = {
-    id: referendumIndex,
-    block_id: event.block_id,
-    event_id: event.event_id,
-    extrinsic_id: '',
-    event: 'Started',
-    data: { voteThreshold },
+  if (!startedEvent) {
+    logger.error('no democracy started event found for incoming entry ' + event.event_id)
+    return
   }
 
-  await governanceRepository.democracy.referenda.save(democracyReferenda)
+  console.log({
+    asApply: startedEvent.phase.asApplyExtrinsic.toHuman(),
+    isApply: startedEvent.phase.isApplyExtrinsic,
+    phase: startedEvent.phase.toHuman(),
+  })
+
+  const referendumIndex = <ReferendumIndex>startedEvent.event.data[0]
+  const threshold = <VoteThreshold>startedEvent.event.data[1]
+
+  // if extrinsic applied then referenda is from technicalcommitee executed proposal
+  if (startedEvent.phase.isApplyExtrinsic) {
+    const extrinsicIndex = startedEvent.phase.asApplyExtrinsic.toNumber()
+
+    const extrinsic = block.block.extrinsics[extrinsicIndex]
+    const hash = <Hash>extrinsic.args[0]
+    const proposalIndex = <Compact<ProposalIndex>>extrinsic.args[1]
+
+    const democracyReferenda: DemocracyReferendaModel = {
+      id: referendumIndex.toNumber(),
+      block_id: event.block_id,
+      event_id: event.event_id,
+      extrinsic_id: event.block_id + '-' + extrinsicIndex,
+      event: 'Started',
+      data: { threshold, motion_hash: hash, technical_committee_proposal_index: proposalIndex },
+    }
+
+    await governanceRepository.democracy.referenda.save(democracyReferenda)
+  }
 }

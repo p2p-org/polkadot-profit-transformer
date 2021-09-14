@@ -7,47 +7,53 @@ import { Logger } from 'apps/common/infra/logger/logger'
 import { isExtrinsicSuccess } from '../../utils/isExtrinsicSuccess'
 import { findEvent } from '../../utils/findEvent'
 import { AccountId, Hash, MemberCount, Proposal, ProposalIndex } from '@polkadot/types/interfaces'
+import { bool, Compact } from '@polkadot/types'
 
-export const processTechnicalCommiteeProposeExtrinsic = async (
+export const processTechnicalCommiteeVoteExtrinsic = async (
   extrinsic: Extrinsic,
   governanceRepository: GovernanceRepository,
   logger: Logger,
   polkadotApi: ApiPromise,
 ): Promise<void> => {
-  logger.info({ extrinsic }, 'processTechnicalCommiteeProposeExtrinsic')
+  logger.info({ extrinsic }, 'processTechnicalCommiteeVoteExtrinsic')
 
   const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
   const blockEvents = await polkadotApi.query.system.events.at(blockHash)
 
   const isExtrinsicSuccessfull = await isExtrinsicSuccess(extrinsic, blockEvents, polkadotApi)
-  if (!isExtrinsicSuccessfull) return
+  if (!isExtrinsicSuccessfull) {
+    logger.warn('extrinsic fail:' + extrinsic.id)
+    return
+  }
 
   const block = await polkadotApi.rpc.chain.getBlock(blockHash)
 
-  const extrinsicFull = await findExtrinic(block, 'technicalCommittee', 'propose', polkadotApi)
+  const extrinsicFull = await findExtrinic(block, 'technicalCommittee', 'vote', polkadotApi)
   if (!extrinsicFull) throw Error('no full extrinsic for enrty ' + extrinsic.id)
 
-  const techCommProposedEvent = findEvent(blockEvents, 'technicalCommittee', 'Proposed')
-  if (!techCommProposedEvent) throw Error('no technicalcommittee Proposed event for enrty ' + extrinsic.id)
+  const techCommVotedEvent = findEvent(blockEvents, 'technicalCommittee', 'Voted')
+  if (!techCommVotedEvent) throw Error('no technicalcommittee voted event for enrty ' + extrinsic.id)
 
-  const proposer = <AccountId>techCommProposedEvent.event.data[0]
-  const proposalIndex = <ProposalIndex>techCommProposedEvent.event.data[1]
-  const proposalHash = <Hash>techCommProposedEvent.event.data[2]
-  const threshold = <MemberCount>techCommProposedEvent.event.data[3]
-  const proposal = <Proposal>extrinsicFull.args[1]
+  const proposalHash = <Hash>extrinsicFull.args[0]
+  const proposalIndex = <Compact<ProposalIndex>>extrinsicFull.args[1]
+  const approve = <bool>extrinsicFull.args[2]
+  const accountId = <AccountId>techCommVotedEvent.event.data[0]
+  const membersYes = <MemberCount>techCommVotedEvent.event.data[3]
+  const membersNo = <MemberCount>techCommVotedEvent.event.data[4]
 
   const proposalModel: TechnicalCommiteeProposalModel = {
     id: proposalIndex.toNumber(),
     hash: proposalHash.toString(),
     block_id: extrinsic.block_id,
-    event: 'Proposed',
+    event: 'Vote',
     data: {
-      proposer,
-      threshold: parseInt(threshold.toHex(), 16),
-      proposal: proposal,
+      voter: accountId.toString(),
+      approve: approve,
+      membersYes: membersYes.toNumber(),
+      membersNo: membersNo.toNumber(),
     },
     extrinsic_id: extrinsic.id,
-    event_id: 'propose',
+    event_id: 'vote',
   }
 
   console.log({ proposalModel })

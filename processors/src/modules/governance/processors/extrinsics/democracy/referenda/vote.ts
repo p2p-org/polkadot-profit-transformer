@@ -3,7 +3,10 @@ import { DemocracyReferendaModel } from '../../../../../../apps/common/infra/pos
 import { Extrinsic } from '../../../../types'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { AccountVote, EventRecord } from '@polkadot/types/interfaces'
+import { AccountVote, EventRecord, ReferendumIndex, Vote } from '@polkadot/types/interfaces'
+import { isExtrinsicSuccess } from '../../../utils/isExtrinsicSuccess'
+import { findExtrinic } from '../../../utils/findExtrinsic'
+import { Compact } from '@polkadot/types'
 
 export const processDemocracyReferendaVoteExtrinsic = async (
   extrinsic: Extrinsic,
@@ -18,54 +21,53 @@ export const processDemocracyReferendaVoteExtrinsic = async (
   logger.info({ extrinsic }, 'processDemocracyReferendaVoteExtrinsic')
 
   const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
-  const signedBlock = await polkadotApi.rpc.chain.getBlock(blockHash)
-
   const blockEvents = await polkadotApi.query.system.events.at(blockHash)
 
-  const extrinsicIndex = +extrinsic.id.split('-')[1]
+  const isExtrinsicSuccessfull = await isExtrinsicSuccess(extrinsic, blockEvents, polkadotApi)
+  if (!isExtrinsicSuccessfull) return
 
-  const events = blockEvents.filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex))
+  const block = await polkadotApi.rpc.chain.getBlock(blockHash)
 
-  const isExtrinsicSuccess = async (events: EventRecord[]): Promise<boolean> => {
-    for (const event of events) {
-      const success = await polkadotApi.events.system.ExtrinsicSuccess.is(event.event)
-      if (success) return true
+  const extrinsicFull = await findExtrinic(block, 'democracy', 'vote', polkadotApi)
+  if (!extrinsicFull) throw Error('no full extrinsic for enrty ' + extrinsic.id)
+
+  console.log({ extrinsicFull })
+
+  const referendumIndex = <Compact<ReferendumIndex>>extrinsicFull.args[0]
+
+  const voteRaw = <AccountVote>extrinsicFull.method.args[1]
+
+  const decodeVote = (v: AccountVote) => {
+    if (!v.isStandard) {
+      const vote = v.toHuman() as { vote: string }
+      return { vote: vote['vote'], conviction: 0, balance: 0 }
     }
-    return false
+
+    // if (v.isStandard) {
+    const vote = v.asStandard.vote.isAye ? 'Aye' : 'Nay'
+    const conviction = v.asStandard.vote.conviction.toNumber()
+    const balance = v.asStandard.balance.toNumber()
+    return { vote, conviction, balance }
+    // }
   }
 
-  const success = await isExtrinsicSuccess(events)
+  const { vote, conviction, balance } = decodeVote(voteRaw)
 
-  if (!success) {
-    logger.warn('extrinsic fail: ' + extrinsic.id)
-    return
-  }
-
-  const voteExtrinsic = signedBlock.block.extrinsics.find((ext) => ext.method.section === 'democracy' && ext.method.method === 'vote')
-
-  if (!voteExtrinsic) {
-    logger.warn('no democracy.vote extrinsic found in block ' + extrinsic.block_id)
-    return
-  }
-  const referendumIndex = <number>(<unknown>voteExtrinsic.args[0])
-
-  const vote = <AccountVote>voteExtrinsic!.args[1]
-
-  console.log('vote', vote.asStandard.vote.toHuman())
-  console.log('balance', vote.asStandard.balance.toNumber())
-  console.log('conviction', vote.asStandard.vote.conviction.toNumber())
+  // console.log('vote', vote.asStandard.vote.toHuman())
+  // console.log('balance', vote.asStandard.balance.toNumber())
+  // console.log('conviction', vote.asStandard.vote.conviction.toNumber())
 
   const referenda: DemocracyReferendaModel = {
-    id: referendumIndex,
+    id: referendumIndex.toNumber(),
     block_id: extrinsic.block_id,
     event_id: '',
     extrinsic_id: extrinsic.id,
     event: 'Voted',
     data: {
-      sender: extrinsic.signer,
-      vote: vote.asStandard.vote.isAye ? 'Aye' : 'Nay',
-      conviction: vote.asStandard.vote.conviction.toNumber(),
-      balance: vote.asStandard.balance.toNumber(),
+      voter: extrinsic.signer,
+      vote,
+      conviction,
+      balance,
     },
   }
 

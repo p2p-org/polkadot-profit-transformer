@@ -1,22 +1,24 @@
+import { EventEntry } from '@modules/governance/types'
+import { Logger } from 'apps/common/infra/logger/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
-import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/governance/models/democracyModels'
+import { PreimageModel } from 'apps/common/infra/postgresql/governance/models/preimageModel'
 
 export const processDemocracyPreimageUsedEvent = async (event: EventEntry, governanceRepository: GovernanceRepository, logger: Logger) => {
-  logger.trace({ event }, 'process democracy preimage used event')
-
   const eventData = JSON.parse(event.data)
-  const referendumIndex = parseInt(eventData[0]['ReferendumIndex'], 16)
+  console.log({ eventData: JSON.stringify(eventData, null, 2) })
 
-  console.log('preimageUsed event data', eventData)
+  const hash = eventData[0]['Hash']
+  const accountId = eventData[1]['AccountId']
+  const balance = parseInt(eventData[2]['Balance'], 16)
 
-  const democracyReferenda: DemocracyReferendaModel = {
-    id: referendumIndex,
+  const preimageRecord: PreimageModel = {
+    proposal_hash: hash,
     block_id: event.block_id,
     event_id: event.event_id,
     extrinsic_id: '',
-    event: 'PreimageUsed',
-    data: {},
+    event: 'preimageUsed',
+    data: { accountId, balance },
   }
 
-  await governanceRepository.democracy.referenda.save(democracyReferenda)
+  await governanceRepository.preimages.save(preimageRecord)
 }

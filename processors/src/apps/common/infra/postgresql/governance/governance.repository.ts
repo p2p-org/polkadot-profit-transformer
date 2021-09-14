@@ -1,8 +1,9 @@
 import { DemocracyProposalModel, DemocracyReferendaModel } from './models/democracyModels'
-import { PreimageModel, TechnicalCommiteeProposalModel } from './models/technicalCommiteeModels'
+import { TechnicalCommiteeProposalModel } from './models/technicalCommiteeModels'
 
 import { Knex } from 'knex'
 import { Logger } from '../../logger/logger'
+import { PreimageModel } from './models/preimageModel'
 
 export type GovernanceRepository = ReturnType<typeof GovernanceRepository>
 
@@ -11,7 +12,7 @@ export const GovernanceRepository = (deps: { knex: Knex; logger: Logger }) => {
   return {
     technicalCommittee: {
       save: async (proposal: TechnicalCommiteeProposalModel): Promise<void> => {
-        await TechnicalCommiteeProposalModel(knex).insert(proposal).onConflict(['hash', 'event_id']).merge()
+        await TechnicalCommiteeProposalModel(knex).insert(proposal).onConflict(['hash', 'extrinsic_id', 'event_id']).merge()
       },
       findProposalIdByHash: async (hash: string): Promise<number> => {
         const proposal = await TechnicalCommiteeProposalModel(knex).where({ hash }).first()
@@ -34,7 +35,7 @@ export const GovernanceRepository = (deps: { knex: Knex; logger: Logger }) => {
     preimages: {
       save: async (preimage: PreimageModel): Promise<void> => {
         logger.info({ preimage }, 'save preimage in db')
-        await PreimageModel(knex).insert(preimage).onConflict('hash').merge()
+        await PreimageModel(knex).insert(preimage).onConflict(['proposal_hash', 'block_id', 'event_id']).merge()
       },
     },
   }
