@@ -30,7 +30,7 @@ const main = async () => {
 
   const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi })
   const eventProcessor = EventProcessor({ governanceRepository, logger, polkadotApi })
-  const multisigExtrinsicProcessor = MultisigExtrinsicProcessor({ extrinsicProcessor, polkadotApi, logger })
+  const multisigExtrinsicProcessor = MultisigExtrinsicProcessor({ polkadotApi, logger })
 
   const governanceProcessor = GovernanceProcessor({ extrinsicProcessor, eventProcessor, multisigExtrinsicProcessor, logger })
 

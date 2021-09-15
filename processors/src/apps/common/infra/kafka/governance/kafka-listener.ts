@@ -33,7 +33,7 @@ export const KafkaListenerFactory = (processor: GovernanceProcessor, logger: Log
               default:
                 logger.error(`unknow kafka topic: "${topic}"`)
             }
-          } catch (err) {
+          } catch (err: any) {
             logger.error({ err, topic, message, error: err.message }, `Error in kafka eachMessage`)
           }
         },

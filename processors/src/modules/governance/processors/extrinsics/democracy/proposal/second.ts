@@ -1,45 +1,21 @@
 import { DemocracyProposalModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracyModels'
-import { ApiPromise } from '@polkadot/api'
-import { Extrinsic } from '../../../../types'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { EventRecord } from '@polkadot/types/interfaces'
+import { ExtrincicProcessorInput } from '../..'
 
 export const processDemocracyProposalSecondExtrinsic = async (
-  extrinsic: Extrinsic,
+  args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
-  polkadotApi: ApiPromise,
 ): Promise<void> => {
+  const { blockEvents, extrinsicFull, extrinsic } = args
+
   console.log('PROPOSAL SECOND')
   console.log('EXTRINSIC', JSON.stringify(extrinsic, null, 2))
 
-  const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
-  const allRecords = await polkadotApi.query.system.events.at(blockHash)
-
-  const extrinsicIndex = +extrinsic.id.split('-')[1]
-  console.log({ extrinsicIndex })
-
-  const events = allRecords.filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex))
-
-  const isExtrinsicSuccess = async (events: EventRecord[]): Promise<boolean> => {
-    for (const event of events) {
-      const success = await polkadotApi.events.system.ExtrinsicSuccess.is(event.event)
-      if (success) return true
-    }
-    return false
-  }
-
-  const success = await isExtrinsicSuccess(events)
-
-  if (!success) {
-    logger.warn('extrinsic fail: ' + extrinsic.id)
-    return
-  }
-
   // find balance reserved for this seconding
 
-  const balanceReserverdEvent = events.find((event) => {
+  const balanceReserverdEvent = blockEvents.find((event) => {
     return event.event.section === 'balances' && event.event.method === 'Reserved'
   })
 

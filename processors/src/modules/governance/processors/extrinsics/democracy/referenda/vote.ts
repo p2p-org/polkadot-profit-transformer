@@ -1,37 +1,19 @@
-import { ApiPromise } from '@polkadot/api'
 import { DemocracyReferendaModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracyModels'
-import { Extrinsic } from '../../../../types'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { AccountVote, EventRecord, ReferendumIndex, Vote } from '@polkadot/types/interfaces'
-import { isExtrinsicSuccess } from '../../../utils/isExtrinsicSuccess'
-import { findExtrinic } from '../../../utils/findExtrinsic'
+import { AccountVote, ReferendumIndex } from '@polkadot/types/interfaces'
 import { Compact } from '@polkadot/types'
+import { ExtrincicProcessorInput } from '../..'
 
 export const processDemocracyReferendaVoteExtrinsic = async (
-  extrinsic: Extrinsic,
+  args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
-  polkadotApi: ApiPromise,
 ): Promise<void> => {
   // here preimage proposal_hash appears first time, add record to the proposal_image table
-
-  console.log({ extrinsic })
+  const { blockEvents, extrinsicFull, extrinsic } = args
 
   logger.info({ extrinsic }, 'processDemocracyReferendaVoteExtrinsic')
-
-  const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
-  const blockEvents = await polkadotApi.query.system.events.at(blockHash)
-
-  const isExtrinsicSuccessfull = await isExtrinsicSuccess(extrinsic, blockEvents, polkadotApi)
-  if (!isExtrinsicSuccessfull) return
-
-  const block = await polkadotApi.rpc.chain.getBlock(blockHash)
-
-  const extrinsicFull = await findExtrinic(block, 'democracy', 'vote', polkadotApi)
-  if (!extrinsicFull) throw Error('no full extrinsic for enrty ' + extrinsic.id)
-
-  console.log({ extrinsicFull })
 
   const referendumIndex = <Compact<ReferendumIndex>>extrinsicFull.args[0]
 

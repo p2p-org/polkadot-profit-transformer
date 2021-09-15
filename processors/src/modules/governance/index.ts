@@ -36,26 +36,44 @@ export const GovernanceProcessor = (deps: {
       }
     },
     processExtrinsicsHandler: async (extrinsics: ExtrinsicsEntry): Promise<void> => {
-      for (const extrinsic of extrinsics.extrinsics) {
-        // logger.info({ extrinsic }, 'process tech comm extrinsic')
-
-        if (extrinsic.section === 'technicalCommittee') {
-          if (extrinsic.method === 'propose') return extrinsicProcessor.technicalCommitee.propose(extrinsic)
-          if (extrinsic.method === 'vote') return extrinsicProcessor.technicalCommitee.vote(extrinsic)
-        }
-
-        if (extrinsic.section === 'democracy') {
-          if (extrinsic.method === 'vote') return extrinsicProcessor.democracy.referenda.vote(extrinsic)
-          //   if (extrinsic.method === 'removeVote') return extrinsicProcessor.democracy.referenda.removeVote(extrinsic)
-          //   if (extrinsic.method === 'removeOtherVote') return extrinsicProcessor.democracy.referenda.removeOtherVote(extrinsic)
-          //   if (extrinsic.method === 'propose') return extrinsicProcessor.democracy.proposal.propose(extrinsic)
-          //   if (extrinsic.method === 'second') return extrinsicProcessor.democracy.proposal.second(extrinsic)
-          if (extrinsic.method === 'notePreimage') return extrinsicProcessor.democracy.preimage.notePreimage(extrinsic)
-        }
-
+      for (let extrinsic of extrinsics.extrinsics) {
+        // extract extrinsic data from multisig
         if (extrinsic.section === 'multisig') {
           if (extrinsic.method === 'asMulti') {
-            return multisigExtrinsicProcessor.asMulti(extrinsic)
+            extrinsic = await multisigExtrinsicProcessor.asMulti(extrinsic)
+          }
+        }
+
+        // check extrinsics from target sections if succesfull
+        if (['technicalCommittee', 'democracy'].includes(extrinsic.section)) {
+          const isExtrinsicSuccessfull = await extrinsicProcessor.utils.isExtrinsicSuccessfull(extrinsic)
+          if (!isExtrinsicSuccessfull) {
+            logger.warn('extrinsic ' + extrinsic.id + ' is not successfull, exit')
+            return
+          }
+
+          // we will need full extrinsics and events for processing, extract here
+          const { blockEvents, extrinsicFull } = await extrinsicProcessor.utils.getFullBlockData(extrinsic)
+
+          if (!blockEvents || !extrinsicFull) {
+            throw new Error('no block events or extrinsicFull found for extrinsic entry ' + extrinsic.id)
+          }
+
+          // process successfull extrinsics
+          if (extrinsic.section === 'technicalCommittee') {
+            if (extrinsic.method === 'propose')
+              return extrinsicProcessor.technicalCommitee.propose({ extrinsic, blockEvents, extrinsicFull })
+            if (extrinsic.method === 'vote') return extrinsicProcessor.technicalCommitee.vote({ extrinsic, blockEvents, extrinsicFull })
+          }
+
+          if (extrinsic.section === 'democracy') {
+            if (extrinsic.method === 'vote') return extrinsicProcessor.democracy.referenda.vote({ extrinsic, blockEvents, extrinsicFull })
+            //   if (extrinsic.method === 'removeVote') return extrinsicProcessor.democracy.referenda.removeVote(extrinsic)
+            //   if (extrinsic.method === 'removeOtherVote') return extrinsicProcessor.democracy.referenda.removeOtherVote(extrinsic)
+            //   if (extrinsic.method === 'propose') return extrinsicProcessor.democracy.proposal.propose(extrinsic)
+            //   if (extrinsic.method === 'second') return extrinsicProcessor.democracy.proposal.second(extrinsic)
+            if (extrinsic.method === 'notePreimage')
+              return extrinsicProcessor.democracy.preimage.notePreimage({ extrinsic, blockEvents, extrinsicFull })
           }
         }
       }

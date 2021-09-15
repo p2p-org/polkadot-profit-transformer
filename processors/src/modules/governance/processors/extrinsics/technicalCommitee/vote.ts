@@ -4,32 +4,19 @@ import { TechnicalCommiteeProposalModel } from '../../../../../apps/common/infra
 import { Extrinsic } from './../../../types'
 import { GovernanceRepository } from './../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { isExtrinsicSuccess } from '../../utils/isExtrinsicSuccess'
 import { findEvent } from '../../utils/findEvent'
-import { AccountId, Hash, MemberCount, Proposal, ProposalIndex } from '@polkadot/types/interfaces'
+import { AccountId, Hash, MemberCount, ProposalIndex } from '@polkadot/types/interfaces'
 import { bool, Compact } from '@polkadot/types'
+import { ExtrincicProcessorInput } from '..'
 
 export const processTechnicalCommiteeVoteExtrinsic = async (
-  extrinsic: Extrinsic,
+  args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
-  polkadotApi: ApiPromise,
 ): Promise<void> => {
+  const { blockEvents, extrinsicFull, extrinsic } = args
+
   logger.info({ extrinsic }, 'processTechnicalCommiteeVoteExtrinsic')
-
-  const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
-  const blockEvents = await polkadotApi.query.system.events.at(blockHash)
-
-  const isExtrinsicSuccessfull = await isExtrinsicSuccess(extrinsic, blockEvents, polkadotApi)
-  if (!isExtrinsicSuccessfull) {
-    logger.warn('extrinsic fail:' + extrinsic.id)
-    return
-  }
-
-  const block = await polkadotApi.rpc.chain.getBlock(blockHash)
-
-  const extrinsicFull = await findExtrinic(block, 'technicalCommittee', 'vote', polkadotApi)
-  if (!extrinsicFull) throw Error('no full extrinsic for enrty ' + extrinsic.id)
 
   const techCommVotedEvent = findEvent(blockEvents, 'technicalCommittee', 'Voted')
   if (!techCommVotedEvent) throw Error('no technicalcommittee voted event for enrty ' + extrinsic.id)

@@ -1,46 +1,21 @@
 import { DemocracyProposalModel } from './../../../../../../apps/common/infra/postgresql/governance/models/democracyModels'
-import { ApiPromise } from '@polkadot/api'
-import { Extrinsic } from '../../../../types'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { EventRecord } from '@polkadot/types/interfaces'
+import { ExtrincicProcessorInput } from '../..'
 
 export const processDemocracyProposalProposeExtrinsic = async (
-  extrinsic: Extrinsic,
+  args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
-  polkadotApi: ApiPromise,
 ): Promise<void> => {
-  console.log('PROPOSAL PROPOSE')
+  const { blockEvents, extrinsicFull, extrinsic } = args
+
+  console.log('DEMOCRACY PROPOSE')
   console.log('EXTRINSIC', JSON.stringify(extrinsic, null, 2))
 
-  const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
-  const blockEvents = await polkadotApi.query.system.events.at(blockHash)
-
-  const extrinsicIndex = +extrinsic.id.split('-')[1]
-  console.log({ extrinsicIndex })
-
-  const events = blockEvents.filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex))
-
-  const isExtrinsicSuccess = async (events: EventRecord[]): Promise<boolean> => {
-    for (const event of events) {
-      const success = await polkadotApi.events.system.ExtrinsicSuccess.is(event.event)
-      if (success) return true
-    }
-    return false
-  }
-
-  const success = await isExtrinsicSuccess(events)
-
-  if (!success) {
-    logger.warn('extrinsic fail: ' + extrinsic.id)
-    return
-  }
-
-  const democracyProposedEvent = events.find((event) => {
+  const democracyProposedEvent = blockEvents.find((event) => {
     return event.event.section === 'democracy' && event.event.method === 'Proposed'
   })
-  // const treasuryDepositEvent = events.find((event) => event.event.method === 'treasury' && event.event.section === 'Deposit')
 
   if (!democracyProposedEvent) {
     logger.warn('no democracy proposed event for extrinsic ' + extrinsic.id)
