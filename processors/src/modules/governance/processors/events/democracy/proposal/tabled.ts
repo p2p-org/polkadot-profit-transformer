@@ -11,7 +11,7 @@ export const processDemocracyProposalTabled = async (
   logger: Logger,
   polkadotApi: ApiPromise,
 ): Promise<void> => {
-  logger.trace({ event }, 'process democracy proposal tabled event')
+  console.log('process democracy proposal tabled event')
   const eventData = JSON.parse(event.data)
   console.log(eventData)
 

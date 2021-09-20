@@ -16,6 +16,8 @@ export const processDemocracyReferendaStarted = async (
   const blockEvents = await polkadotApi.query.system.events.at(blockHash)
   const block = await polkadotApi.rpc.chain.getBlock(blockHash)
 
+  console.log('democracy started event')
+
   const startedEvent = blockEvents.find((event) => {
     return event.event.section === 'democracy' && event.event.method === 'Started'
   })
@@ -25,16 +27,17 @@ export const processDemocracyReferendaStarted = async (
     return
   }
 
-  console.log({
-    asApply: startedEvent.phase.asApplyExtrinsic.toHuman(),
-    isApply: startedEvent.phase.isApplyExtrinsic,
-    phase: startedEvent.phase.toHuman(),
-  })
+  // console.log({
+  //   asApply: startedEvent.phase.asApplyExtrinsic.toHuman(),
+  //   isApply: startedEvent.phase.isApplyExtrinsic,
+  //   phase: startedEvent.phase.toHuman(),
+  // })
 
   const referendumIndex = <ReferendumIndex>startedEvent.event.data[0]
   const threshold = <VoteThreshold>startedEvent.event.data[1]
 
   // if extrinsic applied then referenda is from technicalcommitee executed proposal
+  // todo check fact above
   if (startedEvent.phase.isApplyExtrinsic) {
     const extrinsicIndex = startedEvent.phase.asApplyExtrinsic.toNumber()
 
@@ -52,5 +55,10 @@ export const processDemocracyReferendaStarted = async (
     }
 
     await governanceRepository.democracy.referenda.save(democracyReferenda)
+
+    return
   }
+
+  // else referendum started from a democracy proposal
+  // we process this event in democracy.tabled event to natch democracy proposal and started referenda
 }

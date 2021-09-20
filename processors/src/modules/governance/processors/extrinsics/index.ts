@@ -14,13 +14,14 @@ import { processDemocracyNotePreimageExtrinsic } from './democracy/preimage'
 import { isExtrinsicSuccess } from '../utils/isExtrinsicSuccess'
 import { findExtrinic } from '../utils/findExtrinsic'
 import { GenericExtrinsic, Vec } from '@polkadot/types'
-import { EventRecord } from '@polkadot/types/interfaces'
+import { EventRecord, SignedBlock } from '@polkadot/types/interfaces'
 import { AnyTuple } from '@polkadot/types/types'
 
 export type ExtrincicProcessorInput = {
   extrinsic: Extrinsic
   extrinsicFull: GenericExtrinsic<AnyTuple>
   blockEvents: Vec<EventRecord>
+  block: SignedBlock
 }
 
 export type ExtrinsicProcessor = ReturnType<typeof ExtrinsicProcessor>
@@ -45,7 +46,8 @@ export const ExtrinsicProcessor = (deps: { governanceRepository: GovernanceRepos
         second: (args: ExtrincicProcessorInput) => processDemocracyProposalSecondExtrinsic(args, governanceRepository, logger),
       },
       preimage: {
-        notePreimage: (args: ExtrincicProcessorInput) => processDemocracyNotePreimageExtrinsic(args, governanceRepository, logger),
+        notePreimage: (args: ExtrincicProcessorInput) =>
+          processDemocracyNotePreimageExtrinsic(args, governanceRepository, logger, polkadotApi),
       },
     },
     utils: {
@@ -57,13 +59,13 @@ export const ExtrinsicProcessor = (deps: { governanceRepository: GovernanceRepos
       },
       getFullBlockData: async (
         extrinsic: Extrinsic,
-      ): Promise<{ blockEvents: Vec<EventRecord>; extrinsicFull: GenericExtrinsic<AnyTuple> | undefined }> => {
+      ): Promise<{ blockEvents: Vec<EventRecord>; extrinsicFull: GenericExtrinsic<AnyTuple> | undefined; block: SignedBlock }> => {
         const blockHash = await polkadotApi.rpc.chain.getBlockHash(extrinsic.block_id)
         const blockEvents = await polkadotApi.query.system.events.at(blockHash)
         const block = await polkadotApi.rpc.chain.getBlock(blockHash)
         const extrinsicFull = await findExtrinic(block, extrinsic.section, extrinsic.method, polkadotApi)
 
-        return { blockEvents, extrinsicFull }
+        return { blockEvents, extrinsicFull, block }
       },
     },
   }
