@@ -101,14 +101,6 @@ export const GovernanceProcessor = (deps: {
           continue
         }
 
-        // extract extrinsic data from multisig
-        // todo process multisig extrinsics
-        // if (extrinsic.section === 'multisig') {
-        //   if (extrinsic.method === 'asMulti') {
-        //     extrinsic = await multisigExtrinsicProcessor.asMulti(extrinsic)
-        //   }
-        // }
-
         const fullExtrinsic = await extrinsicProcessor.utils.getExtrinsic(extrinsic)
 
         if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'].includes(fullExtrinsic.method.section)) {

@@ -2,6 +2,7 @@ import { DemocracyProposalModel } from './../../../../../../apps/common/infra/po
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '../..'
+import { u128, u32 } from '@polkadot/types'
 
 export const processDemocracyProposalProposeExtrinsic = async (
   args: ExtrincicProcessorInput,
@@ -9,9 +10,6 @@ export const processDemocracyProposalProposeExtrinsic = async (
   logger: Logger,
 ): Promise<void> => {
   const { extrinsicEvents, fullExtrinsic, extrinsic } = args
-
-  console.log('DEMOCRACY PROPOSE')
-  console.log('EXTRINSIC', JSON.stringify(extrinsic, null, 2))
 
   const democracyProposedEvent = extrinsicEvents.find((event) => {
     return event.event.section === 'democracy' && event.event.method === 'Proposed'
@@ -22,11 +20,27 @@ export const processDemocracyProposalProposeExtrinsic = async (
     return
   }
 
-  const proposalId = parseInt(democracyProposedEvent?.event.data[0].toHex(), 16)
+  const eventData = democracyProposedEvent.event.data
+  const proposalId = (<u32>eventData[0]).toNumber()
+  const balance = (<u128>eventData[1]).toNumber()
 
-  const balance = democracyProposedEvent?.event.data[1].toJSON()
+  const argsdef = fullExtrinsic.argsDef
 
-  console.log({ balance })
+  // fix for a few very early extrinsics in kusama, with the different schema
+  if (argsdef['proposal']) {
+    const proposal: DemocracyProposalModel = {
+      id: proposalId,
+      hash: proposalId.toString(),
+      block_id: extrinsic.block_id,
+      event_id: '',
+      extrinsic_id: extrinsic.id,
+      event: 'Proposed',
+      data: { balance: balance, signer: extrinsic.signer, proposal: fullExtrinsic.args[0].toHuman() },
+    }
+
+    await governanceRepository.democracy.proposal.save(proposal)
+    return
+  }
 
   const proposal: DemocracyProposalModel = {
     id: proposalId,
