@@ -2,11 +2,10 @@ import { ApiPromise } from '@polkadot/api'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { AccountId, Balance, Call, Hash } from '@polkadot/types/interfaces'
-import { Bytes, GenericExtrinsic } from '@polkadot/types'
+import { Bytes } from '@polkadot/types'
 import { findEvent } from '../../../utils/findEvent'
 import { PreimageModel } from 'apps/common/infra/postgresql/governance/models/preimageModel'
 import { ExtrincicProcessorInput } from '../..'
-import { AnyTuple } from '@polkadot/types/types'
 
 export const processDemocracyNotePreimageExtrinsic = async (
   args: ExtrincicProcessorInput,
@@ -27,24 +26,24 @@ export const processDemocracyNotePreimageExtrinsic = async (
 
   // here we decode preimage method and call
 
-  console.log({
-    blockHash: block.block.hash.toString(),
-    proposalHash: proposalHash.toHuman(),
-  })
+  // console.log({
+  //   blockHash: block.block.hash.toString(),
+  //   proposalHash: proposalHash.toHuman(),
+  // })
 
   const api = await polkadotApi.at(block.block.hash)
 
   const preimageWrapped = await api.query.democracy.preimages(proposalHash)
-  console.log('preimage', preimageWrapped)
+  // console.log('preimage', preimageWrapped)
   const preimage = preimageWrapped.unwrap()
 
   let call: Call
 
   if (preimage.isAvailable) {
-    console.log('isAvailable')
+    // console.log('isAvailable')
     call = await polkadotApi.createType('Call', preimage.asAvailable.data)
   } else {
-    console.log('not available')
+    // console.log('not available')
     call = await polkadotApi.createType('Call', (<any>preimage)[0])
   }
 
