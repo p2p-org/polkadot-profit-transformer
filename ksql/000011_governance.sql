@@ -25,7 +25,7 @@ WHERE
         OR
         extractjsonfield(E."event", '$.section') = 'democracy'
         OR
-        extractjsonfield(E."event", '$.section') = 'counsil'
+        extractjsonfield(E."event", '$.section') = 'council'
         OR 
         extractjsonfield(E."event", '$.section') = 'treasury'
         OR

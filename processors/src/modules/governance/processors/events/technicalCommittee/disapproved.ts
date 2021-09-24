@@ -20,6 +20,7 @@ export const processTechnicalCommitteeDisapprovedEvent = async (
     id: proposal_id,
     block_id: event.block_id,
     extrinsic_id: '',
+    event_id: event.event_id,
     event: 'Disapproved',
     data: {},
   }

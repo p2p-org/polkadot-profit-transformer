@@ -1,3 +1,4 @@
+import { processTipsClosedEvent } from './treasury/tips/tipclosed'
 import { ApiPromise } from '@polkadot/api'
 import { processDemocracyProposalTabled } from './democracy/proposal/tabled'
 import { Logger } from 'apps/common/infra/logger/logger'
@@ -19,6 +20,15 @@ import {
 } from './democracy/referenda'
 import { processTechnicalCommitteeClosedEvent } from './technicalCommittee/closed'
 import { processDemocracyPreimageUsedEvent } from './democracy/premiage'
+import {
+  processCouncilApprovedEvent,
+  processCouncilDisapprovedEvent,
+  processCouncilExecutedEvent,
+  processCouncilMemberExecutedEvent,
+} from './democracy/council'
+import { processCouncilClosedEvent } from './democracy/council/closed'
+import { processTreasuryRejectedEvent } from './treasury/proposal/rejected'
+import { processTreasuryAwardedEvent } from './treasury/proposal/awarded'
 
 export type EventProcessor = ReturnType<typeof EventProcessor>
 
@@ -46,6 +56,22 @@ export const EventProcessor = (deps: { governanceRepository: GovernanceRepositor
       },
       preimage: {
         used: (event: EventEntry) => processDemocracyPreimageUsedEvent(event, governanceRepository, logger),
+      },
+    },
+    council: {
+      approved: (event: EventEntry) => processCouncilApprovedEvent(event, governanceRepository, logger),
+      closed: (event: EventEntry) => processCouncilClosedEvent(event, governanceRepository, logger),
+      executed: (event: EventEntry) => processCouncilExecutedEvent(event, governanceRepository, logger),
+      disapproved: (event: EventEntry) => processCouncilDisapprovedEvent(event, governanceRepository, logger),
+      memberExecuted: (event: EventEntry) => processCouncilMemberExecutedEvent(event, governanceRepository, logger),
+    },
+    treasury: {
+      proposal: {
+        rejected: (event: EventEntry) => processTreasuryRejectedEvent(event, governanceRepository, logger),
+        awarded: (event: EventEntry) => processTreasuryAwardedEvent(event, governanceRepository, logger),
+      },
+      tips: {
+        tipsclosed: (event: EventEntry) => processTipsClosedEvent(event, governanceRepository, logger),
       },
     },
   }

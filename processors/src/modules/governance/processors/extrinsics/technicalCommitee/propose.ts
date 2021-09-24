@@ -11,17 +11,17 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { blockEvents, extrinsicFull, extrinsic } = args
+  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
   logger.info({ extrinsic }, 'processTechnicalCommiteeProposeExtrinsic')
 
-  const techCommProposedEvent = findEvent(blockEvents, 'technicalCommittee', 'Proposed')
+  const techCommProposedEvent = findEvent(extrinsicEvents, 'technicalCommittee', 'Proposed')
   if (!techCommProposedEvent) throw Error('no technicalcommittee Proposed event for enrty ' + extrinsic.id)
 
   const proposer = <AccountId>techCommProposedEvent.event.data[0]
   const proposalIndex = <ProposalIndex>techCommProposedEvent.event.data[1]
   const proposalHash = <Hash>techCommProposedEvent.event.data[2]
-  const threshold = <Compact<MemberCount>>extrinsicFull.args[0]
-  const proposal = <Proposal>extrinsicFull.args[1]
+  const threshold = <Compact<MemberCount>>fullExtrinsic.args[0]
+  const proposal = <Proposal>fullExtrinsic.args[1]
 
   const proposalModel: TechnicalCommiteeProposalModel = {
     id: proposalIndex.toNumber(),

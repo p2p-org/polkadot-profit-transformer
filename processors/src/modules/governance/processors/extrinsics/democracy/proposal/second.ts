@@ -8,14 +8,14 @@ export const processDemocracyProposalSecondExtrinsic = async (
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { blockEvents, extrinsicFull, extrinsic } = args
+  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
 
   console.log('PROPOSAL SECOND')
   console.log('EXTRINSIC', JSON.stringify(extrinsic, null, 2))
 
   // find balance reserved for this seconding
 
-  const balanceReserverdEvent = blockEvents.find((event) => {
+  const balanceReserverdEvent = extrinsicEvents.find((event) => {
     return event.event.section === 'balances' && event.event.method === 'Reserved'
   })
 

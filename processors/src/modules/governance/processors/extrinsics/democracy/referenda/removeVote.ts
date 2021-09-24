@@ -9,11 +9,11 @@ export const processDemocracyReferendaRemoveVoteExtrinsic = async (
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { blockEvents, extrinsicFull, extrinsic } = args
+  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
 
   logger.info({ extrinsic }, 'processDemocracyReferendaRemoveVoteExtrinsic')
 
-  const referendumIndex = <number>(<unknown>extrinsicFull.args[0])
+  const referendumIndex = <number>(<unknown>fullExtrinsic.args[0])
 
   console.log('ref index', referendumIndex)
 

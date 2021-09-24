@@ -11,13 +11,13 @@ export const processDemocracyReferendaVoteExtrinsic = async (
   logger: Logger,
 ): Promise<void> => {
   // here preimage proposal_hash appears first time, add record to the proposal_image table
-  const { blockEvents, extrinsicFull, extrinsic } = args
+  const { fullExtrinsic, extrinsic } = args
 
   logger.info({ extrinsic }, 'processDemocracyReferendaVoteExtrinsic')
 
-  const referendumIndex = <Compact<ReferendumIndex>>extrinsicFull.args[0]
+  const referendumIndex = <Compact<ReferendumIndex>>fullExtrinsic.args[0]
 
-  const voteRaw = <AccountVote>extrinsicFull.method.args[1]
+  const voteRaw = <AccountVote>fullExtrinsic.args[1]
 
   const decodeVote = (v: AccountVote) => {
     if (!v.isStandard) {
@@ -25,19 +25,14 @@ export const processDemocracyReferendaVoteExtrinsic = async (
       return { vote: vote['vote'], conviction: 0, balance: 0 }
     }
 
-    // if (v.isStandard) {
+    // if (v.isStandard)
     const vote = v.asStandard.vote.isAye ? 'Aye' : 'Nay'
     const conviction = v.asStandard.vote.conviction.toNumber()
     const balance = v.asStandard.balance.toNumber()
     return { vote, conviction, balance }
-    // }
   }
 
   const { vote, conviction, balance } = decodeVote(voteRaw)
-
-  // console.log('vote', vote.asStandard.vote.toHuman())
-  // console.log('balance', vote.asStandard.balance.toNumber())
-  // console.log('conviction', vote.asStandard.vote.conviction.toNumber())
 
   const referenda: DemocracyReferendaModel = {
     id: referendumIndex.toNumber(),

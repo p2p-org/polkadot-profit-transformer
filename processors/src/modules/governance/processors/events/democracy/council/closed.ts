@@ -1,14 +1,14 @@
-import { GovernanceRepository } from '../../../../../apps/common/infra/postgresql/governance/governance.repository'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
 import { EventEntry } from '@modules/governance/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/governance/models/technicalCommiteeModels'
+import { CouncilProposalModel } from 'apps/common/infra/postgresql/governance/models/councilMotionsModel'
 
-export const processTechnicalCommitteeClosedEvent = async (
+export const processCouncilClosedEvent = async (
   event: EventEntry,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  logger.trace({ event }, 'process technical commitee closed event')
+  logger.trace({ event }, 'council commitee closed event')
 
   const eventData = JSON.parse(event.data)
 
@@ -17,7 +17,7 @@ export const processTechnicalCommitteeClosedEvent = async (
   const ayeVotesCount = parseInt(eventData[1]['MemberCount'], 16)
   const nayVotesCount = parseInt(eventData[2]['MemberCount'], 16)
 
-  const proposal: TechnicalCommiteeProposalModel = {
+  const proposal: CouncilProposalModel = {
     hash,
     id: proposal_id,
     block_id: event.block_id,
@@ -27,5 +27,5 @@ export const processTechnicalCommitteeClosedEvent = async (
     data: { ayeVotesCount, nayVotesCount },
   }
 
-  await governanceRepository.technicalCommittee.save(proposal)
+  await governanceRepository.council.save(proposal)
 }

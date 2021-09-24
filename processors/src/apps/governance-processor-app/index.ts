@@ -1,4 +1,4 @@
-import { MultisigExtrinsicProcessor } from './../../modules/governance/processors/multisigExtrinsics/index'
+// import { MultisigExtrinsicProcessor } from './../../modules/governance/processors/multisigExtrinsics/index'
 import { polkadotFactory } from './../common/infra/polkadotapi/index'
 import { ExtrinsicProcessor } from '../../modules/governance/processors/extrinsics'
 import { GovernanceProcessor } from '../../modules/governance'
@@ -30,9 +30,9 @@ const main = async () => {
 
   const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi })
   const eventProcessor = EventProcessor({ governanceRepository, logger, polkadotApi })
-  const multisigExtrinsicProcessor = MultisigExtrinsicProcessor({ polkadotApi, logger })
+  // const multisigExtrinsicProcessor = MultisigExtrinsicProcessor({ polkadotApi, logger })
 
-  const governanceProcessor = GovernanceProcessor({ extrinsicProcessor, eventProcessor, multisigExtrinsicProcessor, logger })
+  const governanceProcessor = GovernanceProcessor({ extrinsicProcessor, eventProcessor, /* multisigExtrinsicProcessor ,*/ logger })
 
   const kafka = KafkaListenerFactory(governanceProcessor, logger)
   await kafka.listen()

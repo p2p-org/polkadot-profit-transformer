@@ -60,5 +60,5 @@ export const processDemocracyReferendaStarted = async (
   }
 
   // else referendum started from a democracy proposal
-  // we process this event in democracy.tabled event to natch democracy proposal and started referenda
+  // we process this event in democracy.tabled event to catch democracy proposal and started referenda
 }

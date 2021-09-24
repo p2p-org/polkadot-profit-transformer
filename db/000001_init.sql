@@ -149,6 +149,40 @@ CREATE TABLE dot_polka.democracy_proposal (
 );
 
 
+CREATE TABLE dot_polka.council_proposal (
+    "id" INTEGER NOT NULL,
+    "hash" varchar(256),
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("id", "event_id", "extrinsic_id")
+);
+
+CREATE TABLE dot_polka.treasury_proposal (
+    "id" INTEGER NOT NULL,
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("id", "event_id", "extrinsic_id")
+);
+
+
+CREATE TABLE dot_polka.tips (
+    "hash" varchar(256),
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("hash", "event_id", "extrinsic_id")
+);
+
+
+
 
 
 CREATE TABLE dot_polka.preimage (

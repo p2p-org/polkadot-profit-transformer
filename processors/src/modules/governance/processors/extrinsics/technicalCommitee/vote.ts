@@ -1,7 +1,4 @@
-import { findExtrinic } from '../../utils/findExtrinsic'
-import { ApiPromise } from '@polkadot/api'
 import { TechnicalCommiteeProposalModel } from '../../../../../apps/common/infra/postgresql/governance/models/technicalCommiteeModels'
-import { Extrinsic } from './../../../types'
 import { GovernanceRepository } from './../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { findEvent } from '../../utils/findEvent'
@@ -14,16 +11,16 @@ export const processTechnicalCommiteeVoteExtrinsic = async (
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { blockEvents, extrinsicFull, extrinsic } = args
+  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
 
   logger.info({ extrinsic }, 'processTechnicalCommiteeVoteExtrinsic')
 
-  const techCommVotedEvent = findEvent(blockEvents, 'technicalCommittee', 'Voted')
+  const techCommVotedEvent = findEvent(extrinsicEvents, 'technicalCommittee', 'Voted')
   if (!techCommVotedEvent) throw Error('no technicalcommittee voted event for enrty ' + extrinsic.id)
 
-  const proposalHash = <Hash>extrinsicFull.args[0]
-  const proposalIndex = <Compact<ProposalIndex>>extrinsicFull.args[1]
-  const approve = <bool>extrinsicFull.args[2]
+  const proposalHash = <Hash>fullExtrinsic.args[0]
+  const proposalIndex = <Compact<ProposalIndex>>fullExtrinsic.args[1]
+  const approve = <bool>fullExtrinsic.args[2]
   const accountId = <AccountId>techCommVotedEvent.event.data[0]
   const membersYes = <MemberCount>techCommVotedEvent.event.data[3]
   const membersNo = <MemberCount>techCommVotedEvent.event.data[4]

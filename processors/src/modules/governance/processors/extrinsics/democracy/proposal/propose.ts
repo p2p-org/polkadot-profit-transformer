@@ -8,12 +8,12 @@ export const processDemocracyProposalProposeExtrinsic = async (
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { blockEvents, extrinsicFull, extrinsic } = args
+  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
 
   console.log('DEMOCRACY PROPOSE')
   console.log('EXTRINSIC', JSON.stringify(extrinsic, null, 2))
 
-  const democracyProposedEvent = blockEvents.find((event) => {
+  const democracyProposedEvent = extrinsicEvents.find((event) => {
     return event.event.section === 'democracy' && event.event.method === 'Proposed'
   })
 

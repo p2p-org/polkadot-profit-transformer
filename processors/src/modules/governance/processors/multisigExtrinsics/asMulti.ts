@@ -9,7 +9,7 @@ export const processAsMultiExtrinsic = async (extrinsic: Extrinsic, logger: Logg
 
   const block = await polkadotApi.rpc.chain.getBlock(blockHash)
 
-  const extrinsicFull = await findExtrinic(block, 'multisig', 'asMulti', polkadotApi)
+  const extrinsicFull = await findExtrinic(block, 'multisig', 'asMulti')
   if (!extrinsicFull) throw Error('no full extrinsic for enrty ' + extrinsic.id)
 
   const call = <OpaqueCall>extrinsicFull.method.args[3]
