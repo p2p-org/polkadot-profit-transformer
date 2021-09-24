@@ -84,6 +84,14 @@ export const ExtrinsicProcessor = (deps: { governanceRepository: GovernanceRepos
         const extrinsicIndex = +extrinsic.id.split('-')[1]
         const fullExtrinsic = block.block.extrinsics[extrinsicIndex]
 
+        if (fullExtrinsic.method.section === 'multisig' && fullExtrinsic.method.method === 'asMulti') {
+          const call = polkadotApi.createType('Call', fullExtrinsic.args[3].toU8a(true))
+          const e = polkadotApi.createType<GenericExtrinsic<AnyTuple>>('GenericExtrinsic', call)
+
+          console.log('multisig method section', e.method.method, e.method.section)
+          return e
+        }
+
         // here we decode proxy.proxy extrinsic and create fake extrinsic with data called via proxy
         if (fullExtrinsic.method.method === 'proxy' && fullExtrinsic.method.section === 'proxy') {
           const e = polkadotApi.createType<GenericExtrinsic<AnyTuple>>('GenericExtrinsic', fullExtrinsic.args[2])
