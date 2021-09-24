@@ -106,16 +106,6 @@ CREATE TABLE dot_polka.account_identity (
 );
 
 
-CREATE TABLE dot_polka.proposal_preimage (
-    "hash" varchar(256),
-    "block_id" BIGINT,
-    "event_id" VARCHAR(150),
-    "extrinsic_id" VARCHAR(150),
-    "event" VARCHAR(150),
-    "data" JSONB,
-    PRIMARY KEY ("hash")
-);
-
 CREATE TABLE dot_polka.technical_committee_proposal (
     "hash" varchar(256),
     "id" INTEGER NOT NULL,

@@ -3,9 +3,8 @@ import { GovernanceRepository } from '../../../../../apps/common/infra/postgresq
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '..'
 import { CouncilProposalModel } from 'apps/common/infra/postgresql/governance/models/councilMotionsModel'
-import { AccountId, Call, Hash, MemberCount } from '@polkadot/types/interfaces'
-import { GenericExtrinsic, u32 } from '@polkadot/types'
-import { AnyTuple } from '@polkadot/types/types'
+import { Call, Hash } from '@polkadot/types/interfaces'
+import { Compact, u32 } from '@polkadot/types'
 
 export const processCouncilProposeExtrinsic = async (
   args: ExtrincicProcessorInput,
@@ -27,26 +26,38 @@ export const processCouncilProposeExtrinsic = async (
   const eventData = councilProposedEvent.event.data
   const ProposalIndex = (<u32>eventData[1]).toNumber()
   const motionHash = (<Hash>eventData[2]).toString()
-  const memberCount = (<u32>eventData[3]).toNumber()
+  const threshold = (<u32>eventData[3]).toNumber()
 
-  const proposal = <Call>fullExtrinsic.args[1]
-  const module = proposal.method
-  const call = proposal.section
-  const proposalId = proposal.args[0]
+  const proposal: Call = polkadotApi.createType('Call', fullExtrinsic.args[1])
+  const length_bound = <Compact<u32>>fullExtrinsic.args[2]
+  const method = proposal.method
+  const section = proposal.section
+
+  /*
+  {
+    duration: [class (anonymous) extends Compact],
+    lease_period_index: [class (anonymous) extends Compact]
+  }
+  */
+
+  const params = Object.entries(proposal.argsDef).map((entry, index) => ({ [entry[0]]: proposal.args[index] }))
 
   const proposalModel: CouncilProposalModel = {
     id: ProposalIndex,
     hash: motionHash,
     block_id: extrinsic.block_id,
-    event_id: extrinsic.block_id + '-' + councilProposedEvent.event.index,
+    event_id: '',
     extrinsic_id: extrinsic.id,
     event: 'Proposed',
     data: {
-      signer: fullExtrinsic.signer,
-      memberCount,
-      proposal_id: proposalId,
-      module,
-      call,
+      signer: fullExtrinsic.signer.toString(),
+      threshold,
+      proposal: {
+        method,
+        section,
+        params,
+      },
+      length_bound,
     },
   }
 
