@@ -1,7 +1,8 @@
-import { DemocracyReferendaModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracyModels'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '../..'
+import { u32 } from '@polkadot/types'
+import { AccountId32 } from '@polkadot/types/interfaces'
 
 export const processDemocracyReferendaRemoveOtherVoteExtrinsic = async (
   args: ExtrincicProcessorInput,
@@ -12,21 +13,14 @@ export const processDemocracyReferendaRemoveOtherVoteExtrinsic = async (
 
   logger.info({ extrinsic }, 'processDemocracyReferendaRemoveOtherVoteExtrinsic')
 
-  const referendumIndex = +fullExtrinsic.args[1].toString()
-  const target = fullExtrinsic.args[0].toString()
+  const referendumIndex = <u32>fullExtrinsic.args[1]
+  const target = <AccountId32>fullExtrinsic.args[0]
 
-  console.log('ref index', referendumIndex)
+  const vote = await governanceRepository.democracy.referenda.findVote(referendumIndex, target)
 
-  const referenda: DemocracyReferendaModel = {
-    id: referendumIndex,
-    block_id: extrinsic.block_id,
-    event_id: '',
-    extrinsic_id: extrinsic.id,
-    event: 'OtherVoteRemoved',
-    data: {
-      voter: target,
-    },
+  if (!vote) {
+    throw Error('No vote found for removeVote extrinsic ' + extrinsic.id)
   }
 
-  return governanceRepository.democracy.referenda.save(referenda)
+  return governanceRepository.democracy.referenda.removeVote(vote)
 }

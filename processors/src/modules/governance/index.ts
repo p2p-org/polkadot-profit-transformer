@@ -68,9 +68,8 @@ export const GovernanceProcessor = (deps: {
             return extrinsicProcessor.democracy.proposal.second(extrinsicExtendedData)
           if (extrinsicExtendedData.fullExtrinsic.method.method === 'removeVote')
             return extrinsicProcessor.democracy.referenda.removeVote(extrinsicExtendedData)
-          // todo process below actions
-          // if (extrinsic.method === 'removeOtherVote')
-          //   return extrinsicProcessor.democracy.referenda.removeOtherVote(extrinsicExtendedData)
+          if (extrinsicExtendedData.fullExtrinsic.method.method === 'removeOtherVote')
+            return extrinsicProcessor.democracy.referenda.removeOtherVote(extrinsicExtendedData)
           if (extrinsicExtendedData.fullExtrinsic.method.method === 'notePreimage')
             return extrinsicProcessor.democracy.preimage.notePreimage(extrinsicExtendedData)
         }

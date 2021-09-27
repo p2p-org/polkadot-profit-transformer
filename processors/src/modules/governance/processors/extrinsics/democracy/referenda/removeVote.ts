@@ -1,3 +1,4 @@
+import { Address } from '@polkadot/types/interfaces'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '../..'
@@ -14,7 +15,7 @@ export const processDemocracyReferendaRemoveVoteExtrinsic = async (
   logger.info({ extrinsic }, 'processDemocracyReferendaRemoveVoteExtrinsic')
 
   const referendumIndex = <u32>fullExtrinsic.args[0]
-  const voter = fullExtrinsic.signer
+  const voter: Address = fullExtrinsic.signer
 
   const vote = await governanceRepository.democracy.referenda.findVote(referendumIndex, voter)
 
