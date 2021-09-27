@@ -1,3 +1,4 @@
+import { Address } from '@polkadot/types/interfaces'
 import { TipsModel } from './models/TipsModel'
 import { CouncilProposalModel } from 'apps/common/infra/postgresql/governance/models/councilMotionsModel'
 import { DemocracyProposalModel, DemocracyReferendaModel } from './models/democracyModels'
@@ -7,6 +8,7 @@ import { Knex } from 'knex'
 import { Logger } from '../../logger/logger'
 import { PreimageModel } from './models/preimageModel'
 import { TreasuryProposalModel } from './models/treasuryProposalModel'
+import { u32 } from '@polkadot/types'
 
 export type GovernanceRepository = ReturnType<typeof GovernanceRepository>
 
@@ -27,6 +29,17 @@ export const GovernanceRepository = (deps: { knex: Knex; logger: Logger }) => {
       referenda: {
         save: async (referenda: DemocracyReferendaModel): Promise<void> => {
           await DemocracyReferendaModel(knex).insert(referenda).onConflict(['id', 'event_id', 'extrinsic_id']).merge()
+        },
+        findVote: async (ReferendumIndex: u32, voter: Address): Promise<DemocracyReferendaModel | undefined> => {
+          const voteRecord = await DemocracyReferendaModel(knex)
+            .where({ id: ReferendumIndex.toNumber(), event: 'Voted' })
+            .whereRaw('cast(data->>? as text) = ?', ['voter', voter.toString()])
+            .first()
+          if (!voteRecord) return undefined
+          return voteRecord
+        },
+        removeVote: async (vote: DemocracyReferendaModel): Promise<void> => {
+          await DemocracyReferendaModel(knex).where(vote).del()
         },
       },
       proposal: {
