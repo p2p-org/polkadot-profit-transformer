@@ -36,6 +36,7 @@ export const ExtrinsicProcessor = (deps: { governanceRepository: GovernanceRepos
 
   return {
     technicalCommitee: {
+      propose: (args: ExtrincicProcessorInput) => processTechnicalCommiteeProposeExtrinsic(args, governanceRepository, logger),
       vote: (args: ExtrincicProcessorInput) => processTechnicalCommiteeVoteExtrinsic(args, governanceRepository, logger),
     },
     democracy: {
