@@ -37,7 +37,7 @@ export const ExtrinsicProcessor = (deps: { governanceRepository: GovernanceRepos
 
   return {
     technicalCommitee: {
-      propose: (args: ExtrincicProcessorInput) => processTechnicalCommiteeProposeExtrinsic(args, governanceRepository, logger),
+      propose: (args: ExtrincicProcessorInput) => processTechnicalCommiteeProposeExtrinsic(args, governanceRepository, logger, polkadotApi),
       vote: (args: ExtrincicProcessorInput) => processTechnicalCommiteeVoteExtrinsic(args, governanceRepository, logger),
     },
     democracy: {

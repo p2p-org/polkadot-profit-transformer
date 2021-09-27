@@ -21,8 +21,14 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
   const proposalIndex = <ProposalIndex>techCommProposedEvent.event.data[1]
   const proposalHash = <Hash>techCommProposedEvent.event.data[2]
   const threshold = <Compact<MemberCount>>fullExtrinsic.args[0]
-  const proposal = <Proposal>fullExtrinsic.args[1]
+  const proposalArg = <Proposal>fullExtrinsic.method.args[1]
 
+  // todo: discover the issue below
+  const proposal = {
+    call_module: proposalArg.section,
+    call_name: proposalArg.method,
+    ...proposalArg.toJSON(),
+  }
   const proposalModel: TechnicalCommiteeProposalModel = {
     id: proposalIndex.toNumber(),
     hash: proposalHash.toString(),
@@ -30,7 +36,7 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
     event: 'Proposed',
     data: {
       proposer,
-      threshold: parseInt(threshold.toHex(), 16),
+      threshold: threshold.toNumber(),
       proposal: proposal,
     },
     extrinsic_id: extrinsic.id,
