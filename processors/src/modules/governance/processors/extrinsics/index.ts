@@ -21,7 +21,6 @@ import { processTreasuryProposeSpendExtrinsic } from './treasury/proposal/propos
 import { processTreasuryTipsNewExtrinsic } from './treasury/tips/tip-new'
 import { processTreasuryReportAwesomeExtrinsic } from './treasury/tips/report-awesome'
 import { processTreasuryTipExtrinsic } from './treasury/tips/tip'
-import { extrinsics } from '@polkadot/types/interfaces/definitions'
 
 export type ExtrincicProcessorInput = {
   extrinsic: Extrinsic
@@ -37,7 +36,6 @@ export const ExtrinsicProcessor = (deps: { governanceRepository: GovernanceRepos
 
   return {
     technicalCommitee: {
-      propose: (args: ExtrincicProcessorInput) => processTechnicalCommiteeProposeExtrinsic(args, governanceRepository, logger, polkadotApi),
       vote: (args: ExtrincicProcessorInput) => processTechnicalCommiteeVoteExtrinsic(args, governanceRepository, logger),
     },
     democracy: {
