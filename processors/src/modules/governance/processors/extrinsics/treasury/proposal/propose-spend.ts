@@ -29,7 +29,7 @@ export const processTreasuryProposeSpendExtrinsic = async (
     block_id: extrinsic.block_id,
     event: 'Proposed',
     data: {
-      proposer: fullExtrinsic.signer,
+      proposer: fullExtrinsic.signer.toString(),
       beneficiary,
       value,
     },
