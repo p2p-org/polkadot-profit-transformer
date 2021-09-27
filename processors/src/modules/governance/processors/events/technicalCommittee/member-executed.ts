@@ -1,7 +1,7 @@
 import { GovernanceRepository } from '../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { EventEntry } from '@modules/governance/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/governance/models/technicalCommiteeModels'
+import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/governance/models/technicalCommiteeModel'
 
 export const processTechnicalCommitteeMemberExecutedEvent = async (
   event: EventEntry,

@@ -1,8 +1,8 @@
 import { AccountId32, Address } from '@polkadot/types/interfaces'
 import { TipsModel } from './models/TipsModel'
 import { CouncilProposalModel } from 'apps/common/infra/postgresql/governance/models/councilMotionsModel'
-import { DemocracyProposalModel, DemocracyReferendaModel } from './models/democracyModels'
-import { TechnicalCommiteeProposalModel } from './models/technicalCommiteeModels'
+import { DemocracyProposalModel, DemocracyReferendaModel } from './models/democracyModel'
+import { TechnicalCommiteeProposalModel } from './models/technicalCommiteeModel'
 
 import { Knex } from 'knex'
 import { Logger } from '../../logger/logger'

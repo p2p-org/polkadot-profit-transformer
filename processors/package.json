@@ -12,6 +12,7 @@
     "start": "npx ts-node -r tsconfig-paths/register src/apps/governance-processor-app/index.ts",
     "start:prod": "node -r ts-node/register/transpile-only -r tsconfig-paths/register --trace-warnings ./dist/apps/governance-processor-app/index.js",
     "dev:gov": "npx ts-node -r tsconfig-paths/register src/apps/governance-processor-app/index.ts",
+    "test:gov": "npx ts-node -r tsconfig-paths/register src/apps/test-app/index.ts",
     "lint": "npx eslint --ext .js,.ts src/main.ts",
     "lint:fix": "npx eslint ./src/apps/governance-processor-app --fix",
     "lint-staged": "lint-staged",
@@ -22,6 +23,7 @@
   "dependencies": {
     "@polkadot/api": "^5.0.1",
     "@types/pino": "^6.3.11",
+    "axios": "^0.21.4",
     "dotenv": "^8.6.0",
     "kafkajs": "^1.15.0",
     "knex": "^0.95.10",

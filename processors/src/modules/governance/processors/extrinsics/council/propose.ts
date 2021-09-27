@@ -28,6 +28,8 @@ export const processCouncilProposeExtrinsic = async (
   const motionHash = (<Hash>eventData[2]).toString()
   const threshold = (<u32>eventData[3]).toNumber()
 
+  console.log('TOJSON', fullExtrinsic.method.args[1].toJSON())
+
   const proposal: Call = polkadotApi.createType('Call', fullExtrinsic.args[1])
   const length_bound = <Compact<u32>>fullExtrinsic.args[2]
   const method = proposal.method

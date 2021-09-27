@@ -2,7 +2,7 @@ import { ApiPromise } from '@polkadot/api'
 import { EventEntry } from '@modules/governance/types'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
-import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/governance/models/democracyModels'
+import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/governance/models/democracyModel'
 import { Hash, ProposalIndex, ReferendumIndex, VoteThreshold } from '@polkadot/types/interfaces'
 import { Compact } from '@polkadot/types'
 

@@ -1,4 +1,4 @@
-import { DemocracyProposalModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracyModels'
+import { DemocracyProposalModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracyModel'
 import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '../..'
