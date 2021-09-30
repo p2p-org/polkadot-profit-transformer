@@ -4,13 +4,13 @@ help:
 up:
 	./run.sh
 ps:
-	docker-compose -f docker-compose.yml -f docker-compose.graphql.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml ps -a
+	docker-compose -f docker-compose.yml -f docker-compose.redash.yml ps -a
 stop:
 	@echo "Stop all services"
-	docker-compose -f docker-compose.yml -f docker-compose.graphql.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml stop
+	docker-compose -f docker-compose.yml -f docker-compose.redash.yml stop
 start:
 	@echo "Start all services"
-	docker-compose -f docker-compose.yml -f docker-compose.graphql.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml start
+	docker-compose -f docker-compose.yml -f docker-compose.redash.yml start
 clean: down docker.removenetwork
 	@echo "Purge all services and data"
 down: redash.down

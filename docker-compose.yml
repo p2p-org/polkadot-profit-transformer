@@ -6,57 +6,6 @@ networks:
       name: streamer_network
 
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:6.2.0
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - '2181:2181'
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-
-  streamer:
-    build: ./streamer
-    restart: always
-    ports:
-      - 8085:8080
-    depends_on:
-      - zookeeper
-      - broker
-      - schema-registry
-      - db
-    env_file:
-      - docker/env/.streamer.env
-
-  enrichments_processor:
-    build: ./enrichments_processor
-    restart: always
-    ports:
-      - 8086:8085
-    depends_on:
-      - zookeeper
-      - broker
-      - schema-registry
-      - db
-    env_file:
-      - docker/env/.enrichments_processor.env
-
-  watchdog:
-    build:
-      context: ./streamer
-      dockerfile: ./Dockerfile.watchdog
-    restart: always
-    ports:
-      - 8087:8080
-    depends_on:
-      - zookeeper
-      - broker
-      - schema-registry
-      - db
-    env_file:
-      - docker/env/.streamer.env
-
   db:
     build: './db'
     restart: always
