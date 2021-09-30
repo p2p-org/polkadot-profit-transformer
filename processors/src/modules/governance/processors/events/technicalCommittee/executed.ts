@@ -13,16 +13,18 @@ export const processTechnicalCommitteeExecutedEvent = async (
   const eventData = JSON.parse(event.data)
 
   const hash = eventData[0]['Hash']
-  const proposal_id = await governanceRepository.technicalCommittee.findProposalIdByHash(hash)
+  // const techCommProposal = await governanceRepository.technicalCommittee.findProposalByHash(hash)
+  // if (!techCommProposal) logger.error('no tech com proposal found for tech comm executed  event ' + event.event_id)
 
+  const result = eventData[1]['DispatchResult']
   const proposal: TechnicalCommiteeProposalModel = {
     hash,
-    id: proposal_id,
+    id: null, // todo techCommProposal?.id ?? null,
     block_id: event.block_id,
     event_id: event.event_id,
     extrinsic_id: '',
     event: 'Executed',
-    data: {},
+    data: { result },
   }
 
   await governanceRepository.technicalCommittee.save(proposal)

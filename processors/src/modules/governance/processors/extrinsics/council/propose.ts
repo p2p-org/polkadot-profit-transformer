@@ -28,21 +28,17 @@ export const processCouncilProposeExtrinsic = async (
   const motionHash = (<Hash>eventData[2]).toString()
   const threshold = (<u32>eventData[3]).toNumber()
 
+  const proposalArg = <Call>fullExtrinsic.method.args[1]
+
   console.log('TOJSON', fullExtrinsic.method.args[1].toJSON())
 
-  const proposal: Call = polkadotApi.createType('Call', fullExtrinsic.args[1])
   const length_bound = <Compact<u32>>fullExtrinsic.args[2]
-  const method = proposal.method
-  const section = proposal.section
 
-  /*
-  {
-    duration: [class (anonymous) extends Compact],
-    lease_period_index: [class (anonymous) extends Compact]
+  const proposal = {
+    call_module: proposalArg.section,
+    call_name: proposalArg.method,
+    ...proposalArg.toJSON(),
   }
-  */
-
-  const params = Object.entries(proposal.argsDef).map((entry, index) => ({ [entry[0]]: proposal.args[index] }))
 
   const proposalModel: CouncilProposalModel = {
     id: ProposalIndex,
@@ -54,11 +50,7 @@ export const processCouncilProposeExtrinsic = async (
     data: {
       signer: fullExtrinsic.signer.toString(),
       threshold,
-      proposal: {
-        method,
-        section,
-        params,
-      },
+      proposal,
       length_bound,
     },
   }

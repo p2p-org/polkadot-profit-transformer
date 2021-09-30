@@ -19,11 +19,10 @@ export const GovernanceRepository = (deps: { knex: Knex; logger: Logger }) => {
       save: async (proposal: TechnicalCommiteeProposalModel): Promise<void> => {
         await TechnicalCommiteeProposalModel(knex).insert(proposal).onConflict(['hash', 'extrinsic_id', 'event_id']).merge()
       },
-      findProposalIdByHash: async (hash: string): Promise<number> => {
-        const proposal = await TechnicalCommiteeProposalModel(knex).where({ hash }).first()
-        if (!proposal) throw new Error('Can not find tech comm proposal by hash: ' + hash)
-        return Number(proposal.id)
-      },
+      // findProposalByHash: async (hash: string): Promise<TechnicalCommiteeProposalModel | undefined> => {
+      //   const proposal = await TechnicalCommiteeProposalModel(knex).withSchema('dot_polka').where({ hash }).first()
+      //   return proposal
+      // },
     },
     democracy: {
       referenda: {

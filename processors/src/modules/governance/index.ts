@@ -17,37 +17,41 @@ export const GovernanceProcessor = (deps: {
 
   return {
     processEventHandler: async (event: EventEntry): Promise<void> => {
-      // console.log('EVENT_________________', { event })
-      if (event.section === 'technicalCommittee') {
-        if (event.method === 'Approved') return eventProcessor.technicalCommittee.approved(event)
-        if (event.method === 'Executed') return eventProcessor.technicalCommittee.executed(event)
-        if (event.method === 'Closed') return eventProcessor.technicalCommittee.closed(event)
-        if (event.method === 'Disapproved') return eventProcessor.technicalCommittee.disapproved(event)
-        if (event.method === 'MemberExecuted') return eventProcessor.technicalCommittee.memberExecuted(event)
-      }
-      if (event.section === 'democracy') {
-        if (event.method === 'Started') return eventProcessor.democracy.referenda.started(event)
-        if (event.method === 'Tabled') return eventProcessor.democracy.proposal.tabled(event)
-        if (event.method === 'Cancelled') return eventProcessor.democracy.referenda.cancelled(event)
-        if (event.method === 'Executed') return eventProcessor.democracy.referenda.executed(event)
-        if (event.method === 'NotPassed') return eventProcessor.democracy.referenda.notpassed(event)
-        if (event.method === 'Passed') return eventProcessor.democracy.referenda.passed(event)
-        if (event.method === 'PreimageUsed') return eventProcessor.democracy.preimage.used(event)
-      }
-      if (event.section === 'council') {
-        if (event.method === 'Approved') return eventProcessor.council.approved(event)
-        if (event.method === 'Executed') return eventProcessor.council.executed(event)
-        if (event.method === 'Closed') return eventProcessor.council.closed(event)
-        if (event.method === 'Disapproved') return eventProcessor.council.disapproved(event)
-        if (event.method === 'MemberExecuted') return eventProcessor.council.memberExecuted(event)
-      }
-      if (event.section === 'treasury') {
-        if (event.method === 'Rejected') return eventProcessor.treasury.proposal.rejected(event)
-        if (event.method === 'Awarded') return eventProcessor.treasury.proposal.awarded(event)
-        if (event.method === 'TipClosed') return eventProcessor.treasury.tips.tipsclosed(event)
-      }
-      if (event.section === 'tips') {
-        if (event.method === 'TipClosed') return eventProcessor.treasury.tips.tipsclosed(event)
+      try {
+        // console.log('EVENT_________________', { event })
+        if (event.section === 'technicalCommittee') {
+          if (event.method === 'Approved') return eventProcessor.technicalCommittee.approved(event)
+          if (event.method === 'Executed') return eventProcessor.technicalCommittee.executed(event)
+          if (event.method === 'Closed') return eventProcessor.technicalCommittee.closed(event)
+          if (event.method === 'Disapproved') return eventProcessor.technicalCommittee.disapproved(event)
+        }
+        if (event.section === 'democracy') {
+          if (event.method === 'Started') return eventProcessor.democracy.referenda.started(event)
+          if (event.method === 'Tabled') return eventProcessor.democracy.proposal.tabled(event)
+          if (event.method === 'Cancelled') return eventProcessor.democracy.referenda.cancelled(event)
+          if (event.method === 'Executed') return eventProcessor.democracy.referenda.executed(event)
+          if (event.method === 'NotPassed') return eventProcessor.democracy.referenda.notpassed(event)
+          if (event.method === 'Passed') return eventProcessor.democracy.referenda.passed(event)
+          if (event.method === 'PreimageUsed') return eventProcessor.democracy.preimage.used(event)
+        }
+        if (event.section === 'council') {
+          if (event.method === 'Approved') return eventProcessor.council.approved(event)
+          if (event.method === 'Executed') return eventProcessor.council.executed(event)
+          if (event.method === 'Closed') return eventProcessor.council.closed(event)
+          if (event.method === 'Disapproved') return eventProcessor.council.disapproved(event)
+          if (event.method === 'MemberExecuted') return eventProcessor.council.memberExecuted(event)
+        }
+        if (event.section === 'treasury') {
+          if (event.method === 'Rejected') return eventProcessor.treasury.proposal.rejected(event)
+          if (event.method === 'Awarded') return eventProcessor.treasury.proposal.awarded(event)
+          if (event.method === 'TipClosed') return eventProcessor.treasury.tips.tipsclosed(event)
+        }
+        if (event.section === 'tips') {
+          if (event.method === 'TipClosed') return eventProcessor.treasury.tips.tipsclosed(event)
+        }
+      } catch (error) {
+        console.log('error in block id: ' + event.block_id)
+        throw error
       }
     },
     processExtrinsicsHandler: async (extrinsics: ExtrinsicsEntry): Promise<void> => {
@@ -95,6 +99,7 @@ export const GovernanceProcessor = (deps: {
       }
 
       for (const extrinsic of extrinsics.extrinsics) {
+        console.log('process extrinsic ' + extrinsic.id)
         const isExtrinsicSuccessfull = await extrinsicProcessor.utils.isExtrinsicSuccessfull(extrinsic)
         if (!isExtrinsicSuccessfull) {
           logger.warn('extrinsic ' + extrinsic.id + ' is not successfull, skip')
@@ -113,7 +118,7 @@ export const GovernanceProcessor = (deps: {
 
           console.log({ extrinsic })
 
-          processExtrinsic(extrinsicExtendedData)
+          await processExtrinsic(extrinsicExtendedData)
         }
       }
     },

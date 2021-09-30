@@ -30,6 +30,7 @@
     "pg": "^8.7.1",
     "pino": "^6.13.1",
     "pino-pretty": "^4.5.0",
+    "prompt": "^1.2.0",
     "tsconfig-paths": "^3.10.1"
   },
   "devDependencies": {
@@ -41,6 +42,7 @@
     "@polkadot/types": "^5.0.1",
     "@types/dotenv": "^8.2.0",
     "@types/jest": "^26.0.24",
+    "@types/prompt": "^1.1.1",
     "@typescript-eslint/eslint-plugin": "^4.28.3",
     "@typescript-eslint/parser": "^4.28.3",
     "babel-eslint": "^10.1.0",

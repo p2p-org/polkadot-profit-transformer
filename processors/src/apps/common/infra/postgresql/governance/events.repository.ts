@@ -7,8 +7,12 @@ export type EventsRepository = ReturnType<typeof EventsRepository>
 export const EventsRepository = (deps: { knex: Knex; logger: Logger }) => {
   const { knex, logger } = deps
   return {
-    findBySectionAndMethod: async (method: string, section: string): Promise<EventModel[]> => {
-      const events = await EventModel(knex).where({ section, method })
+    findBySectionAndMethod: async (args: { section: string; method: string }[]): Promise<EventModel[]> => {
+      let query = EventModel(knex).withSchema('dot_kusama')
+      for (const { method, section } of args) {
+        query = query.orWhere({ section, method })
+      }
+      const events = await query
       return events
     },
   }

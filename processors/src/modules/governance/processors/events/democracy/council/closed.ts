@@ -13,13 +13,16 @@ export const processCouncilClosedEvent = async (
   const eventData = JSON.parse(event.data)
 
   const hash = eventData[0]['Hash']
-  const proposal_id = await governanceRepository.technicalCommittee.findProposalIdByHash(hash)
+  // const techCommProposal = await governanceRepository.technicalCommittee.findProposalByHash(hash)
+
+  // if (!techCommProposal) throw Error('no tech com proposal found for council closed event ' + event.event_id)
+
   const ayeVotesCount = parseInt(eventData[1]['MemberCount'], 16)
   const nayVotesCount = parseInt(eventData[2]['MemberCount'], 16)
 
   const proposal: CouncilProposalModel = {
     hash,
-    id: proposal_id,
+    id: 0, //todo techCommProposal.id,
     block_id: event.block_id,
     extrinsic_id: '',
     event_id: event.event_id,

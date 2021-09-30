@@ -8,7 +8,6 @@ import {
   processTechnicalCommitteeApprovedEvent,
   processTechnicalCommitteeDisapprovedEvent,
   processTechnicalCommitteeExecutedEvent,
-  processTechnicalCommitteeMemberExecutedEvent,
 } from './technicalCommittee'
 
 import {
@@ -41,7 +40,6 @@ export const EventProcessor = (deps: { governanceRepository: GovernanceRepositor
       closed: (event: EventEntry) => processTechnicalCommitteeClosedEvent(event, governanceRepository, logger),
       executed: (event: EventEntry) => processTechnicalCommitteeExecutedEvent(event, governanceRepository, logger),
       disapproved: (event: EventEntry) => processTechnicalCommitteeDisapprovedEvent(event, governanceRepository, logger),
-      memberExecuted: (event: EventEntry) => processTechnicalCommitteeMemberExecutedEvent(event, governanceRepository, logger),
     },
     democracy: {
       referenda: {

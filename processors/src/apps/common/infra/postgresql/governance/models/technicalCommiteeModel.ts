@@ -2,7 +2,7 @@ import { Knex } from 'knex'
 
 export type TechnicalCommiteeProposalModel = {
   hash: string
-  id: number
+  id: number | null
   block_id: number
   extrinsic_id: string
   event_id: string

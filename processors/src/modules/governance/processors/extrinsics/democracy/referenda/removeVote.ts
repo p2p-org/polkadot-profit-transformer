@@ -20,6 +20,8 @@ export const processDemocracyReferendaRemoveVoteExtrinsic = async (
   const vote = await governanceRepository.democracy.referenda.findVote(referendumIndex, voter)
 
   if (!vote) {
+    // todo leave error
+    return
     throw Error('No vote found for removeVote extrinsic ' + extrinsic.id)
   }
 

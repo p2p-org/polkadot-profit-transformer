@@ -37,14 +37,16 @@ export const processDemocracyNotePreimageExtrinsic = async (
   // console.log('preimage', preimageWrapped)
   const preimage = preimageWrapped.unwrap()
 
-  let call: Call
+  let call: Call | null
 
   if (preimage.isAvailable) {
     // console.log('isAvailable')
     call = await polkadotApi.createType('Call', preimage.asAvailable.data)
   } else {
     // console.log('not available')
-    call = await polkadotApi.createType('Call', (<any>preimage)[0])
+    // todo : old image decode
+    // call = await polkadotApi.createType('Call', (<any>preimage)[0])
+    call = null
   }
 
   const preimageRecord: PreimageModel = {

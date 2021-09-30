@@ -1,8 +1,8 @@
 import { Knex } from 'knex'
 
 export type CouncilProposalModel = {
-  id: number
-  hash: string
+  id: number | null
+  hash?: string
   block_id: number
   event_id: string
   extrinsic_id: string

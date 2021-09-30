@@ -108,7 +108,7 @@ CREATE TABLE dot_polka.account_identity (
 
 CREATE TABLE dot_polka.technical_committee_proposal (
     "hash" varchar(256),
-    "id" INTEGER NOT NULL,
+    "id" INTEGER,
     "block_id" BIGINT,
     "extrinsic_id" varchar(256),
     "event_id" varchar(256),
