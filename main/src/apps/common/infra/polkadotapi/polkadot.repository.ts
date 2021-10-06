@@ -9,6 +9,7 @@ import {
   Exposure,
   Header,
   Moment,
+  Registration,
   SessionIndex,
   SignedBlock,
   ValidatorPrefs,
@@ -183,6 +184,11 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       ])
 
       return [sessionId, activeEra, extHeader]
+    },
+
+    async getIdentity(accountId: string): Promise<Registration> {
+      const identity = (await polkadotApi.query.identity.identityOf(accountId)).unwrap()
+      return identity
     },
   }
 }

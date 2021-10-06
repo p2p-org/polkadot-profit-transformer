@@ -4,7 +4,7 @@ import { StakingRepository } from './../../apps/common/infra/postgresql/staking.
 import { Logger } from './../../apps/common/infra/logger/logger'
 import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
 import fastq from 'fastq'
-import { IGetValidatorsNominatorsResult, IProcessEraPayload, PayoutEvent, TBlockHash } from './staking.types'
+import { IGetValidatorsNominatorsResult, TBlockHash } from './staking.types'
 import { StreamerRepository } from 'apps/common/infra/postgresql/streamer.repository'
 import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 

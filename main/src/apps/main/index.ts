@@ -1,4 +1,4 @@
-import { EventModel } from './../common/infra/postgresql/models/event.model'
+import { IdentityProcessor } from './../../modules/identity-processor/index'
 import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
 import { EventsProcessor } from '../../modules/streamer/events-processor'
 import { BlockProcessor } from '../../modules/streamer/block-processor'
@@ -39,7 +39,7 @@ const main = async () => {
 
   const streamerRepository = StreamerRepository({ knex: pg, logger })
   const stakingRepository = StakingRepository({ knex: pg, logger })
-  // const identityRepository = IdentityRepository({ knex: pg, logger })
+  const identityRepository = IdentityRepository({ knex: pg, logger })
   // const governanceRepository = GovernanceRepository({ knex: pg, logger })
   const polkadotRepository = PolkadotRepository({ polkadotApi, logger })
 
@@ -52,13 +52,16 @@ const main = async () => {
   const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository })
   const blockProcessor = BlockProcessor({ polkadotRepository, eventsProcessor, extrinsicsProcessor, logger, eventBus, streamerRepository })
   const stakingProcessor = StakingProcessor({ polkadotRepository, streamerRepository, stakingRepository, logger })
+  const identityProcessor = IdentityProcessor({ polkadotRepository, identityRepository, logger })
 
   // todo fix generics to register and dispatch in eventBus
   eventBus.register('eraPayout', stakingProcessor.addToQueue)
+  eventBus.register('identityEvent', identityProcessor.processEvent)
+  eventBus.register('identityExtrinsic', identityProcessor.processIdentityExtrinsics)
+  eventBus.register('subIdentityExtrinsic', identityProcessor.processSubIdentityExtrinsics)
 
   // how many blocks processed in parallel by BlocksPreloader
   const concurrency = 10
-
   // blocksPreloader fills up database from block 0 to current block
   const blocksPreloader = BlocksPreloader({ streamerRepository, blockProcessor, polkadotRepository, logger, concurrency })
   await blocksPreloader(2346123)
