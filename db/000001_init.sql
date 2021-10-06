@@ -37,6 +37,7 @@ CREATE TABLE dot_polka.events (
 CREATE TABLE dot_polka.extrinsics (
     "id" VARCHAR(150) PRIMARY KEY,
     "block_id" BIGINT NOT NULL,
+    "success" BOOL,
     "parent_id" VARCHAR(150),
     "session_id" INT,
     "era" INT,

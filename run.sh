@@ -28,7 +28,7 @@ fi
 
 make docker.createnetwork
 
-docker-compose -f docker-compose.yml db
+docker-compose -f docker-compose.yml up -d db
 
 
 # docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile

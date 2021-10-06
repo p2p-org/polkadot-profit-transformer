@@ -13,11 +13,5 @@ services:
     hostname: postgres
     ports:
       - 5432:5432
-    depends_on:
-      - zookeeper
-      - broker
-      - schema-registry
-      - connect
-      - ksqldb-server
     env_file:
       - docker/env/.postgres.env
