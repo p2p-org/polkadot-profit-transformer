@@ -17,6 +17,7 @@ export const IdentityProcessor = (args: {
 
   const saveEnrichment = async <T extends { account_id: string }>(data: T): Promise<void> => {
     try {
+      console.log('saveEnrichment account_id', data.account_id)
       const oldIdentity = await identityRepository.findByAccountId(data.account_id)
       const updatedIdentity = { ...(oldIdentity ?? {}), ...data }
       await identityRepository.save(updatedIdentity)
@@ -27,23 +28,24 @@ export const IdentityProcessor = (args: {
   }
 
   const onNewAccount = async (event: EventModel): Promise<void> => {
+    console.log('onNewAccount accountId', event.data[0]['AccountId'])
     return saveEnrichment({
-      account_id: event.data[0]['AccountId'],
+      account_id: event.data[0]['AccountId'].toString(),
       created_at: event.block_id,
     })
   }
 
   const onKilledAccount = async (event: EventModel): Promise<void> => {
     return saveEnrichment({
-      account_id: event.data[0]['AccountId'],
+      account_id: event.data[0]['AccountId'].toString(),
       killed_at: event.block_id,
     })
   }
 
   const onJudgementEvent = async ({ event, status }: { event: EventModel; status: JudgementStatus }): Promise<void> => {
-    const data = JSON.parse(event.data)
+    const data = event.data
     const enrichmentData = {
-      account_id: event.data[0]['AccountId'],
+      account_id: event.data[0]['AccountId'].toString(),
       judgement_status: status,
       registrar_index: parseInt(data[1]['RegistrarIndex'], 16),
     }

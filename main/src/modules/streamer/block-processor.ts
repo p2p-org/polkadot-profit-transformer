@@ -6,7 +6,6 @@ import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
 import { EventBus } from 'utils/event-bus/event-bus'
 import { EventsProcessor } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
-import { IdentityEventInput } from '@modules/identity-processor'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 
 export type BlockProcessor = ReturnType<typeof BlockProcessor>
@@ -66,9 +65,21 @@ export const BlockProcessor = (deps: {
         block_time: new Date(blockTime.toNumber()),
       }
 
+      // save extrinsics events and block to main tables
       for (const extrinsic of extractedExtrinsics) {
         await streamerRepository.extrinsics.save(extrinsic)
+      }
 
+      for (const event of processedEvents) {
+        // logger.info('BlockProcessor send to db eventModel: ' + JSON.stringify(event))
+        await streamerRepository.events.save(event)
+      }
+
+      // logger.info('BlockProcessor send to db BlockModel: ' + JSON.stringify(blockModel))
+      await streamerRepository.blocks.save(blockModel)
+
+      // here targeted events and extrinsics send to the eventBus
+      for (const extrinsic of extractedExtrinsics) {
         if (extrinsic.section === 'identity') {
           if (['clearIdentity', 'killIdentity', 'setFields', 'setIdentity'].includes(extrinsic.method)) {
             eventBus.dispatch<ExtrinsicModel>('identityExtrinsic', extrinsic)
@@ -80,9 +91,6 @@ export const BlockProcessor = (deps: {
       }
 
       for (const event of processedEvents) {
-        // logger.info('BlockProcessor send to db eventModel: ' + JSON.stringify(event))
-        await streamerRepository.events.save(event)
-
         if (event.section === 'staking' && event.method === 'EraPayout') {
           logger.info('BlockProcessor eraPayout detected')
           eventBus.dispatch<EventModel>('eraPayout', event)
@@ -100,9 +108,6 @@ export const BlockProcessor = (deps: {
           }
         }
       }
-
-      // logger.info('BlockProcessor send to db BlockModel: ' + JSON.stringify(blockModel))
-      await streamerRepository.blocks.save(blockModel)
     } catch (error: any) {
       if (error.message === 'Unable to retrieve header and parent from supplied hash') return
       throw error

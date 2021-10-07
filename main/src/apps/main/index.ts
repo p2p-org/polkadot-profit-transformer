@@ -64,7 +64,7 @@ const main = async () => {
   const concurrency = 10
   // blocksPreloader fills up database from block 0 to current block
   const blocksPreloader = BlocksPreloader({ streamerRepository, blockProcessor, polkadotRepository, logger, concurrency })
-  await blocksPreloader(2346123)
+  await blocksPreloader(9523577)
 
   // now we have all previous blocks pprocessed and we are listening to the finalized block events
   polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))

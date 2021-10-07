@@ -27,7 +27,8 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger }) => {
     },
     events: {
       save: async (event: EventModel): Promise<void> => {
-        await EventModel(knex).insert(event).onConflict(['id']).merge()
+        const stringifiedDataEvent = { ...event, data: JSON.stringify(event.data) }
+        await EventModel(knex).insert(stringifiedDataEvent).onConflict(['id']).merge()
       },
       findBySectionAndMethod: async (args: { section: string; method: string }[]): Promise<EventModel[]> => {
         let query = EventModel(knex).withSchema('dot_polka')
