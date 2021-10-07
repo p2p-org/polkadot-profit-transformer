@@ -1,6 +1,5 @@
-// import { MultisigExtrinsicProcessor } from './processors/multisigExtrinsics/index'
+import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
 import { EventProcessor } from './processors/events'
-import { EventEntry, ExtrinsicsEntry } from './types'
 import { Logger } from '../../apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput, ExtrinsicProcessor } from './processors/extrinsics'
 
@@ -10,15 +9,12 @@ export const GovernanceProcessor = (deps: {
   extrinsicProcessor: ExtrinsicProcessor
   eventProcessor: EventProcessor
   logger: Logger
-  // multisigExtrinsicProcessor: MultisigExtrinsicProcessor
 }) => {
-  // const { extrinsicProcessor, eventProcessor, logger, multisigExtrinsicProcessor } = deps
   const { extrinsicProcessor, eventProcessor, logger } = deps
 
   return {
-    processEventHandler: async (event: EventEntry): Promise<void> => {
+    processEventHandler: async (event: EventModel): Promise<void> => {
       try {
-        // console.log('EVENT_________________', { event })
         if (event.section === 'technicalCommittee') {
           if (event.method === 'Approved') return eventProcessor.technicalCommittee.approved(event)
           if (event.method === 'Executed') return eventProcessor.technicalCommittee.executed(event)
@@ -54,72 +50,42 @@ export const GovernanceProcessor = (deps: {
         throw error
       }
     },
-    processExtrinsicsHandler: async (extrinsics: ExtrinsicsEntry): Promise<void> => {
-      const processExtrinsic = (extrinsicExtendedData: ExtrincicProcessorInput) => {
-        if (extrinsicExtendedData.fullExtrinsic.method.section === 'technicalCommittee') {
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'propose')
-            return extrinsicProcessor.technicalCommitee.propose(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'vote')
-            return extrinsicProcessor.technicalCommitee.vote(extrinsicExtendedData)
-        }
+    processExtrinsicsHandler: async (extrinsicEntry: ExtrincicProcessorInput): Promise<void> => {
+      console.log('process extrinsic ' + extrinsicEntry.extrinsic.id)
 
-        if (extrinsicExtendedData.fullExtrinsic.method.section === 'democracy') {
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'vote')
-            return extrinsicProcessor.democracy.referenda.vote(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'propose')
-            return extrinsicProcessor.democracy.proposal.propose(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'second')
-            return extrinsicProcessor.democracy.proposal.second(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'removeVote')
-            return extrinsicProcessor.democracy.referenda.removeVote(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'removeOtherVote')
-            return extrinsicProcessor.democracy.referenda.removeOtherVote(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'notePreimage')
-            return extrinsicProcessor.democracy.preimage.notePreimage(extrinsicExtendedData)
-        }
+      // process successfull extrinsics
 
-        if (extrinsicExtendedData.fullExtrinsic.method.section === 'council') {
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'propose')
-            return extrinsicProcessor.council.propose(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'vote') return extrinsicProcessor.council.vote(extrinsicExtendedData)
-        }
-
-        if (extrinsicExtendedData.fullExtrinsic.method.section === 'treasury') {
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'proposeSpend')
-            return extrinsicProcessor.treasury.propose(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'reportAwesome')
-            return extrinsicProcessor.tips.reportAwesome(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'tip') return extrinsicProcessor.tips.tip(extrinsicExtendedData)
-        }
-
-        if (extrinsicExtendedData.fullExtrinsic.method.section === 'tips') {
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'tipNew') return extrinsicProcessor.tips.tipNew(extrinsicExtendedData)
-          if (extrinsicExtendedData.fullExtrinsic.method.method === 'tip') return extrinsicProcessor.tips.tip(extrinsicExtendedData)
-        }
+      if (extrinsicEntry.extrinsic.section === 'technicalCommittee') {
+        if (extrinsicEntry.extrinsic.method === 'propose') return extrinsicProcessor.technicalCommitee.propose(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'vote') return extrinsicProcessor.technicalCommitee.vote(extrinsicEntry)
       }
 
-      for (const extrinsic of extrinsics.extrinsics) {
-        console.log('process extrinsic ' + extrinsic.id)
-        const isExtrinsicSuccessfull = await extrinsicProcessor.utils.isExtrinsicSuccessfull(extrinsic)
-        if (!isExtrinsicSuccessfull) {
-          logger.warn('extrinsic ' + extrinsic.id + ' is not successfull, skip')
-          continue
-        }
+      if (extrinsicEntry.extrinsic.section === 'democracy') {
+        if (extrinsicEntry.extrinsic.method === 'vote') return extrinsicProcessor.democracy.referenda.vote(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'propose') return extrinsicProcessor.democracy.proposal.propose(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'second') return extrinsicProcessor.democracy.proposal.second(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'removeVote')
+          return extrinsicProcessor.democracy.referenda.removeVote(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'removeOtherVote')
+          return extrinsicProcessor.democracy.referenda.removeOtherVote(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'notePreimage')
+          return extrinsicProcessor.democracy.preimage.notePreimage(extrinsicEntry)
+      }
 
-        const fullExtrinsic = await extrinsicProcessor.utils.getExtrinsic(extrinsic)
+      if (extrinsicEntry.extrinsic.section === 'council') {
+        if (extrinsicEntry.extrinsic.method === 'propose') return extrinsicProcessor.council.propose(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'vote') return extrinsicProcessor.council.vote(extrinsicEntry)
+      }
 
-        if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'].includes(fullExtrinsic.method.section)) {
-          // we will need full extrinsics and events for processing, extract here
-          const { extrinsicEvents, block } = await extrinsicProcessor.utils.getActionData(extrinsic)
+      if (extrinsicEntry.extrinsic.section === 'treasury') {
+        if (extrinsicEntry.extrinsic.method === 'proposeSpend') return extrinsicProcessor.treasury.propose(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'reportAwesome') return extrinsicProcessor.tips.reportAwesome(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'tip') return extrinsicProcessor.tips.tip(extrinsicEntry)
+      }
 
-          const extrinsicExtendedData: ExtrincicProcessorInput = { extrinsic, extrinsicEvents, fullExtrinsic, block }
-
-          // process successfull extrinsics
-
-          console.log({ extrinsic })
-
-          await processExtrinsic(extrinsicExtendedData)
-        }
+      if (extrinsicEntry.extrinsic.section === 'tips') {
+        if (extrinsicEntry.extrinsic.method === 'tipNew') return extrinsicProcessor.tips.tipNew(extrinsicEntry)
+        if (extrinsicEntry.extrinsic.method === 'tip') return extrinsicProcessor.tips.tip(extrinsicEntry)
       }
     },
   }

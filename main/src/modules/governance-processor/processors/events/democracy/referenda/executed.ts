@@ -1,10 +1,10 @@
-import { EventEntry } from '@modules/governance-processor/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
-import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/governance/models/democracy.model'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/models/democracy.model'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 
 export const processDemocracyReferendaExecuted = async (
-  event: EventEntry,
+  event: EventModel,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
@@ -18,7 +18,7 @@ export const processDemocracyReferendaExecuted = async (
   const democracyReferenda: DemocracyReferendaModel = {
     id: referendumIndex,
     block_id: event.block_id,
-    event_id: event.event_id,
+    event_id: event.id,
     extrinsic_id: '',
     event: 'Executed',
     data: { result },

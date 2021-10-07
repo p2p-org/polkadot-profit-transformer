@@ -1,9 +1,15 @@
-import { EventEntry } from '@modules/governance-processor/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
-import { PreimageModel } from 'apps/common/infra/postgresql/governance/models/preimage.model'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { PreimageModel } from 'apps/common/infra/postgresql/models/preimage.model'
 
-export const processDemocracyPreimageUsedEvent = async (event: EventEntry, governanceRepository: GovernanceRepository, logger: Logger) => {
+type NewType = EventModel
+
+export const processDemocracyPreimageUsedEvent = async (
+  event: NewType,
+  governanceRepository: GovernanceRepository,
+  logger: Logger,
+) => {
   const eventData = JSON.parse(event.data)
   console.log({ eventData: JSON.stringify(eventData, null, 2) })
 
@@ -14,7 +20,7 @@ export const processDemocracyPreimageUsedEvent = async (event: EventEntry, gover
   const preimageRecord: PreimageModel = {
     proposal_hash: hash,
     block_id: event.block_id,
-    event_id: event.event_id,
+    event_id: event.id,
     extrinsic_id: '',
     event: 'preimageUsed',
     data: { accountId, balance },

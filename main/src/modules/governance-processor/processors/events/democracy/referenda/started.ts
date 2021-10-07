@@ -1,13 +1,13 @@
 import { ApiPromise } from '@polkadot/api'
-import { EventEntry } from '@modules/governance-processor/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
-import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/governance/models/democracy.model'
 import { Hash, ProposalIndex, ReferendumIndex, VoteThreshold } from '@polkadot/types/interfaces'
 import { Compact } from '@polkadot/types'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/models/democracy.model'
 
 export const processDemocracyReferendaStarted = async (
-  event: EventEntry,
+  event: EventModel,
   governanceRepository: GovernanceRepository,
   logger: Logger,
   polkadotApi: ApiPromise,
@@ -23,7 +23,7 @@ export const processDemocracyReferendaStarted = async (
   })
 
   if (!startedEvent) {
-    logger.error('no democracy started event found for incoming entry ' + event.event_id)
+    logger.error('no democracy started event found for incoming entry ' + event.id)
     return
   }
 
@@ -48,7 +48,7 @@ export const processDemocracyReferendaStarted = async (
     const democracyReferenda: DemocracyReferendaModel = {
       id: referendumIndex.toNumber(),
       block_id: event.block_id,
-      event_id: event.event_id,
+      event_id: event.id,
       extrinsic_id: event.block_id + '-' + extrinsicIndex,
       event: 'Started',
       data: { threshold, motion_hash: hash, technical_committee_proposal_index: proposalIndex },

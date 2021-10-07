@@ -1,11 +1,11 @@
 import { ApiPromise } from '@polkadot/api'
-import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { AccountId, Balance, Call, Hash } from '@polkadot/types/interfaces'
 import { Bytes } from '@polkadot/types'
 import { findEvent } from '../../../utils/findEvent'
-import { PreimageModel } from 'apps/common/infra/postgresql/governance/models/preimage.model'
 import { ExtrincicProcessorInput } from '../..'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { PreimageModel } from 'apps/common/infra/postgresql/models/preimage.model'
 
 export const processDemocracyNotePreimageExtrinsic = async (
   args: ExtrincicProcessorInput,
@@ -13,12 +13,12 @@ export const processDemocracyNotePreimageExtrinsic = async (
   logger: Logger,
   polkadotApi: ApiPromise,
 ): Promise<void> => {
-  const { extrinsicEvents, fullExtrinsic, extrinsic, block } = args
+  const { events, extrinsic, block } = args
 
-  const preimageNotedEvent = findEvent(extrinsicEvents, 'democracy', 'PreimageNoted')
+  const preimageNotedEvent = findEvent(events, 'democracy', 'PreimageNoted')
   if (!preimageNotedEvent) throw Error('no  PreimageNoted event for enrty ' + extrinsic.id)
 
-  const encoded_proposal = <Bytes>fullExtrinsic.args[0]
+  const encoded_proposal = <Bytes>extrinsic.args[0]
 
   const proposalHash = <Hash>preimageNotedEvent.event.data[0]
   const accountId = <AccountId>preimageNotedEvent.event.data[1]
@@ -31,7 +31,7 @@ export const processDemocracyNotePreimageExtrinsic = async (
   //   proposalHash: proposalHash.toHuman(),
   // })
 
-  const api = await polkadotApi.at(block.block.hash)
+  const api = await polkadotApi.at(block.hash)
 
   const preimageWrapped = await api.query.democracy.preimages(proposalHash)
   // console.log('preimage', preimageWrapped)

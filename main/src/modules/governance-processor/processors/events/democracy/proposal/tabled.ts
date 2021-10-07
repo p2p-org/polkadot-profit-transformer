@@ -1,12 +1,11 @@
 import { ApiPromise } from '@polkadot/api'
-import { DemocracyProposalModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracy.model'
-import { EventEntry } from '@modules/governance-processor/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
-import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/governance/models/democracy.model'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { DemocracyProposalModel, DemocracyReferendaModel } from 'apps/common/infra/postgresql/models/democracy.model'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 
 export const processDemocracyProposalTabled = async (
-  event: EventEntry,
+  event: EventModel,
   governanceRepository: GovernanceRepository,
   logger: Logger,
   polkadotApi: ApiPromise,
@@ -24,7 +23,9 @@ export const processDemocracyProposalTabled = async (
   const blockHash = await polkadotApi.rpc.chain.getBlockHash(event.block_id)
   const blockEvents = await polkadotApi.query.system.events.at(blockHash)
 
-  const democracyStartedEvent = blockEvents.find((event) => event.event.section === 'democracy' && event.event.method === 'Started')
+  const democracyStartedEvent = blockEvents.find(
+    (event) => event.event.section === 'democracy' && event.event.method === 'Started',
+  )
 
   console.log('democracyStartedEvent: ', democracyStartedEvent?.toHuman())
 
@@ -42,7 +43,7 @@ export const processDemocracyProposalTabled = async (
     id: proposalIndex,
     hash: '',
     block_id: event.block_id,
-    event_id: event.event_id,
+    event_id: event.id,
     extrinsic_id: '',
     event: 'Tabled',
     data: { balance, depositors, referendumIndex },
@@ -53,7 +54,7 @@ export const processDemocracyProposalTabled = async (
   const democracyReferenda: DemocracyReferendaModel = {
     id: referendumIndex,
     block_id: event.block_id,
-    event_id: event.event_id,
+    event_id: event.id,
     extrinsic_id: '',
     event: 'Started',
     data: { voteThreshold },

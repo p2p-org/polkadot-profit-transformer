@@ -2,8 +2,6 @@ import { processTipsClosedEvent } from './treasury/tips/tipclosed'
 import { ApiPromise } from '@polkadot/api'
 import { processDemocracyProposalTabled } from './democracy/proposal/tabled'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { GovernanceRepository } from '../../../../apps/common/infra/postgresql/governance/governance.repository'
-import { EventEntry } from '../../types'
 import {
   processTechnicalCommitteeApprovedEvent,
   processTechnicalCommitteeDisapprovedEvent,
@@ -28,6 +26,8 @@ import {
 import { processCouncilClosedEvent } from './democracy/council/closed'
 import { processTreasuryRejectedEvent } from './treasury/proposal/rejected'
 import { processTreasuryAwardedEvent } from './treasury/proposal/awarded'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 
 export type EventProcessor = ReturnType<typeof EventProcessor>
 
@@ -36,40 +36,40 @@ export const EventProcessor = (deps: { governanceRepository: GovernanceRepositor
 
   return {
     technicalCommittee: {
-      approved: (event: EventEntry) => processTechnicalCommitteeApprovedEvent(event, governanceRepository, logger),
-      closed: (event: EventEntry) => processTechnicalCommitteeClosedEvent(event, governanceRepository, logger),
-      executed: (event: EventEntry) => processTechnicalCommitteeExecutedEvent(event, governanceRepository, logger),
-      disapproved: (event: EventEntry) => processTechnicalCommitteeDisapprovedEvent(event, governanceRepository, logger),
+      approved: (event: EventModel) => processTechnicalCommitteeApprovedEvent(event, governanceRepository, logger),
+      closed: (event: EventModel) => processTechnicalCommitteeClosedEvent(event, governanceRepository, logger),
+      executed: (event: EventModel) => processTechnicalCommitteeExecutedEvent(event, governanceRepository, logger),
+      disapproved: (event: EventModel) => processTechnicalCommitteeDisapprovedEvent(event, governanceRepository, logger),
     },
     democracy: {
       referenda: {
-        started: (event: EventEntry) => processDemocracyReferendaStarted(event, governanceRepository, logger, polkadotApi),
-        cancelled: (event: EventEntry) => processDemocracyReferendaCancelled(event, governanceRepository, logger),
-        executed: (event: EventEntry) => processDemocracyReferendaExecuted(event, governanceRepository, logger),
-        notpassed: (event: EventEntry) => processDemocracyReferendaNotPassed(event, governanceRepository, logger),
-        passed: (event: EventEntry) => processDemocracyReferendaPassed(event, governanceRepository, logger),
+        started: (event: EventModel) => processDemocracyReferendaStarted(event, governanceRepository, logger, polkadotApi),
+        cancelled: (event: EventModel) => processDemocracyReferendaCancelled(event, governanceRepository, logger),
+        executed: (event: EventModel) => processDemocracyReferendaExecuted(event, governanceRepository, logger),
+        notpassed: (event: EventModel) => processDemocracyReferendaNotPassed(event, governanceRepository, logger),
+        passed: (event: EventModel) => processDemocracyReferendaPassed(event, governanceRepository, logger),
       },
       proposal: {
-        tabled: (event: EventEntry) => processDemocracyProposalTabled(event, governanceRepository, logger, polkadotApi),
+        tabled: (event: EventModel) => processDemocracyProposalTabled(event, governanceRepository, logger, polkadotApi),
       },
       preimage: {
-        used: (event: EventEntry) => processDemocracyPreimageUsedEvent(event, governanceRepository, logger),
+        used: (event: EventModel) => processDemocracyPreimageUsedEvent(event, governanceRepository, logger),
       },
     },
     council: {
-      approved: (event: EventEntry) => processCouncilApprovedEvent(event, governanceRepository, logger),
-      closed: (event: EventEntry) => processCouncilClosedEvent(event, governanceRepository, logger),
-      executed: (event: EventEntry) => processCouncilExecutedEvent(event, governanceRepository, logger),
-      disapproved: (event: EventEntry) => processCouncilDisapprovedEvent(event, governanceRepository, logger),
-      memberExecuted: (event: EventEntry) => processCouncilMemberExecutedEvent(event, governanceRepository, logger),
+      approved: (event: EventModel) => processCouncilApprovedEvent(event, governanceRepository, logger),
+      closed: (event: EventModel) => processCouncilClosedEvent(event, governanceRepository, logger),
+      executed: (event: EventModel) => processCouncilExecutedEvent(event, governanceRepository, logger),
+      disapproved: (event: EventModel) => processCouncilDisapprovedEvent(event, governanceRepository, logger),
+      memberExecuted: (event: EventModel) => processCouncilMemberExecutedEvent(event, governanceRepository, logger),
     },
     treasury: {
       proposal: {
-        rejected: (event: EventEntry) => processTreasuryRejectedEvent(event, governanceRepository, logger),
-        awarded: (event: EventEntry) => processTreasuryAwardedEvent(event, governanceRepository, logger),
+        rejected: (event: EventModel) => processTreasuryRejectedEvent(event, governanceRepository, logger),
+        awarded: (event: EventModel) => processTreasuryAwardedEvent(event, governanceRepository, logger),
       },
       tips: {
-        tipsclosed: (event: EventEntry) => processTipsClosedEvent(event, governanceRepository, logger),
+        tipsclosed: (event: EventModel) => processTipsClosedEvent(event, governanceRepository, logger),
       },
     },
   }

@@ -1,22 +1,19 @@
-import { ApiPromise } from '@polkadot/api'
-import { GovernanceRepository } from '../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '..'
-import { CouncilProposalModel } from 'apps/common/infra/postgresql/governance/models/councilMotions.model'
 import { Call, Hash } from '@polkadot/types/interfaces'
 import { Compact, u32 } from '@polkadot/types'
+import { findEvent } from '../../utils/findEvent'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { CouncilProposalModel } from 'apps/common/infra/postgresql/models/councilMotions.model'
 
 export const processCouncilProposeExtrinsic = async (
   args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
-  polkadotApi: ApiPromise,
 ): Promise<void> => {
-  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
+  const { events, extrinsic } = args
 
-  const councilProposedEvent = extrinsicEvents.find((event) => {
-    return event.event.section === 'council' && event.event.method === 'Proposed'
-  })
+  const councilProposedEvent = findEvent(events, 'council', 'Proposed')
 
   if (!councilProposedEvent) {
     logger.warn('no council proposed event for extrinsic ' + extrinsic.id)
@@ -28,11 +25,11 @@ export const processCouncilProposeExtrinsic = async (
   const motionHash = (<Hash>eventData[2]).toString()
   const threshold = (<u32>eventData[3]).toNumber()
 
-  const proposalArg = <Call>fullExtrinsic.method.args[1]
+  const proposalArg = <Call>extrinsic.args[1]
 
-  console.log('TOJSON', fullExtrinsic.method.args[1].toJSON())
+  console.log('TOJSON', extrinsic.args[1].toJSON())
 
-  const length_bound = <Compact<u32>>fullExtrinsic.args[2]
+  const length_bound = <Compact<u32>>extrinsic.args[2]
 
   const proposal = {
     call_module: proposalArg.section,
@@ -48,7 +45,7 @@ export const processCouncilProposeExtrinsic = async (
     extrinsic_id: extrinsic.id,
     event: 'Proposed',
     data: {
-      signer: fullExtrinsic.signer.toString(),
+      signer: extrinsic.signer,
       threshold,
       proposal,
       length_bound,

@@ -1,21 +1,23 @@
-import { TechnicalCommiteeProposalModel } from '../../../../../apps/common/infra/postgresql/governance/models/technicalCommittee.model'
-import { GovernanceRepository } from './../../../../../apps/common/infra/postgresql/governance/governance.repository'
+import { findEvent } from '@modules/governance-processor/processors/utils/findEvent'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { findEvent } from '../../utils/findEvent'
 import { AccountId, Hash, MemberCount, Proposal, ProposalIndex } from '@polkadot/types/interfaces'
 import { ExtrincicProcessorInput } from '..'
 import { Compact } from '@polkadot/types'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/models/technicalCommittee.model'
 
 export const processTechnicalCommiteeProposeExtrinsic = async (
   args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
+  const { events, extrinsic } = args
   logger.info({ extrinsic }, 'processTechnicalCommiteeProposeExtrinsic')
 
-  const threshold = (<Compact<MemberCount>>fullExtrinsic.args[0]).toNumber()
-  const proposalArg = <Proposal>fullExtrinsic.method.args[1]
+  console.log('extrinsic.args[0]', extrinsic.args)
+
+  const threshold = (<Compact<MemberCount>>extrinsic.args[0]).toNumber()
+  const proposalArg = <Proposal>extrinsic.args[1]
 
   const proposal = {
     call_module: proposalArg.section,
@@ -25,7 +27,7 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
 
   // threshold more than 1, will be voting
   if (threshold > 1) {
-    const techCommProposedEvent = findEvent(extrinsicEvents, 'technicalCommittee', 'Proposed')
+    const techCommProposedEvent = findEvent(events, 'technicalCommittee', 'Proposed')
     if (!techCommProposedEvent) throw Error('no technicalcommittee Proposed event for enrty ' + extrinsic.id)
 
     const proposer = <AccountId>techCommProposedEvent.event.data[0]
@@ -53,7 +55,7 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
   }
 
   // threshold less than 2, immediate execution
-  const techCommExexcutedEvent = findEvent(extrinsicEvents, 'technicalCommittee', 'Executed')
+  const techCommExexcutedEvent = findEvent(events, 'technicalCommittee', 'Executed')
   if (!techCommExexcutedEvent) throw Error('no technicalcommittee executed event for enrty ' + extrinsic.id)
 
   const hash = <Hash>techCommExexcutedEvent.event.data[0]
@@ -64,7 +66,7 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
     block_id: extrinsic.block_id,
     event: 'Proposed',
     data: {
-      proposer: fullExtrinsic.signer.toString(),
+      proposer: extrinsic.signer,
       threshold: threshold,
       proposal: proposal,
     },
@@ -72,18 +74,5 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
     event_id: 'propose',
   }
 
-  // const proposalExecutedModel: TechnicalCommiteeProposalModel = {
-  //   id: null,
-  //   hash: hash.toString(),
-  //   block_id: extrinsic.block_id,
-  //   event: 'Executed',
-  //   data: {
-  //     result: result.toJSON(),
-  //   },
-  //   extrinsic_id: extrinsic.id,
-  //   event_id: 'executed',
-  // }
-
   await governanceRepository.technicalCommittee.save(proposalModel)
-  // await governanceRepository.technicalCommittee.save(proposalExecutedModel)
 }

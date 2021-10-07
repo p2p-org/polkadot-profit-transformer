@@ -4,7 +4,7 @@ import { Logger } from 'apps/common/infra/logger/logger'
 import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/governance/models/technicalCommittee.model'
 
 export const processTechnicalCommitteeMemberExecutedEvent = async (
-  event: EventEntry,
+  event: EventModel,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {

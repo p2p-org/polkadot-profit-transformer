@@ -1,9 +1,10 @@
-import { DemocracyReferendaModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracy.model'
-import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { AccountVote, ReferendumIndex } from '@polkadot/types/interfaces'
 import { Compact } from '@polkadot/types'
 import { ExtrincicProcessorInput } from '../..'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { extrinsics } from '@polkadot/types/interfaces/definitions'
+import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/models/democracy.model'
 
 export const processDemocracyReferendaVoteExtrinsic = async (
   args: ExtrincicProcessorInput,
@@ -11,13 +12,13 @@ export const processDemocracyReferendaVoteExtrinsic = async (
   logger: Logger,
 ): Promise<void> => {
   // here preimage proposal_hash appears first time, add record to the proposal_image table
-  const { fullExtrinsic, extrinsic } = args
+  const { extrinsic } = args
 
   logger.info({ extrinsic }, 'processDemocracyReferendaVoteExtrinsic')
 
-  const referendumIndex = <Compact<ReferendumIndex>>fullExtrinsic.args[0]
+  const referendumIndex = <Compact<ReferendumIndex>>extrinsic.args[0]
 
-  const voteRaw = <AccountVote>fullExtrinsic.args[1]
+  const voteRaw = <AccountVote>extrinsic.args[1]
 
   const decodeVote = (v: AccountVote) => {
     if (!v.isStandard) {

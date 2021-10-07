@@ -1,10 +1,10 @@
-import { GovernanceRepository } from '../../../../../apps/common/infra/postgresql/governance/governance.repository'
-import { EventEntry } from '@modules/governance-processor/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/governance/models/technicalCommittee.model'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/models/technicalCommittee.model'
 
 export const processTechnicalCommitteeExecutedEvent = async (
-  event: EventEntry,
+  event: EventModel,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
@@ -21,7 +21,7 @@ export const processTechnicalCommitteeExecutedEvent = async (
     hash,
     id: null, // todo techCommProposal?.id ?? null,
     block_id: event.block_id,
-    event_id: event.event_id,
+    event_id: event.id,
     extrinsic_id: '',
     event: 'Executed',
     data: { result },

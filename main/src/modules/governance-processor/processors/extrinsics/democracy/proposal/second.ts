@@ -1,20 +1,20 @@
-import { DemocracyProposalModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracy.model'
-import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '../..'
 import { Compact, u32 } from '@polkadot/types'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { DemocracyProposalModel } from 'apps/common/infra/postgresql/models/democracy.model'
 
 export const processDemocracyProposalSecondExtrinsic = async (
   args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { fullExtrinsic, extrinsic } = args
+  const { extrinsic } = args
 
   logger.info('democracy.second extrinsic', extrinsic.id)
 
-  const proposalId = <Compact<u32>>fullExtrinsic.args[0]
-  const seconds_upper_bound = <Compact<u32>>fullExtrinsic.args[1]
+  const proposalId = <Compact<u32>>extrinsic.args[0]
+  const seconds_upper_bound = <Compact<u32>>extrinsic.args[1]
 
   const proposal: DemocracyProposalModel = {
     id: proposalId.toNumber(),

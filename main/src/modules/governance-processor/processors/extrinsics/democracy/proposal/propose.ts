@@ -1,19 +1,18 @@
-import { DemocracyProposalModel } from '../../../../../../apps/common/infra/postgresql/governance/models/democracy.model'
-import { GovernanceRepository } from '../../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { ExtrincicProcessorInput } from '../..'
 import { u128, u32 } from '@polkadot/types'
+import { findEvent } from '@modules/governance-processor/processors/utils/findEvent'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { DemocracyProposalModel } from 'apps/common/infra/postgresql/models/democracy.model'
 
 export const processDemocracyProposalProposeExtrinsic = async (
   args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
+  const { events, extrinsic } = args
 
-  const democracyProposedEvent = extrinsicEvents.find((event) => {
-    return event.event.section === 'democracy' && event.event.method === 'Proposed'
-  })
+  const democracyProposedEvent = findEvent(events, 'democracy', 'Proposed')
 
   if (!democracyProposedEvent) {
     logger.warn('no democracy proposed event for extrinsic ' + extrinsic.id)
@@ -24,7 +23,10 @@ export const processDemocracyProposalProposeExtrinsic = async (
   const proposalId = (<u32>eventData[0]).toNumber()
   const balance = (<u128>eventData[1]).toNumber()
 
-  const argsdef = fullExtrinsic.argsDef
+  // todo check if correct
+  const call = democracyProposedEvent.registry.createType('Call', extrinsic.extrinsic.args)
+
+  const argsdef = call.argsDef
 
   // fix for a few very early extrinsics in kusama, with the different schema
   if (argsdef['proposal']) {
@@ -35,7 +37,7 @@ export const processDemocracyProposalProposeExtrinsic = async (
       event_id: '',
       extrinsic_id: extrinsic.id,
       event: 'Proposed',
-      data: { balance: balance, signer: extrinsic.signer, proposal: fullExtrinsic.args[0].toHuman() },
+      data: { balance: balance, signer: extrinsic.signer, proposal: extrinsic.args[0].toHuman() },
     }
 
     await governanceRepository.democracy.proposal.save(proposal)

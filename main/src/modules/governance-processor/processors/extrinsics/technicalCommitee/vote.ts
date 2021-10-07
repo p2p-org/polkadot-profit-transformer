@@ -1,26 +1,26 @@
-import { TechnicalCommiteeProposalModel } from '../../../../../apps/common/infra/postgresql/governance/models/technicalCommittee.model'
-import { GovernanceRepository } from './../../../../../apps/common/infra/postgresql/governance/governance.repository'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { findEvent } from '../../utils/findEvent'
 import { AccountId, Hash, MemberCount, ProposalIndex } from '@polkadot/types/interfaces'
 import { bool, Compact } from '@polkadot/types'
 import { ExtrincicProcessorInput } from '..'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/models/technicalCommittee.model'
 
 export const processTechnicalCommiteeVoteExtrinsic = async (
   args: ExtrincicProcessorInput,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
-  const { extrinsicEvents, fullExtrinsic, extrinsic } = args
+  const { events, extrinsic } = args
 
   logger.info({ extrinsic }, 'processTechnicalCommiteeVoteExtrinsic')
 
-  const techCommVotedEvent = findEvent(extrinsicEvents, 'technicalCommittee', 'Voted')
+  const techCommVotedEvent = findEvent(events, 'technicalCommittee', 'Voted')
   if (!techCommVotedEvent) throw Error('no technicalcommittee voted event for enrty ' + extrinsic.id)
 
-  const proposalHash = <Hash>fullExtrinsic.args[0]
-  const proposalIndex = <Compact<ProposalIndex>>fullExtrinsic.args[1]
-  const approve = <bool>fullExtrinsic.args[2]
+  const proposalHash = <Hash>extrinsic.args[0]
+  const proposalIndex = <Compact<ProposalIndex>>extrinsic.args[1]
+  const approve = <bool>extrinsic.args[2]
   const accountId = <AccountId>techCommVotedEvent.event.data[0]
   const membersYes = <MemberCount>techCommVotedEvent.event.data[3]
   const membersNo = <MemberCount>techCommVotedEvent.event.data[4]

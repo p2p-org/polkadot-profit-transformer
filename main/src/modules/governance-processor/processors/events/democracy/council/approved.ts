@@ -1,10 +1,10 @@
-import { CouncilProposalModel } from 'apps/common/infra/postgresql/governance/models/councilMotions.model'
-import { EventEntry } from '@modules/governance-processor/types'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { GovernanceRepository } from 'apps/common/infra/postgresql/governance/governance.repository'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { CouncilProposalModel } from 'apps/common/infra/postgresql/models/councilMotions.model'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 
 export const processCouncilApprovedEvent = async (
-  event: EventEntry,
+  event: EventModel,
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ): Promise<void> => {
@@ -20,7 +20,7 @@ export const processCouncilApprovedEvent = async (
     id: proposal_id,
     block_id: event.block_id,
     extrinsic_id: '',
-    event_id: event.event_id,
+    event_id: event.id,
     event: 'Approved',
     data: {},
   }
