@@ -13,8 +13,6 @@ export type Environment = {
   DB_SCHEMA: string | undefined
   LOG_LEVEL: string | undefined
   APP_ID: string | undefined
-  KAFKA_URI: string | undefined
-  KAFKA_PREFIX: string | undefined
   SUBSTRATE_URI: string | undefined
 }
 
@@ -23,7 +21,5 @@ export const environment: Environment = {
   DB_SCHEMA: process.env.DB_SCHEMA,
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   APP_ID: process.env.APP_ID,
-  KAFKA_URI: process.env.KAFKA_URI,
-  KAFKA_PREFIX: process.env.KAFKA_PREFIX,
   SUBSTRATE_URI: process.env.SUBSTRATE_URI,
 }

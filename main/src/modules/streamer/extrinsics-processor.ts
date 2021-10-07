@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { isExtrinsicSuccess } from './../governance-processor/processors/utils/isExtrinsicSuccess'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
-import { BlockNumber, Call, EventRecord, OpaqueCall } from '@polkadot/types/interfaces'
+import { BlockNumber, EventRecord, OpaqueCall } from '@polkadot/types/interfaces'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 
 export type ExtrinsicsProcessorInput = {
@@ -46,8 +47,8 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
         nonce: extrinsic.nonce.toNumber(),
         ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
         version: extrinsic.tip.toNumber(),
-        extrinsic: JSON.stringify(extrinsic.toHuman()),
-        args: JSON.stringify(extrinsic.args),
+        extrinsic: extrinsic.toHuman(),
+        args: extrinsic.args,
       }
 
       extractedExtrinsics.push(mainExtrinsic)
@@ -72,10 +73,11 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
             signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
             tip: extrinsic.tip.toNumber(),
             nonce: extrinsic.nonce.toNumber(),
-            ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
+            ref_event_ids:
+              referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
             version: extrinsic.tip.toNumber(),
-            extrinsic: JSON.stringify(batchExtrinsicEntry.toHuman()),
-            args: JSON.stringify(batchExtrinsicEntry.args),
+            extrinsic: batchExtrinsicEntry.toHuman(),
+            args: batchExtrinsicEntry.args,
           }
           return batchPartExtrinsic
         })
@@ -104,10 +106,11 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
           signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
           tip: extrinsic.tip.toNumber(),
           nonce: extrinsic.nonce.toNumber(),
-          ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
+          ref_event_ids:
+            referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
           version: extrinsic.tip.toNumber(),
-          extrinsic: JSON.stringify(call.toHuman()),
-          args: JSON.stringify(call.args),
+          extrinsic: call.toHuman(),
+          args: call.args,
         }
 
         extractedExtrinsics.push(multisigExtrinsicCall)
@@ -130,10 +133,11 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
               signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
               tip: extrinsic.tip.toNumber(),
               nonce: extrinsic.nonce.toNumber(),
-              ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
+              ref_event_ids:
+                referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
               version: extrinsic.tip.toNumber(),
-              extrinsic: JSON.stringify(batchExtrinsicEntry.toHuman()),
-              args: JSON.stringify(batchExtrinsicEntry.args),
+              extrinsic: batchExtrinsicEntry.toHuman(),
+              args: batchExtrinsicEntry.args,
             }
             return batchPartExtrinsic
           })
@@ -160,10 +164,11 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
           signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
           tip: extrinsic.tip.toNumber(),
           nonce: extrinsic.nonce.toNumber(),
-          ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
+          ref_event_ids:
+            referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
           version: extrinsic.tip.toNumber(),
-          extrinsic: JSON.stringify(call.toHuman()),
-          args: JSON.stringify(call.args),
+          extrinsic: call.toHuman(),
+          args: call.args,
         }
 
         extractedExtrinsics.push(proxyExtrinsicCall)
@@ -186,10 +191,11 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
               signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
               tip: extrinsic.tip.toNumber(),
               nonce: extrinsic.nonce.toNumber(),
-              ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
+              ref_event_ids:
+                referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
               version: extrinsic.tip.toNumber(),
-              extrinsic: JSON.stringify(batchExtrinsicEntry.toHuman()),
-              args: JSON.stringify(batchExtrinsicEntry.args),
+              extrinsic: batchExtrinsicEntry.toHuman(),
+              args: batchExtrinsicEntry.args,
             }
             return batchPartExtrinsic
           })

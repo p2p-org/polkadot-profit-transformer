@@ -1,21 +1,9 @@
-export type EventEntry = {
-  block_id: number
-  section: string
-  method: string
-  event_id: string
-  data: string
-}
+import { EventRecord } from '@polkadot/types/interfaces'
+import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
+import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 
-export interface Extrinsic {
-  id: string
-  block_id: number
-  section: string
-  method: string
-  signer: string
-  extrinsic: any
-  args: any
-}
-
-export type ExtrinsicsEntry = {
-  extrinsics: Extrinsic[]
+export type GovernanceExtrinsicEntry = {
+  extrinsic: ExtrinsicModel
+  block: BlockModel
+  events: EventRecord[]
 }

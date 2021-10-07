@@ -7,6 +7,7 @@ import { EventBus } from 'utils/event-bus/event-bus'
 import { EventsProcessor } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
+import { ExtrincicProcessorInput } from '@modules/governance-processor/processors/extrinsics'
 
 export type BlockProcessor = ReturnType<typeof BlockProcessor>
 
@@ -50,7 +51,7 @@ export const BlockProcessor = (deps: {
 
       const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
-      const blockModel: BlockModel = {
+      const block: BlockModel = {
         id: signedBlock.block.header.number.toNumber(),
         hash: signedBlock.block.header.hash.toHex(),
         author: extHeader?.author ? extHeader.author.toString() : '',
@@ -71,15 +72,15 @@ export const BlockProcessor = (deps: {
       }
 
       for (const event of processedEvents) {
-        // logger.info('BlockProcessor send to db eventModel: ' + JSON.stringify(event))
         await streamerRepository.events.save(event)
       }
 
-      // logger.info('BlockProcessor send to db BlockModel: ' + JSON.stringify(blockModel))
-      await streamerRepository.blocks.save(blockModel)
+      await streamerRepository.blocks.save(block)
 
-      // here targeted events and extrinsics send to the eventBus
+      // here we send needed events and successfull extrinsics to the eventBus
       for (const extrinsic of extractedExtrinsics) {
+        if (!extrinsic.success) continue
+
         if (extrinsic.section === 'identity') {
           if (['clearIdentity', 'killIdentity', 'setFields', 'setIdentity'].includes(extrinsic.method)) {
             eventBus.dispatch<ExtrinsicModel>('identityExtrinsic', extrinsic)
@@ -87,6 +88,20 @@ export const BlockProcessor = (deps: {
           if (['addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'].includes(extrinsic.method)) {
             eventBus.dispatch<ExtrinsicModel>('subIdentityExtrinsic', extrinsic)
           }
+        }
+
+        if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'].includes(extrinsic.section)) {
+          // for governance processing we need extrinsics with corresponding events
+          const extrinsicIndex = Number(extrinsic.id.split('-')[1])
+          const extrinsicEvents = events.filter(
+            ({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex),
+          )
+          const extrinsicEntry: ExtrincicProcessorInput = {
+            extrinsic,
+            events: extrinsicEvents,
+            block: block,
+          }
+          eventBus.dispatch<ExtrincicProcessorInput>('governanceExtrinsic', extrinsicEntry)
         }
       }
 
@@ -106,6 +121,10 @@ export const BlockProcessor = (deps: {
           if (['JudgementRequested', 'JudgementGiven', 'JudgementUnrequested'].includes(event.method)) {
             eventBus.dispatch<EventModel>('identityEvent', event)
           }
+        }
+
+        if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'.includes(event.section)]) {
+          eventBus.dispatch<EventModel>('governanceEvent', event)
         }
       }
     } catch (error: any) {

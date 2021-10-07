@@ -29,7 +29,10 @@ export const GovernanceRepository = (deps: { knex: Knex; logger: Logger }) => {
         save: async (referenda: DemocracyReferendaModel): Promise<void> => {
           await DemocracyReferendaModel(knex).insert(referenda).onConflict(['id', 'event_id', 'extrinsic_id']).merge()
         },
-        findVote: async (ReferendumIndex: u32, voter: Address | AccountId32): Promise<DemocracyReferendaModel | undefined> => {
+        findVote: async (
+          ReferendumIndex: u32,
+          voter: Address | AccountId32 | string,
+        ): Promise<DemocracyReferendaModel | undefined> => {
           const voteRecord = await DemocracyReferendaModel(knex)
             .where({ id: ReferendumIndex.toNumber(), event: 'Voted' })
             .whereRaw('cast(data->>? as text) = ?', ['voter', voter.toString()])
