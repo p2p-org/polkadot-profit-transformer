@@ -14,7 +14,7 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
   const { events, extrinsic } = args
   logger.info({ extrinsic }, 'processTechnicalCommiteeProposeExtrinsic')
 
-  console.log('extrinsic.args[0]', extrinsic.args)
+  // console.log('extrinsic.args[0]', extrinsic.args)
 
   const threshold = (<Compact<MemberCount>>extrinsic.args[0]).toNumber()
   const proposalArg = <Proposal>extrinsic.args[1]
@@ -45,7 +45,7 @@ export const processTechnicalCommiteeProposeExtrinsic = async (
         proposal: proposal,
       },
       extrinsic_id: extrinsic.id,
-      event_id: 'propose',
+      event_id: '',
     }
 
     console.log({ proposalModel })

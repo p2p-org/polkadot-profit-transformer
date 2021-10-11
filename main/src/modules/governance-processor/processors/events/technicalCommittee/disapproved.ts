@@ -1,3 +1,4 @@
+import { H256 } from '@polkadot/types/interfaces'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
@@ -10,9 +11,9 @@ export const processTechnicalCommitteeDisapprovedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process technical commitee disapproved event')
 
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
 
-  const hash = eventData[0]['Hash']
+  const hash = (<H256>eventData[0]['Hash']).toString()
   // const techCommProposal = await governanceRepository.technicalCommittee.findProposalByHash(hash)
   // if (!techCommProposal) throw Error('no tech com proposal found for tech comm disapproved closed event ' + event.event_id)
 

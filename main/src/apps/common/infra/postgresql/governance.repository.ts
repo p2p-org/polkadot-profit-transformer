@@ -17,7 +17,12 @@ export const GovernanceRepository = (deps: { knex: Knex; logger: Logger }) => {
   return {
     technicalCommittee: {
       save: async (proposal: TechnicalCommiteeProposalModel): Promise<void> => {
-        await TechnicalCommiteeProposalModel(knex).insert(proposal).onConflict(['hash', 'extrinsic_id', 'event_id']).merge()
+        console.log('GovernanceRepository: proposal to save', proposal)
+        const encodedProposal = { ...proposal, data: JSON.stringify(proposal.data) }
+        await TechnicalCommiteeProposalModel(knex)
+          .insert(encodedProposal)
+          .onConflict(['hash', 'extrinsic_id', 'event_id'])
+          .merge()
       },
       // findProposalByHash: async (hash: string): Promise<TechnicalCommiteeProposalModel | undefined> => {
       //   const proposal = await TechnicalCommiteeProposalModel(knex).withSchema('dot_polka').where({ hash }).first()

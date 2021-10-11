@@ -47,7 +47,7 @@ CREATE TABLE dot_polka.extrinsics (
     "mortal_phase" INT,
     "is_signed" BOOL,
     "signer" VARCHAR(66),
-    "tip" INT,
+    "tip" BIGINT,
     "nonce" DOUBLE PRECISION,
     "ref_event_ids" VARCHAR(150)[],
     "version" INT,

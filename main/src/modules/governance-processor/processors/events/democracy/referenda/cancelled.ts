@@ -10,11 +10,11 @@ export const processDemocracyReferendaCancelled = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process democracy referenda cancelled event')
 
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
   console.log(eventData)
 
   const referendumIndex = parseInt(eventData[0]['ReferendumIndex'], 16)
-  const result = eventData[1]['bool'] ? 'Success' : 'Fail'
+  // const result = eventData[1]['bool'] ? 'Success' : 'Fail'
 
   const democracyReferenda: DemocracyReferendaModel = {
     id: referendumIndex,
@@ -22,7 +22,7 @@ export const processDemocracyReferendaCancelled = async (
     event_id: event.id,
     extrinsic_id: '',
     event: 'Cancelled',
-    data: { result },
+    data: {},
   }
 
   await governanceRepository.democracy.referenda.save(democracyReferenda)

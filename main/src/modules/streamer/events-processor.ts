@@ -19,7 +19,7 @@ export const EventsProcessor = (deps: { logger: Logger }) => {
         eventDataRaw.map((data: any, index: number) => ({ [types[index].type]: data }))
 
       const eventData = extractEventData(event.data)
-      console.log({ eventData })
+      // console.log({ eventData })
       acc.push({
         id: `${blockId}-${eventIndex}`,
         block_id: blockId,

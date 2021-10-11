@@ -14,7 +14,7 @@ start:
 clean: down docker.removenetwork
 	@echo "Purge all services and data"
 down: redash.down
-	docker-compose -f docker-compose.yml -f docker-compose.graphql.yml -f docker-compose.ksql.yml down -v
+	docker-compose -f docker-compose.yml down -v
 psql:
 	docker-compose -f docker-compose.yml -f docker-compose.ksql.yml exec db psql -U sink -d raw
 rebuild streamer:

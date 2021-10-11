@@ -16,12 +16,16 @@ export const processCouncilProposalVoteExtrinsic = async (
   logger.info({ extrinsic }, 'process council vote extrinsic')
 
   const councilVotedEvent = findEvent(events, 'council', 'Voted')
-  if (!councilVotedEvent) throw Error('no council voted event for enrty ' + extrinsic.id)
 
-  const eventData = councilVotedEvent.event.data
-  const accountId = (<AccountId>eventData[0]).toString()
-  const membersYes = (<MemberCount>eventData[3]).toNumber()
-  const membersNo = (<MemberCount>eventData[4]).toNumber()
+  let accountId, membersYes, membersNo
+
+  if (councilVotedEvent) {
+    const eventData = councilVotedEvent.event.data
+    accountId = (<AccountId>eventData[0]).toString()
+    membersYes = (<MemberCount>eventData[3]).toNumber()
+    membersNo = (<MemberCount>eventData[4]).toNumber()
+    logger.error('no council vote event found for extrinsic ' + extrinsic.id)
+  }
 
   const proposalHash = (<Hash>extrinsic.args[0]).toString()
   const proposalIndex = (<Compact<ProposalIndex>>extrinsic.args[1]).toNumber()
@@ -42,7 +46,7 @@ export const processCouncilProposalVoteExtrinsic = async (
     event_id: '',
   }
 
-  console.log({ votedModel })
+  // console.log({ votedModel })
 
   await governanceRepository.council.save(votedModel)
 }

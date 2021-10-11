@@ -13,7 +13,7 @@ export type ExtrinsicModel = {
   mortal_phase: number | null
   is_signed: boolean
   signer: string | null
-  tip: number
+  tip: string
   nonce: number
   ref_event_ids: any
   version: number

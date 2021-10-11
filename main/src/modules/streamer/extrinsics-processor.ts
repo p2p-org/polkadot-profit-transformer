@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import { isExtrinsicSuccess } from './../governance-processor/processors/utils/isExtrinsicSuccess'
+import { isExtrinsicSuccess } from './utils/is-extrinsic-success'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
-import { BlockNumber, EventRecord, OpaqueCall } from '@polkadot/types/interfaces'
+import { BlockNumber, EventRecord, OpaqueCall, Call } from '@polkadot/types/interfaces'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
+import { AnyTuple } from '@polkadot/types/types'
 
 export type ExtrinsicsProcessorInput = {
   eraId: number
@@ -17,193 +17,88 @@ export type ExtrinsicsProcessor = ReturnType<typeof ExtrinsicsProcessor>
 
 export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotRepository }) => {
   const { polkadotRepository } = args
+
   return async (input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> => {
     const { eraId, sessionId, blockNumber, events, extrinsics } = input
 
-    const extractedExtrinsics: ExtrinsicModel[] = []
-
-    for (let index = 0; index < extrinsics.length; index++) {
-      const extrinsic = extrinsics[index]
-
-      const isSuccess = await isExtrinsicSuccess(index, events, polkadotRepository)
-
-      const referencedEventsIds = events
-        .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
-        .map((_, evIndex) => `${blockNumber}-${evIndex}`)
-
-      const mainExtrinsic: ExtrinsicModel = {
+    const createExtrinsicModelFromCall = (
+      call: Call,
+      isSuccess: boolean,
+      extrinsic: GenericExtrinsic<AnyTuple>,
+      index: string,
+      referencedEventsIds: string[],
+    ): ExtrinsicModel => {
+      const extrinsicModel: ExtrinsicModel = {
         id: `${blockNumber}-${index}`,
         success: isSuccess,
         block_id: blockNumber.toNumber(),
         session_id: sessionId,
         era: eraId,
-        section: extrinsic.method.section,
-        method: extrinsic.method.method,
+        section: call.section,
+        method: call.method,
         mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,
         mortal_phase: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.phase.toNumber() : null,
         is_signed: extrinsic.isSigned,
         signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
-        tip: extrinsic.tip.toNumber(),
+        tip: extrinsic.tip.toString(),
         nonce: extrinsic.nonce.toNumber(),
         ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
-        version: extrinsic.tip.toNumber(),
-        extrinsic: extrinsic.toHuman(),
-        args: extrinsic.args,
+        version: extrinsic.version,
+        extrinsic: call.toHuman(),
+        args: call.args,
       }
 
-      extractedExtrinsics.push(mainExtrinsic)
-
-      if (extrinsic.method.method === 'batch') {
-        //fix it later, most probably something bad is going on here
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const batchExtrinsics = extrinsic.method.args[0].map((batchExtrinsicEntry, batchExIndex) => {
-          const batchPartExtrinsic: ExtrinsicModel = {
-            id: `${blockNumber}-${index}-${batchExIndex}`,
-            block_id: blockNumber.toNumber(),
-            success: isSuccess,
-            parent_id: `${blockNumber}-${index}`,
-            session_id: sessionId,
-            era: eraId,
-            section: batchExtrinsicEntry.section,
-            method: batchExtrinsicEntry.method,
-            mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,
-            mortal_phase: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.phase.toNumber() : null,
-            is_signed: extrinsic.isSigned,
-            signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
-            tip: extrinsic.tip.toNumber(),
-            nonce: extrinsic.nonce.toNumber(),
-            ref_event_ids:
-              referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
-            version: extrinsic.tip.toNumber(),
-            extrinsic: batchExtrinsicEntry.toHuman(),
-            args: batchExtrinsicEntry.args,
-          }
-          return batchPartExtrinsic
-        })
-
-        extractedExtrinsics.push(batchExtrinsics)
-      }
-
-      if (extrinsic.method.method === 'asMulti' && extrinsic.method.section == 'multisig') {
-        const opaqueCall = <OpaqueCall>extrinsic.args[3]
-        const call = opaqueCall.registry.createType('Call', opaqueCall.toU8a(true))
-        // const call = <Call>polkadotRepository.createType('Call', opaqueCall.toU8a(true))
-        console.log(call.method, call.section)
-
-        const multisigExtrinsicCall: ExtrinsicModel = {
-          id: `${blockNumber}-${index}-0`,
-          block_id: blockNumber.toNumber(),
-          success: isSuccess,
-          parent_id: `${blockNumber}-${index}`,
-          session_id: sessionId,
-          era: eraId,
-          section: call.section,
-          method: call.method,
-          mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,
-          mortal_phase: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.phase.toNumber() : null,
-          is_signed: extrinsic.isSigned,
-          signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
-          tip: extrinsic.tip.toNumber(),
-          nonce: extrinsic.nonce.toNumber(),
-          ref_event_ids:
-            referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
-          version: extrinsic.tip.toNumber(),
-          extrinsic: call.toHuman(),
-          args: call.args,
-        }
-
-        extractedExtrinsics.push(multisigExtrinsicCall)
-
-        if (call.section === 'utility' && call.method === 'batch') {
-          // @ts-ignore
-          const multisigBatchExtrinsics = call.args[0].map((batchExtrinsicEntry, batchExIndex) => {
-            const batchPartExtrinsic: ExtrinsicModel = {
-              id: `${blockNumber}-${index}-0-${batchExIndex}`,
-              block_id: blockNumber.toNumber(),
-              success: isSuccess,
-              parent_id: `${blockNumber}-${index}`,
-              session_id: sessionId,
-              era: eraId,
-              section: batchExtrinsicEntry.section,
-              method: batchExtrinsicEntry.method,
-              mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,
-              mortal_phase: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.phase.toNumber() : null,
-              is_signed: extrinsic.isSigned,
-              signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
-              tip: extrinsic.tip.toNumber(),
-              nonce: extrinsic.nonce.toNumber(),
-              ref_event_ids:
-                referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
-              version: extrinsic.tip.toNumber(),
-              extrinsic: batchExtrinsicEntry.toHuman(),
-              args: batchExtrinsicEntry.args,
-            }
-            return batchPartExtrinsic
-          })
-          extractedExtrinsics.push(multisigBatchExtrinsics)
-        }
-      }
-
-      if (extrinsic.method.method === 'proxy' && extrinsic.method.section == 'proxy') {
-        const opaqueCall = <OpaqueCall>extrinsic.args[2]
-        const call = opaqueCall.registry.createType('Call', opaqueCall.toU8a(true))
-
-        const proxyExtrinsicCall: ExtrinsicModel = {
-          id: `${blockNumber}-${index}-0`,
-          block_id: blockNumber.toNumber(),
-          parent_id: `${blockNumber}-${index}`,
-          success: isSuccess,
-          session_id: sessionId,
-          era: eraId,
-          section: call.section,
-          method: call.method,
-          mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,
-          mortal_phase: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.phase.toNumber() : null,
-          is_signed: extrinsic.isSigned,
-          signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
-          tip: extrinsic.tip.toNumber(),
-          nonce: extrinsic.nonce.toNumber(),
-          ref_event_ids:
-            referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
-          version: extrinsic.tip.toNumber(),
-          extrinsic: call.toHuman(),
-          args: call.args,
-        }
-
-        extractedExtrinsics.push(proxyExtrinsicCall)
-
-        if (call.section === 'utility' && call.method === 'batch') {
-          // @ts-ignore
-          const proxyBatchExtrinsics = call.args[0].map((batchExtrinsicEntry, batchExIndex) => {
-            const batchPartExtrinsic: ExtrinsicModel = {
-              id: `${blockNumber}-${index}-0-${batchExIndex}`,
-              block_id: blockNumber.toNumber(),
-              success: isSuccess,
-              parent_id: `${blockNumber}-${index}`,
-              session_id: sessionId,
-              era: eraId,
-              section: batchExtrinsicEntry.section,
-              method: batchExtrinsicEntry.method,
-              mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,
-              mortal_phase: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.phase.toNumber() : null,
-              is_signed: extrinsic.isSigned,
-              signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
-              tip: extrinsic.tip.toNumber(),
-              nonce: extrinsic.nonce.toNumber(),
-              ref_event_ids:
-                referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
-              version: extrinsic.tip.toNumber(),
-              extrinsic: batchExtrinsicEntry.toHuman(),
-              args: batchExtrinsicEntry.args,
-            }
-            return batchPartExtrinsic
-          })
-          extractedExtrinsics.push(proxyBatchExtrinsics)
-        }
-      }
+      return extrinsicModel
     }
 
-    return extractedExtrinsics.flat(Infinity)
+    type callEntry = {
+      call: Call
+      indexes: number[]
+      index: number
+    }
+    const recursiveExtrinsicDecoder = (entry: callEntry): callEntry[] => {
+      const currentIndexes = [...entry.indexes, entry.index]
+
+      if (entry.call.section === 'utility' && entry.call.method === 'batch') {
+        console.log('batch')
+        const processedBatchCalls = (<Vec<Call>>entry.call.args[0])
+          .map((call, index) => recursiveExtrinsicDecoder({ call, indexes: currentIndexes, index }))
+          .flat()
+        return [entry, ...processedBatchCalls]
+      }
+
+      if (entry.call.section === 'multisig' && entry.call.method === 'asMulti') {
+        console.log('multisig')
+        const innerCall = entry.call.registry.createType('Call', entry.call.args[3])
+        return [entry, ...recursiveExtrinsicDecoder({ call: innerCall, indexes: currentIndexes, index: 0 })]
+      }
+
+      if (entry.call.section === 'proxy' && entry.call.method === 'proxy') {
+        // console.log('proxy', call.args[2].toHuman())
+        const innerCall = entry.call.registry.createType('Call', entry.call.args[2])
+        return [entry, ...recursiveExtrinsicDecoder({ call: innerCall, indexes: currentIndexes, index: 0 })]
+      }
+
+      return [entry]
+    }
+
+    const result = await Promise.all(
+      extrinsics.map(async (extrinsic, index) => {
+        const isSuccess = await isExtrinsicSuccess(index, events, polkadotRepository)
+        const initialCall = extrinsic.registry.createType('Call', extrinsic.method)
+        const extractedExtrinsics = recursiveExtrinsicDecoder({ call: initialCall, indexes: [], index })
+        const referencedEventsIds = events
+          .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
+          .map((_, evIndex) => `${blockNumber}-${evIndex}`)
+        const extrinsicModels = extractedExtrinsics.map(({ call, indexes, index }) =>
+          createExtrinsicModelFromCall(call, isSuccess, extrinsic, [...indexes, index].join('-'), referencedEventsIds),
+        )
+        return extrinsicModels
+      }),
+    )
+
+    const r = result.flat()
+    // console.log(JSON.stringify(r, null, 2))
+    return r
   }
 }

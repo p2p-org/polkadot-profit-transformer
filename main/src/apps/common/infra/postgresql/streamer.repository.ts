@@ -1,6 +1,5 @@
 import { Knex } from 'knex'
 
-import { EraModel } from './models/era.model'
 import { ExtrinsicModel } from './models/extrinsic.model'
 import { BlockModel } from './models/block.model'
 import { EventModel } from './models/event.model'
@@ -31,6 +30,7 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger }) => {
         await EventModel(knex).insert(stringifiedDataEvent).onConflict(['id']).merge()
       },
       findBySectionAndMethod: async (args: { section: string; method: string }[]): Promise<EventModel[]> => {
+        // todo implement schema from env
         let query = EventModel(knex).withSchema('dot_polka')
         for (const { method, section } of args) {
           query = query.orWhere({ section, method })
@@ -41,10 +41,16 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger }) => {
     },
     extrinsics: {
       save: async (extrinsic: ExtrinsicModel): Promise<void> => {
-        await ExtrinsicModel(knex).insert(extrinsic).onConflict(['id']).merge()
+        const strigifiedDataExtrinsic = {
+          ...extrinsic,
+          extrinsic: JSON.stringify(extrinsic.extrinsic),
+          args: JSON.stringify(extrinsic.args),
+        }
+        await ExtrinsicModel(knex).insert(strigifiedDataExtrinsic).onConflict(['id']).merge()
       },
       findBySectionAndMethod: async (args: { section: string; method: string }[]): Promise<ExtrinsicModel[]> => {
-        let query = ExtrinsicModel(knex).withSchema('dot_kusama')
+        // todo implement schema from env
+        let query = ExtrinsicModel(knex).withSchema('dot_polka')
         for (const { method, section } of args) {
           query = query.orWhere({ section, method })
         }

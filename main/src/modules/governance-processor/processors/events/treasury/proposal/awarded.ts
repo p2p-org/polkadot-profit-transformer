@@ -10,7 +10,7 @@ export const processTreasuryAwardedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process treasury rejected event')
 
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
 
   const proposal_id = parseInt(eventData[0]['ProposalIndex'], 16)
   const balance = parseInt(eventData[1]['Balance'], 16)

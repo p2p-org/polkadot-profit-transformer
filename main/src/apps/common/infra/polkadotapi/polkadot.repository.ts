@@ -94,7 +94,11 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       return eraRewardPointsMap
     },
 
-    async getStakersInfo(blockHash: TBlockHash, eraId: number, validatorAccountId: string): Promise<[Exposure, Exposure, ValidatorPrefs]> {
+    async getStakersInfo(
+      blockHash: TBlockHash,
+      eraId: number,
+      validatorAccountId: string,
+    ): Promise<[Exposure, Exposure, ValidatorPrefs]> {
       const [staking, stakingClipped, prefs] = await Promise.all([
         polkadotApi.query.staking.erasStakers.at(blockHash, eraId, validatorAccountId),
         polkadotApi.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId),
@@ -151,7 +155,9 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
 
     async getInfoToProcessBlock(
       blockHash: BlockHash,
-    ): Promise<[SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
+    ): Promise<
+      [SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
+    > {
       const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
         polkadotApi.query.session.currentIndex.at(blockHash),
         polkadotApi.query.staking.currentEra.at(blockHash),
@@ -176,7 +182,9 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       return polkadotApi.query.staking.currentEra()
     },
 
-    async getInfoToCheckHistoryDepth(blockHash: TBlockHash): Promise<[SessionIndex, Option<ActiveEraInfo>, HeaderExtended | undefined]> {
+    async getInfoToCheckHistoryDepth(
+      blockHash: TBlockHash,
+    ): Promise<[SessionIndex, Option<ActiveEraInfo>, HeaderExtended | undefined]> {
       const [sessionId, activeEra, extHeader] = await Promise.all([
         polkadotApi.query.session.currentIndex.at(blockHash),
         polkadotApi.query.staking.activeEra.at(blockHash),
@@ -186,9 +194,11 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       return [sessionId, activeEra, extHeader]
     },
 
-    async getIdentity(accountId: string): Promise<Registration> {
-      const identity = (await polkadotApi.query.identity.identityOf(accountId)).unwrap()
-      return identity
+    async getIdentity(accountId: string): Promise<Registration | undefined> {
+      const identity = await polkadotApi.query.identity.identityOf(accountId)
+      if (identity.isEmpty || identity.isNone) return undefined
+
+      return identity.unwrap()
     },
   }
 }

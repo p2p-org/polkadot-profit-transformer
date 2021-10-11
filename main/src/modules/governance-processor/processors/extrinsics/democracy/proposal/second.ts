@@ -13,11 +13,11 @@ export const processDemocracyProposalSecondExtrinsic = async (
 
   logger.info('democracy.second extrinsic', extrinsic.id)
 
-  const proposalId = <Compact<u32>>extrinsic.args[0]
+  const proposalId = (<Compact<u32>>extrinsic.args[0]).toNumber()
   const seconds_upper_bound = <Compact<u32>>extrinsic.args[1]
 
   const proposal: DemocracyProposalModel = {
-    id: proposalId.toNumber(),
+    id: proposalId,
     hash: '',
     block_id: extrinsic.block_id,
     event_id: '',

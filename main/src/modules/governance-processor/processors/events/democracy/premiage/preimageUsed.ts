@@ -1,3 +1,5 @@
+import { u128 } from '@polkadot/types'
+import { AccountId32, H256 } from '@polkadot/types/interfaces'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
@@ -10,12 +12,12 @@ export const processDemocracyPreimageUsedEvent = async (
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ) => {
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
   console.log({ eventData: JSON.stringify(eventData, null, 2) })
 
-  const hash = eventData[0]['Hash']
-  const accountId = eventData[1]['AccountId']
-  const balance = parseInt(eventData[2]['Balance'], 16)
+  const hash = (<H256>eventData[0]['Hash']).toString()
+  const accountId = (<AccountId32>eventData[1]['AccountId']).toString()
+  const balance = (<u128>eventData[2]['Balance']).toString()
 
   const preimageRecord: PreimageModel = {
     proposal_hash: hash,

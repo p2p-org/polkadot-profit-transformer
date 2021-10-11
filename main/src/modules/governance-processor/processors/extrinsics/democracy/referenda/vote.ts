@@ -29,7 +29,7 @@ export const processDemocracyReferendaVoteExtrinsic = async (
     // if (v.isStandard)
     const vote = v.asStandard.vote.isAye ? 'Aye' : 'Nay'
     const conviction = v.asStandard.vote.conviction.toNumber()
-    const balance = v.asStandard.balance.toNumber()
+    const balance = v.asStandard.balance.toString()
     return { vote, conviction, balance }
   }
 

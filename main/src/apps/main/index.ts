@@ -26,7 +26,7 @@ const main = async () => {
 
   const pg = knex({
     client: 'pg',
-    debug: false,
+    debug: true,
     connection: {
       connectionString: environment.PG_CONNECTION_STRING,
       ssl: false,
@@ -73,10 +73,17 @@ const main = async () => {
   const concurrency = 10
   // blocksPreloader fills up database from block 0 to current block
   const blocksPreloader = BlocksPreloader({ streamerRepository, blockProcessor, polkadotRepository, logger, concurrency })
-  await blocksPreloader(9080140)
+  // await blocksPreloader(9508090)
+  await blockProcessor(2213295)
 
   // now we have all previous blocks pprocessed and we are listening to the finalized block events
-  polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
+  // polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
 main()
+
+/* 7443 : process block  1401685
+{"level":30,"time":1633859937101,"pid":73917,"hostname":"192.168.1.2","msg":"BlockProcessor: start processing block with id: 1401685"}
+7444 : process block  1401724
+
+*/

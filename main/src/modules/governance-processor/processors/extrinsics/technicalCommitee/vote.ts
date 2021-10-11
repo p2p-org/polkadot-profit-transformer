@@ -37,7 +37,7 @@ export const processTechnicalCommiteeVoteExtrinsic = async (
       membersNo: membersNo.toNumber(),
     },
     extrinsic_id: extrinsic.id,
-    event_id: 'vote',
+    event_id: '',
   }
 
   console.log({ proposalModel })

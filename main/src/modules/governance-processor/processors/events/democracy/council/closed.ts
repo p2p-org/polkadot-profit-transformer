@@ -1,3 +1,5 @@
+import { u32 } from '@polkadot/types'
+import { H256 } from '@polkadot/types/interfaces'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { CouncilProposalModel } from 'apps/common/infra/postgresql/models/councilMotions.model'
@@ -10,15 +12,15 @@ export const processCouncilClosedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'council commitee closed event')
 
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
 
-  const hash = eventData[0]['Hash']
+  const hash = (<H256>eventData[0]['Hash']).toString()
   // const techCommProposal = await governanceRepository.technicalCommittee.findProposalByHash(hash)
 
   // if (!techCommProposal) throw Error('no tech com proposal found for council closed event ' + event.event_id)
 
-  const ayeVotesCount = parseInt(eventData[1]['MemberCount'], 16)
-  const nayVotesCount = parseInt(eventData[2]['MemberCount'], 16)
+  const ayeVotesCount = (<u32>eventData[1]['MemberCount']).toNumber()
+  const nayVotesCount = (<u32>eventData[2]['MemberCount']).toNumber()
 
   const proposal: CouncilProposalModel = {
     hash,

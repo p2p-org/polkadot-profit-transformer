@@ -20,9 +20,9 @@ export const processDemocracyNotePreimageExtrinsic = async (
 
   const encoded_proposal = <Bytes>extrinsic.args[0]
 
-  const proposalHash = <Hash>preimageNotedEvent.event.data[0]
-  const accountId = <AccountId>preimageNotedEvent.event.data[1]
-  const deposit = <Balance>preimageNotedEvent.event.data[2]
+  const proposalHash = (<Hash>preimageNotedEvent.event.data[0]).toString()
+  const accountId = (<AccountId>preimageNotedEvent.event.data[1]).toString()
+  const deposit = (<Balance>preimageNotedEvent.event.data[2]).toString()
 
   // here we decode preimage method and call
 
@@ -34,14 +34,13 @@ export const processDemocracyNotePreimageExtrinsic = async (
   const api = await polkadotApi.at(block.hash)
 
   const preimageWrapped = await api.query.democracy.preimages(proposalHash)
-  // console.log('preimage', preimageWrapped)
   const preimage = preimageWrapped.unwrap()
 
   let call: Call | null
 
   if (preimage.isAvailable) {
     // console.log('isAvailable')
-    call = await polkadotApi.createType('Call', preimage.asAvailable.data)
+    call = await preimage.registry.createType('Call', preimage.asAvailable.data)
   } else {
     // console.log('not available')
     // todo : old image decode
@@ -50,13 +49,13 @@ export const processDemocracyNotePreimageExtrinsic = async (
   }
 
   const preimageRecord: PreimageModel = {
-    proposal_hash: proposalHash.toString(),
+    proposal_hash: proposalHash,
     block_id: extrinsic.block_id,
-    event_id: 'noted',
+    event_id: '',
     extrinsic_id: extrinsic.id,
     event: 'preimageNoted',
     data: {
-      deposit: deposit.toNumber(),
+      deposit: deposit,
       accountId,
       encoded_proposal,
       image: call,

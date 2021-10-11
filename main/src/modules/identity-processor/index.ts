@@ -4,7 +4,7 @@ import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repos
 import { IdentityRepository } from 'apps/common/infra/postgresql/identity.repository'
 import { JudgementStatus } from './identity_processor.types'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
-import { Registration } from '@polkadot/types/interfaces'
+import { MultiAddress, Registration } from '@polkadot/types/interfaces'
 
 export type IdentityProcessor = ReturnType<typeof IdentityProcessor>
 
@@ -28,6 +28,8 @@ export const IdentityProcessor = (args: {
   }
 
   const onNewAccount = async (event: EventModel): Promise<void> => {
+    console.log('onNewAccount event', event)
+
     return saveEnrichment({
       account_id: event.data[0]['AccountId'].toString(),
       created_at: event.block_id,
@@ -35,6 +37,8 @@ export const IdentityProcessor = (args: {
   }
 
   const onKilledAccount = async (event: EventModel): Promise<void> => {
+    console.log('onKilledAccount event', event)
+
     return saveEnrichment({
       account_id: event.data[0]['AccountId'].toString(),
       killed_at: event.block_id,
@@ -42,6 +46,8 @@ export const IdentityProcessor = (args: {
   }
 
   const onJudgementEvent = async ({ event, status }: { event: EventModel; status: JudgementStatus }): Promise<void> => {
+    console.log('onJudgementEvent event', event)
+
     const data = event.data
     const enrichmentData = {
       account_id: event.data[0]['AccountId'].toString(),
@@ -53,16 +59,20 @@ export const IdentityProcessor = (args: {
 
   // identity extrinsics processing functions
   const updateAccountIdentity = async (extrinsic: ExtrinsicModel): Promise<void> => {
-    const account_id = extrinsic.signer
+    console.log('updateAccountIdentity extrinsic', extrinsic)
+
+    const account_id = extrinsic.signer?.toString()
 
     if (!account_id) throw Error('IdentityProcessor no account_id found for extrinsic' + JSON.stringify(extrinsic))
 
-    const identityRaw: Registration = await polkadotRepository.getIdentity(account_id)
-    if (!identityRaw)
-      throw Error(
-        'IdentityProcessor updateAccountIdentity error: no identity found in polkadot.repository.getIdentity for account_id = ' +
-          account_id,
-      )
+    const identityRaw: Registration | undefined = await polkadotRepository.getIdentity(account_id)
+    if (!identityRaw) {
+      return
+      // throw Error(
+      //   'IdentityProcessor updateAccountIdentity error: no identity found in polkadot.repository.getIdentity for account_id = ' +
+      //     account_id,
+      // )
+    }
 
     const getValueOfField = (identityRaw: Registration, field: string) => {
       return identityRaw.info.get(field)
@@ -80,7 +90,7 @@ export const IdentityProcessor = (args: {
   }
 
   const updateSubAccounts = async (extrinsic: ExtrinsicModel): Promise<void> => {
-    logger.trace(`Process updateSubAccounts` + JSON.stringify(extrinsic))
+    console.log('updateSubAccounts extrinsic', extrinsic)
 
     const { method, args } = extrinsic
 
@@ -88,9 +98,9 @@ export const IdentityProcessor = (args: {
      * Adds the given account to the sender's subs.
      */
     const addSub = async (extrinsic: ExtrinsicModel) => {
-      const [rawArg] = args
-      const account_id = typeof rawArg === 'string' ? rawArg : rawArg.id
-      const root_account_id = extrinsic.signer
+      const account_id = (<MultiAddress>extrinsic.args[0]).toString()
+
+      const root_account_id = extrinsic.signer?.toString()
       return saveEnrichment({ account_id, root_account_id })
     }
 
@@ -98,12 +108,15 @@ export const IdentityProcessor = (args: {
      * Set the sub-accounts of the sender.
      */
     const setSubs = async (extrinsic: ExtrinsicModel) => {
+      console.log('setSubss extrinsic', extrinsic)
+
+      console.log('setSubs', extrinsic)
       const [rawSubs] = args
-      const root_account_id = extrinsic.signer
+      const root_account_id = extrinsic.signer?.toString()
       return Promise.all(
         rawSubs.map(([account_id]: string) =>
           saveEnrichment({
-            account_id,
+            account_id: account_id.toString(),
             root_account_id,
           }),
         ),
@@ -121,16 +134,20 @@ export const IdentityProcessor = (args: {
      *
      */
     const removeSub = async (extrinsic: ExtrinsicModel): Promise<void> => {
-      const [rawArg] = extrinsic.args
-      const account_id = typeof rawArg === 'string' ? rawArg : rawArg.id
-      return saveEnrichment({ account_id, root_acccount_id: null })
+      console.log('removeSub extrinsic', extrinsic)
+
+      const account_id = (<MultiAddress>extrinsic.args[0]).toString()
+
+      return saveEnrichment({ account_id, root_account_id: null })
     }
 
     /**
      * Remove the sender as a sub-account.
      */
     const quitSub = async (extrinsic: ExtrinsicModel): Promise<void> => {
-      const account_id = extrinsic.signer!
+      console.log('quitSub extrinsic', extrinsic)
+
+      const account_id = extrinsic.signer!.toString()
       return saveEnrichment({ account_id, root_account_id: null })
     }
 

@@ -12,11 +12,11 @@
     "start": "npx ts-node -r tsconfig-paths/register src/apps/main/index.ts",
     "start:prod": "node -r ts-node/register/transpile-only -r tsconfig-paths/register --trace-warnings ./dist/apps/main/index.js",
     "dev:main": "npx ts-node -r tsconfig-paths/register src/apps/main/index.ts",
+    "dev:debug": "npx ts-node -r tsconfig-paths/register src/apps/debug-app/index.ts",
     "lint": "npx eslint --ext .js,.ts src/main/index.ts",
     "lint:fix": "npx eslint ./src/apps/main --fix",
     "lint-staged": "lint-staged",
-    "test": "mocha --timeout 2000000 ./**/test/e2e/*.js",
-    "test-new": "npx jest --maxWorkers=1",
+    "test": "npx jest --maxWorkers=1",
     "prepare": "cd .. && husky install streamer/.husky"
   },
   "dependencies": {

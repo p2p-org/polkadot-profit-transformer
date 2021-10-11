@@ -33,8 +33,21 @@ const main = async () => {
     searchPath: ['knex', environment.DB_SCHEMA!],
   })
 
+  const pg_prod = knex({
+    client: 'pg',
+    debug: true,
+    connection: {
+      connectionString:
+        'postgresql://app_streamer_polkadot:xDKd@t5_Cw0oXjw4Xv7y2Xm@r2_P1-5MjRcPdlKxPS@lNxRo_3@localhost:5435/mbelt_substrate_polkadot?schema=dot_polka',
+      ssl: false,
+    },
+    searchPath: ['knex', environment.DB_SCHEMA!],
+  })
+
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
   const eventBus = EventBus({ logger })
+
+  const streamerProdRepository = StreamerRepository({ knex: pg_prod, logger })
 
   const streamerRepository = StreamerRepository({ knex: pg, logger })
   const stakingRepository = StakingRepository({ knex: pg, logger })
@@ -70,21 +83,23 @@ const main = async () => {
 
   const targetExtrinsicsSectionsMethods = {
     technicalCommittee: ['propose', 'vote'],
-    // democracy: ['vote', 'propose', 'second', 'removeVote', 'removeOtherVote', 'notePreimage'],
-    // council: ['propose', 'vote'],
-    // treasury: ['proposeSpend', 'reportAwesome', 'tip'],
-    // tips: ['tipNew', 'tip'],
-    // proxy: ['proxy'],
-    // multisig: ['asMulti'],
+    democracy: ['vote', 'propose', 'second', 'removeVote', 'removeOtherVote', 'notePreimage'],
+    council: ['propose', 'vote'],
+    treasury: ['proposeSpend', 'reportAwesome', 'tip'],
+    tips: ['tipNew', 'tip'],
+    proxy: ['proxy'],
+    multisig: ['asMulti'],
   }
 
   const targetEventsSectionsMethods = {
     technicalCommittee: ['Approved', 'Executed', 'Closed', 'Disapproved', 'MemberExecuted'],
-    // democracy: ['Started', 'Tabled', 'Cancelled', 'Executed', 'NotPassed', 'Passed', 'PreimageUsed'],
-    // council: ['Approved', 'Executed', 'Closed', 'Disapproved', 'MemberExecuted'],
-    // treasury: ['Rejected', 'Awarded', 'TipClosed'],
-    // tips: ['TipClosed'],
+    democracy: ['Started', 'Tabled', 'Cancelled', 'Executed', 'NotPassed', 'Passed', 'PreimageUsed'],
+    council: ['Approved', 'Executed', 'Closed', 'Disapproved', 'MemberExecuted'],
+    treasury: ['Rejected', 'Awarded', 'TipClosed'],
+    tips: ['TipClosed'],
   }
+
+  console.log('targetEventsSectionsMethods', targetEventsSectionsMethods)
 
   // get all target extrinsics
   const targetExtrinsicsMethodSections = Object.entries(targetExtrinsicsSectionsMethods).reduce((acc, [section, methods]) => {
@@ -96,11 +111,11 @@ const main = async () => {
     return acc
   }, [] as { section: string; method: string }[])
 
-  // console.log(targetExtrinsicsMethodSections)
+  console.log('targetExtrinsicsMethodSections', targetExtrinsicsMethodSections)
 
-  const targetExtrinsics = await streamerRepository.extrinsics.findBySectionAndMethod(targetExtrinsicsMethodSections)
+  const targetExtrinsics = await streamerProdRepository.extrinsics.findBySectionAndMethod(targetExtrinsicsMethodSections)
 
-  // console.log('extr', targetExtrinsics)
+  console.log('targetExtrinsics', targetExtrinsics.length)
 
   // get all target events
   const targetEventsMethodSections = Object.entries(targetEventsSectionsMethods).reduce((acc, [section, methods]) => {
@@ -112,10 +127,10 @@ const main = async () => {
     return acc
   }, [] as { section: string; method: string }[])
 
-  // console.log(targetExtrinsicsMethodSections)
+  console.log('targetEventsMethodSections', targetEventsMethodSections)
 
-  const targetEvents = await streamerRepository.events.findBySectionAndMethod(targetEventsMethodSections)
-  // console.log('evts', targetEvents)
+  const targetEvents = await streamerProdRepository.events.findBySectionAndMethod(targetEventsMethodSections)
+  console.log('targetEvents', targetEvents.length)
 
   const reducedBlockIds = [...targetExtrinsics, ...targetEvents]
     .reduce((acc, extrinsic) => {
@@ -125,7 +140,7 @@ const main = async () => {
     .map((id) => +id)
     .sort((a, b) => a - b)
 
-  console.log(reducedBlockIds.length)
+  console.log('REDUCED LENGTH', reducedBlockIds.length)
 
   const chunks = []
   const chunk = 1000
@@ -140,10 +155,10 @@ const main = async () => {
   while (index < reducedBlockIds.length) {
     const blockId = reducedBlockIds[index]
 
-    console.log(index, blockId)
+    console.log(index, ': process block ', blockId)
 
     try {
-      await blockProcessor(blockId)
+      if (blockId > 5444870) await blockProcessor(blockId)
     } catch (error: any) {
       console.log('Error in debug loop: ' + error.message)
       throw error

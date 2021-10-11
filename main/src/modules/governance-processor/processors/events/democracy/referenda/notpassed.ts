@@ -9,7 +9,7 @@ export const processDemocracyReferendaNotPassed = async (
   logger: Logger,
 ): Promise<void> => {
   logger.trace({ event }, 'process democracy referenda not passed event')
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
   console.log(eventData)
   const referendumIndex = parseInt(eventData[0]['ReferendumIndex'], 16)
 

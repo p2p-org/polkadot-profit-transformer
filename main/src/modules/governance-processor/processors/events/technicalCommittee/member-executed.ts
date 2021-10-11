@@ -1,8 +1,10 @@
-import { GovernanceRepository } from '../../../../../apps/common/infra/postgresql/governance/governance.repository'
-import { EventEntry } from '@modules/governance-processor/types'
+import { H256 } from '@polkadot/types/interfaces'
 import { Logger } from 'apps/common/infra/logger/logger'
-import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/governance/models/technicalCommittee.model'
+import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
+import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/models/technicalCommittee.model'
 
+// todo not implemented
 export const processTechnicalCommitteeMemberExecutedEvent = async (
   event: EventModel,
   governanceRepository: GovernanceRepository,
@@ -10,9 +12,9 @@ export const processTechnicalCommitteeMemberExecutedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process technical commitee member executed event')
 
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
 
-  const hash = eventData[0]['Hash']
+  const hash = (<H256>eventData[0]['Hash']).toString()
   // const techCommProposal = await governanceRepository.technicalCommittee.findProposalByHash(hash)
   // if (!techCommProposal) throw Error('no tech com proposal found for tect comm member executed event ' + event.event_id)
 
@@ -23,7 +25,7 @@ export const processTechnicalCommitteeMemberExecutedEvent = async (
     id: null, //todo techCommProposal.id,
     block_id: event.block_id,
     extrinsic_id: '',
-    event_id: event.event_id,
+    event_id: event.id,
     event: 'MemberExecuted',
     data: { result },
   }

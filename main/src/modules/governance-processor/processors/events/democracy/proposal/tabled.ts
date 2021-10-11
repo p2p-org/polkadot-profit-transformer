@@ -11,7 +11,7 @@ export const processDemocracyProposalTabled = async (
   polkadotApi: ApiPromise,
 ): Promise<void> => {
   console.log('process democracy proposal tabled event')
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
   console.log(eventData)
 
   const proposalIndex = parseInt(eventData[0]['PropIndex'], 16)
@@ -41,7 +41,7 @@ export const processDemocracyProposalTabled = async (
 
   const proposal: DemocracyProposalModel = {
     id: proposalIndex,
-    hash: '',
+    hash: '', // todo why no hash?
     block_id: event.block_id,
     event_id: event.id,
     extrinsic_id: '',

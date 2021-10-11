@@ -51,7 +51,7 @@ export const processDemocracyReferendaStarted = async (
       event_id: event.id,
       extrinsic_id: event.block_id + '-' + extrinsicIndex,
       event: 'Started',
-      data: { threshold, motion_hash: hash, technical_committee_proposal_index: proposalIndex },
+      data: { threshold, motion_hash: hash.toString(), technical_committee_proposal_index: proposalIndex },
     }
 
     await governanceRepository.democracy.referenda.save(democracyReferenda)

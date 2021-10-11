@@ -4,8 +4,8 @@ export type TechnicalCommiteeProposalModel = {
   hash: string
   id: number | null
   block_id: number
-  extrinsic_id: string
-  event_id: string
+  extrinsic_id?: string
+  event_id?: string
   event: string
   data: any
 }

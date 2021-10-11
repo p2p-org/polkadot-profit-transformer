@@ -1,3 +1,4 @@
+import { H256 } from '@polkadot/types/interfaces'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { CouncilProposalModel } from 'apps/common/infra/postgresql/models/councilMotions.model'
@@ -10,9 +11,9 @@ export const processCouncilApprovedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process council approved event')
 
-  const eventData = JSON.parse(event.data)
+  const eventData = event.data
 
-  const hash = eventData[0]['Hash']
+  const hash = (<H256>eventData[0]['Hash']).toString()
   const proposal_id = await governanceRepository.council.findProposalIdByHash(hash)
 
   const proposal: CouncilProposalModel = {

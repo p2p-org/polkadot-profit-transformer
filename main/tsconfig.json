@@ -15,9 +15,8 @@
     "moduleResolution": "node",
     "baseUrl": "./src",
     "paths": {
-      "@services/*": ["services/*"],
-      "@modules/*": ["modules/*"],
-      "@repositories/*": ["repositories/*"]
+      "@apps/*": ["apps/*"],
+      "@modules/*": ["modules/*"]
     },
     "esModuleInterop": true,
     "experimentalDecorators": true,
