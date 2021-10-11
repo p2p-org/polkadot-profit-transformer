@@ -23,7 +23,6 @@ export const BlocksPreloader = (deps: {
     start: async (startBlockParam?: number) => {
       logger.info('BlocksPreloader started with startBlockParam = ' + startBlockParam)
       const lastBlockIdInDb = await streamerRepository.blocks.findLastBlockId()
-      console.log({ lastBlockIdInDb, type: typeof lastBlockIdInDb })
       const startBlockId = startBlockParam ?? (lastBlockIdInDb || 0)
       let lastBlockNumber = await polkadotRepository.getFinBlockNumber()
       logger.info('last finalized block id: ' + lastBlockNumber)

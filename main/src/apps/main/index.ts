@@ -1,7 +1,6 @@
 import { RestApi } from './rest-api/index'
 import knex from 'knex'
 import yargs from 'yargs'
-import express from 'express'
 
 import { IdentityProcessor } from './../../modules/identity-processor/index'
 import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
