@@ -27,7 +27,7 @@ const main = async () => {
 
   const pg = knex({
     client: 'pg',
-    debug: true,
+    debug: process.env.LOG_LEVEL === 'debug',
     connection: {
       connectionString: environment.PG_CONNECTION_STRING,
       ssl: false,
