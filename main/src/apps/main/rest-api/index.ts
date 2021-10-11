@@ -1,7 +1,6 @@
-import { environment } from './../../debug-app/environment'
 import { BlockProcessor } from './../../../modules/streamer/block-processor'
 import { BlocksPreloader, PRELOADER_STATUS } from './../../../modules/streamer/blocks-preloader'
-import express, { Express } from 'express'
+import express from 'express'
 import { Environment } from '../environment'
 
 export type RestApi = ReturnType<typeof RestApi>
