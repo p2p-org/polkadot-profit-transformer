@@ -13,6 +13,7 @@
     "start:prod": "node -r ts-node/register/transpile-only -r tsconfig-paths/register --trace-warnings ./dist/apps/main/index.js",
     "dev:main": "npx ts-node -r tsconfig-paths/register src/apps/main/index.ts",
     "dev:debug": "npx ts-node -r tsconfig-paths/register src/apps/debug-app/index.ts",
+    "dev:resync": "npx ts-node -r tsconfig-paths/register src/apps/main/index.ts --resync=true",
     "lint": "npx eslint --ext .js,.ts src/main/index.ts",
     "lint:fix": "npx eslint ./src/apps/main --fix",
     "lint-staged": "lint-staged",
@@ -31,7 +32,8 @@
     "pino": "^6.13.1",
     "pino-pretty": "^4.5.0",
     "prompt": "^1.2.0",
-    "tsconfig-paths": "^3.10.1"
+    "tsconfig-paths": "^3.10.1",
+    "yargs": "^16.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.14.3",

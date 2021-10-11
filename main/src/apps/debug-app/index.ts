@@ -158,7 +158,7 @@ const main = async () => {
     console.log(index, ': process block ', blockId)
 
     try {
-      if (blockId > 5444870) await blockProcessor(blockId)
+      if (blockId > 6661795) await blockProcessor(blockId)
     } catch (error: any) {
       console.log('Error in debug loop: ' + error.message)
       throw error

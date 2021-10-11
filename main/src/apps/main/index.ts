@@ -3,6 +3,7 @@ import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor
 import { EventsProcessor } from '../../modules/streamer/events-processor'
 import { BlockProcessor } from '../../modules/streamer/block-processor'
 import knex from 'knex'
+import yargs from 'yargs'
 
 import { environment } from './environment'
 import { polkadotFactory } from '../common/infra/polkadotapi/index'
@@ -73,11 +74,22 @@ const main = async () => {
   const concurrency = 10
   // blocksPreloader fills up database from block 0 to current block
   const blocksPreloader = BlocksPreloader({ streamerRepository, blockProcessor, polkadotRepository, logger, concurrency })
-  // await blocksPreloader(9508090)
-  await blockProcessor(2213295)
+
+  // from which block we start
+  const { argv } = yargs.option('resync', {
+    type: 'boolean',
+    default: false,
+    description: 'Sync from the a genesis block',
+  })
+
+  const startBlockId = argv.resync ? 0 : undefined
+
+  await blocksPreloader(startBlockId)
+
+  // await blockProcessor(2213295)
 
   // now we have all previous blocks pprocessed and we are listening to the finalized block events
-  // polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
+  polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
 main()
