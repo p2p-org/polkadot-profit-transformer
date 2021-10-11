@@ -15,3 +15,5 @@ services:
       - 5432:5432
     env_file:
       - docker/env/.postgres.env
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data

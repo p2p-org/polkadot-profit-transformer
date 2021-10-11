@@ -3,3 +3,4 @@
 gen_*
 gen
 .env
+postgres-data/
