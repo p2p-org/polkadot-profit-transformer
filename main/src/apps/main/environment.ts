@@ -15,6 +15,7 @@ export type Environment = {
   SUBSTRATE_URI: string | undefined
   PROCESS_EXTRINSICS: boolean
   PROCESS_EVENTS: boolean
+  REST_API_PORT: number
 }
 
 export const environment = {
@@ -25,4 +26,5 @@ export const environment = {
   SUBSTRATE_URI: process.env.SUBSTRATE_URI,
   PROCESS_EXTRINSICS: Boolean(process.env.PROCESS_EXTRINSICS) || true,
   PROCESS_EVENTS: Boolean(process.env.PROCESS_EVENTS) || false,
+  REST_API_PORT: Number(process.env.REST_API_PORT) || 3000,
 }
