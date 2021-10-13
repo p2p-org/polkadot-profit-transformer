@@ -164,16 +164,22 @@ export class PolkadotModule {
 
   async getInfoToProcessBlock(
     blockHash: TBlockHash
-  ): Promise<[SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
-    const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
-      this.api!.query.session.currentIndex.at(blockHash),
-      this.api!.query.staking.currentEra.at(blockHash),
-      this.api!.query.staking.activeEra.at(blockHash),
+    //todo fix active era type
+  ): Promise<[SessionIndex, Option<EraIndex>, any, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
+    const historicalApi = await this.api?.at(blockHash)
+
+    const [sessionId, blockCurrentEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
+      historicalApi!.query.session.currentIndex(),
+      historicalApi!.query.staking.currentEra(),
       this.api!.rpc.chain.getBlock(blockHash),
       this.api!.derive.chain.getHeader(blockHash),
-      this.api!.query.timestamp.now.at(blockHash),
-      this.api!.query.system.events.at(blockHash)
+      historicalApi!.query.timestamp.now(),
+      historicalApi!.query.system.events()
     ])
+
+    let activeEra = { isNone: true }
+
+    if (!!historicalApi!.query.staking.activeEra) activeEra = await historicalApi!.query.staking.activeEra()
 
     return [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events]
   }
@@ -198,15 +204,5 @@ export class PolkadotModule {
 
   async getHeader(): Promise<Header> {
     return this.api!.rpc.chain.getHeader()
-  }
-
-  async getInfoToCheckHistoryDepth(blockHash: TBlockHash): Promise<[SessionIndex, Option<ActiveEraInfo>, HeaderExtended | undefined]> {
-    const [sessionId, activeEra, extHeader] = await Promise.all([
-      this.api!.query.session.currentIndex.at(blockHash),
-      this.api!.query.staking.activeEra.at(blockHash),
-      this.api!.derive.chain.getHeader(blockHash)
-    ])
-
-    return [sessionId, activeEra, extHeader]
   }
 }
