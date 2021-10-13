@@ -22,7 +22,7 @@ const build = async (): Promise<FastifyInstance> => {
 
   try {
     await validateEnv()
-  } catch (err) {
+  } catch (err: any) {
     fastify.log.error(`Environment variable error: "${err.message}"`)
     fastify.log.error(`Stopping instance...`)
     process.exit(1)
