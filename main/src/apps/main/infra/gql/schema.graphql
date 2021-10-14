@@ -1,0 +1,42 @@
+scalar Date
+scalar Void
+
+type Project {
+  id: ID!
+  name: String!
+  done: Boolean!
+  donePercentage: Float!
+  doneByWhom: String
+  members: [Member]!
+  tasks: [Task]
+}
+
+type Member {
+  id: ID!
+  userId: String!
+  active: Boolean!
+  project: Project
+}
+
+type Task {
+  id: ID!
+  name: String!
+  plannedDate: Date
+  description: String
+  done: Boolean
+  doneByWhom: String
+  createdAt: Date
+  updatedAt: Date
+  deletedAt: Date
+  project: Project
+}
+
+type Query {
+  projects: [Project]
+  project(id: ID!): Project
+}
+
+type Mutation {
+  createProject(name: String!, id: ID!): Void
+  addMemberToProject(projectId: ID!, userId: ID!): Void
+}

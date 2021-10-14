@@ -7,27 +7,37 @@ import { Logger } from '../logger/logger'
 
 export type StreamerRepository = ReturnType<typeof StreamerRepository>
 
-export const StreamerRepository = (deps: { knex: Knex; logger: Logger }) => {
-  const { knex, logger } = deps
+export const StreamerRepository = (deps: { knex: Knex; logger: Logger; networkId: number }) => {
+  const { knex, logger, networkId } = deps
+  const network = { network_id: networkId }
   return {
     blocks: {
       save: async (block: BlockModel): Promise<void> => {
-        await BlockModel(knex).insert(block).onConflict(['id']).merge()
+        await BlockModel(knex)
+          .insert({ ...block, ...network })
+          .onConflict(['id', 'network_id'])
+          .merge()
       },
       findLastBlockId: async (): Promise<number | undefined> => {
-        const lastBlock = await BlockModel(knex).where(true).orderBy('id', 'desc').first()
+        const lastBlock = await BlockModel(knex).where(network).orderBy('id', 'desc').first()
         const lastBlockId = lastBlock ? Number(lastBlock.id) : 0
         return lastBlockId
       },
       async getFirstBlockInEra(eraId: number): Promise<BlockModel | undefined> {
-        const firstBlock = await BlockModel(knex).where({ era: eraId }).orderBy('id').first()
+        const firstBlock = await BlockModel(knex)
+          .where({ era: eraId, ...network })
+          .orderBy('id')
+          .first()
         return firstBlock
       },
     },
     events: {
       save: async (event: EventModel): Promise<void> => {
         const stringifiedDataEvent = { ...event, data: JSON.stringify(event.data) }
-        await EventModel(knex).insert(stringifiedDataEvent).onConflict(['id']).merge()
+        await EventModel(knex)
+          .insert({ ...stringifiedDataEvent, ...network })
+          .onConflict(['id', 'network_id'])
+          .merge()
       },
       findBySectionAndMethod: async (args: { section: string; method: string }[]): Promise<EventModel[]> => {
         // todo implement schema from env
@@ -46,11 +56,14 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger }) => {
           extrinsic: JSON.stringify(extrinsic.extrinsic),
           args: JSON.stringify(extrinsic.args),
         }
-        await ExtrinsicModel(knex).insert(strigifiedDataExtrinsic).onConflict(['id']).merge()
+        await ExtrinsicModel(knex)
+          .insert({ ...strigifiedDataExtrinsic, ...network })
+          .onConflict(['id', 'network_id'])
+          .merge()
       },
       findBySectionAndMethod: async (args: { section: string; method: string }[]): Promise<ExtrinsicModel[]> => {
         // todo implement schema from env
-        let query = ExtrinsicModel(knex).withSchema('dot_polka')
+        let query = ExtrinsicModel(knex).withSchema('mbelt')
         for (const { method, section } of args) {
           query = query.orWhere({ section, method })
         }

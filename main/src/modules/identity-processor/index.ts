@@ -2,9 +2,14 @@ import { EventModel } from './../../apps/common/infra/postgresql/models/event.mo
 import { Logger } from './../../apps/common/infra/logger/logger'
 import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
 import { IdentityRepository } from 'apps/common/infra/postgresql/identity.repository'
-import { JudgementStatus } from './identity_processor.types'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 import { MultiAddress, Registration } from '@polkadot/types/interfaces'
+
+export enum JudgementStatus {
+  REQUESTED = 'requested',
+  GIVEN = 'given',
+  UNREQUESTED = 'unrequested',
+}
 
 export type IdentityProcessor = ReturnType<typeof IdentityProcessor>
 

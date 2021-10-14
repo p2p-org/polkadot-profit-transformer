@@ -10,7 +10,6 @@ if (envFound.error) {
 
 export type Environment = {
   PG_CONNECTION_STRING: string | undefined
-  DB_SCHEMA: string | undefined
   LOG_LEVEL: string | undefined
   SUBSTRATE_URI: string | undefined
   PROCESS_EXTRINSICS: boolean
@@ -21,7 +20,6 @@ export type Environment = {
 
 export const environment = {
   PG_CONNECTION_STRING: process.env.PG_CONNECTION_STRING,
-  DB_SCHEMA: process.env.DB_SCHEMA,
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   APP_ID: process.env.APP_ID,
   SUBSTRATE_URI: process.env.SUBSTRATE_URI,

@@ -1,8 +1,8 @@
 import { Knex } from 'knex'
 
-export type ConfigModel = {
-  key: string
-  value: string
+export type NetworkModel = {
+  id?: number
+  name: string
 }
 
-export const ConfigModel = (knex: Knex) => knex<ConfigModel>('_config')
+export const NetworkModel = (knex: Knex) => knex<NetworkModel>('networks')

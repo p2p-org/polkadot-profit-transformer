@@ -30,7 +30,7 @@ const main = async () => {
       connectionString: environment.PG_CONNECTION_STRING,
       ssl: false,
     },
-    searchPath: ['knex', environment.DB_SCHEMA!],
+    searchPath: ['knex'],
   })
 
   const pg_prod = knex({
@@ -38,10 +38,10 @@ const main = async () => {
     debug: true,
     connection: {
       connectionString:
-        'postgresql://app_streamer_polkadot:xDKd@t5_Cw0oXjw4Xv7y2Xm@r2_P1-5MjRcPdlKxPS@lNxRo_3@localhost:5435/mbelt_substrate_polkadot?schema=dot_polka',
+        'postgresql://app_streamer_polkadot:xDKd@t5_Cw0oXjw4Xv7y2Xm@r2_P1-5MjRcPdlKxPS@lNxRo_3@localhost:5435/mbelt_substrate_polkadot?schema=mbelt',
       ssl: false,
     },
-    searchPath: ['knex', environment.DB_SCHEMA!],
+    searchPath: ['knex', 'public'],
   })
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)

@@ -23,6 +23,8 @@ import { ExtrinsicProcessor } from '../../modules/governance-processor/processor
 import { GovernanceProcessor } from '../../modules/governance-processor'
 import { EventProcessor } from '@modules/governance-processor/processors/events'
 import { StakingProcessor } from '@modules/staking-processor'
+import { NetworksRepository } from '@apps/common/infra/postgresql/networks_repository'
+import { NetworkModel } from '@apps/common/infra/postgresql/models/config.model'
 
 const main = async () => {
   // parse start params from command line
@@ -41,22 +43,29 @@ const main = async () => {
       connectionString: environment.PG_CONNECTION_STRING,
       ssl: false,
     },
-    searchPath: ['knex', environment.DB_SCHEMA!],
+    searchPath: ['knex'],
   })
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
   const eventBus = EventBus({ logger })
 
-  const streamerRepository = StreamerRepository({ knex: pg, logger })
-  const stakingRepository = StakingRepository({ knex: pg, logger })
-  const identityRepository = IdentityRepository({ knex: pg, logger })
-  const governanceRepository = GovernanceRepository({ knex: pg, logger })
   const polkadotRepository = PolkadotRepository({ polkadotApi, logger })
+  const networksRepository = NetworksRepository({ knex: pg, logger })
+
+  // get current network from node
+  const chainName = await polkadotRepository.getChainInfo()
+  const network: NetworkModel = { name: chainName }
+  await networksRepository.save(network)
+  const networkId = await networksRepository.getIdByName(chainName)
+
+  const streamerRepository = StreamerRepository({ knex: pg, logger, networkId })
+  const stakingRepository = StakingRepository({ knex: pg, logger, networkId })
+  const identityRepository = IdentityRepository({ knex: pg, logger, networkId })
+  const governanceRepository = GovernanceRepository({ knex: pg, logger, networkId })
 
   const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi })
   const eventProcessor = EventProcessor({ governanceRepository, logger, polkadotApi })
   const governanceProcessor = GovernanceProcessor({ extrinsicProcessor, eventProcessor, logger })
-
   const eventsProcessor = EventsProcessor({ logger })
   const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository })
   const blockProcessor = BlockProcessor({

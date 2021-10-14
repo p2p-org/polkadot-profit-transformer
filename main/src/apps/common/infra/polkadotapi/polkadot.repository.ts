@@ -28,15 +28,9 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       //todo fix generic
       return polkadotApi.createType(type, data) as unknown as T
     },
-    async getChainInfo(): Promise<[string, string]> {
-      const [currentChain, currentChainType] = (
-        await Promise.all([
-          polkadotApi.rpc.system.chain(), // Polkadot
-          polkadotApi.rpc.system.chainType(), // Live
-        ])
-      ).map((value) => value.toString().trim())
-
-      return [currentChain, currentChainType]
+    async getChainInfo(): Promise<string> {
+      const currentChain = await polkadotApi.rpc.system.chain()
+      return currentChain.toString()
     },
     async getFinBlockNumber() {
       const lastFinHeader = await polkadotApi.rpc.chain.getFinalizedHead()
