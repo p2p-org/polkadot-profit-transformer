@@ -20,6 +20,9 @@ psql:
 rebuild streamer:
 	@echo "Rebuild streamer service"
 	docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d --force-recreate --build --no-deps streamer
+rebuild db:
+	@echo "Rebuild db service"
+	docker-compose -f docker-compose.yml up -d --force-recreate --build --no-deps db
 redash.recreate: redash.down redash.init
 	@echo "Purge old and start new redash instance"
 redash.init: docker.createnetwork redash.up redash.createdatabase redash.createdashboard
