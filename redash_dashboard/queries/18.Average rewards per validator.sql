@@ -11,10 +11,10 @@ Select  e.era,
         total_reward_points,
         total_reward_points/validators_active as avg_points, 
         (total_reward/validators_active)/10^10 as avg_rewards
-FROM dot_polka.eras as e
-    INNER JOIN (SELECT era, COUNT(account_id) as validators_active FROM dot_polka.validators GROUP BY era) as vmax 
+FROM mbelt.eras as e
+    INNER JOIN (SELECT era, COUNT(account_id) as validators_active FROM mbelt.validators GROUP BY era) as vmax 
             ON vmax.era = e.era
-    INNER JOIN (SELECT era, COUNT(account_id) as nominator_active FROM dot_polka.nominators GROUP BY era) as nmax 
+    INNER JOIN (SELECT era, COUNT(account_id) as nominator_active FROM mbelt.nominators GROUP BY era) as nmax 
             ON nmax.era = e.era)
 SELECT  era,
         validators_active,

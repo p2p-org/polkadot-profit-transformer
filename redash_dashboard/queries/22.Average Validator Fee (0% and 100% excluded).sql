@@ -4,7 +4,7 @@
 -- { "options": { "parameterMappings": {}, "isHidden": false, "position": { "autoHeight": false, "sizeX": 3, "sizeY": 8, "maxSizeY": 1000, "maxSizeX": 6, "minSizeY": 5, "minSizeX": 1, "col": 0, "row": 44 } }, "text":"","width":1,"dashboard_id":1,"visualization_id":54}
 select  era, count(distinct account_id) as validators,
         AVG((((prefs::json->'commission')::varchar)::int)) /10^7 as fee 
-from dot_polka.validators
+from mbelt.validators
 WHERE  ((prefs::json->'commission')::varchar)::int /10^7 != 100
 and ((prefs::json->'commission')::varchar)::int /10^7 != 0
 group by era
