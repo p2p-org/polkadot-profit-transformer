@@ -1,0 +1,3 @@
+table:
+  name: treasury_proposal
+  schema: public

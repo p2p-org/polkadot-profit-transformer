@@ -1,0 +1,3 @@
+table:
+  name: democracy_proposal
+  schema: public

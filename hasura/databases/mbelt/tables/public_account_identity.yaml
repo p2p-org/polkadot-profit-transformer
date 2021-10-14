@@ -1,0 +1,3 @@
+table:
+  name: account_identity
+  schema: public

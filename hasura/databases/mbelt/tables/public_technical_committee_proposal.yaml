@@ -1,0 +1,3 @@
+table:
+  name: technical_committee_proposal
+  schema: public
