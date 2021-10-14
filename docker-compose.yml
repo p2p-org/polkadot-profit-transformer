@@ -16,4 +16,15 @@ services:
     env_file:
       - docker/env/.postgres.env
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./db-data:/var/lib/postgresql/data
+  hasura:
+    image: hasura/graphql-engine:v2.0.9.cli-migrations-v3
+    ports:
+      - '8080:8080'
+    depends_on:
+      - 'db'
+    restart: always
+    env_file:
+      - docker/env/.hasura.env
+    volumes:
+      - ./hasura:/hasura-metadata
