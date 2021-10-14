@@ -1,13 +1,11 @@
-CREATE  SCHEMA IF NOT EXISTS dot_polka;
-
-
-CREATE TABLE dot_polka._config (
-    "key" VARCHAR (100) PRIMARY KEY,
-    "value" TEXT
+CREATE TABLE networks (
+    "id" SERIAL,
+    "name" VARCHAR (100)  PRIMARY KEY
 );
 
-CREATE TABLE dot_polka.blocks (
-    "id" BIGINT PRIMARY KEY,
+CREATE TABLE blocks (
+    "network_id" INT,
+    "id" BIGINT,
     "hash" VARCHAR(66),
     "state_root" VARCHAR(66),
     "extrinsics_root" VARCHAR(66),
@@ -18,24 +16,29 @@ CREATE TABLE dot_polka.blocks (
     "current_era" INT,
     "last_log" VARCHAR(100),
     "digest" JSONB,
-    "block_time" TIMESTAMP
+    "block_time" TIMESTAMP,
+    PRIMARY KEY ("id", "network_id")
 );
 
 
 
-CREATE TABLE dot_polka.events (
-    "id" VARCHAR(150) PRIMARY KEY,
+CREATE TABLE events (
+    "network_id" INT,
+    "id" VARCHAR(150),
     "block_id" BIGINT NOT NULL,
     "session_id" INT,
     "era" INT,
     "section" VARCHAR(50),
     "method" VARCHAR(50),
     "data" JSONB,
-    "event" JSONB
+    "event" JSONB,
+    PRIMARY KEY ("id", "network_id")
+
 );
 
-CREATE TABLE dot_polka.extrinsics (
-    "id" VARCHAR(150) PRIMARY KEY,
+CREATE TABLE extrinsics (
+    "network_id" INT,
+    "id" VARCHAR(150),
     "block_id" BIGINT NOT NULL,
     "success" BOOL,
     "parent_id" VARCHAR(150),
@@ -52,19 +55,25 @@ CREATE TABLE dot_polka.extrinsics (
     "ref_event_ids" VARCHAR(150)[],
     "version" INT,
     "extrinsic" JSONB,
-    "args" JSONB
+    "args" JSONB,
+    PRIMARY KEY ("id", "network_id")
+
 );
 
 
-CREATE TABLE dot_polka.eras (
-    "era" INT PRIMARY KEY,
+CREATE TABLE eras (
+    "network_id" INT,
+    "era" INT,
     "session_start" INT,
     "total_reward" BIGINT,
     "total_stake" BIGINT,
-    "total_reward_points" INT
+    "total_reward_points" INT,
+    PRIMARY KEY ("era", "network_id")
+
 );
 
-CREATE TABLE dot_polka.validators (
+CREATE TABLE validators (
+    "network_id" INT,
     "era" INT,
     "account_id" VARCHAR(150),
     "total" BIGINT,
@@ -75,10 +84,11 @@ CREATE TABLE dot_polka.validators (
     "reward_account_id" VARCHAR (150),
     "prefs" JSONB,
     "block_time" TIMESTAMP,
-    PRIMARY KEY ("era", "account_id")
+    PRIMARY KEY ("era", "account_id", "network_id")
 );
 
-CREATE TABLE dot_polka.nominators (
+CREATE TABLE nominators (
+    "network_id" INT,
     "era" INT,
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
@@ -87,12 +97,12 @@ CREATE TABLE dot_polka.nominators (
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
     "block_time" TIMESTAMP,
-    PRIMARY KEY ("era", "account_id", "validator")
+    PRIMARY KEY ("era", "account_id", "validator", "network_id")
 );
 
-
-CREATE TABLE dot_polka.account_identity (
-    "account_id" varchar(50) PRIMARY KEY,
+CREATE TABLE account_identity (
+    "network_id" INT,
+    "account_id" varchar(50),
     "root_account_id" varchar(50),
     "display" varchar(256),
     "legal" varchar(256),
@@ -103,11 +113,12 @@ CREATE TABLE dot_polka.account_identity (
     "judgement_status" varchar(256),
     "registrar_index" BIGINT,
     "created_at" BIGINT,
-    "killed_at" BIGINT
+    "killed_at" BIGINT,
+    PRIMARY KEY ("account_id", "network_id")
 );
 
-
-CREATE TABLE dot_polka.technical_committee_proposal (
+CREATE TABLE technical_committee_proposal (
+    "network_id" INT,
     "hash" varchar(256),
     "id" INTEGER,
     "block_id" BIGINT,
@@ -115,32 +126,22 @@ CREATE TABLE dot_polka.technical_committee_proposal (
     "event_id" varchar(256),
     "event" varchar(256),
     "data" JSONB,
-    PRIMARY KEY ("hash", "extrinsic_id", "event_id")
+    PRIMARY KEY ("hash", "extrinsic_id", "event_id", "network_id")
 );
 
-CREATE TABLE dot_polka.democracy_referenda (
+CREATE TABLE democracy_referenda (
+    "network_id" INT,
     "id" INTEGER NOT NULL,
     "block_id" BIGINT,
     "event_id" varchar(256),
     "extrinsic_id" varchar(256),
     "event" varchar(256),
     "data" JSONB,
-    PRIMARY KEY ("id", "event_id", "extrinsic_id")
+    PRIMARY KEY ("id", "event_id", "extrinsic_id", "network_id")
 );
 
-CREATE TABLE dot_polka.democracy_proposal (
-    "id" INTEGER NOT NULL,
-    "hash" varchar(256),
-    "block_id" BIGINT,
-    "event_id" varchar(256),
-    "extrinsic_id" varchar(256),
-    "event" varchar(256),
-    "data" JSONB,
-    PRIMARY KEY ("id", "event_id", "extrinsic_id")
-);
-
-
-CREATE TABLE dot_polka.council_proposal (
+CREATE TABLE democracy_proposal (
+    "network_id" INT,
     "id" INTEGER NOT NULL,
     "hash" varchar(256),
     "block_id" BIGINT,
@@ -148,169 +149,177 @@ CREATE TABLE dot_polka.council_proposal (
     "extrinsic_id" varchar(256),
     "event" varchar(256),
     "data" JSONB,
-    PRIMARY KEY ("id", "event_id", "extrinsic_id")
+    PRIMARY KEY ("id", "event_id", "extrinsic_id", "network_id")
 );
 
-CREATE TABLE dot_polka.treasury_proposal (
+
+CREATE TABLE council_proposal (
+    "network_id" INT,
     "id" INTEGER NOT NULL,
-    "block_id" BIGINT,
-    "event_id" varchar(256),
-    "extrinsic_id" varchar(256),
-    "event" varchar(256),
-    "data" JSONB,
-    PRIMARY KEY ("id", "event_id", "extrinsic_id")
-);
-
-
-CREATE TABLE dot_polka.tips (
     "hash" varchar(256),
     "block_id" BIGINT,
     "event_id" varchar(256),
     "extrinsic_id" varchar(256),
     "event" varchar(256),
     "data" JSONB,
-    PRIMARY KEY ("hash", "event_id", "extrinsic_id")
+    PRIMARY KEY ("id", "event_id", "extrinsic_id", "network_id")
+);
+
+CREATE TABLE treasury_proposal (
+    "network_id" INT,
+    "id" INTEGER NOT NULL,
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("id", "event_id", "extrinsic_id", "network_id")
+);
+
+
+CREATE TABLE tips (
+    "network_id" INT,
+    "hash" varchar(256),
+    "block_id" BIGINT,
+    "event_id" varchar(256),
+    "extrinsic_id" varchar(256),
+    "event" varchar(256),
+    "data" JSONB,
+    PRIMARY KEY ("hash", "event_id", "extrinsic_id", "network_id")
 );
 
 
 
-
-
-CREATE TABLE dot_polka.preimage (
+CREATE TABLE preimage (
+    "network_id" INT,
     "proposal_hash" varchar(256),
     "block_id" int,
     "event_id" varchar(256),
     "extrinsic_id" varchar(256),
     "event" varchar(256),
     "data" JSONB,
-    PRIMARY KEY ("proposal_hash", "block_id", "event_id")
+    PRIMARY KEY ("proposal_hash", "block_id", "event_id", "network_id")
 );
 
+CREATE INDEX mbelt_account_identity_account_id_idx ON account_identity (account_id, network_id);
 
+CREATE INDEX events_block_id ON events(block_id, network_id);
 
+CREATE INDEX blocks_era ON blocks(era, network_id);
 
+CREATE INDEX blocks_session_id ON blocks(session_id, network_id);
 
-CREATE INDEX dot_polka_account_identity_account_id_idx ON dot_polka.account_identity (account_id);
-
-CREATE INDEX events_block_id ON dot_polka.events(block_id);
-
-CREATE INDEX blocks_era ON dot_polka.blocks(era);
-
-CREATE INDEX blocks_session_id ON dot_polka.blocks(session_id);
-
-CREATE INDEX extrinsics_block_id ON dot_polka.extrinsics(block_id);
-
-
+CREATE INDEX extrinsics_block_id ON extrinsics(block_id, network_id);
 
 --  BI additions
 
-CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance TABLESPACE pg_default AS
-SELECT
-           e.session_id,
-           e.era,
-           ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
-           e.method,
-           e.data,
-           b.id AS block_id,
-           b.block_time
-FROM dot_polka.events e
-JOIN dot_polka.blocks b ON b.id = e.block_id
-WHERE e.section::text = 'balances'::text
-ORDER BY e.block_id DESC WITH DATA;
+-- CREATE MATERIALIZED VIEW mv_bi_accounts_balance TABLESPACE pg_default AS
+-- SELECT
+--            e.session_id,
+--            e.era,
+--            ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
+--            e.method,
+--            e.data,
+--            b.id AS block_id,
+--            b.block_time
+-- FROM events e
+-- JOIN blocks b ON b.id = e.block_id
+-- WHERE e.section::text = 'balances'::text
+-- ORDER BY e.block_id DESC WITH DATA;
 
-REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_balance;
+-- REFRESH MATERIALIZED VIEW mv_bi_accounts_balance;
 
-CREATE MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking AS
-SELECT
-           e.session_id,
-           e.era,
-            ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
-           e.method,
-           CASE WHEN e.method IN ('Unbonded', 'Slash', 'Withdrawn') THEN (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10^10 * -1
-                  ELSE (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10^10
-           END AS balance,
-           b.block_time
-FROM dot_polka.events e
-JOIN dot_polka.blocks b ON b.id = e.block_id
-WHERE e.section = 'staking' AND e.method IN ('Bonded', 'Reward', 'Slash', 'Unbonded', 'Withdrawn')
-ORDER BY e.block_id DESC WITH DATA;
+-- CREATE MATERIALIZED VIEW mv_bi_accounts_staking AS
+-- SELECT
+--            e.session_id,
+--            e.era,
+--             ((e.data ->> 0)::jsonb) ->> 'AccountId' AS account_id,
+--            e.method,
+--            CASE WHEN e.method IN ('Unbonded', 'Slash', 'Withdrawn') THEN (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10^10 * -1
+--                   ELSE (((e.data ->> 1)::jsonb) ->> 'Balance')::DOUBLE PRECISION / 10^10
+--            END AS balance,
+--            b.block_time
+-- FROM events e
+-- JOIN blocks b ON b.id = e.block_id
+-- WHERE e.section = 'staking' AND e.method IN ('Bonded', 'Reward', 'Slash', 'Unbonded', 'Withdrawn')
+-- ORDER BY e.block_id DESC WITH DATA;
 
-REFRESH MATERIALIZED VIEW dot_polka.mv_bi_accounts_staking;
+-- REFRESH MATERIALIZED VIEW mv_bi_accounts_staking;
 
-CREATE MATERIALIZED VIEW dot_polka.nominator_validator_apy AS 
+-- CREATE MATERIALIZED VIEW nominator_validator_apy AS 
 
-SELECT block_time, era, nominator, validator, nominator_stake, commission,
-        validator_points / era_points * era_rewards / validator_total * 365 *100 as validator_APR,
-        era_rewards * validator_points / era_points as val_total_rewards,
-        CASE WHEN nominator_stake>0 AND validator_points>0 
-            THEN CASE WHEN commission = 0 
-                    THEN era_rewards * validator_points / era_points / validator_total * nominator_stake * 1 
-                    ELSE era_rewards * validator_points / era_points / validator_total * nominator_stake * (1 - commission/ 100) END
-            ELSE 0 END as nominator_income,
-        CASE WHEN nominator_stake>0 AND validator_points>0 
-            THEN CASE WHEN commission = 0 
-                THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
-                ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
-            ELSE 0 END as nom_APY
-FROM (
-    SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, n.block_time,
-          validator, SUM((v.total/10^10)::float) as validator_total, SUM((v.own/10^10)::float) as validator_own, (SUM(v.reward_points))::float as validator_points,
-          CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission,
-          MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
-    FROM dot_polka.nominators as n
-        INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
-        INNER JOIN dot_polka.eras as e ON e.era = n.era
-    GROUP BY n.era, n.block_time, n.account_id, validator,prefs
-    ) as grouped;
+-- SELECT block_time, era, nominator, validator, nominator_stake, commission,
+--         validator_points / era_points * era_rewards / validator_total * 365 *100 as validator_APR,
+--         era_rewards * validator_points / era_points as val_total_rewards,
+--         CASE WHEN nominator_stake>0 AND validator_points>0 
+--             THEN CASE WHEN commission = 0 
+--                     THEN era_rewards * validator_points / era_points / validator_total * nominator_stake * 1 
+--                     ELSE era_rewards * validator_points / era_points / validator_total * nominator_stake * (1 - commission/ 100) END
+--             ELSE 0 END as nominator_income,
+--         CASE WHEN nominator_stake>0 AND validator_points>0 
+--             THEN CASE WHEN commission = 0 
+--                 THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
+--                 ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
+--             ELSE 0 END as nom_APY
+-- FROM (
+--     SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, n.block_time,
+--           validator, SUM((v.total/10^10)::float) as validator_total, SUM((v.own/10^10)::float) as validator_own, (SUM(v.reward_points))::float as validator_points,
+--           CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission,
+--           MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
+--     FROM nominators as n
+--         INNER JOIN validators as v ON v.account_id = n.validator AND v.era = n.era
+--         INNER JOIN eras as e ON e.era = n.era
+--     GROUP BY n.era, n.block_time, n.account_id, validator,prefs
+--     ) as grouped;
 
-REFRESH MATERIALIZED VIEW dot_polka.nominator_validator_apy;
-
-
-CREATE MATERIALIZED VIEW dot_polka.nominator_apy AS 
-
-SELECT d.era, nominator, nominator_stake, nominator_income, nom_APY, max_APY, avg_APY, min_APY
-FROM (
-        SELECT era, nominator, nominator_stake, commission,
-        CASE WHEN nominator_stake>0 AND validator_points>0 
-            THEN CASE WHEN commission = 0 
-                    THEN era_rewards * validator_points / era_points / validator_total * nominator_stake * 1 
-                    ELSE era_rewards * validator_points / era_points / validator_total * nominator_stake * (1 - commission/ 100) END
-            ELSE 0 END as nominator_income,
-        CASE WHEN nominator_stake>0 AND validator_points>0 
-            THEN CASE WHEN commission = 0 
-                THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
-                ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
-            ELSE 0 END as nom_APY
-        FROM (
-                SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, prefs,
-                      validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
-                      MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
-                FROM dot_polka.nominators as n
-                    INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
-                    INNER JOIN dot_polka.eras as e ON e.era = n.era 
-                GROUP BY n.era, n.account_id, validator, prefs
-            ) as data
-                ) as d
-            INNER JOIN  (SELECT era, MAX(apy) as max_apy, AVG(APY) as avg_apy, min(apy) as min_apy
-                        FROM (SELECT era,
-                                    CASE WHEN nominator_stake>0 AND validator_points>0 
-                                        THEN CASE WHEN commission = 0 
-                                            THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
-                                            ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
-                                        ELSE 0 END as APY
-                        FROM (
-                                SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake,
-                                validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
-                                MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
-                                FROM dot_polka.nominators as n
-                                    INNER JOIN dot_polka.validators as v ON v.account_id = n.validator AND v.era = n.era
-                                    INNER JOIN dot_polka.eras as e ON e.era = n.era 
-                                GROUP BY n.block_time, n.era, n.account_id, validator, prefs
-                                    ) as pre_max_min
-                        ) as max_min 
-            GROUP by era ) as max_min_grouped
-            ON max_min_grouped.era=d.era
-ORDER by d.era desc;
+-- REFRESH MATERIALIZED VIEW nominator_validator_apy;
 
 
-REFRESH MATERIALIZED VIEW dot_polka.nominator_apy;
+-- CREATE MATERIALIZED VIEW nominator_apy AS 
+
+-- SELECT d.era, nominator, nominator_stake, nominator_income, nom_APY, max_APY, avg_APY, min_APY
+-- FROM (
+--         SELECT era, nominator, nominator_stake, commission,
+--         CASE WHEN nominator_stake>0 AND validator_points>0 
+--             THEN CASE WHEN commission = 0 
+--                     THEN era_rewards * validator_points / era_points / validator_total * nominator_stake * 1 
+--                     ELSE era_rewards * validator_points / era_points / validator_total * nominator_stake * (1 - commission/ 100) END
+--             ELSE 0 END as nominator_income,
+--         CASE WHEN nominator_stake>0 AND validator_points>0 
+--             THEN CASE WHEN commission = 0 
+--                 THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
+--                 ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
+--             ELSE 0 END as nom_APY
+--         FROM (
+--                 SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake, prefs,
+--                       validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
+--                       MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
+--                 FROM nominators as n
+--                     INNER JOIN validators as v ON v.account_id = n.validator AND v.era = n.era
+--                     INNER JOIN eras as e ON e.era = n.era 
+--                 GROUP BY n.era, n.account_id, validator, prefs
+--             ) as data
+--                 ) as d
+--             INNER JOIN  (SELECT era, MAX(apy) as max_apy, AVG(APY) as avg_apy, min(apy) as min_apy
+--                         FROM (SELECT era,
+--                                     CASE WHEN nominator_stake>0 AND validator_points>0 
+--                                         THEN CASE WHEN commission = 0 
+--                                             THEN (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake* 100*365 * 1 
+--                                             ELSE (era_rewards * validator_points / era_points / validator_total * nominator_stake) / nominator_stake * 100*365 * (1 - commission/ 100)  END
+--                                         ELSE 0 END as APY
+--                         FROM (
+--                                 SELECT n.era, n.account_id as nominator, (SUM(n.value) /10^10)::float as nominator_stake,
+--                                 validator, SUM((v.total/10^10)::float) as validator_total, (SUM(v.reward_points))::float as validator_points, CASE WHEN (prefs->'commission')::float !=1 THEN (prefs->'commission')::float/10^7 ELSE 0 END as commission ,
+--                                 MAX((e.total_reward / 10^10)::float) as era_rewards, MAX((e.total_stake / 10^10)::float) as era_stake, MAX((total_reward_points)::float) as era_points
+--                                 FROM nominators as n
+--                                     INNER JOIN validators as v ON v.account_id = n.validator AND v.era = n.era
+--                                     INNER JOIN eras as e ON e.era = n.era 
+--                                 GROUP BY n.block_time, n.era, n.account_id, validator, prefs
+--                                     ) as pre_max_min
+--                         ) as max_min 
+--             GROUP by era ) as max_min_grouped
+--             ON max_min_grouped.era=d.era
+-- ORDER by d.era desc;
+
+
+-- REFRESH MATERIALIZED VIEW nominator_apy;
