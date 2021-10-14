@@ -98,7 +98,7 @@ export class StakingService implements IStakingService {
       return res
     }
 
-    const allValidatorsChunked = sliceIntoChunks(Array.from(validatorsAccountIdSet), 100)
+    const allValidatorsChunked = sliceIntoChunks(Array.from(validatorsAccountIdSet), 30)
 
     for (const chunk of allValidatorsChunked) {
       await Promise.all(chunk.map(processValidator))
