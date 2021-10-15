@@ -18,7 +18,7 @@ fi
 
 make docker.createnetwork
 
-docker-compose -f docker-compose.yml up -d db streamer
+docker-compose -f docker-compose.yml up -d db hasura streamer
 
 
 echo "Setting up Redash"

@@ -14,7 +14,7 @@ with eras_validators as
        max(total)/10^10::float as max,
        avg(total)/10^10::float as avg,
        min(total)/10^10::float as min
-FROM mbelt.validators
+FROM validators
 GROUP BY era)
 
 SELECT era, total_stake, max, avg, min, min / avg * 100 as ratio_min_to_avg

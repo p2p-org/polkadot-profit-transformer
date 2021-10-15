@@ -4,8 +4,8 @@
 -- { "options": { "parameterMappings": {}, "isHidden": false, "position": { "autoHeight": false, "sizeX": 3, "sizeY": 8, "maxSizeY": 1000, "maxSizeX": 6, "minSizeY": 5, "minSizeX": 1, "col": 3, "row": 44 } }, "text":"","width":1,"dashboard_id":1,"visualization_id":54}
 select  count(distinct account_id) as validators,
         (((prefs::json->'commission')::varchar)::int) /10^7 as fee 
-from mbelt.validators
-WHERE era=(SELECT max(era) FROM mbelt.validators)
+from validators
+WHERE era=(SELECT max(era) FROM validators)
 group by prefs
 order by validators desc
 

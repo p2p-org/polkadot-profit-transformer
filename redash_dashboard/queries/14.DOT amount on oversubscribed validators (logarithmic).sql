@@ -5,7 +5,7 @@
 select  era, 
         count(distinct account_id) as nominators,
         sum(value)/10^10 as amount
-from mbelt.nominators
+from nominators
 where is_clipped = 'false'
 group by era
 order by era desc

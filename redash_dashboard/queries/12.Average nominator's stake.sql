@@ -8,6 +8,6 @@ select  era,
         max(value)/10^10 as max_stake,
         avg(value)/10^10 as avg_stake, 
         min(value)/10^10 as min_stake
-from mbelt.nominators
+from nominators
 group by era 
 order by era desc
