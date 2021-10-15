@@ -19,6 +19,8 @@ import { ExtrinsicProcessor } from '../../modules/governance-processor/processor
 import { GovernanceProcessor } from '../../modules/governance-processor'
 import { EventProcessor } from '@modules/governance-processor/processors/events'
 import { StakingProcessor } from '@modules/staking-processor'
+import { NetworksRepository } from '@apps/common/infra/postgresql/networks_repository'
+import { NetworkModel } from '@apps/common/infra/postgresql/models/config.model'
 
 const main = async () => {
   const logger = PinoLogger({ logLevel: environment.LOG_LEVEL! })
@@ -47,13 +49,21 @@ const main = async () => {
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
   const eventBus = EventBus({ logger })
 
-  const streamerProdRepository = StreamerRepository({ knex: pg_prod, logger })
-
-  const streamerRepository = StreamerRepository({ knex: pg, logger })
-  const stakingRepository = StakingRepository({ knex: pg, logger })
-  const identityRepository = IdentityRepository({ knex: pg, logger })
-  const governanceRepository = GovernanceRepository({ knex: pg, logger })
   const polkadotRepository = PolkadotRepository({ polkadotApi, logger })
+  const networksRepository = NetworksRepository({ knex: pg, logger })
+
+  // get current network from node
+  const chainName = await polkadotRepository.getChainInfo()
+  const network: NetworkModel = { name: chainName }
+  await networksRepository.save(network)
+  const networkId = await networksRepository.getIdByName(chainName)
+
+  const streamerProdRepository = StreamerRepository({ knex: pg_prod, logger, networkId })
+
+  const streamerRepository = StreamerRepository({ knex: pg, logger, networkId })
+  const stakingRepository = StakingRepository({ knex: pg, logger, networkId })
+  const identityRepository = IdentityRepository({ knex: pg, logger, networkId })
+  const governanceRepository = GovernanceRepository({ knex: pg, logger, networkId })
 
   // old governance modules
   const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi })
