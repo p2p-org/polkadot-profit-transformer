@@ -20,11 +20,22 @@ services:
   hasura:
     image: hasura/graphql-engine:v2.0.9.cli-migrations-v3
     ports:
-      - '8080:8080'
+      - '8081:8080'
     depends_on:
       - 'db'
     restart: always
+    depends_on:
+      - db
     env_file:
       - docker/env/.hasura.env
     volumes:
       - ./hasura:/hasura-metadata
+  streamer:
+    build: ./main
+    restart: always
+    ports:
+      - 8082:8080
+    depends_on:
+      - db
+    env_file:
+      - docker/env/.streamer.env
