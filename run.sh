@@ -1,17 +1,7 @@
 #!/bin/bash
 
-DB_CONNECTION_URL='jdbc:postgresql://db:5432/raw?user=sink&password=d5_TDyp52HhMceA82sv0u_30wLX2o1_j520p8x'
-POSTGRES_SCHEMA='dot_polka'
-REDASH_HOST='localhost:5000'
-
-APP_MODE=dev
-APP_NETWORK=polkadot
-
-APP_ID=substrate_streamer
-
 
 COLOR_RED=$(tput setaf 1)
-COLOR_GREEN=$(tput setaf 2)
 COLOR_NONE=$(tput sgr0)
 
 
@@ -28,14 +18,11 @@ fi
 
 make docker.createnetwork
 
-docker-compose -f docker-compose.yml up -d db
+docker-compose -f docker-compose.yml up -d db streamer
 
 
-# docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d graphile
-# docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.graphql.yml up -d streamer enrichments_processor
+echo "Setting up Redash"
 
-# echo "Setting up Redash"
+make redash.init
 
-# make redash.init
-
-# echo "Redash is up and running: http://localhost:5000"
+echo "Redash is up and running: http://localhost:5000"
