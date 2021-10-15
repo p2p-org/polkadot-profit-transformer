@@ -16,10 +16,10 @@ clean: down docker.removenetwork
 down: redash.down
 	docker-compose -f docker-compose.yml down -v
 psql:
-	docker-compose -f docker-compose.yml -f docker-compose.ksql.yml exec db psql -U sink -d raw
+	docker-compose -f docker-compose.yml exec db psql -U user -d mbelt
 rebuild streamer:
 	@echo "Rebuild streamer service"
-	docker-compose -f docker-compose.yml -f docker-compose.ksql.yml up -d --force-recreate --build --no-deps streamer
+	docker-compose -f docker-compose.yml up -d --force-recreate --build --no-deps streamer
 rebuild db:
 	@echo "Rebuild db service"
 	docker-compose -f docker-compose.yml up -d --force-recreate --build --no-deps db
