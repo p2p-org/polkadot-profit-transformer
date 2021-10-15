@@ -5,3 +5,7 @@ gen
 .env
 postgres-data/
 db-data/
+docker/env/*.env
+docker/env/.hasura.env
+docker/env/.postgres.env
+docker/env/.streamer.env
