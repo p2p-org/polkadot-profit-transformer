@@ -23,4 +23,4 @@ COPY --from=building /usr/src/app/tsconfig.json ./tsconfig.json
 
 EXPOSE 8080
 
-CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/main.js", "--sync", "--sub-fin-head"]
+CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/apps/main/index.js"]
