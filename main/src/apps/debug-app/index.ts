@@ -32,7 +32,7 @@ const main = async () => {
       connectionString: environment.PG_CONNECTION_STRING,
       ssl: false,
     },
-    searchPath: ['knex'],
+    searchPath: ['knex', 'public'],
   })
 
   const pg_prod = knex({
