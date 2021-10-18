@@ -97,4 +97,4 @@ const main = async () => {
     polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
-main()
+main().catch((error) => console.log('Error in igniter main function', error))
