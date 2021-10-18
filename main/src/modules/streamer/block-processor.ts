@@ -39,6 +39,8 @@ export const BlockProcessor = (deps: {
         const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] =
           await polkadotRepository.getInfoToProcessBlock(blockHash)
 
+        console.log(blockId + ': getInfoToProcessBlock done')
+
         const current_era = parseInt(blockCurrentEra.toString(), 10)
         const eraId = activeEra.isNone ? current_era : Number(activeEra.unwrap().get('index'))
 
@@ -50,8 +52,11 @@ export const BlockProcessor = (deps: {
           extrinsics: signedBlock.block.extrinsics,
         }
         const extractedExtrinsics = await extrinsicsProcessor(extrinsicsData)
+        console.log(blockId + ': extractedExtrinsics done')
 
         const processedEvents = eventsProcessor(signedBlock.block.header.number.toNumber(), events, sessionId, eraId)
+
+        console.log(blockId + ': processedEvents done')
 
         const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
@@ -70,16 +75,24 @@ export const BlockProcessor = (deps: {
           block_time: new Date(blockTime.toNumber()),
         }
 
+        console.log(blockId + ': BlockModel created')
+
         // save extrinsics events and block to main tables
         for (const extrinsic of extractedExtrinsics) {
           await streamerRepository.extrinsics.save(extrinsic)
         }
 
+        console.log(blockId + ': extrinsics saved')
+
         for (const event of processedEvents) {
           await streamerRepository.events.save(event)
         }
 
+        console.log(blockId + ': events saved')
+
         await streamerRepository.blocks.save(block)
+
+        console.log(blockId + ': block saved')
 
         // here we send needed events and successfull extrinsics to the eventBus
         for (const extrinsic of extractedExtrinsics) {
@@ -109,6 +122,8 @@ export const BlockProcessor = (deps: {
           }
         }
 
+        console.log(blockId + ': extrinsics send to eventBus')
+
         for (const event of processedEvents) {
           if (event.section === 'staking' && event.method === 'EraPayout') {
             logger.info('BlockProcessor eraPayout detected')
@@ -131,6 +146,8 @@ export const BlockProcessor = (deps: {
             eventBus.dispatch<EventModel>('governanceEvent', event)
           }
         }
+
+        console.log(blockId + ': events send to eventBus')
 
         return
       } catch (error: any) {

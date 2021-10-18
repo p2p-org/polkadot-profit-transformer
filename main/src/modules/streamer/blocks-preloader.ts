@@ -34,9 +34,7 @@ export const BlocksPreloader = (deps: {
 
         const processTasks = Array(concurrency)
           .fill('')
-          .map((_, i) => {
-            return blockProcessor(blockNumber + i)
-          })
+          .map((_, i) => blockProcessor(blockNumber + i))
 
         await Promise.all(processTasks)
 
