@@ -42,7 +42,7 @@ const main = async () => {
       connectionString: process.env.PROD_DB_URL,
       ssl: false,
     },
-    searchPath: ['knex', 'public'],
+    searchPath: ['knex', 'dot_polka'],
   })
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
