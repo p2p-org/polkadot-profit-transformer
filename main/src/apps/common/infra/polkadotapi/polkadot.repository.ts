@@ -157,12 +157,12 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
 
       console.log(blockId + ': getInfoToProcessBlock historicalApi done')
 
-      const [sessionId, blockCurrentEra, activeEra, blockTime, events] = await polkadotApi.queryMulti([
+      const [sessionId, blockCurrentEra, activeEra, blockTime, events] = await historicalApi.queryMulti([
         [historicalApi.query.session.currentIndex],
         [historicalApi.query.staking.currentEra],
         [historicalApi.query.staking.activeEra],
-        [polkadotApi.query.timestamp.now],
-        [polkadotApi.query.system.events, blockHash],
+        [historicalApi.query.timestamp.now],
+        [historicalApi.query.system.events, blockHash],
       ])
 
       console.log(blockId + ': getInfoToProcessBlock sessionId done')
@@ -171,6 +171,16 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
         polkadotApi.rpc.chain.getBlock(blockHash),
         polkadotApi.derive.chain.getHeader(blockHash),
       ])
+
+      // const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
+      //   polkadotApi.query.session.currentIndex.at(blockHash),
+      //   polkadotApi.query.staking.currentEra.at(blockHash),
+      //   polkadotApi.query.staking.activeEra.at(blockHash),
+      //   polkadotApi.rpc.chain.getBlock(blockHash),
+      //   polkadotApi.derive.chain.getHeader(blockHash),
+      //   polkadotApi.query.timestamp.now.at(blockHash),
+      //   polkadotApi.query.system.events.at(blockHash),
+      // ])
 
       console.log(blockId + ': getInfoToProcessBlock signedBlock done')
 
