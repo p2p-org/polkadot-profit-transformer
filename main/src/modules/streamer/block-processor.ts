@@ -30,7 +30,7 @@ export const BlockProcessor = (deps: {
 
   return async (blockId: number) => {
     for (let attempts = 0; attempts < 5; attempts++) {
-      console.log('attempt1')
+      console.log('attempt' + attempts)
       try {
         const blockHash = await polkadotRepository.getBlockHashByHeight(blockId)
 
