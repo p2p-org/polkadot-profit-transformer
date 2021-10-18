@@ -28,7 +28,7 @@ export const EventsProcessor = (deps: { logger: Logger }) => {
         section: event.section,
         method: event.method,
         data: eventData,
-        event: event.toJSON(),
+        event: event,
       })
 
       return acc

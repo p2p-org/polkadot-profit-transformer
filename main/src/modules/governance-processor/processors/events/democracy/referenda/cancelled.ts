@@ -10,10 +10,9 @@ export const processDemocracyReferendaCancelled = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process democracy referenda cancelled event')
 
-  const eventData = event.data
-  console.log(eventData)
+  const eventData = event.event.data
 
-  const referendumIndex = parseInt(eventData[0]['ReferendumIndex'], 16)
+  const referendumIndex = parseInt(eventData[0], 16)
   // const result = eventData[1]['bool'] ? 'Success' : 'Fail'
 
   const democracyReferenda: DemocracyReferendaModel = {

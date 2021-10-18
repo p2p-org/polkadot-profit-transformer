@@ -12,12 +12,11 @@ export const processDemocracyPreimageUsedEvent = async (
   governanceRepository: GovernanceRepository,
   logger: Logger,
 ) => {
-  const eventData = event.data
-  console.log({ eventData: JSON.stringify(eventData, null, 2) })
+  const eventData = event.event.data
 
-  const hash = (<H256>eventData[0]['Hash']).toString()
-  const accountId = (<AccountId32>eventData[1]['AccountId']).toString()
-  const balance = (<u128>eventData[2]['Balance']).toString()
+  const hash = (<H256>eventData[0]).toString()
+  const accountId = (<AccountId32>eventData[1]).toString()
+  const balance = (<u128>eventData[2]).toString()
 
   const preimageRecord: PreimageModel = {
     proposal_hash: hash,

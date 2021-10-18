@@ -10,10 +10,10 @@ export const processTreasuryAwardedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process treasury rejected event')
 
-  const eventData = event.data
+  const eventData = event.event.data
 
-  const proposal_id = parseInt(eventData[0]['ProposalIndex'], 16)
-  const balance = parseInt(eventData[1]['Balance'], 16)
+  const proposal_id = parseInt(eventData[0], 16)
+  const balance = parseInt(eventData[1], 16)
 
   const proposal: TreasuryProposalModel = {
     id: proposal_id,
@@ -21,7 +21,7 @@ export const processTreasuryAwardedEvent = async (
     event_id: event.id,
     extrinsic_id: '',
     event: 'Awarded',
-    data: { balance, accountId: eventData[2]['AccountId'] },
+    data: { balance, accountId: eventData[2] },
   }
 
   await governanceRepository.treasury.proposal.save(proposal)

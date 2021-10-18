@@ -11,12 +11,11 @@ export const processDemocracyProposalTabled = async (
   polkadotApi: ApiPromise,
 ): Promise<void> => {
   console.log('process democracy proposal tabled event')
-  const eventData = event.data
-  console.log(eventData)
+  const eventData = event.event.data
 
-  const proposalIndex = parseInt(eventData[0]['PropIndex'], 16)
-  const balance = parseInt(eventData[1]['Balance'], 16)
-  const depositors = eventData[2]['Vec<AccountId>']
+  const proposalIndex = parseInt(eventData[0], 16)
+  const balance = parseInt(eventData[1], 16)
+  const depositors = eventData[2]
 
   // find referenda started in this block (democracy.started event). this proposal become referenda here
 
@@ -26,8 +25,6 @@ export const processDemocracyProposalTabled = async (
   const democracyStartedEvent = blockEvents.find(
     (event) => event.event.section === 'democracy' && event.event.method === 'Started',
   )
-
-  console.log('democracyStartedEvent: ', democracyStartedEvent?.toHuman())
 
   if (!democracyStartedEvent) {
     logger.error('no democracy started event for tabled proposal in block ' + event.block_id)

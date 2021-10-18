@@ -12,15 +12,15 @@ export const processCouncilClosedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'council commitee closed event')
 
-  const eventData = event.data
+  const eventData = event.event.data
 
-  const hash = (<H256>eventData[0]['Hash']).toString()
+  const hash = (<H256>eventData[0]).toString()
   // const techCommProposal = await governanceRepository.technicalCommittee.findProposalByHash(hash)
 
   // if (!techCommProposal) throw Error('no tech com proposal found for council closed event ' + event.event_id)
 
-  const ayeVotesCount = (<u32>eventData[1]['MemberCount']).toNumber()
-  const nayVotesCount = (<u32>eventData[2]['MemberCount']).toNumber()
+  const ayeVotesCount = (<u32>eventData[1]).toNumber()
+  const nayVotesCount = (<u32>eventData[2]).toNumber()
 
   const proposal: CouncilProposalModel = {
     hash,

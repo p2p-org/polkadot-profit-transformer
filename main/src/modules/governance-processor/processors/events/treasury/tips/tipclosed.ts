@@ -11,11 +11,11 @@ export const processTipsClosedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process treasury rejected event')
 
-  const eventData = event.data
+  const eventData = event.event.data
 
-  const hash = (<H256>eventData[0]['Hash']).toString()
-  const accountId = (<AccountId32>eventData[1]['AccountId']).toString()
-  const balance = parseInt(eventData[2]['Balance'], 16)
+  const hash = (<H256>eventData[0]).toString()
+  const accountId = (<AccountId32>eventData[1]).toString()
+  const balance = parseInt(eventData[2], 16)
 
   const tipModel: TipsModel = {
     hash,

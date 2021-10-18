@@ -11,9 +11,7 @@ export const processCouncilApprovedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process council approved event')
 
-  const eventData = event.data
-
-  const hash = (<H256>eventData[0]['Hash']).toString()
+  const hash = (<H256>event.event.data[0]).toString()
   const proposal_id = await governanceRepository.council.findProposalIdByHash(hash)
 
   const proposal: CouncilProposalModel = {

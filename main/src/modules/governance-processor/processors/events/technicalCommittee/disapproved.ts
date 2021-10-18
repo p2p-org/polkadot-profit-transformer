@@ -11,9 +11,9 @@ export const processTechnicalCommitteeDisapprovedEvent = async (
 ): Promise<void> => {
   logger.trace({ event }, 'process technical commitee disapproved event')
 
-  const eventData = event.data
+  const eventData = event.event.data
 
-  const hash = (<H256>eventData[0]['Hash']).toString()
+  const hash = (<H256>eventData[0]).toString()
   // const techCommProposal = await governanceRepository.technicalCommittee.findProposalByHash(hash)
   // if (!techCommProposal) throw Error('no tech com proposal found for tech comm disapproved closed event ' + event.event_id)
 

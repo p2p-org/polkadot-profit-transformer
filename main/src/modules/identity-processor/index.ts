@@ -36,7 +36,7 @@ export const IdentityProcessor = (args: {
     console.log('onNewAccount event', event)
 
     return saveEnrichment({
-      account_id: event.data[0]['AccountId'].toString(),
+      account_id: event.data[0].toString(),
       created_at: event.block_id,
     })
   }
@@ -45,7 +45,7 @@ export const IdentityProcessor = (args: {
     console.log('onKilledAccount event', event)
 
     return saveEnrichment({
-      account_id: event.data[0]['AccountId'].toString(),
+      account_id: event.data[0].toString(),
       killed_at: event.block_id,
     })
   }
@@ -53,11 +53,10 @@ export const IdentityProcessor = (args: {
   const onJudgementEvent = async ({ event, status }: { event: EventModel; status: JudgementStatus }): Promise<void> => {
     console.log('onJudgementEvent event', event)
 
-    const data = event.data
     const enrichmentData = {
-      account_id: event.data[0]['AccountId'].toString(),
+      account_id: event.data[0].toString(),
       judgement_status: status,
-      registrar_index: parseInt(data[1]['RegistrarIndex'], 16),
+      registrar_index: parseInt(event.data[1], 16),
     }
     return saveEnrichment(enrichmentData)
   }

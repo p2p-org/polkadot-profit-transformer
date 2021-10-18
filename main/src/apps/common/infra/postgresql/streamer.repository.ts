@@ -33,9 +33,9 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger; networkId
     },
     events: {
       save: async (event: EventModel): Promise<void> => {
-        const stringifiedDataEvent = { ...event, data: JSON.stringify(event.data) }
+        const eventForDb = { ...event, data: JSON.stringify(event.data), event: event.event.toJSON() }
         await EventModel(knex)
-          .insert({ ...stringifiedDataEvent, ...network })
+          .insert({ ...eventForDb, ...network })
           .onConflict(['id', 'network_id'])
           .merge()
       },
