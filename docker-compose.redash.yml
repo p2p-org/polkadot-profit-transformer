@@ -18,38 +18,38 @@ networks:
 services:
   redash-init:
     build: redash_dashboard
-    env_file: 
-      - redash_dashboard/example.env
-    depends_on: 
+    env_file:
+      - redash_dashboard/.env
+    depends_on:
       - redash-server
-    restart: "no"
-  
+    restart: 'no'
+
   redash-server:
     <<: *redash-service
     command: server
     ports:
-      - "5000:5000"
-      - "5678:5678"
+      - '5000:5000'
+      - '5678:5678'
 
   redash-scheduler:
     <<: *redash-service
     command: scheduler
     environment:
-      QUEUES: "celery"
+      QUEUES: 'celery'
       WORKERS_COUNT: 1
 
   redash-scheduled-worker:
     <<: *redash-service
     command: worker
     environment:
-      QUEUES: "scheduled_queries,schemas"
+      QUEUES: 'scheduled_queries,schemas'
       WORKERS_COUNT: 1
 
   redash-adhoc-worker:
     <<: *redash-service
     command: worker
     environment:
-      QUEUES: "queries"
+      QUEUES: 'queries'
       WORKERS_COUNT: 2
 
   redash-postgres:
@@ -67,4 +67,4 @@ services:
     image: djfarrelly/maildev
     restart: unless-stopped
     ports:
-      - "1080:80"
+      - '1080:80'
