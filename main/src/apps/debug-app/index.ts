@@ -39,7 +39,7 @@ const main = async () => {
     client: 'pg',
     debug: true,
     connection: {
-      connectionString: process.env.PROD_DB_URL
+      connectionString: process.env.PROD_DB_URL,
       ssl: false,
     },
     searchPath: ['knex', 'public'],
