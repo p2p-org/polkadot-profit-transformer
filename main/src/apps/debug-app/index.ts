@@ -39,8 +39,7 @@ const main = async () => {
     client: 'pg',
     debug: true,
     connection: {
-      connectionString:
-        'postgresql://app_streamer_polkadot:xDKd@t5_Cw0oXjw4Xv7y2Xm@r2_P1-5MjRcPdlKxPS@lNxRo_3@localhost:5435/mbelt_substrate_polkadot?schema=mbelt',
+      connectionString: process.env.PROD_DB_URL
       ssl: false,
     },
     searchPath: ['knex', 'public'],
