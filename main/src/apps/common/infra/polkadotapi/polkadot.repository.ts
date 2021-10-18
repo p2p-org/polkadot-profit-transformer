@@ -149,20 +149,15 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
 
     async getInfoToProcessBlock(
       blockHash: BlockHash,
-    ): Promise<
-      [SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
-    > {
-      const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
-        polkadotApi.query.session.currentIndex.at(blockHash),
-        polkadotApi.query.staking.currentEra.at(blockHash),
-        polkadotApi.query.staking.activeEra.at(blockHash),
+    ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
+      const [signedBlock, extHeader, blockTime, events] = await Promise.all([
         polkadotApi.rpc.chain.getBlock(blockHash),
         polkadotApi.derive.chain.getHeader(blockHash),
         polkadotApi.query.timestamp.now.at(blockHash),
         polkadotApi.query.system.events.at(blockHash),
       ])
 
-      return [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events]
+      return [signedBlock, extHeader, blockTime, events]
     },
 
     async getHistoryDepth(blockHash: TBlockHash): Promise<u32> {
