@@ -6,7 +6,7 @@ import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor
 import { EventsProcessor } from '../../modules/streamer/events-processor'
 import { BlockProcessor } from '../../modules/streamer/block-processor'
 
-import { environment, START_PARAMS } from './environment'
+import { environment } from './environment'
 import { polkadotFactory } from '../common/infra/polkadotapi/index'
 import { LoggerFactory as PinoLogger } from '../common/infra/logger/logger'
 import { EventBus } from 'utils/event-bus/event-bus'
