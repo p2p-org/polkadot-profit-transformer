@@ -63,7 +63,7 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger; networkId
       },
       findBySectionAndMethod: async (args: { section: string; method: string }[]): Promise<ExtrinsicModel[]> => {
         // todo implement schema from env
-        let query = ExtrinsicModel(knex).withSchema('mbelt')
+        let query = ExtrinsicModel(knex).withSchema('dot_polka')
         for (const { method, section } of args) {
           query = query.orWhere({ section, method })
         }
