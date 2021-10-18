@@ -1,13 +1,12 @@
 import { RestApi } from './rest-api/index'
 import knex from 'knex'
-import yargs from 'yargs'
 
 import { IdentityProcessor } from './../../modules/identity-processor/index'
 import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
 import { EventsProcessor } from '../../modules/streamer/events-processor'
 import { BlockProcessor } from '../../modules/streamer/block-processor'
 
-import { environment } from './environment'
+import { environment, START_PARAMS } from './environment'
 import { polkadotFactory } from '../common/infra/polkadotapi/index'
 import { LoggerFactory as PinoLogger } from '../common/infra/logger/logger'
 import { EventBus } from 'utils/event-bus/event-bus'
@@ -27,13 +26,6 @@ import { NetworksRepository } from '@apps/common/infra/postgresql/networks_repos
 import { NetworkModel } from '@apps/common/infra/postgresql/models/config.model'
 
 const main = async () => {
-  // parse start params from command line
-  const { argv } = yargs.option('resync', {
-    type: 'boolean',
-    default: false,
-    description: 'Sync from the a genesis block',
-  })
-
   const logger = PinoLogger({ logLevel: environment.LOG_LEVEL! })
 
   const pg = knex({
@@ -95,12 +87,14 @@ const main = async () => {
   restApi.init()
 
   // blocksPreloader fills up database from block 0 to current block
-  const startBlockId = argv.resync ? 0 : undefined
-  await blocksPreloader.start(startBlockId)
-  // await blockProcessor(2213295)
+  if (environment.PRELOAD) {
+    const startBlockId = environment.START_BLOCK_ID
+    await blocksPreloader.start(startBlockId)
+  }
 
-  // now we have all previous blocks pprocessed and we are listening to the finalized block events
-  polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
+  if (environment.SUBSCRIBE)
+    // now we have all previous blocks pprocessed and we are listening to the finalized block events
+    polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
 main()
