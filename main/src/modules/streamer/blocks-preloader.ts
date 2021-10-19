@@ -17,7 +17,7 @@ export const BlocksPreloader = (deps: {
   concurrency: number
 }) => {
   const { streamerRepository, polkadotRepository, blockProcessor, logger, concurrency } = deps
-  const status = PRELOADER_STATUS.IN_PROGRESS
+  let status = PRELOADER_STATUS.IN_PROGRESS
   let blockNumber = 0
   return {
     start: async (startBlockParam?: number) => {
@@ -44,6 +44,8 @@ export const BlocksPreloader = (deps: {
 
         lastBlockNumber = await polkadotRepository.getFinBlockNumber()
       }
+
+      status = PRELOADER_STATUS.DONE
     },
     rewind: (blockId: number) => {
       blockNumber = blockId
