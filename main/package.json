@@ -63,7 +63,6 @@
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.0.1",
-    "husky": "^6.0.0",
     "jest": "^27.0.0-next.9",
     "lint-staged": "^10.5.4",
     "prettier": "^2.1.2",
@@ -71,12 +70,6 @@
     "ts-node": "^9.1.1",
     "type-coverage": "^2.17.2",
     "typescript": "^4.3.5"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm lint-staged",
-      "pre-push": "npm run type-coverage && npm run build"
-    }
   },
   "lint-staged": {
     "*.(ts)": [
