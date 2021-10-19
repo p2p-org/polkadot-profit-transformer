@@ -22,7 +22,7 @@ export const processDemocracyProposalProposeExtrinsic = async (
 
   const eventData = democracyProposedEvent.event.data
   const proposalId = (<u32>eventData[0]).toNumber()
-  const balance = (<u128>eventData[1]).toNumber()
+  const balance = (<u128>eventData[1]).toString()
 
   console.log('extrinsic', extrinsic)
 
