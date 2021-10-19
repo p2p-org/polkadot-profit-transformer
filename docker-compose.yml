@@ -34,7 +34,8 @@ services:
     build: ./main
     restart: always
     ports:
-      - 8082:8080
+      - 3000:3000
+      - 4000:4000
     depends_on:
       - db
     env_file:
