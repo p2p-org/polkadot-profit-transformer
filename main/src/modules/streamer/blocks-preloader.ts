@@ -20,10 +20,10 @@ export const BlocksPreloader = (deps: {
   let status = PRELOADER_STATUS.IN_PROGRESS
   let blockNumber = 0
   return {
-    start: async (startBlockParam?: number) => {
+    start: async (startBlockParam: number) => {
       logger.info('BlocksPreloader started with startBlockParam = ' + startBlockParam)
       const lastBlockIdInDb = await streamerRepository.blocks.findLastBlockId()
-      const startBlockId = startBlockParam ?? (lastBlockIdInDb || 0)
+      const startBlockId = startBlockParam === -1 ? lastBlockIdInDb || 0 : startBlockParam
       let lastBlockNumber = await polkadotRepository.getFinBlockNumber()
       logger.info('last finalized block id: ' + lastBlockNumber)
 
@@ -46,9 +46,6 @@ export const BlocksPreloader = (deps: {
       }
 
       status = PRELOADER_STATUS.DONE
-    },
-    rewind: (blockId: number) => {
-      blockNumber = blockId
     },
     status: () => status,
     currentBlock: () => blockNumber,
