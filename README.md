@@ -6,17 +6,15 @@ Multi blockchain ETL solution is an interoperability-first data warehouse with g
 
 # Features
 
-- Support extract and store data from Polkadot Relay chain and Kusama
-- Built-in default GraphQL API
-- Support UI for GraphQL, based on PostGraphile
+- Support extract and store data from Polkadot, Kusama and Parachains
+- GraphQL API built with Hasura
 - Docker-compose setup for easy deployment of the ETL and API solution
-- Auto configuration tools for Kafka, KSQL based on unified config
 - Materialised views for Postgresql
-- Built-in dashboards for vendor Redash integration
+- Redash with built-in dashboards
 
 # Dependencies
 
-- Docker (allocate memory at least 8 GB in docker settings)
+- Docker
 - Docker Compose
 - Make (optional)
 - Python
@@ -24,19 +22,15 @@ Multi blockchain ETL solution is an interoperability-first data warehouse with g
 # Ram requirements
 
 - streamer: 2Gb
-- enrichments_processor: 512Mb
-- KSQL cluster: 12Gb
 - Postgresql: 1Gb
-
-_For launching all stack on a single machine, 16Gb RAM and 30Gb disk space for polkadot, 100Gb for kusama required._
 
 You need Polkadot or Kusama node **in archive mode** with an open websocket interface.
 
-
-
-Docker service should be started first. Please allocate 12GB of RAM in Docker settings.
+Docker service should be started first.
 
 Also python need to be installed installed.
+
+# Pre-installs
 
 ## Docker installation
 
@@ -91,9 +85,9 @@ You must see «Hello from Docker!»
 
 ```
 
-## Python installation 
+## Python installation
 
-``` 
+```
 1. Update package:
 sudo apt update
 
@@ -106,51 +100,73 @@ python3 -V
 Output
 Python 3.8.2
 ```
-## Other package
+
+## Other packages
+
 In additional following package also must to be installed
+
 ```
 git:
 sudo apt install git
 
 docker-compose:
 pip install docker-compose
-
-jg:
-sudo apt-get install jq
 ```
-
 
 # Quick Start
 
 ```
 git clone https://github.com/p2p-org/polkadot-profit-transformer.git
+
 cd polkadot-profit-transformer
 
-# Now fill up SUBSTRATE_URI and APP_NETWORK in docker/env/.streamer.env, docker/env/.enrichments_processor.env
+cp docker/env/.streamer.env.example docker/env/.streamer.env
+cp docker/env/.postgres.env.example docker/env/.postgres.env
+cp docker/env/.redash.env.example docker/env/.redash.env
+cp docker/env/.hasura.env.example docker/env/.hasura.env
 
-# !!! Add next line to the /etc/hosts
-# 127.0.0.1 broker
 
 make up
 ```
-
-`make up` command will start all services in ~5 minutes.
 
 Then whole blocks sync begins.
 
 Sync process continues for a few days (about 1M blocks/day)
 
-You can check sync status by api call [http://0.0.0.0:8085/api/blocks/status](http://0.0.0.0:8085/api/blocks/status)
+# REST API
 
-Port is described in [@docker-compose.yml](docker-compose.yml)
+To monitor streamer status, you can use API on port, defined in ./docker/env/.streamer.env (3000 by default)
 
-On sync in progress, you'll see `{status: "syncronization"}`
+**API is protected with Basic Auth:**
 
-After sync completed `{status: "syncronized"}`, the streamer will switch to the finalized blocks listening, and Redash starts with pre-set datasource and dashboard.
+user: `admin`
 
-Also you can take a look in logs by enter followinf command `docker-compose -f docker-compose.yml -f docker-compose.ksql.yml -f docker-compose.redash.yml logs -tf --tail=10 streamer`. In logs you'll see last block processing and its hash.
+password: `password` as REST_API_BASIC_AUTH_PASSWORD in .streamer.env
 
-### Redash
+## API methods
+
+[http://0.0.0.0:3000/health](http://0.0.0.0:3000/health) - responses `{"status":"live"}` if healthy
+
+[http://0.0.0.0:3000/status](http://0.0.0.0:3000/status) - responses `{"status":"preloading in progress","currentBlockId":301790}` or `"listening for finalized blocks"` if preloading finished
+
+[http://0.0.0.0:3000/processBlock/:blockId](http://0.0.0.0:3000/status/1) - manually process blockId
+
+After preload completed, the streamer will switch to the finalized blocks listening.
+
+## GraphQL
+
+Open-source Hasura edition used.
+
+Initial Hasura metadata placed in ./hasura directory
+
+Hasura deploed by directives placed in docker-compose.yml
+
+Currently we use out-of-the-box settings, so you should set up limit/offset in queries. Usage without limits could lead to memory-based errors.
+
+By default Hasura works on port `8001` (set your own port in docker-compose.yml),
+and protected by password `myadminsecretkey` as HASURA_GRAPHQL_ADMIN_SECRET in .hasura.env
+
+## Redash
 
 During the sync and after the sync ended, you can use Redash to work with data.
 
@@ -160,9 +176,7 @@ Login: admin@example.org
 
 Password: supersecret123
 
-_Login and password are defined in [@run.sh](run.sh)_
-
-### Make commands
+## Make commands
 
 `up` Create and run all containers
 
@@ -170,125 +184,125 @@ _Login and password are defined in [@run.sh](run.sh)_
 
 `stop` Stop all containers
 
-`rm` Remove force all containers
+`clean` Remove force all containers
 
-#### Configuring environment
+# How it works
 
-**streamer** - extracts and transform chain information from substrate node (should be launched in archive mode) via websocket connection
-and push to ksql processing. Default environment configuration file _.streamer.env_.
-
-| Command         | Default     | Description                                                  |
-| --------------- | ----------- | ------------------------------------------------------------ |
-| `API_ADDR`      | `0.0.0.0`   | RPC API address                                              |
-| `API_PORT`      | `8080`      | RPC API port                                                 |
-| `APP_MODE`      | `info`      | Logger level (`debug`, `info`, `warning`, `error`)           |
-| `SUBSTRATE_URI` | -           | Substrate url to websocket connection node, `ws://host:port` |
-| `KAFKA_URI`     | -           | Host to kafka broker `host:port`                             |
-| `APP_MODE`      | `dev`       | Suffix for application mode (`dev`, `prod`, `staging`)       |
-| `APP_NETWORK`   | -           | Must be `polkadot`, `kusama` and other                       |
-| `DB_HOST`       | `localhost` | Postgresql host                                              |
-| `DB_PORT`       | `5432`      | Postgresql port                                              |
-| `DB_NAME`       | -           | Database name                                                |
-| `DB_SCHEMA`     | `public`    | Database schema                                              |
-| `DB_USER`       | `postgres`  | Database user                                                |
-| `DB_PASSWORD`   | -           | User password                                                |
-
-**enrichments_processor** - listening extracts information from kafka topics with _ENRICHMENT_ prefix and extract additional data from substrate node (should be launched in archive mode) via websocket connection
-and push to ksql processing. Default environment configuration file _.enrichments_processor.env_.
-
-| Command         | Default   | Description                                                  |
-| --------------- | --------- | ------------------------------------------------------------ |
-| `API_ADDR`      | `0.0.0.0` | RPC API address                                              |
-| `API_PORT`      | `8079`    | RPC API port                                                 |
-| `APP_MODE`      | `info`    | Logger level (`debug`, `info`, `warning`, `error`)           |
-| `SUBSTRATE_URI` | -         | Substrate url to websocket connection node, `ws://host:port` |
-| `KAFKA_URI`     | -         | Host to kafka broker `host:port`                             |
-| `APP_MODE`      | `dev`     | Suffix for application mode (`dev`, `prod`, `staging`)       |
-| `APP_NETWORK`   | -         | Must be `polkadot`, `kusama` and other                       |
-
-Vendor environment configuration files
-_.postgres.env_  
-_.graphile.env_  
-_.redash.env_
-
-## Testing and overview
-
-### Postgresql interface
-
-1. Running psql command line from container
-
-```shell
-$ make psql
-raw=# SELECT * FROM dot_polka.blocks LIMIT 10
-```
-
-2. connecting to `db` container with mapped port and credentials from `docker/env/.postges.env`
-
-### PostGraphile UI
-
-Local Docker instance playground
-http://localhost:4000/
-
-### GraphQL endpoint
-
-Local Docker instance
-
-```bash
-POST http://localhost:5000/graphql
-```
-
-Example:
-
-```bash
-curl --request POST 'http://localhost:4000/graphql' \
---header 'Content-Type: application/json' \
---data '{
-	"query": "query { allBlocks { edges { node { id sessionId era hash  author  } } } }",
-	"variables": null
-}'
-```
-
-### Health checks
-
-You can check that the streamer is working correctly by running
-
-```bash
-docker logs polkadot-profit-transformer_streamer_1
-```
-
-The logs should look like this:
+## Project structure
 
 ```
-[1611470950389] INFO	 (1 on c0c920a5bb9a): Process block "939" with hash 0xec2c0fb4f2ccc05b0ab749197db8d6d1c6de07d6e8cb2620d5c308881d1059b5
+├── db: schema to spin up postrges db
+├── db-data: external docker volume for postgres data
+├── docker
+│   └── env: .env for docker (with examples)
+├── hasura: hasura initial metadata (place migrations here)
+├── main
+│   └── src
+│       ├── apps
+│       │   ├── common
+│       │   ├── debug-app: temp app for pre-fill of needed data
+│       │   └── main: main application
+│       ├── modules
+│       │   ├── governance-processor
+│       │   │   └── processors
+│       │   │       ├── events
+│       │   │       ├── extrinsics
+│       │   │       └── utils
+│       │   ├── identity-processor: processor to track account identities events
+│       │   ├── staking-processor: track validators/nominators data
+│       │   └── streamer: initial preloader and finalized block processor
+│       └── utils
+├── redash_dashboard: pre-installation data for redash
+    └── queries
+
 ```
 
-### Features
+## Database structure
 
-This framework provides extractions blocks and subscription to updates (with reorganization support) Polkadot and Kusama.  
-![schema](docs/img/mbelt_schema.png 'mbelt schema')
+DB shema is desribed in ./db directory
 
-### Database structure
+It is used as entrypoint SQL when Postgres started by ./db/Dockerfile from ./docker-compose.yml
 
-![erd](docs/img/mbelt_erd.png 'mbelt database structure')
+## Workflow
 
-## Modules description
+- **Streamer**
+  - Preload all blocks before head and send them to the **Block Processor**
+  - Listen for finalized blocks and send them to the **Block Processor**
+- **Block Processor**
+  - Get block data from chain
+  - Extract extrinsics and send them to the
+    - **Extrinsics Processor**
+      - Check if extrinsic successfull
+      - Recursive extract nested calls for the next extrinsic types
+        - multisig
+        - proxy
+        - batch
+      - form extrinsic model for DB
+  - Extract events and send them to the
+    - **Events Processor**
+      - form event model for DB
+  - Save block data in DB
+  - Save extrinsics data in DB
+  - Save events data in DB
+  - Send block data to the Event Bus
+- **Event Bus**
+  - In-memory simple bus for additional processors subscriptions
+  - Could be replaced by some EventBus/MessageBroker solutions
+- **Additional Processors**
+  - **Staking Processor**
+  - **Identity Processor**
+  - **Governance Processor**
 
-- [@streamer](streamer) - The main service, provides extractions and consumer subscriptions operations for ksqlDB pipelines
+## Additional Processors
 
-- [@enrichments_processor](enrichments_processor) - The enrichments transformation service, provides extractions and consumer subscriptions operations for [ksqlDB pipelines](streamer/docs/SPECS.md)
+Processors make additional data processing and enrichments.
+We've created EventBus and send events with data in `./modules/streamer/block-processor.ts`
 
-## Sequence interaction
+Processors subscribe to the EventBus events in the main app igniter `./apps/main/index.ts`
 
-![Sequence](docs/img/sequence_streamer.png 'Sequence interaction')
+```ts
+eventBus.register('eraPayout', stakingProcessor.addToQueue);
 
-### Additional modules:
+eventBus.register('identityEvent', identityProcessor.processEvent);
+// etc
+```
 
-- [@run.sh](run.sh) - Bootstrap script: creates topics from [@ksql_config.json](ksql_config.json), reads ksql migration files from [@ksql](ksql) directory and run containers
-- [@docker](docker) - contains docker deploying configuration and environment files
-- [@db](db) - contains database simple init migrations
-- [@ksql](ksql) contains ksql init migrations
+---
 
-# Other docs
+### **Staking Processor**
 
-- [@Streamer](streamer/README.md)
-- [@Watchdog](streamer/README.md#Watchdog)
+This processor calculates on EraPaid event next data:
+
+- General Era payout data in `eras` table
+- Validators data in `validators` table
+- Nominators data in `nominators` table
+
+### **Identity Processor**
+
+This processor creates account record in `account_identity` table and updates account identity info, listening to the identity change events.
+
+### **Governance Processor**
+
+This processor listen to the governance extrinsics and events and save data to the next tables:
+
+- `council_proposal`
+- `democracy_proposal`
+- `democracy_referenda`
+- `technical_committee_proposal`
+- `tips`
+- `treasury_proposal`
+- `preimage`
+
+To reduce tables amount, we store this data slighlty denormalized, e.g. for proposals we store events such as `proposed`, `approved`, `executed` as well as `Votes` records from 'vote' extrinsics.
+
+It is possible to extract all data from this storage by the SQL queries and/or GraphQL queries.
+
+# How to add new chain to the platform
+
+Currently we added Moonbeam network to the streamer.
+
+Due to the custom metadata we created the `moonbeam` brahcn in the repo with changed polkadot api initialization and removed staking-related queries.
+
+In general you can spin up a new process of streamer with changed `SUBSTRATE_URI` in .env
+
+Streamer will see if this network exists in in the `networks` table, if not - new network record will be created, and new data will be stored in the DB with the new `network_id` value.
