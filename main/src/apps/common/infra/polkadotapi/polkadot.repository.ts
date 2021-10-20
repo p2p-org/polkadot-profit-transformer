@@ -14,7 +14,7 @@ import {
   SignedBlock,
   ValidatorPrefs,
 } from '@polkadot/types/interfaces'
-import { Option, Vec } from '@polkadot/types'
+import { Option, u32, Vec } from '@polkadot/types'
 import { HeaderExtended } from '@polkadot/api-derive/types'
 import { IBlockEraParams, TBlockHash } from '@modules/staking-processor/staking.types'
 import { EraModel } from '../postgresql/models/era.model'
@@ -156,14 +156,18 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       const historicalApi = await polkadotApi.at(blockHash)
 
       console.log(blockId + ': getInfoToProcessBlock historicalApi done')
-      const [[sessionId, blockCurrentEra, activeEra, blockTime, events], signedBlock, extHeader] = await Promise.all([
-        historicalApi.queryMulti([
-          historicalApi.query.session.currentIndex,
-          historicalApi.query.staking.currentEra,
-          historicalApi.query.staking.activeEra,
-          historicalApi.query.timestamp.now,
-          [historicalApi.query.system.events, blockHash],
-        ]) as Promise<[SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, Moment, Vec<EventRecord>]>,
+
+      const [sessionId, blockCurrentEra, activeEra, blockTime, events] = await historicalApi.queryMulti([
+        [historicalApi.query.session.currentIndex],
+        [historicalApi.query.staking.currentEra],
+        [historicalApi.query.staking.activeEra],
+        [historicalApi.query.timestamp.now],
+        [historicalApi.query.system.events, blockHash],
+      ])
+
+      console.log(blockId + ': getInfoToProcessBlock sessionId done')
+
+      const [signedBlock, extHeader] = await Promise.all([
         polkadotApi.rpc.chain.getBlock(blockHash),
         polkadotApi.derive.chain.getHeader(blockHash),
       ])
@@ -183,7 +187,11 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       return [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events]
     },
 
-    getCurrentRawEra(blockHash?: TBlockHash): Promise<Option<EraIndex>> {
+    async getHistoryDepth(blockHash: TBlockHash): Promise<u32> {
+      return polkadotApi.query.staking.historyDepth.at(blockHash)
+    },
+
+    async getCurrentRawEra(blockHash?: TBlockHash): Promise<Option<EraIndex>> {
       if (blockHash) {
         return polkadotApi.query.staking.currentEra.at(blockHash)
       }
