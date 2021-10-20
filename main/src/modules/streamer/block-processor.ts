@@ -36,7 +36,7 @@ export const BlockProcessor = (deps: {
 
         logger.info('BlockProcessor: start processing block with id: ' + blockId)
 
-        const [signedBlock, extHeader, blockTime, events] = await polkadotRepository.getInfoToProcessBlock(blockHash)
+        const [signedBlock, extHeader, blockTime, events] = await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
 
         console.log(blockId + ': getInfoToProcessBlock done')
 
