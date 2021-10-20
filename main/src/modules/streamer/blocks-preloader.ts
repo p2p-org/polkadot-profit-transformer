@@ -42,7 +42,7 @@ export const BlocksPreloader = (deps: {
 
         console.log('next blockNumber', blockNumber)
 
-        lastBlockNumber = await polkadotRepository.getFinBlockNumber()
+        if (blockNumber >= lastBlockNumber) lastBlockNumber = await polkadotRepository.getFinBlockNumber()
       }
 
       status = PRELOADER_STATUS.DONE
