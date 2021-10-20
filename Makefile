@@ -1,6 +1,3 @@
-.DEFAULT_GOAL := help
-help:
-	@echo "Commands:\n\tup - create and run\n\tps - show processes\n\tstop - stop all containers\n\tclean - stop and remove all containers, volumes and networks\n\trebuild streamer - rebuild streamer service\n\tredash.recreate - remove redash and reinit it"
 up:
 	./run.sh
 ps:
@@ -15,16 +12,9 @@ clean: down docker.removenetwork
 	@echo "Purge all services and data"
 down: redash.down
 	docker-compose -f docker-compose.yml down -v
-psql:
-	docker-compose -f docker-compose.yml exec db psql -U user -d mbelt
 rebuild streamer:
 	@echo "Rebuild streamer service"
 	docker-compose -f docker-compose.yml up -d --force-recreate --build --no-deps streamer
-rebuild db:
-	@echo "Rebuild db service"
-	docker-compose -f docker-compose.yml up -d --force-recreate --build --no-deps db
-redash.recreate: redash.down redash.init
-	@echo "Purge old and start new redash instance"
 redash.init: docker.createnetwork redash.up redash.createdatabase redash.createdashboard
 redash.up: docker.createnetwork
 	@echo "Start redash services"

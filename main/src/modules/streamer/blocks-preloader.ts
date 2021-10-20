@@ -17,13 +17,13 @@ export const BlocksPreloader = (deps: {
   concurrency: number
 }) => {
   const { streamerRepository, polkadotRepository, blockProcessor, logger, concurrency } = deps
-  const status = PRELOADER_STATUS.IN_PROGRESS
+  let status = PRELOADER_STATUS.IN_PROGRESS
   let blockNumber = 0
   return {
-    start: async (startBlockParam?: number) => {
+    start: async (startBlockParam: number) => {
       logger.info('BlocksPreloader started with startBlockParam = ' + startBlockParam)
       const lastBlockIdInDb = await streamerRepository.blocks.findLastBlockId()
-      const startBlockId = startBlockParam ?? (lastBlockIdInDb || 0)
+      const startBlockId = startBlockParam === -1 ? lastBlockIdInDb || 0 : startBlockParam
       let lastBlockNumber = await polkadotRepository.getFinBlockNumber()
       logger.info('last finalized block id: ' + lastBlockNumber)
 
@@ -42,11 +42,10 @@ export const BlocksPreloader = (deps: {
 
         console.log('next blockNumber', blockNumber)
 
-        lastBlockNumber = await polkadotRepository.getFinBlockNumber()
+        if (blockNumber >= lastBlockNumber) lastBlockNumber = await polkadotRepository.getFinBlockNumber()
       }
-    },
-    rewind: (blockId: number) => {
-      blockNumber = blockId
+
+      status = PRELOADER_STATUS.DONE
     },
     status: () => status,
     currentBlock: () => blockNumber,

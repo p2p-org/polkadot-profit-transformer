@@ -1,6 +1,5 @@
 import dotenv from 'dotenv'
 
-// Set the NODE_ENV to 'development' by default
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
 dotenv.config()
@@ -12,7 +11,7 @@ export type Environment = {
   REST_API_PORT: number
   REST_API_BASIC_AUTH_PASSWORD: string
   PRELOAD: boolean
-  START_BLOCK_ID: number | undefined
+  START_BLOCK_ID: number
   SUBSCRIBE: boolean
 }
 
@@ -23,6 +22,6 @@ export const environment: Environment = {
   REST_API_PORT: Number(process.env.REST_API_PORT) || 3000,
   REST_API_BASIC_AUTH_PASSWORD: process.env.REST_API_BASIC_AUTH_PASSWORD ?? 'password',
   PRELOAD: process.env.PRELOAD ? Boolean(process.env.PRELOAD) : false,
-  START_BLOCK_ID: process.env.START_BLOCK_ID ? Number(process.env.START_BLOCK_ID) : 0,
+  START_BLOCK_ID: process.env.START_BLOCK_ID ? Number(process.env.START_BLOCK_ID) : -1, // -1 = continue from last preloaded block from db
   SUBSCRIBE: process.env.SUBSCRIBE ? Boolean(process.env.SUBSCRIBE) : false,
 }
