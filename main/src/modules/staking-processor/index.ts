@@ -74,7 +74,20 @@ export const StakingProcessor = (args: {
       })
     }
 
-    await Promise.all(Array.from(validatorsAccountIdSet).map(processValidator))
+    const sliceIntoChunks = (arr: string[], chunkSize: number): Array<string[]> => {
+      const res = []
+      for (let i = 0; i < arr.length; i += chunkSize) {
+        const chunk = arr.slice(i, i + chunkSize)
+        res.push(chunk)
+      }
+      return res
+    }
+
+    const allValidatorsChunked = sliceIntoChunks(Array.from(validatorsAccountIdSet), 30)
+
+    for (const chunk of allValidatorsChunked) {
+      await Promise.all(chunk.map(processValidator))
+    }
 
     return {
       validators,
