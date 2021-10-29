@@ -157,6 +157,7 @@ export const BlockProcessor = (deps: {
         await sleep(2000)
       }
     }
+
     console.log('Error process block after 5 atempts for blockId=' + blockId)
     throw Error('Error process block after 5 atempts for blockId=' + blockId)
   }
