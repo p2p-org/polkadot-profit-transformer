@@ -79,7 +79,7 @@ const main = async () => {
   eventBus.register('governanceExtrinsic', governanceProcessor.processExtrinsicsHandler)
   eventBus.register('governanceEvent', governanceProcessor.processEventHandler)
 
-  const concurrency = 10 // how many blocks processed in parallel by BlocksPreloaders
+  const concurrency = environment.CONCURRENCY // how many blocks processed in parallel by BlocksPreloaders
   const blocksPreloader = BlocksPreloader({ streamerRepository, blockProcessor, polkadotRepository, logger, concurrency })
 
   // express rest api
