@@ -41,11 +41,11 @@ const main = async () => {
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
   const eventBus = EventBus({ logger })
 
-  const polkadotRepository = PolkadotRepository({ polkadotApi, logger })
+  const polkadotRepository = async () => PolkadotRepository({ polkadotApi: await polkadotApi(), logger })
   const networksRepository = NetworksRepository({ knex: pg, logger })
 
   // get current network from node
-  const chainName = await polkadotRepository.getChainInfo()
+  const chainName = await (await polkadotRepository()).getChainInfo()
   const network: NetworkModel = { name: chainName }
   await networksRepository.save(network)
   const networkId = await networksRepository.getIdByName(chainName)
@@ -55,21 +55,26 @@ const main = async () => {
   const identityRepository = IdentityRepository({ knex: pg, logger, networkId })
   const governanceRepository = GovernanceRepository({ knex: pg, logger, networkId })
 
-  const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi })
-  const eventProcessor = EventProcessor({ governanceRepository, logger, polkadotApi })
+  const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi: await polkadotApi() })
+  const eventProcessor = EventProcessor({ governanceRepository, logger, polkadotApi: await polkadotApi() })
   const governanceProcessor = GovernanceProcessor({ extrinsicProcessor, eventProcessor, logger })
   const eventsProcessor = EventsProcessor({ logger })
-  const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository })
+  const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository: await polkadotRepository() })
   const blockProcessor = BlockProcessor({
-    polkadotRepository,
+    polkadotRepository: await polkadotRepository(),
     eventsProcessor,
     extrinsicsProcessor,
     logger,
     eventBus,
     streamerRepository,
   })
-  const stakingProcessor = StakingProcessor({ polkadotRepository, streamerRepository, stakingRepository, logger })
-  const identityProcessor = IdentityProcessor({ polkadotRepository, identityRepository, logger })
+  const stakingProcessor = StakingProcessor({
+    polkadotRepository: await polkadotRepository(),
+    streamerRepository,
+    stakingRepository,
+    logger,
+  })
+  const identityProcessor = IdentityProcessor({ polkadotRepository: await polkadotRepository(), identityRepository, logger })
 
   // todo fix generics to register and dispatch in eventBus
   eventBus.register('eraPayout', stakingProcessor.addToQueue)
@@ -79,8 +84,14 @@ const main = async () => {
   eventBus.register('governanceExtrinsic', governanceProcessor.processExtrinsicsHandler)
   eventBus.register('governanceEvent', governanceProcessor.processEventHandler)
 
-  const concurrency = environment.CONCURRENCY // how many blocks processed in parallel by BlocksPreloaders
-  const blocksPreloader = BlocksPreloader({ streamerRepository, blockProcessor, polkadotRepository, logger, concurrency })
+  const concurrency = 500 //environment.CONCURRENCY // how many blocks processed in parallel by BlocksPreloaders
+  const blocksPreloader = BlocksPreloader({
+    streamerRepository,
+    blockProcessor,
+    polkadotRepository: await polkadotRepository(),
+    logger,
+    concurrency,
+  })
 
   // express rest api
   const restApi = RestApi({ environment, blocksPreloader, blockProcessor })
@@ -94,7 +105,7 @@ const main = async () => {
 
   if (environment.SUBSCRIBE)
     // now we have all previous blocks pprocessed and we are listening to the finalized block events
-    polkadotRepository.subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
+    (await polkadotRepository()).subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
 main().catch((error) => console.log('Error in igniter main function', error))
