@@ -25,5 +25,5 @@ export const environment: Environment = {
   PRELOAD: process.env.PRELOAD ? Boolean(process.env.PRELOAD) : false,
   START_BLOCK_ID: process.env.START_BLOCK_ID ? Number(process.env.START_BLOCK_ID) : -1, // -1 = continue from last preloaded block from db
   SUBSCRIBE: process.env.SUBSCRIBE ? Boolean(process.env.SUBSCRIBE) : false,
-  CONCURRENCY: process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 200,
+  CONCURRENCY: process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 5,
 }
