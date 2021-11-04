@@ -22,7 +22,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "exclude": ["main/src/apps/debug-app/*.ts"]
-  }
+    "forceConsistentCasingInFileNames": true
+  },
+  "exclude": ["main/src/apps/debug-app/*.ts"]
 }
