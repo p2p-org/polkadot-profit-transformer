@@ -27,20 +27,20 @@ export const processDemocracyProposalProposeExtrinsic = async (
   console.log('extrinsic', extrinsic)
 
   // fix for a few very early extrinsics in kusama, with the different schema
-  if (extrinsic.extrinsic.args && extrinsic.extrinsic.args[0] && extrinsic.extrinsic.args[0]['method']) {
-    const proposal: DemocracyProposalModel = {
-      id: proposalId,
-      hash: proposalId.toString(),
-      block_id: extrinsic.block_id,
-      event_id: '',
-      extrinsic_id: extrinsic.id,
-      event: 'Proposed',
-      data: { balance: balance, signer: extrinsic.signer, proposal: extrinsic.args[0] },
-    }
+  // if (extrinsic.extrinsic.args && extrinsic.extrinsic.args[0] && extrinsic.extrinsic.args[0]['method']) {
+  //   const proposal: DemocracyProposalModel = {
+  //     id: proposalId,
+  //     hash: proposalId.toString(),
+  //     block_id: extrinsic.block_id,
+  //     event_id: '',
+  //     extrinsic_id: extrinsic.id,
+  //     event: 'Proposed',
+  //     data: { balance: balance, signer: extrinsic.signer, proposal: extrinsic.args[0] },
+  //   }
 
-    await governanceRepository.democracy.proposal.save(proposal)
-    return
-  }
+  //   await governanceRepository.democracy.proposal.save(proposal)
+  //   return
+  // }
 
   const proposal: DemocracyProposalModel = {
     id: proposalId,
