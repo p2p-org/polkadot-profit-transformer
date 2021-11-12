@@ -22,8 +22,8 @@ export const environment: Environment = {
   SUBSTRATE_URI: process.env.SUBSTRATE_URI,
   REST_API_PORT: Number(process.env.REST_API_PORT) || 3000,
   REST_API_BASIC_AUTH_PASSWORD: process.env.REST_API_BASIC_AUTH_PASSWORD ?? 'password',
-  PRELOAD: process.env.PRELOAD ? Boolean(process.env.PRELOAD) : false,
+  PRELOAD: process.env.PRELOAD ? process.env.PRELOAD === 'true' : false,
   START_BLOCK_ID: process.env.START_BLOCK_ID ? Number(process.env.START_BLOCK_ID) : -1, // -1 = continue from last preloaded block from db
-  SUBSCRIBE: process.env.SUBSCRIBE ? Boolean(process.env.SUBSCRIBE) : false,
+  SUBSCRIBE: process.env.SUBSCRIBE ? process.env.SUBSCRIBE === 'true' : false,
   CONCURRENCY: process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 5,
 }
