@@ -86,14 +86,30 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
       extrinsics.map(async (extrinsic, index) => {
         const isSuccess = await isExtrinsicSuccess(index, events, polkadotRepository)
         const initialCall = extrinsic.registry.createType('Call', extrinsic.method)
-        const extractedExtrinsics = recursiveExtrinsicDecoder({ call: initialCall, indexes: [], index })
+
         const referencedEventsIds = events
           .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
           .map((_, evIndex) => `${blockNumber}-${evIndex}`)
-        const extrinsicModels = extractedExtrinsics.map(({ call, indexes, index }) =>
-          createExtrinsicModelFromCall(call, isSuccess, extrinsic, [...indexes, index].join('-'), referencedEventsIds),
-        )
-        return extrinsicModels
+
+        if (isSuccess) {
+          const extractedExtrinsics = recursiveExtrinsicDecoder({ call: initialCall, indexes: [], index })
+
+          const extrinsicModels = extractedExtrinsics.map(({ call, indexes, index }) =>
+            createExtrinsicModelFromCall(call, isSuccess, extrinsic, [...indexes, index].join('-'), referencedEventsIds),
+          )
+          return extrinsicModels
+        } else {
+          // failed extrinsics sometimes have currupted inner call data, skip extraction and processing of extrinscics calls
+          const failedExtrinsicModel = createExtrinsicModelFromCall(
+            initialCall,
+            isSuccess,
+            extrinsic,
+            index.toString(),
+            referencedEventsIds,
+          )
+
+          return [failedExtrinsicModel]
+        }
       }),
     )
 
