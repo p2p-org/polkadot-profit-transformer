@@ -14,6 +14,7 @@ export const isExtrinsicSuccess = async (
   const isSuccess = async (events: EventRecord[]): Promise<boolean> => {
     for (const event of events) {
       const success = await polkadotRepository.isExtrinsicSuccess(event)
+
       if (success) return true
     }
     return false

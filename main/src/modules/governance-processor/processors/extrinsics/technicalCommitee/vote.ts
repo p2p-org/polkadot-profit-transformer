@@ -16,7 +16,10 @@ export const processTechnicalCommiteeVoteExtrinsic = async (
   logger.info({ extrinsic }, 'processTechnicalCommiteeVoteExtrinsic')
 
   const techCommVotedEvent = findEvent(events, 'technicalCommittee', 'Voted')
-  if (!techCommVotedEvent) throw Error('no technicalcommittee voted event for enrty ' + extrinsic.id)
+  if (!techCommVotedEvent) {
+    logger.error('no technicalcommittee voted event for enrty ' + extrinsic.id)
+    return
+  }
 
   const proposalHash = <Hash>extrinsic.args[0]
   const proposalIndex = <Compact<ProposalIndex>>extrinsic.args[1]
