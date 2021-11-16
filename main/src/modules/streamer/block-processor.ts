@@ -125,7 +125,7 @@ export const BlockProcessor = (deps: {
         console.log(blockId + ': extrinsics send to eventBus')
 
         for (const event of processedEvents) {
-          if (event.section === 'staking' && event.method === 'EraPayout') {
+          if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
             logger.info('BlockProcessor eraPayout detected')
             eventBus.dispatch<EventModel>('eraPayout', event)
           }
