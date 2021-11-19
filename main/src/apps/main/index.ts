@@ -84,38 +84,28 @@ const main = async () => {
   eventBus.register('governanceExtrinsic', governanceProcessor.processExtrinsicsHandler)
   eventBus.register('governanceEvent', governanceProcessor.processEventHandler)
 
-  const payoutBlocks = [
-    6884145, 6898544, 6912942, 6927342, 6941739, 6956133, 6970532, 6984928, 6999325, 7013721, 7028114, 7042480, 7056870, 7071265,
-    7085662, 7100054, 7114450, 7128842, 7143239, 7157623, 7171975, 7186191, 7199833, 7214114, 7228486, 7242865, 7257258, 7271652,
-    7286044, 7300435, 7314828, 7329220, 7343577, 7357911, 7372278, 7386590, 7400882, 7415209, 7429527, 7443838, 7458128, 7472412,
-    7486657, 7500907, 7515226, 7529522, 7543858, 7558187, 7572349, 7586592, 7600846, 7615036, 7629211, 7643373, 7657558, 7671952,
-    7686343, 7700734, 7715129, 7729523,
-  ]
+  const concurrency = environment.CONCURRENCY // how many blocks processed in parallel by BlocksPreloaders
+  const blocksPreloader = BlocksPreloader({
+    streamerRepository,
+    blockProcessor,
+    polkadotRepository: await polkadotRepository(),
+    logger,
+    concurrency,
+  })
 
-  // let index = 0
-  // while (index < targetEvents.length) {
-  //   const blockId = targetEvents[index].block_id
+  // express rest api
+  const restApi = RestApi({ environment, blocksPreloader, blockProcessor })
+  restApi.init()
 
-  //   console.log(index, ': process block ', blockId)
-
-  //   try {
-  //     /*  if (blockId > 6661795)  */ await stakingProcessor.addToQueue(targetEvents[index])
-  //   } catch (error: any) {
-  //     console.log('Error in debug loop: ' + error.message)
-  //     throw error
-  //   }
-
-  //   index++
-  // }
-
-  let index = 0
-
-  while (index < payoutBlocks.length) {
-    const blockId = payoutBlocks[index]
-    console.log(index, blockId)
-    blockProcessor(blockId)
-    index++
+  // blocksPreloader fills up database from block 0 to current block
+  if (environment.PRELOAD) {
+    const startBlockId = environment.START_BLOCK_ID
+    await blocksPreloader.start(startBlockId)
   }
+
+  if (environment.SUBSCRIBE)
+    // now we have all previous blocks pprocessed and we are listening to the finalized block events
+    (await polkadotRepository()).subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
 main().catch((error) => console.log('Error in igniter main function', error))
