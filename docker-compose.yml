@@ -10,8 +10,6 @@ services:
     build: ./main
     restart: always
     ports:
-      - 3000:3000
-    depends_on:
-      - db
+      - 3003:3001
     env_file:
       - docker/env/.moonbeam.env
