@@ -81,7 +81,7 @@ export const IdentityProcessor = (args: {
     const getValueOfField = (identityRaw: Registration, field: string) => {
       console.log({ display: identityRaw.info.toHuman() })
       //@ts-ignore
-      return identityRaw.info.get(field)?.toHuman()['Raw']
+      return identityRaw.info.get(field)?.toHuman()['Raw'] || ''
     }
 
     return await saveEnrichment({
