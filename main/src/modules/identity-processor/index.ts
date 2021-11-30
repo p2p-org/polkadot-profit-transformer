@@ -95,6 +95,48 @@ export const IdentityProcessor = (args: {
     })
   }
 
+  const updateAccountIdentityByAccountId = async (accountId: string): Promise<void> => {
+    console.log('updateAccountIdentity by accountId', accountId)
+
+    try {
+      const identityRaw: Registration | undefined = await polkadotRepository.getIdentity(accountId)
+      console.log({ identityRaw })
+
+      if (!identityRaw) {
+        return saveEnrichment({
+          account_id: accountId,
+          display: '',
+          legal: '',
+          web: '',
+          riot: '',
+          email: '',
+          twitter: '',
+        })
+      }
+
+      console.log({ identityRaw })
+
+      const getValueOfField = (identityRaw: Registration, field: string) => {
+        console.log({ display: identityRaw.info.toHuman() })
+        //@ts-ignore
+        return identityRaw.info.get(field)?.toHuman()['Raw'] || ''
+      }
+
+      return saveEnrichment({
+        account_id: accountId,
+        display: getValueOfField(identityRaw, 'display'),
+        legal: getValueOfField(identityRaw, 'legal'),
+        web: getValueOfField(identityRaw, 'web'),
+        riot: getValueOfField(identityRaw, 'riot'),
+        email: getValueOfField(identityRaw, 'email'),
+        twitter: getValueOfField(identityRaw, 'twitter'),
+      })
+    } catch (error) {
+      console.log('error for account_id:', accountId)
+      throw error
+    }
+  }
+
   const updateSubAccounts = async (extrinsic: ExtrinsicModel): Promise<void> => {
     console.log('updateSubAccounts extrinsic', extrinsic)
 
@@ -212,5 +254,6 @@ export const IdentityProcessor = (args: {
     processSubIdentityExtrinsics: async (extrinsic: ExtrinsicModel): Promise<void> => {
       await updateSubAccounts(extrinsic)
     },
+    updateAccountIdentityByAccountId,
   }
 }
