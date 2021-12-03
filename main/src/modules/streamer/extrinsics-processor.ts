@@ -69,8 +69,12 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
 
       if (entry.call.section === 'multisig' && entry.call.method === 'asMulti') {
         console.log('multisig')
-        const innerCall = entry.call.registry.createType('Call', entry.call.args[3])
-        return [entry, ...recursiveExtrinsicDecoder({ call: innerCall, indexes: currentIndexes, index: 0 })]
+        try {
+          const innerCall = entry.call.registry.createType('Call', entry.call.args[3])
+          return [entry, ...recursiveExtrinsicDecoder({ call: innerCall, indexes: currentIndexes, index: 0 })]
+        } catch (error) {
+          return [entry]
+        }
       }
 
       if (entry.call.section === 'proxy' && entry.call.method === 'proxy') {
