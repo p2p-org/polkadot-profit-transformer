@@ -24,8 +24,9 @@ export const BlockProcessor = (deps: {
   extrinsicsProcessor: ExtrinsicsProcessor
   eventBus: EventBus
   streamerRepository: StreamerRepository
+  chainName: string
 }) => {
-  const { polkadotRepository, eventsProcessor, logger, extrinsicsProcessor, streamerRepository, eventBus } = deps
+  const { polkadotRepository, eventsProcessor, logger, extrinsicsProcessor, streamerRepository, eventBus, chainName } = deps
   logger.info('BlockProcessor initialized')
 
   return async (blockId: number) => {
@@ -42,7 +43,7 @@ export const BlockProcessor = (deps: {
         console.log(blockId + ': getInfoToProcessBlock done')
 
         const current_era = parseInt(blockCurrentEra.toString(), 10)
-        const eraId = activeEra.isNone ? current_era : Number(activeEra.unwrap().get('index'))
+        const eraId = activeEra || current_era
 
         const extrinsicsData: ExtrinsicsProcessorInput = {
           eraId,
@@ -142,7 +143,9 @@ export const BlockProcessor = (deps: {
             }
           }
 
+          // we skip kusama governance events and process only last year events, because of the hardness of the old api types decoding.
           if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'.includes(event.section)]) {
+            if (chainName === 'Kusama' && blockId < 4655884) return // here is Kusama block near the end of the 2020
             eventBus.dispatch<EventModel>('governanceEvent', event)
           }
         }

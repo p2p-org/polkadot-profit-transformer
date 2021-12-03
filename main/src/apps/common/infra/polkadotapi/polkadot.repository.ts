@@ -151,20 +151,29 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       blockHash: BlockHash,
       blockId: number,
     ): Promise<
-      [SessionIndex, Option<EraIndex>, Option<ActiveEraInfo>, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
+      [SessionIndex, Option<EraIndex>, number | null, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
     > {
       try {
         const historicalApi = await polkadotApi.at(blockHash)
 
         console.log(blockId + ': getInfoToProcessBlock historicalApi done')
 
-        const [sessionId, blockCurrentEra, activeEra, blockTime, events] = await historicalApi.queryMulti([
+        const getActiveEra = async () => {
+          if (!historicalApi.query.staking.activeEra) return null
+          const activeEra = await historicalApi.query.staking.activeEra()
+          if (activeEra.isNone || activeEra.isEmpty) return null
+          const eraId = activeEra.unwrap().get('index')
+          return eraId ? +eraId : null
+        }
+
+        const [sessionId, blockCurrentEra, blockTime, events] = await historicalApi.queryMulti([
           [historicalApi.query.session.currentIndex],
           [historicalApi.query.staking.currentEra],
-          [historicalApi.query.staking.activeEra],
           [historicalApi.query.timestamp.now],
           [historicalApi.query.system.events, blockHash],
         ])
+
+        const activeEra = await getActiveEra()
 
         console.log(blockId + ': getInfoToProcessBlock sessionId done')
 

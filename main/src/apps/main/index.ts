@@ -67,6 +67,7 @@ const main = async () => {
     logger,
     eventBus,
     streamerRepository,
+    chainName,
   })
   const stakingProcessor = StakingProcessor({
     polkadotRepository: await polkadotRepository(),
