@@ -3,7 +3,7 @@ import { StreamerRepository } from '../../apps/common/infra/postgresql/streamer.
 import { ExtrinsicsProcessor, ExtrinsicsProcessorInput } from './extrinsics-processor'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
-import { EventBus } from 'utils/event-bus/event-bus'
+import { EventBus, EventName } from '@modules/event-bus/event-bus'
 import { EventsProcessor } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
@@ -101,10 +101,10 @@ export const BlockProcessor = (deps: {
 
           if (extrinsic.section === 'identity') {
             if (['clearIdentity', 'killIdentity', 'setFields', 'setIdentity'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>('identityExtrinsic', extrinsic)
+              eventBus.dispatch<ExtrinsicModel>(EventName.identityExtrinsic, extrinsic)
             }
             if (['addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>('subIdentityExtrinsic', extrinsic)
+              eventBus.dispatch<ExtrinsicModel>(EventName.subIdentityExtrinsic, extrinsic)
             }
           }
 
@@ -119,7 +119,7 @@ export const BlockProcessor = (deps: {
               events: extrinsicEvents,
               block: block,
             }
-            eventBus.dispatch<ExtrincicProcessorInput>('governanceExtrinsic', extrinsicEntry)
+            eventBus.dispatch<ExtrincicProcessorInput>(EventName.governanceExtrinsic, extrinsicEntry)
           }
         }
 
@@ -128,25 +128,25 @@ export const BlockProcessor = (deps: {
         for (const event of processedEvents) {
           if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
             logger.info('BlockProcessor eraPayout detected')
-            eventBus.dispatch<EventModel>('eraPayout', event)
+            eventBus.dispatch<EventModel>(EventName.eraPayout, event)
           }
 
           if (event.section === 'system') {
             if (['NewAccount', 'KilledAccount'].includes(event.method)) {
-              eventBus.dispatch<EventModel>('identityEvent', event)
+              eventBus.dispatch<EventModel>(EventName.identityEvent, event)
             }
           }
 
           if (event.section === 'identity') {
             if (['JudgementRequested', 'JudgementGiven', 'JudgementUnrequested'].includes(event.method)) {
-              eventBus.dispatch<EventModel>('identityEvent', event)
+              eventBus.dispatch<EventModel>(EventName.identityEvent, event)
             }
           }
 
           // we skip kusama governance events and process only last year events, because of the hardness of the old api types decoding.
           if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'.includes(event.section)]) {
             if (chainName === 'Kusama' && blockId < 4655884) return // here is Kusama block near the end of the 2020
-            eventBus.dispatch<EventModel>('governanceEvent', event)
+            eventBus.dispatch<EventModel>(EventName.governanceEvent, event)
           }
         }
 

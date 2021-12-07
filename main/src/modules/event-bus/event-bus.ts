@@ -1,4 +1,4 @@
-import { Logger } from './../../apps/common/infra/logger/logger'
+import { Logger } from '../../apps/common/infra/logger/logger'
 /* eslint-disable @typescript-eslint/ban-types */
 export interface Registry {
   unregister: () => void
@@ -14,6 +14,15 @@ export interface Subscriber {
 
 export type EventBus = ReturnType<typeof EventBus>
 
+export enum EventName {
+  eraPayout = 'eraPayout',
+  identityEvent = 'identityEvent',
+  identityExtrinsic = 'identityExtrinsic',
+  subIdentityExtrinsic = 'subIdentityExtrinsic',
+  governanceExtrinsic = 'governanceExtrinsic',
+  governanceEvent = 'governanceEvent',
+}
+
 export const EventBus = (deps: { logger: Logger }) => {
   const { logger } = deps
   let nextId = 0
@@ -22,7 +31,7 @@ export const EventBus = (deps: { logger: Logger }) => {
     return nextId++
   }
   return {
-    dispatch<T>(event: string, arg?: T): void {
+    dispatch<T>(event: EventName, arg?: T): void {
       const subscriber = subscribers[event]
 
       if (subscriber === undefined) {
@@ -32,7 +41,7 @@ export const EventBus = (deps: { logger: Logger }) => {
       Object.keys(subscriber).forEach((key) => subscriber[key](<T>arg))
     },
 
-    register(event: string, callback: Function): Registry {
+    register(event: EventName, callback: Function): Registry {
       const id = getNextId()
       if (!subscribers[event]) subscribers[event] = {}
 

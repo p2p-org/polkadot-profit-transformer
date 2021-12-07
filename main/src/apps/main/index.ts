@@ -9,7 +9,7 @@ import { BlockProcessor } from '../../modules/streamer/block-processor'
 import { environment } from './environment'
 import { polkadotFactory } from '../common/infra/polkadotapi/index'
 import { LoggerFactory as PinoLogger } from '../common/infra/logger/logger'
-import { EventBus } from 'utils/event-bus/event-bus'
+import { EventBus, EventName } from '@modules/event-bus/event-bus'
 
 import { PolkadotRepository } from './../common/infra/polkadotapi/polkadot.repository'
 import { IdentityRepository } from './../common/infra/postgresql/identity.repository'
@@ -78,12 +78,12 @@ const main = async () => {
   const identityProcessor = IdentityProcessor({ polkadotRepository: await polkadotRepository(), identityRepository, logger })
 
   // todo fix generics to register and dispatch in eventBus
-  eventBus.register('eraPayout', stakingProcessor.addToQueue)
-  eventBus.register('identityEvent', identityProcessor.processEvent)
-  eventBus.register('identityExtrinsic', identityProcessor.processIdentityExtrinsics)
-  eventBus.register('subIdentityExtrinsic', identityProcessor.processSubIdentityExtrinsics)
-  eventBus.register('governanceExtrinsic', governanceProcessor.processExtrinsicsHandler)
-  eventBus.register('governanceEvent', governanceProcessor.processEventHandler)
+  eventBus.register(EventName.eraPayout, stakingProcessor.addToQueue)
+  eventBus.register(EventName.identityEvent, identityProcessor.processEvent)
+  eventBus.register(EventName.identityExtrinsic, identityProcessor.processIdentityExtrinsics)
+  eventBus.register(EventName.subIdentityExtrinsic, identityProcessor.processSubIdentityExtrinsics)
+  eventBus.register(EventName.governanceExtrinsic, governanceProcessor.processExtrinsicsHandler)
+  eventBus.register(EventName.governanceEvent, governanceProcessor.processEventHandler)
 
   const concurrency = environment.CONCURRENCY // how many blocks processed in parallel by BlocksPreloaders
   const blocksPreloader = BlocksPreloader({
