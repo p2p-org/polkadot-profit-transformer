@@ -253,6 +253,10 @@ It is used as entrypoint SQL when Postgres started by ./db/Dockerfile from ./doc
   - **Identity Processor**
   - **Governance Processor**
 
+## Mbelt structure diagram
+
+![Mbelt structure diagram](./docs/mbelt.png)
+
 ## Additional Processors
 
 Processors make additional data processing and enrichments.
@@ -261,9 +265,9 @@ We've created EventBus and send events with data in `./modules/streamer/block-pr
 Processors subscribe to the EventBus events in the main app igniter `./apps/main/index.ts`
 
 ```ts
-eventBus.register('eraPayout', stakingProcessor.addToQueue);
+eventBus.register('eraPayout', stakingProcessor.addToQueue)
 
-eventBus.register('identityEvent', identityProcessor.processEvent);
+eventBus.register('identityEvent', identityProcessor.processEvent)
 // etc
 ```
 
@@ -296,6 +300,24 @@ This processor listen to the governance extrinsics and events and save data to t
 To reduce tables amount, we store this data slighlty denormalized, e.g. for proposals we store events such as `proposed`, `approved`, `executed` as well as `Votes` records from 'vote' extrinsics.
 
 It is possible to extract all data from this storage by the SQL queries and/or GraphQL queries.
+
+# How to add additional processor
+
+To add an additional processor:
+
+- create new tables in DB to store processed data
+- add Knex models to the [models folder](./main/src/apps/common/infra/postgresql/models)
+- add DB repository to the [postgres repos folder](./main/src/apps/common/infra/postgresql/)
+- create processor folder in the [modules folder](./main/src/modules)
+- add processor files similar to the other processors
+- initialize repository and processor in [app ignitor](./main/src/apps/main/index.ts)
+- add event name to the EventName enum in [EventBus](./main/src/modules/event-bus/event-bus.ts#L17)
+- dispatch event with necessary data via eventBus.dispatch
+  - do it in Block Processor with event or extrinsic call, selected by section/method
+  - you can find existing dispatches [here](./main/src/modules/streamer/block-processor.ts#L104)
+- subscribe your processor hanlders on the target events in [app ignitor](./main/src/apps/main/index.ts#L81)
+
+**We've added [README file](./main/src/modules/identity-processor/README.md) to the [identity processor](./main/src/modules/identity-processor) with the detailed explanation of how this processor works**
 
 # How to add new chain to the platform
 

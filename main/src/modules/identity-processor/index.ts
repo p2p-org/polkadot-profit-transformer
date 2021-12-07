@@ -13,6 +13,7 @@ export enum JudgementStatus {
 
 export type IdentityProcessor = ReturnType<typeof IdentityProcessor>
 
+// IdentityProcessor conctructor with injected dependencies (repos, logger)
 export const IdentityProcessor = (args: {
   polkadotRepository: PolkadotRepository
   identityRepository: IdentityRepository
@@ -220,6 +221,7 @@ export const IdentityProcessor = (args: {
     }
   }
 
+  // here we return handlers, to register to the eventBus events
   return {
     processEvent: async (event: EventModel) => {
       switch (event.method) {
