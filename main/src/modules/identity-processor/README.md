@@ -30,6 +30,6 @@ We initialize Identity Processor from constructor in [main app ignitor](/main/sr
 
 We've defined `identityEvent` and `identityExtrinsic` events in [EventName enum](/main/src/modules/event-bus/event-bus.ts#L19)
 
-We dispatch related events in EventBus, looking for targeted method and sections of the [events](/main/modules/streamer/block-processor.ts#L140) and [extinsics](/main/modules/streamer/block-processor.ts#L102)
+We dispatch related events in EventBus, looking for targeted method and sections of the [events](/main/src/modules/streamer/block-processor.ts#L140) and [extrinsics](/main/src/modules/streamer/block-processor.ts#L102)
 
 Finally we register Identity Processor handlers to this events [here](/main/src/apps/main/index.ts#L82)
