@@ -212,18 +212,6 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       return polkadotApi.query.staking.currentEra()
     },
 
-    async getInfoToCheckHistoryDepth(
-      blockHash: TBlockHash,
-    ): Promise<[SessionIndex, Option<ActiveEraInfo>, HeaderExtended | undefined]> {
-      const [sessionId, activeEra, extHeader] = await Promise.all([
-        polkadotApi.query.session.currentIndex.at(blockHash),
-        polkadotApi.query.staking.activeEra.at(blockHash),
-        polkadotApi.derive.chain.getHeader(blockHash),
-      ])
-
-      return [sessionId, activeEra, extHeader]
-    },
-
     async getIdentity(accountId: string): Promise<Registration | undefined> {
       const identity = await polkadotApi.query.identity.identityOf(accountId)
       if (identity.isEmpty || identity.isNone) return undefined
