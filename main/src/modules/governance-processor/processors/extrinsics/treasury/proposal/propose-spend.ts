@@ -16,14 +16,14 @@ export const processTreasuryProposeSpendExtrinsic = async (
   logger.info({ extrinsic }, 'processTreasuryProposeSpendExtrinsic')
 
   const treasuryProposeSpendEvent = findEvent(events, 'treasury', 'Proposed')
-  if (!treasuryProposeSpendEvent) throw Error('no treasury propose event for enrty ' + extrinsic.id)
 
-  const proposalIndex = <ProposalIndex>treasuryProposeSpendEvent.event.data[0]
+  //todo: for mulisig extrinsic 3409395-2 no event found, set proposalIndex to -1
+  const proposalIndex = treasuryProposeSpendEvent ? (<ProposalIndex>treasuryProposeSpendEvent.event.data[0]).toNumber() : -1
   const value = <Compact<u128>>extrinsic.args[0]
   const beneficiary = <MultiAddress>extrinsic.args[1]
 
   const proposalModel: TreasuryProposalModel = {
-    id: proposalIndex.toNumber(),
+    id: proposalIndex,
     block_id: extrinsic.block_id,
     event: 'Proposed',
     data: {
