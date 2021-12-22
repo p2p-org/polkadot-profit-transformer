@@ -6,6 +6,7 @@ import { findEvent } from '../../../utils/findEvent'
 import { ExtrincicProcessorInput } from '../..'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { PreimageModel } from 'apps/common/infra/postgresql/models/preimage.model'
+import '@polkadot/api-augment'
 
 export const processDemocracyNotePreimageExtrinsic = async (
   args: ExtrincicProcessorInput,
@@ -40,7 +41,7 @@ export const processDemocracyNotePreimageExtrinsic = async (
 
   if (preimage.isAvailable) {
     // console.log('isAvailable')
-    call = await preimage.registry.createType('Call', preimage.asAvailable.data)
+    call = await polkadotApi.createType('Call', preimage.asAvailable.data)
   } else {
     // console.log('not available')
     // todo : old image decode
