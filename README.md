@@ -170,7 +170,7 @@ and protected by password `myadminsecretkey` as HASURA_GRAPHQL_ADMIN_SECRET in .
 
 During the sync and after the sync ended, you can use Redash to work with data.
 
-Open your browser [https://localhost:5000](https://localhost:5000&), then login to Redash:
+Open your browser [https://localhost:5000](https://localhost:5000), then login to Redash:
 
 Login: admin@example.org
 
