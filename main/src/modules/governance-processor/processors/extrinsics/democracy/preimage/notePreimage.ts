@@ -40,8 +40,12 @@ export const processDemocracyNotePreimageExtrinsic = async (
   let call: Call | null
 
   if (preimage.isAvailable) {
-    // console.log('isAvailable')
-    call = await polkadotApi.createType('Call', preimage.asAvailable.data)
+    // todo fix kusama block # 5053432 preimage decoding issue
+    try {
+      call = await polkadotApi.registry.createType('Call', preimage.asAvailable.data)
+    } catch (error) {
+      call = null
+    }
   } else {
     // console.log('not available')
     // todo : old image decode
