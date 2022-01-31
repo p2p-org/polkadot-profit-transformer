@@ -148,7 +148,7 @@ export const BlockProcessor = (deps: {
         return
       } catch (error: any) {
         logger.error('BlockProcessor error: ', error.message)
-        console.error('BlockProcessor error: ', error.message)
+        console.error('blockId' + blockId + ' BlockProcessor error: ', error.message)
         if (error.message === 'Unable to retrieve header and parent from supplied hash') return
         await sleep(2000)
       }
