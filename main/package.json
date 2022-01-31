@@ -21,7 +21,7 @@
     "test": "npx jest --maxWorkers=1"
   },
   "dependencies": {
-    "@polkadot/api": "^6.7.2",
+    "@polkadot/api": "^6.9.1",
     "@types/pino": "^6.3.11",
     "apollo-server": "^3.3.0",
     "axios": "^0.21.4",
@@ -30,7 +30,7 @@
     "express-basic-auth": "^1.2.0",
     "fastq": "^1.13.0",
     "knex": "^0.95.10",
-    "moonbeam-types-bundle": "^2.0.1",
+    "moonbeam-types-bundle": "^2.0.3",
     "pg": "^8.7.1",
     "pino": "^6.13.1",
     "pino-pretty": "^4.5.0",
@@ -44,7 +44,7 @@
     "@babel/plugin-proposal-decorators": "^7.14.2",
     "@babel/preset-env": "^7.14.2",
     "@babel/preset-typescript": "^7.13.0",
-    "@polkadot/types": "^6.7.2",
+    "@polkadot/types": "^6.9.1",
     "@typed-code/schemats": "^4.3.0",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.13",
