@@ -76,8 +76,8 @@ const main = async () => {
   eventBus.register('identityEvent', identityProcessor.processEvent)
   eventBus.register('identityExtrinsic', identityProcessor.processIdentityExtrinsics)
   eventBus.register('subIdentityExtrinsic', identityProcessor.processSubIdentityExtrinsics)
-  eventBus.register('governanceExtrinsic', governanceProcessor.processExtrinsicsHandler)
-  eventBus.register('governanceEvent', governanceProcessor.processEventHandler)
+  // eventBus.register('governanceExtrinsic', governanceProcessor.processExtrinsicsHandler)
+  // eventBus.register('governanceEvent', governanceProcessor.processEventHandler)
 
   const concurrency = 10 // how many blocks processed in parallel by BlocksPreloaders
   const blocksPreloader = BlocksPreloader({ streamerRepository, blockProcessor, polkadotRepository, logger, concurrency })
