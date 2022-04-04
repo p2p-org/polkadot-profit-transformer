@@ -4,6 +4,10 @@ import basicAuth from 'express-basic-auth'
 import { BlockProcessor } from './../../../modules/streamer/block-processor'
 import { BlocksPreloader, PRELOADER_STATUS } from './../../../modules/streamer/blocks-preloader'
 import { Environment } from '../environment'
+import prom from 'prom-client'
+
+const collectDefaultMetrics = prom.collectDefaultMetrics
+collectDefaultMetrics({ prefix: 'forethought' })
 
 export type RestApi = ReturnType<typeof RestApi>
 
@@ -20,6 +24,11 @@ export const RestApi = (deps: { environment: Environment; blocksPreloader: Block
           users: { admin: environment.REST_API_BASIC_AUTH_PASSWORD },
         }),
       )
+
+      app.get('/metrics', function (req, res) {
+        res.set('Content-Type', prom.register.contentType)
+        res.end(prom.register.metrics())
+      })
 
       app.get('/health', (req, res) => {
         res.json({ status: 'live' })
