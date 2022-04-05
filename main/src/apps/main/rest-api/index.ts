@@ -18,16 +18,18 @@ export const RestApi = (deps: { environment: Environment; blocksPreloader: Block
   return {
     init: async () => {
       const app = express()
-      app.use(
-        basicAuth({
-          challenge: true,
-          users: { admin: environment.REST_API_BASIC_AUTH_PASSWORD },
-        }),
-      )
+      if (environment.BASIC_AUTH) {
+        app.use(
+          basicAuth({
+            challenge: true,
+            users: { admin: environment.REST_API_BASIC_AUTH_PASSWORD },
+          }),
+        )
+      }
 
-      app.get('/metrics', function (req, res) {
+      app.get('/metrics', async function (req, res) {
         res.set('Content-Type', prom.register.contentType)
-        res.end(prom.register.metrics())
+        res.end(await prom.register.metrics())
       })
 
       app.get('/health', (req, res) => {
