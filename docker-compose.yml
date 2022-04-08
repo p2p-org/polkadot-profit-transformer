@@ -24,8 +24,6 @@ services:
     depends_on:
       - 'db'
     restart: always
-    depends_on:
-      - db
     env_file:
       - docker/env/.hasura.env
     volumes:
