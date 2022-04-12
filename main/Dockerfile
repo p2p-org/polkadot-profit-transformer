@@ -7,8 +7,8 @@ COPY ./tsconfig.json ./
 COPY ./tsconfig-paths-bootstrap.js ./
 COPY ./src ./src
 
-RUN apk add --no-cache --virtual .build-deps make gcc g++ python \
-  RUN npm ci
+RUN apk add --no-cache --virtual .build-deps make gcc g++ python 
+RUN npm ci
 RUN npm run build
 RUN npm prune --production
 RUN apk del .build-deps
