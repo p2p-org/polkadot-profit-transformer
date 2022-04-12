@@ -28,6 +28,8 @@ import { NetworkModel } from '@apps/common/infra/postgresql/models/config.model'
 const main = async () => {
   const logger = PinoLogger({ logLevel: environment.LOG_LEVEL! })
 
+  logger.info('Main app started')
+
   const pg = knex({
     client: 'pg',
     debug: process.env.LOG_LEVEL === 'debug',
@@ -109,4 +111,4 @@ const main = async () => {
     (await polkadotRepository()).subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
-main().catch((error) => console.log('Error in igniter main function', error))
+main().catch((error) => console.log('Error in igniter main function', error.message))
