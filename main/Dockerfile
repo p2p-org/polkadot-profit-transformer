@@ -1,4 +1,4 @@
-FROM node:14-alpine as building
+FROM --platform=linux/amd64 node:14-alpine as building
 
 WORKDIR /usr/src/app
 
@@ -7,12 +7,13 @@ COPY ./tsconfig.json ./
 COPY ./tsconfig-paths-bootstrap.js ./
 COPY ./src ./src
 
-RUN apk add python make gcc g++
+RUN apk add --no-cache --virtual .build-deps python3 make gcc g++
 RUN npm ci
 RUN npm run build
 RUN npm prune --production
+RUN apk del .build-deps
 
-FROM node:14-alpine
+FROM --platform=linux/amd64 node:14-alpine
 
 WORKDIR /usr/src/app
 
