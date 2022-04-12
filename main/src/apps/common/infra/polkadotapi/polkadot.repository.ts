@@ -1,5 +1,8 @@
 import { Logger } from './../logger/logger'
 import { ApiPromise } from '@polkadot/api'
+import '@moonbeam-network/api-augment'
+import '@moonbeam-network/api-augment/moonriver'
+
 import {
   ActiveEraInfo,
   BlockHash,
@@ -150,20 +153,19 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
     async getInfoToProcessBlock(
       blockHash: BlockHash,
       blockId: number,
-    ): Promise<
-      [SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
-    > {
+    ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
       const historicalApi = await polkadotApi.at(blockHash)
 
       console.log(blockId + ': getInfoToProcessBlock historicalApi done')
-      const [[ blockTime, events], signedBlock, extHeader] = await Promise.all([
-        historicalApi.queryMulti([
-          historicalApi.query.timestamp.now,
-          [historicalApi.query.system.events, blockHash],
-        ]) as Promise<[Moment, Vec<EventRecord>]>,
+      const [[blockTime, events], signedBlock, extHeader] = await Promise.all([
+        historicalApi.queryMulti([historicalApi.query.timestamp.now, [historicalApi.query.system.events, blockHash]]) as Promise<
+          [Moment, Vec<EventRecord>]
+        >,
         polkadotApi.rpc.chain.getBlock(blockHash),
         polkadotApi.derive.chain.getHeader(blockHash),
       ])
+
+      polkadotApi.query
 
       // const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
       //   polkadotApi.query.session.currentIndex.at(blockHash),
@@ -177,7 +179,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
 
       console.log(blockId + ': getInfoToProcessBlock signedBlock done')
 
-      return [ signedBlock, extHeader, blockTime, events]
+      return [signedBlock, extHeader, blockTime, events]
     },
 
     getCurrentRawEra(blockHash?: TBlockHash): Promise<Option<EraIndex>> {
