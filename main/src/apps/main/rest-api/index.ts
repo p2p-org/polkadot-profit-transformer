@@ -4,6 +4,7 @@ import basicAuth from 'express-basic-auth'
 import { BlockProcessor } from './../../../modules/streamer/block-processor'
 import { BlocksPreloader, PRELOADER_STATUS } from './../../../modules/streamer/blocks-preloader'
 import { Environment } from '../environment'
+import prom from 'prom-client'
 
 export type RestApi = ReturnType<typeof RestApi>
 
@@ -14,12 +15,20 @@ export const RestApi = (deps: { environment: Environment; blocksPreloader: Block
   return {
     init: async () => {
       const app = express()
-      app.use(
-        basicAuth({
-          challenge: true,
-          users: { admin: environment.REST_API_BASIC_AUTH_PASSWORD },
-        }),
-      )
+
+      if (environment.BASIC_AUTH) {
+        app.use(
+          basicAuth({
+            challenge: true,
+            users: { admin: environment.REST_API_BASIC_AUTH_PASSWORD },
+          }),
+        )
+      }
+
+      app.get('/metrics', async function (req, res) {
+        res.set('Content-Type', prom.register.contentType)
+        res.end(await prom.register.metrics())
+      })
 
       app.get('/health', (req, res) => {
         res.json({ status: 'live' })

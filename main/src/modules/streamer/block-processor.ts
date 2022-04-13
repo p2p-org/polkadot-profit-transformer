@@ -8,6 +8,7 @@ import { EventsProcessor } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 import { ExtrincicProcessorInput } from '@modules/governance-processor/processors/extrinsics'
+import { counter } from '@apps/common/infra/prometheus'
 
 const sleep = async (ms: number): Promise<any> => {
   return new Promise((resolve) => {
@@ -145,6 +146,7 @@ export const BlockProcessor = (deps: {
 
         console.log(blockId + ': events send to eventBus')
 
+        counter.inc(1)
         return
       } catch (error: any) {
         logger.error('BlockProcessor error: ', error.message)

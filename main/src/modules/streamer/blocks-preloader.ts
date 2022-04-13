@@ -2,6 +2,7 @@ import { BlockProcessor } from './block-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { Logger } from '../../apps/common/infra/logger/logger'
 import { StreamerRepository } from '../../apps/common/infra/postgresql/streamer.repository'
+import { counter } from '@apps/common/infra/prometheus'
 
 export enum PRELOADER_STATUS {
   IN_PROGRESS = 'preloading in progress',
@@ -28,6 +29,7 @@ export const BlocksPreloader = (deps: {
       logger.info('last finalized block id: ' + lastBlockNumber)
 
       blockNumber = startBlockId
+      counter.inc(blockNumber)
 
       while (blockNumber <= lastBlockNumber) {
         logger.info('BlocksPreloader: get new loop of 10 blocks from blockNumber=' + blockNumber)
