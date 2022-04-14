@@ -1,6 +1,7 @@
 import { Logger } from './../logger/logger'
 import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
+
 import {
   ActiveEraInfo,
   BlockHash,
