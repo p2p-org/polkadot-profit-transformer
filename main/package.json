@@ -21,6 +21,7 @@
     "test": "npx jest --maxWorkers=1"
   },
   "dependencies": {
+    "@acala-network/api": "^4.1.1",
     "@polkadot/api": "^7.15.1",
     "@types/pino": "^6.3.11",
     "apollo-server": "^3.3.0",
