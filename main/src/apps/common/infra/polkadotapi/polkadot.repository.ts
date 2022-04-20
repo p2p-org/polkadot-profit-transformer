@@ -3,7 +3,6 @@ import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
 
 import {
-  ActiveEraInfo,
   BlockHash,
   EraIndex,
   EventIndex,
@@ -12,7 +11,6 @@ import {
   Header,
   Moment,
   Registration,
-  SessionIndex,
   SignedBlock,
   ValidatorPrefs,
 } from '@polkadot/types/interfaces'
@@ -152,30 +150,16 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
     async getInfoToProcessBlock(
       blockHash: BlockHash,
       blockId: number,
-    ): Promise<
-      [SessionIndex, Option<EraIndex>, number | null, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
-    > {
+    ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
       try {
         const historicalApi = await polkadotApi.at(blockHash)
 
         console.log(blockId + ': getInfoToProcessBlock historicalApi done')
 
-        const getActiveEra = async () => {
-          if (!historicalApi.query.staking.activeEra) return null
-          const activeEra = await historicalApi.query.staking.activeEra()
-          if (activeEra.isNone || activeEra.isEmpty) return null
-          const eraId = activeEra.unwrap().get('index')
-          return eraId ? +eraId : null
-        }
-
-        const [sessionId, blockCurrentEra, blockTime, events] = await historicalApi.queryMulti([
-          [historicalApi.query.session.currentIndex],
-          [historicalApi.query.staking.currentEra],
+        const [blockTime, events] = await historicalApi.queryMulti([
           [historicalApi.query.timestamp.now],
           [historicalApi.query.system.events, blockHash],
         ])
-
-        const activeEra = await getActiveEra()
 
         console.log(blockId + ': getInfoToProcessBlock sessionId done')
 
@@ -196,7 +180,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
 
         console.log(blockId + ': getInfoToProcessBlock signedBlock done')
 
-        return [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events]
+        return [signedBlock, extHeader, blockTime, events]
       } catch (error: any) {
         console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)
         throw error

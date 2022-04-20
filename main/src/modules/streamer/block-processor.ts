@@ -38,17 +38,13 @@ export const BlockProcessor = (deps: {
 
         logger.info('BlockProcessor: start processing block with id: ' + blockId)
 
-        const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] =
-          await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
+        const [signedBlock, extHeader, blockTime, events] = await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
 
         console.log(blockId + ': getInfoToProcessBlock done')
 
-        const current_era = parseInt(blockCurrentEra.toString(), 10)
-        const eraId = activeEra || current_era
-
         const extrinsicsData: ExtrinsicsProcessorInput = {
-          eraId,
-          sessionId: sessionId.toNumber(),
+          eraId: 0,
+          sessionId: 0,
           blockNumber: signedBlock.block.header.number,
           events,
           extrinsics: signedBlock.block.extrinsics,
@@ -56,7 +52,7 @@ export const BlockProcessor = (deps: {
         const extractedExtrinsics = await extrinsicsProcessor(extrinsicsData)
         console.log(blockId + ': extractedExtrinsics done')
 
-        const processedEvents = eventsProcessor(signedBlock.block.header.number.toNumber(), events, sessionId, eraId)
+        const processedEvents = eventsProcessor(signedBlock.block.header.number.toNumber(), events)
 
         console.log(blockId + ': processedEvents done')
 
@@ -66,9 +62,9 @@ export const BlockProcessor = (deps: {
           id: signedBlock.block.header.number.toNumber(),
           hash: signedBlock.block.header.hash.toHex(),
           author: extHeader?.author ? extHeader.author.toString() : '',
-          session_id: sessionId.toNumber(),
-          current_era,
-          era: eraId,
+          session_id: 0,
+          current_era: 0,
+          era: 0,
           state_root: signedBlock.block.header.stateRoot.toHex(),
           extrinsics_root: signedBlock.block.header.extrinsicsRoot.toHex(),
           parent_hash: signedBlock.block.header.parentHash.toHex(),
