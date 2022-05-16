@@ -7,6 +7,8 @@ import fastq from 'fastq'
 import { IGetValidatorsNominatorsResult, TBlockHash } from './staking.types'
 import { StreamerRepository } from 'apps/common/infra/postgresql/streamer.repository'
 import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { Vec } from '@polkadot/types'
+import { IndividualExposure } from '@polkadot/types/interfaces'
 
 export type StakingProcessor = ReturnType<typeof StakingProcessor>
 
@@ -43,23 +45,44 @@ export const StakingProcessor = (args: {
         validatorAccountId,
       )
 
-      const newNominators = await Promise.all(
-        others.map(async ({ who, value }) => {
-          return {
-            account_id: who.toString(),
-            value: value.toString(),
-            is_clipped: !!othersClipped.find((e: { who: { toString: () => any } }) => {
-              return e.who.toString() === who.toString()
-            }),
-            era: eraId,
-            validator: validatorAccountId,
-            ...(await polkadotRepository.getStakingPayee(blockHash, who.toString())),
-            block_time: new Date(blockTime),
-          }
-        }),
+      const sliceNominatorsToChunks = (arr: Vec<IndividualExposure>, chunkSize: number): Array<IndividualExposure[]> => {
+        const res = []
+        for (let i = 0; i < arr.length; i += chunkSize) {
+          const chunk = arr.slice(i, i + chunkSize)
+          res.push(chunk)
+        }
+        return res
+      }
+
+      const nominatorsChunked = sliceNominatorsToChunks(
+        others,
+        process.env.NOMINATORS_CUNCURRENCY ? Number(process.env.NOMINATORS_CUNCURRENCY) : 10,
       )
 
-      nominators.push(...newNominators)
+      logger.info(`validator ${validatorAccountId} has ${others.length} nominators`)
+
+      const newNominators = []
+
+      for (const chunk of nominatorsChunked) {
+        // this.logger.info({ chunk })
+        const chunkResult = await Promise.all(
+          chunk.map(async ({ who, value }) => {
+            return {
+              account_id: who.toString(),
+              value: value.toString(),
+              is_clipped: !!othersClipped.find((e: { who: { toString: () => any } }) => {
+                return e.who.toString() === who.toString()
+              }),
+              era: eraId,
+              validator: validatorAccountId,
+              ...(await polkadotRepository.getStakingPayee(blockHash, who.toString())),
+              block_time: new Date(blockTime),
+            }
+          }),
+        )
+
+        nominators.push(...chunkResult)
+      }
 
       validators.push({
         era: eraId,
@@ -98,7 +121,8 @@ export const StakingProcessor = (args: {
   const processEraPayout = async (event: EventModel, cb: (arg0: null) => void): Promise<void> => {
     const eraId = event.event.data[0]
 
-    console.log('processEraPayout for era: ', eraId)
+    const start = Date.now()
+    logger.info(`Process staking payout for era: ${eraId}`)
 
     const blockHash = await polkadotRepository.getBlockHashByHeight(event.block_id)
 
@@ -119,9 +143,11 @@ export const StakingProcessor = (args: {
         await stakingRepository.nominators.save(nominator)
       }
 
-      logger.info(`Era ${eraId.toString()} staking processing finished`)
-    } catch (error) {
-      logger.error({ error }, `error in processing era staking`)
+      const finish = Date.now()
+
+      logger.info(`Era ${eraId.toString()} staking processing finished in ${(finish - start) / 1000} seconds.`)
+    } catch (error: any) {
+      logger.error(`error in processing era staking`, error.message)
       throw error
     }
 
