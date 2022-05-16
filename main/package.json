@@ -4,7 +4,7 @@
   "description": "Stream polkadot blocks and events to Kafka",
   "main": "src/main.ts",
   "repository": "",
-  "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika",
+  "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika & Maxim Manylov",
   "license": "Apache 2.0",
   "private": false,
   "scripts": {
@@ -21,7 +21,7 @@
     "test": "npx jest --maxWorkers=1"
   },
   "dependencies": {
-    "@polkadot/api": "^7.15.1",
+    "@polkadot/api": "^8.2.1",
     "@types/pino": "^6.3.11",
     "apollo-server": "^3.3.0",
     "axios": "^0.21.4",
@@ -45,7 +45,7 @@
     "@babel/plugin-proposal-decorators": "^7.14.2",
     "@babel/preset-env": "^7.14.2",
     "@babel/preset-typescript": "^7.13.0",
-    "@polkadot/types": "^7.15.1",
+    "@polkadot/types": "^8.2.1",
     "@typed-code/schemats": "^4.3.0",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.13",
