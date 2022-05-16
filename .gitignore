@@ -9,3 +9,4 @@ docker/env/*.env
 docker/env/.hasura.env
 docker/env/.postgres.env
 docker/env/.streamer.env
+node_modules/
