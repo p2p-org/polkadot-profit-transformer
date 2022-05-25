@@ -1,26 +1,10 @@
 import { Logger } from './../logger/logger'
 import { ApiPromise } from '@polkadot/api'
-import '@moonbeam-network/api-augment'
-import '@moonbeam-network/api-augment/moonriver'
 
-import {
-  ActiveEraInfo,
-  BlockHash,
-  EraIndex,
-  EventIndex,
-  EventRecord,
-  Exposure,
-  Header,
-  Moment,
-  Registration,
-  SessionIndex,
-  SignedBlock,
-  ValidatorPrefs,
-} from '@polkadot/types/interfaces'
-import { Option, Vec } from '@polkadot/types'
+import { BlockHash, EventIndex, EventRecord, Header, Moment, SignedBlock, ValidatorPrefs } from '@polkadot/types/interfaces'
+import { Vec } from '@polkadot/types'
 import { HeaderExtended } from '@polkadot/api-derive/types'
-import { IBlockEraParams, TBlockHash } from '@modules/staking-processor/staking.types'
-import { EraModel } from '../postgresql/models/era.model'
+import { TBlockHash } from '@modules/staking-processor/staking.types'
 
 export type PolkadotRepository = ReturnType<typeof PolkadotRepository>
 
@@ -66,7 +50,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
     // },
     async getBlockTime(blockHash: TBlockHash): Promise<number> {
       const blockTime = await polkadotApi.query.timestamp.now.at(blockHash)
-      return blockTime.toNumber()
+      return +blockTime.toString()
     },
 
     // async getDistinctValidatorsAccountsByEra(blockHash: string): Promise<Set<string>> {
@@ -185,11 +169,11 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
     //   return polkadotApi.query.staking.currentEra()
     // },
 
-    async getIdentity(accountId: string): Promise<Registration | undefined> {
-      const identity = await polkadotApi.query.identity.identityOf(accountId)
-      if (identity.isEmpty || identity.isNone) return undefined
+    // async getIdentity(accountId: string): Promise<Registration | undefined> {
+    //   const identity = await polkadotApi.query.identity.identityOf(accountId)
+    //   if (identity.isEmpty || identity.isNone) return undefined
 
-      return identity.unwrap()
-    },
+    //   return identity.unwrap()
+    // },
   }
 }

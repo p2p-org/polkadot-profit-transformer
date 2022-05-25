@@ -1,7 +1,7 @@
 import { RestApi } from './rest-api/index'
 import knex from 'knex'
 
-import { IdentityProcessor } from './../../modules/identity-processor/index'
+// import { IdentityProcessor } from './../../modules/identity-processor/index'
 import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
 import { EventsProcessor } from '../../modules/streamer/events-processor'
 import { BlockProcessor } from '../../modules/streamer/block-processor'
@@ -12,7 +12,7 @@ import { LoggerFactory as PinoLogger } from '../common/infra/logger/logger'
 import { EventBus } from 'utils/event-bus/event-bus'
 
 import { PolkadotRepository } from './../common/infra/polkadotapi/polkadot.repository'
-import { IdentityRepository } from './../common/infra/postgresql/identity.repository'
+// import { IdentityRepository } from './../common/infra/postgresql/identity.repository'
 // import { StakingRepository } from './../common/infra/postgresql/staking.repository'
 import { StreamerRepository } from './../common/infra/postgresql/streamer.repository'
 // import { GovernanceRepository } from '../common/infra/postgresql/governance.repository'
@@ -52,7 +52,7 @@ const main = async () => {
 
   const streamerRepository = StreamerRepository({ knex: pg, logger, networkId })
   // const stakingRepository = StakingRepository({ knex: pg, logger, networkId })
-  const identityRepository = IdentityRepository({ knex: pg, logger, networkId })
+  // const identityRepository = IdentityRepository({ knex: pg, logger, networkId })
   // const governanceRepository = GovernanceRepository({ knex: pg, logger, networkId })
 
   // const extrinsicProcessor = ExtrinsicProcessor({ governanceRepository, logger, polkadotApi })
@@ -69,13 +69,13 @@ const main = async () => {
     streamerRepository,
   })
   // const stakingProcessor = StakingProcessor({ polkadotRepository, streamerRepository, stakingRepository, logger })
-  const identityProcessor = IdentityProcessor({ polkadotRepository, identityRepository, logger })
+  // const identityProcessor = IdentityProcessor({ polkadotRepository, identityRepository, logger })
 
   // todo fix generics to register and dispatch in eventBus
   // eventBus.register('eraPayout', stakingProcessor.addToQueue)
-  eventBus.register('identityEvent', identityProcessor.processEvent)
-  eventBus.register('identityExtrinsic', identityProcessor.processIdentityExtrinsics)
-  eventBus.register('subIdentityExtrinsic', identityProcessor.processSubIdentityExtrinsics)
+  // eventBus.register('identityEvent', identityProcessor.processEvent)
+  // eventBus.register('identityExtrinsic', identityProcessor.processIdentityExtrinsics)
+  // eventBus.register('subIdentityExtrinsic', identityProcessor.processSubIdentityExtrinsics)
   // eventBus.register('governanceExtrinsic', governanceProcessor.processExtrinsicsHandler)
   // eventBus.register('governanceEvent', governanceProcessor.processEventHandler)
 

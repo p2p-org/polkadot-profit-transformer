@@ -40,6 +40,11 @@
   dependencies:
     "xss" "^1.0.8"
 
+"@astar-network/types@^1.0.4":
+  "integrity" "sha512-5S9u+igoe0RFsbdWMsvEtKo868D0wRuztBelvINrEa/Jq/0iajSuvedNtYh4hqlBAqeKK5A7B73o/ydZq+S5Gw=="
+  "resolved" "https://registry.npmjs.org/@astar-network/types/-/types-1.0.4.tgz"
+  "version" "1.0.4"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.7":
   "integrity" "sha512-iAXqUn8IIeBTNd72xsFlgaXHkMBMt6y4HJp1tIaK465CWLT/fG1aqB7ykr95gHHmlBdGbFeWWfyB4NJJ0nmeIg=="
   "resolved" "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.16.7.tgz"
@@ -1290,11 +1295,6 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@moonbeam-network/api-augment@^0.0.1-beta.4":
-  "integrity" "sha512-5/3Khm6pbO6YPEtyfotWONZmg8joas0CN1i/qBhnbno+ZQM3kkQQOFNjQ6/Xqt0LFkLPf3dbXwcpDo25oGerug=="
-  "resolved" "https://registry.npmjs.org/@moonbeam-network/api-augment/-/api-augment-0.0.1-beta.4.tgz"
-  "version" "0.0.1-beta.4"
-
 "@noble/hashes@1.0.0":
   "integrity" "sha512-DZVbtY62kc3kkBtMHqwCOfXrT/hnoORy5BJ4+HU1IR59X0KWAOqsfzQPcUl/lQLlG7qXbe/fZ3r/emxtAl+sqg=="
   "resolved" "https://registry.npmjs.org/@noble/hashes/-/hashes-1.0.0.tgz"
@@ -1366,7 +1366,7 @@
     "@polkadot/util-crypto" "^8.7.1"
     "rxjs" "^7.5.5"
 
-"@polkadot/api@^7.14.3", "@polkadot/api@7.15.1":
+"@polkadot/api@^7.14.3", "@polkadot/api@>=6.3.1", "@polkadot/api@7.15.1":
   "integrity" "sha512-z0z6+k8+R9ixRMWzfsYrNDnqSV5zHKmyhTCL0I7+1I081V18MJTCFUKubrh0t1gD0/FCt3U9Ibvr4IbtukYLrQ=="
   "resolved" "https://registry.npmjs.org/@polkadot/api/-/api-7.15.1.tgz"
   "version" "7.15.1"
@@ -2411,12 +2411,7 @@
   dependencies:
     "retry" "0.13.1"
 
-"async@~1.0.0":
-  "integrity" "sha1-+PwEyjoTeErenhZBr5hXjPvWR6k="
-  "resolved" "https://registry.npmjs.org/async/-/async-1.0.0.tgz"
-  "version" "1.0.0"
-
-"async@3.2.3":
+"async@^3.2.3", "async@3.2.3":
   "integrity" "sha512-spZRyzKL5l5BZQrr/6m/SqFdBN0q3OCI0f9rjfBzCMBIP4p75P620rR3gTmaksNOhmzgdxcaxdNfMy6anrbM0g=="
   "resolved" "https://registry.npmjs.org/async/-/async-3.2.3.tgz"
   "version" "3.2.3"
@@ -5639,14 +5634,6 @@
   "resolved" "https://registry.npmjs.org/mock-socket/-/mock-socket-9.1.2.tgz"
   "version" "9.1.2"
 
-"moonbeam-types-bundle@^2.0.4":
-  "integrity" "sha512-kA51R8Wvv/IQBMhOve0Lkre/3lUwiodEyN+gKokI1vxZS2aXITeb2v908mUQx+N+EpoRsPW/X29ZGxVoK53/2A=="
-  "resolved" "https://registry.npmjs.org/moonbeam-types-bundle/-/moonbeam-types-bundle-2.0.4.tgz"
-  "version" "2.0.4"
-  dependencies:
-    "@polkadot/api" "^7.14.3"
-    "typescript" "^4.5.2"
-
 "mri@1.1.4":
   "integrity" "sha512-6y7IjGPm8AzlvoUrwAaw1tLnUBudaS3752vcd8JtrpGGQn+rXIe63LFVHm/YMwtqAuh+LJPCFdlLYPWM1nYn6w=="
   "resolved" "https://registry.npmjs.org/mri/-/mri-1.1.4.tgz"
@@ -7475,7 +7462,7 @@
   dependencies:
     "is-typedarray" "^1.0.0"
 
-"typescript@^4.3.5", "typescript@^4.5.2", "typescript@^4.5.4", "typescript@>=2.7", "typescript@>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta", "typescript@>=3.8 <5.0", "typescript@2 || 3 || 4":
+"typescript@^4.3.5", "typescript@^4.5.4", "typescript@>=2.7", "typescript@>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta", "typescript@>=3.8 <5.0", "typescript@2 || 3 || 4":
   "integrity" "sha512-yNIatDa5iaofVozS/uQJEl3JRWLKKGJKh6Yaiv0GLGSuhpFJe7P3SbHZ8/yjAHRQwKRoA6YZqlfjXWmVzoVSMw=="
   "resolved" "https://registry.npmjs.org/typescript/-/typescript-4.6.3.tgz"
   "version" "4.6.3"
@@ -7715,11 +7702,11 @@
     "isexe" "^2.0.0"
 
 "winston@2.x":
-  "integrity" "sha512-TWoamHt5yYvsMarGlGEQE59SbJHqGsZV8/lwC+iCcGeAe0vUaOh+Lv6SYM17ouzC/a/LB1/hz/7sxFBtlu1l4A=="
-  "resolved" "https://registry.npmjs.org/winston/-/winston-2.4.5.tgz"
-  "version" "2.4.5"
+  "integrity" "sha512-J5Zu4p0tojLde8mIOyDSsmLmcP8I3Z6wtwpTDHx1+hGcdhxcJaAmG4CFtagkb+NiN1M9Ek4b42pzMWqfc9jm8w=="
+  "resolved" "https://registry.npmjs.org/winston/-/winston-2.4.6.tgz"
+  "version" "2.4.6"
   dependencies:
-    "async" "~1.0.0"
+    "async" "^3.2.3"
     "colors" "1.0.x"
     "cycle" "1.0.x"
     "eyes" "0.1.x"
