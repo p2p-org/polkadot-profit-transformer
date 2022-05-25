@@ -7,7 +7,6 @@ import { EventBus } from 'utils/event-bus/event-bus'
 import { EventsProcessor } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
-import { ExtrincicProcessorInput } from '@modules/governance-processor/processors/extrinsics'
 import { counter } from '@apps/common/infra/prometheus'
 
 const sleep = async (ms: number): Promise<any> => {
@@ -94,29 +93,6 @@ export const BlockProcessor = (deps: {
         // here we send needed events and successfull extrinsics to the eventBus
         for (const extrinsic of extractedExtrinsics) {
           if (!extrinsic.success) continue
-
-          if (extrinsic.section === 'identity') {
-            if (['clearIdentity', 'killIdentity', 'setFields', 'setIdentity'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>('identityExtrinsic', extrinsic)
-            }
-            if (['addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>('subIdentityExtrinsic', extrinsic)
-            }
-          }
-
-          if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'].includes(extrinsic.section)) {
-            // for governance processing we need extrinsics with corresponding events
-            const extrinsicIndex = Number(extrinsic.id.split('-')[1])
-            const extrinsicEvents = events.filter(
-              ({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex),
-            )
-            const extrinsicEntry: ExtrincicProcessorInput = {
-              extrinsic,
-              events: extrinsicEvents,
-              block: block,
-            }
-            eventBus.dispatch<ExtrincicProcessorInput>('governanceExtrinsic', extrinsicEntry)
-          }
         }
 
         console.log(blockId + ': extrinsics send to eventBus')
@@ -125,22 +101,6 @@ export const BlockProcessor = (deps: {
           if (event.section === 'staking' && event.method === 'EraPayout') {
             logger.info('BlockProcessor eraPayout detected')
             eventBus.dispatch<EventModel>('eraPayout', event)
-          }
-
-          if (event.section === 'system') {
-            if (['NewAccount', 'KilledAccount'].includes(event.method)) {
-              eventBus.dispatch<EventModel>('identityEvent', event)
-            }
-          }
-
-          if (event.section === 'identity') {
-            if (['JudgementRequested', 'JudgementGiven', 'JudgementUnrequested'].includes(event.method)) {
-              eventBus.dispatch<EventModel>('identityEvent', event)
-            }
-          }
-
-          if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'.includes(event.section)]) {
-            eventBus.dispatch<EventModel>('governanceEvent', event)
           }
         }
 
