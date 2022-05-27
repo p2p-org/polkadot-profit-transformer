@@ -89,7 +89,7 @@ export const StakingProcessor = (args: {
         account_id: validatorAccountId,
         total: total.toString(),
         own: own.toString(),
-        nominators_count: newNominators.length,
+        nominators_count: others.length,
         reward_points: eraRewardPointsMap.get(validatorAccountId) || 0,
         ...(await polkadotRepository.getStakingPayee(blockHash, validatorAccountId)),
         prefs: prefs.toJSON(),
