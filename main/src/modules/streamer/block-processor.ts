@@ -1,3 +1,4 @@
+import { Rabbit } from './../../apps/common/infra/rabbitmq/index'
 import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
 import { StreamerRepository } from '../../apps/common/infra/postgresql/streamer.repository'
 import { ExtrinsicsProcessor, ExtrinsicsProcessorInput } from './extrinsics-processor'
@@ -26,6 +27,7 @@ export const BlockProcessor = (deps: {
   eventBus: EventBus
   streamerRepository: StreamerRepository
   chainName: string
+  rabbitMQ: Rabbit
 }) => {
   const { polkadotRepository, eventsProcessor, logger, extrinsicsProcessor, streamerRepository, eventBus, chainName } = deps
   logger.info('BlockProcessor initialized')

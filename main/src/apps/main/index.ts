@@ -1,5 +1,6 @@
 import { RestApi } from './rest-api/index'
 import knex from 'knex'
+import client, { Connection } from 'amqplib'
 
 import { IdentityProcessor } from './../../modules/identity-processor/index'
 import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
@@ -24,6 +25,7 @@ import { EventProcessor } from '@modules/governance-processor/processors/events'
 import { StakingProcessor } from '@modules/staking-processor'
 import { NetworksRepository } from '@apps/common/infra/postgresql/networks_repository'
 import { NetworkModel } from '@apps/common/infra/postgresql/models/config.model'
+import { QUEUES, RABBITMQ } from '@apps/common/infra/rabbitmq'
 
 const main = async () => {
   const logger = PinoLogger({ logLevel: environment.LOG_LEVEL! })
@@ -39,6 +41,9 @@ const main = async () => {
     },
     searchPath: ['knex', 'public'],
   })
+
+  const rabbitConnection: Connection = await client.connect(environment.RABBITMQ!)
+  const rabbitMQ = await RABBITMQ(rabbitConnection)
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
   const eventBus = EventBus({ logger })
@@ -62,6 +67,7 @@ const main = async () => {
   const governanceProcessor = GovernanceProcessor({ extrinsicProcessor, eventProcessor, logger })
   const eventsProcessor = EventsProcessor({ logger })
   const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository: await polkadotRepository() })
+
   const blockProcessor = BlockProcessor({
     polkadotRepository: await polkadotRepository(),
     eventsProcessor,
@@ -70,17 +76,23 @@ const main = async () => {
     eventBus,
     streamerRepository,
     chainName,
+    rabbitMQ,
   })
+
   const stakingProcessor = StakingProcessor({
     polkadotRepository: await polkadotRepository(),
     streamerRepository,
     stakingRepository,
     logger,
   })
+
   const identityProcessor = IdentityProcessor({ polkadotRepository: await polkadotRepository(), identityRepository, logger })
 
+  const stakingQueue: QUEUES = QUEUES.Staking
+  rabbitMQ.process(stakingQueue, stakingProcessor)
+
   // todo fix generics to register and dispatch in eventBus
-  eventBus.register(EventName.eraPayout, stakingProcessor.addToQueue)
+  // eventBus.register(EventName.eraPayout, stakingProcessor.addToQueue)
   eventBus.register(EventName.identityEvent, identityProcessor.processEvent)
   eventBus.register(EventName.identityExtrinsic, identityProcessor.processIdentityExtrinsics)
   eventBus.register(EventName.subIdentityExtrinsic, identityProcessor.processSubIdentityExtrinsics)
