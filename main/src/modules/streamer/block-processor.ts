@@ -1,4 +1,4 @@
-import { Rabbit } from './../../apps/common/infra/rabbitmq/index'
+import { QUEUES, Rabbit } from './../../apps/common/infra/rabbitmq/index'
 import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
 import { StreamerRepository } from '../../apps/common/infra/postgresql/streamer.repository'
 import { ExtrinsicsProcessor, ExtrinsicsProcessorInput } from './extrinsics-processor'
@@ -29,7 +29,8 @@ export const BlockProcessor = (deps: {
   chainName: string
   rabbitMQ: Rabbit
 }) => {
-  const { polkadotRepository, eventsProcessor, logger, extrinsicsProcessor, streamerRepository, eventBus, chainName } = deps
+  const { polkadotRepository, eventsProcessor, logger, extrinsicsProcessor, streamerRepository, eventBus, chainName, rabbitMQ } =
+    deps
   logger.info('BlockProcessor initialized')
 
   return async (blockId: number) => {
@@ -130,8 +131,9 @@ export const BlockProcessor = (deps: {
 
         for (const event of processedEvents) {
           if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
-            logger.info('BlockProcessor eraPayout detected')
-            eventBus.dispatch<EventModel>(EventName.eraPayout, event)
+            logger.info('BlockProcessor eraPayout detected, eraId = ', event.data[0])
+            // eventBus.dispatch<EventModel>(EventName.eraPayout, event)
+            rabbitMQ.send(QUEUES.Staking, event.data[0])
           }
 
           if (event.section === 'system') {

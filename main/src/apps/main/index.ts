@@ -25,7 +25,7 @@ import { EventProcessor } from '@modules/governance-processor/processors/events'
 import { StakingProcessor } from '@modules/staking-processor'
 import { NetworksRepository } from '@apps/common/infra/postgresql/networks_repository'
 import { NetworkModel } from '@apps/common/infra/postgresql/models/config.model'
-import { QUEUES, RABBITMQ } from '@apps/common/infra/rabbitmq'
+import { QUEUES, RABBIT } from '@apps/common/infra/rabbitmq'
 
 const main = async () => {
   const logger = PinoLogger({ logLevel: environment.LOG_LEVEL! })
@@ -43,7 +43,7 @@ const main = async () => {
   })
 
   const rabbitConnection: Connection = await client.connect(environment.RABBITMQ!)
-  const rabbitMQ = await RABBITMQ(rabbitConnection)
+  const rabbitMQ = await RABBIT(rabbitConnection)
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
   const eventBus = EventBus({ logger })
@@ -109,7 +109,7 @@ const main = async () => {
   })
 
   // express rest api
-  const restApi = RestApi({ environment, blocksPreloader, blockProcessor })
+  const restApi = RestApi({ environment, blocksPreloader, blockProcessor, stakingProcessor, rabbitMQ })
   restApi.init()
 
   // blocksPreloader fills up database from block 0 to current block

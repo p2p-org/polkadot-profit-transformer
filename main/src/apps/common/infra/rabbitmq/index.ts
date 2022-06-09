@@ -15,7 +15,7 @@ export type Rabbit = {
   process: (queue: QUEUES, processor: QueueProcessor) => Promise<void>
 }
 
-export const RABBITMQ = async (connection: Connection): Promise<Rabbit> => {
+export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
   const channel: Channel = await connection.createChannel()
   await channel.assertQueue('Staking')
   await channel.prefetch(1)
@@ -31,8 +31,8 @@ export const RABBITMQ = async (connection: Connection): Promise<Rabbit> => {
           if (msg) {
             // Display the received message
             console.log(msg.content.toString())
-            const jsonMMessage = JSON.parse(msg.content.toString())
-            await processor.process(jsonMMessage)
+            const jsonMessage = JSON.parse(msg.content.toString())
+            await processor.process(jsonMessage)
             // Acknowledge the message
 
             channel.ack(msg)

@@ -3,10 +3,8 @@ import { NominatorModel } from './../../apps/common/infra/postgresql/models/nomi
 import { StakingRepository } from './../../apps/common/infra/postgresql/staking.repository'
 import { Logger } from './../../apps/common/infra/logger/logger'
 import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
-import fastq from 'fastq'
 import { IGetValidatorsNominatorsResult, TBlockHash } from './staking.types'
 import { StreamerRepository } from 'apps/common/infra/postgresql/streamer.repository'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 import { Vec } from '@polkadot/types'
 import { IndividualExposure } from '@polkadot/types/interfaces'
 
@@ -60,8 +58,6 @@ export const StakingProcessor = (args: {
       )
 
       logger.info(`validator ${validatorAccountId} has ${others.length} nominators`)
-
-      const newNominators = []
 
       for (const chunk of nominatorsChunked) {
         // this.logger.info({ chunk })
@@ -151,7 +147,7 @@ export const StakingProcessor = (args: {
 
       logger.info(`Era ${eraId.toString()} staking processing finished in ${(finish - start) / 1000} seconds.`)
     } catch (error: any) {
-      logger.error(`error in processing era staking`, error.message)
+      logger.info(`error in processing era staking: ${error.message}`)
       throw error
     }
   }

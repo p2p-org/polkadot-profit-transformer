@@ -61,7 +61,7 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger; networkId
             method: 'EraPayout',
             ...network,
           })
-          .andWhereRaw(`event -> 'data' ->> 0 = '${eraId}'`)
+          .whereRaw(`event -> 'data' -> 0 = '${eraId}'`)
           .orderBy('id')
           .first()
 
