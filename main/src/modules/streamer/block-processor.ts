@@ -7,7 +7,6 @@ import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
 import { EventBus, EventName } from '@modules/event-bus/event-bus'
 import { EventsProcessor } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
-import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 import { ExtrincicProcessorInput } from '@modules/governance-processor/processors/extrinsics'
 import { counter } from '@apps/common/infra/prometheus'
 
@@ -80,35 +79,39 @@ export const BlockProcessor = (deps: {
           block_time: new Date(blockTime.toNumber()),
         }
 
-        console.log(blockId + ': BlockModel created')
-
         // save extrinsics events and block to main tables
         for (const extrinsic of extractedExtrinsics) {
           await streamerRepository.extrinsics.save(extrinsic)
         }
 
-        console.log(blockId + ': extrinsics saved')
-
         for (const event of processedEvents) {
           await streamerRepository.events.save(event)
         }
 
-        console.log(blockId + ': events saved')
-
         await streamerRepository.blocks.save(block)
-
-        console.log(blockId + ': block saved')
 
         // here we send needed events and successfull extrinsics to the eventBus
         for (const extrinsic of extractedExtrinsics) {
           if (!extrinsic.success) continue
 
           if (extrinsic.section === 'identity') {
-            if (['clearIdentity', 'killIdentity', 'setFields', 'setIdentity'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>(EventName.identityExtrinsic, extrinsic)
-            }
-            if (['addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>(EventName.subIdentityExtrinsic, extrinsic)
+            if (
+              [
+                'clearIdentity',
+                'killIdentity',
+                'setFields',
+                'setIdentity',
+                'addSub',
+                'quitSub',
+                'removeSub',
+                'renameSub',
+                'setSubs',
+              ].includes(extrinsic.method)
+            ) {
+              rabbitMQ.send(QUEUES.Identity, {
+                type: 'extrinsic',
+                payload: extrinsic,
+              })
             }
           }
 
@@ -127,8 +130,6 @@ export const BlockProcessor = (deps: {
           }
         }
 
-        console.log(blockId + ': extrinsics send to eventBus')
-
         for (const event of processedEvents) {
           if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
             logger.info('BlockProcessor eraPayout detected, eraId = ', event.data[0])
@@ -138,13 +139,21 @@ export const BlockProcessor = (deps: {
 
           if (event.section === 'system') {
             if (['NewAccount', 'KilledAccount'].includes(event.method)) {
-              eventBus.dispatch<EventModel>(EventName.identityEvent, event)
+              rabbitMQ.send(QUEUES.Identity, {
+                type: 'event',
+                payload: event,
+              })
+
+              // eventBus.dispatch<EventModel>(EventName.identityEvent, event)
             }
           }
 
           if (event.section === 'identity') {
             if (['JudgementRequested', 'JudgementGiven', 'JudgementUnrequested'].includes(event.method)) {
-              eventBus.dispatch<EventModel>(EventName.identityEvent, event)
+              rabbitMQ.send(QUEUES.Identity, {
+                type: 'event',
+                payload: event,
+              })
             }
           }
 

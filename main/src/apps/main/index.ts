@@ -88,14 +88,14 @@ const main = async () => {
 
   const identityProcessor = IdentityProcessor({ polkadotRepository: await polkadotRepository(), identityRepository, logger })
 
-  const stakingQueue: QUEUES = QUEUES.Staking
-  rabbitMQ.process(stakingQueue, stakingProcessor)
+  rabbitMQ.process(QUEUES.Staking, stakingProcessor)
+  rabbitMQ.process(QUEUES.Identity, identityProcessor)
 
   // todo fix generics to register and dispatch in eventBus
   // eventBus.register(EventName.eraPayout, stakingProcessor.addToQueue)
-  eventBus.register(EventName.identityEvent, identityProcessor.processEvent)
-  eventBus.register(EventName.identityExtrinsic, identityProcessor.processIdentityExtrinsics)
-  eventBus.register(EventName.subIdentityExtrinsic, identityProcessor.processSubIdentityExtrinsics)
+  // eventBus.register(EventName.identityEvent, identityProcessor.processEvent)
+  // eventBus.register(EventName.identityExtrinsic, identityProcessor.processIdentityExtrinsics)
+  // eventBus.register(EventName.subIdentityExtrinsic, identityProcessor.processSubIdentityExtrinsics)
   eventBus.register(EventName.governanceExtrinsic, governanceProcessor.processExtrinsicsHandler)
   eventBus.register(EventName.governanceEvent, governanceProcessor.processEventHandler)
 

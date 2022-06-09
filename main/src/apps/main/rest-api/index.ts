@@ -63,7 +63,10 @@ export const RestApi = (deps: {
       app.get('/processEra/:eraId', async (req, res) => {
         if (isNaN(Number(req.params.eraId))) return res.json({ error: 'blockId must be a number' })
         // await stakingProcessor.process(Number(req.params.eraId))
-        rabbitMQ.send(QUEUES.Staking, req.params.eraId)
+        rabbitMQ.send(QUEUES.Staking, {
+          type: 'number',
+          payload: +req.params.eraId,
+        })
         return res.json({ result: 'ok' })
       })
       app.listen(port, () => {

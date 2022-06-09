@@ -1,9 +1,11 @@
+import { extrinsic } from './../../apps/common/infra/postgresql/schema'
 import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
 import { Logger } from './../../apps/common/infra/logger/logger'
 import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
 import { IdentityRepository } from 'apps/common/infra/postgresql/identity.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 import { MultiAddress, Registration } from '@polkadot/types/interfaces'
+import { QueuePayload } from '@apps/common/infra/rabbitmq'
 
 export enum JudgementStatus {
   REQUESTED = 'requested',
@@ -221,40 +223,51 @@ export const IdentityProcessor = (args: {
     }
   }
 
-  // here we return handlers, to register to the eventBus events
   return {
-    processEvent: async (event: EventModel) => {
-      switch (event.method) {
-        case 'NewAccount':
-          logger.info({ block_id: event.block_id }, `Process enrichment NewAccount`)
-          await onNewAccount(event)
-          break
-        case 'KilledAccount':
-          logger.info({ block_id: event.block_id }, `Process enrichment KilledAccount`)
-          await onKilledAccount(event)
-          break
-        case 'JudgementRequested':
-          logger.info({ block_id: event.block_id }, `Process enrichment JudgementRequested`)
-          await onJudgementEvent({ event, status: JudgementStatus.REQUESTED })
-          break
-        case 'JudgementGiven':
-          logger.info({ block_id: event.block_id }, `Process enrichment JudgementGiven`)
-          await onJudgementEvent({ event, status: JudgementStatus.GIVEN })
-          break
-        case 'JudgementUnrequested':
-          logger.info({ block_id: event.block_id }, `Process enrichment JudgementUnrequested`)
-          await onJudgementEvent({ event, status: JudgementStatus.UNREQUESTED })
-          break
-        default:
-          logger.error({ block_id: event.block_id }, `failed to process undefined entry with event type "${event.event}"`)
-          break
+    process: async (message: QueuePayload): Promise<void> => {
+      if (message.type === 'event') {
+        const event = message.payload
+
+        switch (event.method) {
+          case 'NewAccount':
+            logger.info({ block_id: event.block_id }, `Process enrichment NewAccount`)
+            await onNewAccount(event)
+            break
+          case 'KilledAccount':
+            logger.info({ block_id: event.block_id }, `Process enrichment KilledAccount`)
+            await onKilledAccount(event)
+            break
+          case 'JudgementRequested':
+            logger.info({ block_id: event.block_id }, `Process enrichment JudgementRequested`)
+            await onJudgementEvent({ event, status: JudgementStatus.REQUESTED })
+            break
+          case 'JudgementGiven':
+            logger.info({ block_id: event.block_id }, `Process enrichment JudgementGiven`)
+            await onJudgementEvent({ event, status: JudgementStatus.GIVEN })
+            break
+          case 'JudgementUnrequested':
+            logger.info({ block_id: event.block_id }, `Process enrichment JudgementUnrequested`)
+            await onJudgementEvent({ event, status: JudgementStatus.UNREQUESTED })
+            break
+          default:
+            logger.error({ block_id: event.block_id }, `failed to process undefined entry with event type "${event.event}"`)
+            break
+        }
+        return
       }
-    },
-    processIdentityExtrinsics: async (extrinsic: ExtrinsicModel): Promise<void> => {
-      await updateAccountIdentity(extrinsic)
-    },
-    processSubIdentityExtrinsics: async (extrinsic: ExtrinsicModel): Promise<void> => {
-      await updateSubAccounts(extrinsic)
+
+      if (message.type === 'extrinsic') {
+        const extrinsic: ExtrinsicModel = message.payload
+        if (['clearIdentity', 'killIdentity', 'setFields', 'setIdentity'].includes(extrinsic.method)) {
+          await updateAccountIdentity(extrinsic)
+          return
+        }
+
+        if (['addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'].includes(extrinsic.method)) {
+          await updateSubAccounts(extrinsic)
+          return
+        }
+      }
     },
     updateAccountIdentityByAccountId,
   }

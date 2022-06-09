@@ -1,4 +1,6 @@
+import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 import { Channel, Connection, ConsumeMessage } from 'amqplib'
+import { EventModel } from '../postgresql/models/event.model'
 
 export enum QUEUES {
   Staking = 'Staking',
@@ -10,8 +12,22 @@ export type QueueProcessor = {
   process: (msg: any) => Promise<void>
 }
 
+export type QueuePayload =
+  | {
+      type: 'event'
+      payload: EventModel
+    }
+  | {
+      type: 'extrinsic'
+      payload: ExtrinsicModel
+    }
+  | {
+      type: 'number'
+      payload: number
+    }
+
 export type Rabbit = {
-  send: (queue: QUEUES, message: any) => Promise<void>
+  send: (queue: QUEUES, message: QueuePayload) => Promise<void>
   process: (queue: QUEUES, processor: QueueProcessor) => Promise<void>
 }
 
