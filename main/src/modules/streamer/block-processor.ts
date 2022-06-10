@@ -44,8 +44,6 @@ export const BlockProcessor = (deps: {
         const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] =
           await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
 
-        console.log(blockId + ': getInfoToProcessBlock done')
-
         const current_era = parseInt(blockCurrentEra.toString(), 10)
         const eraId = activeEra || current_era
 
@@ -57,11 +55,8 @@ export const BlockProcessor = (deps: {
           extrinsics: signedBlock.block.extrinsics,
         }
         const extractedExtrinsics = await extrinsicsProcessor(extrinsicsData)
-        console.log(blockId + ': extractedExtrinsics done')
 
         const processedEvents = eventsProcessor(signedBlock.block.header.number.toNumber(), events, sessionId, eraId)
-
-        console.log(blockId + ': processedEvents done')
 
         const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
@@ -79,8 +74,6 @@ export const BlockProcessor = (deps: {
           digest: signedBlock.block.header.digest.toString(),
           block_time: new Date(blockTime.toNumber()),
         }
-
-        console.log(blockId + ': BlockModel created')
 
         // save extrinsics events and block to main tables
         for (const extrinsic of extractedExtrinsics) {
@@ -131,9 +124,9 @@ export const BlockProcessor = (deps: {
 
         for (const event of processedEvents) {
           if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
-            logger.info('BlockProcessor eraPayout detected, eraId = ', event.data[0])
+            logger.info('BlockProcessor eraPayout detected, eraId = ', event.event.data[0])
             // eventBus.dispatch<EventModel>(EventName.eraPayout, event)
-            rabbitMQ.send(QUEUES.Staking, event.data[0])
+            rabbitMQ.send(QUEUES.Staking, event.event.data[0])
           }
 
           if (event.section === 'system') {
@@ -154,8 +147,6 @@ export const BlockProcessor = (deps: {
             eventBus.dispatch<EventModel>(EventName.governanceEvent, event)
           }
         }
-
-        console.log(blockId + ': events send to eventBus')
 
         counter.inc(1)
         return

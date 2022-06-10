@@ -156,8 +156,6 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       try {
         const historicalApi = await polkadotApi.at(blockHash)
 
-        console.log(blockId + ': getInfoToProcessBlock historicalApi done')
-
         const getActiveEra = async () => {
           if (!historicalApi.query.staking.activeEra) return null
           const activeEra = await historicalApi.query.staking.activeEra()
@@ -191,8 +189,6 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
         //   polkadotApi.query.timestamp.now.at(blockHash),
         //   polkadotApi.query.system.events.at(blockHash),
         // ])
-
-        console.log(blockId + ': getInfoToProcessBlock signedBlock done')
 
         return [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events]
       } catch (error: any) {

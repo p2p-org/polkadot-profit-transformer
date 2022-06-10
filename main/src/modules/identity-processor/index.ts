@@ -23,7 +23,7 @@ export const IdentityProcessor = (args: {
 
   const saveEnrichment = async <T extends { account_id: string }>(data: T): Promise<void> => {
     try {
-      console.log('saveEnrichment account_id', data.account_id)
+      // console.log('saveEnrichment account_id', data.account_id)
       const oldIdentity = await identityRepository.findByAccountId(data.account_id)
       const updatedIdentity = { ...(oldIdentity ?? {}), ...data }
       await identityRepository.save(updatedIdentity)
@@ -34,7 +34,7 @@ export const IdentityProcessor = (args: {
   }
 
   const onNewAccount = async (event: EventModel): Promise<void> => {
-    console.log('onNewAccount event', event)
+    // console.log('onNewAccount event', event)
 
     return saveEnrichment({
       account_id: event.event.data[0].toString(),
@@ -43,7 +43,7 @@ export const IdentityProcessor = (args: {
   }
 
   const onKilledAccount = async (event: EventModel): Promise<void> => {
-    console.log('onKilledAccount event', event)
+    // console.log('onKilledAccount event', event)
 
     return saveEnrichment({
       account_id: event.event.data[0].toString(),
@@ -52,7 +52,7 @@ export const IdentityProcessor = (args: {
   }
 
   const onJudgementEvent = async ({ event, status }: { event: EventModel; status: JudgementStatus }): Promise<void> => {
-    console.log('onJudgementEvent event', event)
+    // console.log('onJudgementEvent event', event)
 
     const enrichmentData = {
       account_id: event.event.data[0].toString(),
@@ -64,7 +64,7 @@ export const IdentityProcessor = (args: {
 
   // identity extrinsics processing functions
   const updateAccountIdentity = async (extrinsic: ExtrinsicModel): Promise<void> => {
-    console.log('updateAccountIdentity extrinsic', extrinsic)
+    // console.log('updateAccountIdentity extrinsic', extrinsic)
 
     const account_id = extrinsic.signer?.toString()
 
@@ -80,7 +80,7 @@ export const IdentityProcessor = (args: {
     }
 
     const getValueOfField = (identityRaw: Registration, field: string) => {
-      console.log({ display: identityRaw.info.toHuman() })
+      // console.log({ display: identityRaw.info.toHuman() })
       //@ts-ignore
       return identityRaw.info.get(field)?.toHuman()['Raw'] || ''
     }
@@ -97,7 +97,7 @@ export const IdentityProcessor = (args: {
   }
 
   const updateAccountIdentityByAccountId = async (accountId: string): Promise<void> => {
-    console.log('updateAccountIdentity by accountId', accountId)
+    // console.log('updateAccountIdentity by accountId', accountId)
 
     try {
       const identityRaw: Registration | undefined = await polkadotRepository.getIdentity(accountId)
@@ -115,10 +115,10 @@ export const IdentityProcessor = (args: {
         })
       }
 
-      console.log({ identityRaw })
+      // console.log({ identityRaw })
 
       const getValueOfField = (identityRaw: Registration, field: string) => {
-        console.log({ display: identityRaw.info.toHuman() })
+        // console.log({ display: identityRaw.info.toHuman() })
         //@ts-ignore
         return identityRaw.info.get(field)?.toHuman()['Raw'] || ''
       }
@@ -139,7 +139,7 @@ export const IdentityProcessor = (args: {
   }
 
   const updateSubAccounts = async (extrinsic: ExtrinsicModel): Promise<void> => {
-    console.log('updateSubAccounts extrinsic', extrinsic)
+    // console.log('updateSubAccounts extrinsic', extrinsic)
 
     const { method, args } = extrinsic
 
@@ -157,7 +157,7 @@ export const IdentityProcessor = (args: {
      * Set the sub-accounts of the sender.
      */
     const setSubs = async (extrinsic: ExtrinsicModel) => {
-      console.log('setSubss extrinsic', extrinsic)
+      // console.log('setSubss extrinsic', extrinsic)
 
       console.log('setSubs', extrinsic)
       const [rawSubs] = args
@@ -194,7 +194,7 @@ export const IdentityProcessor = (args: {
      * Remove the sender as a sub-account.
      */
     const quitSub = async (extrinsic: ExtrinsicModel): Promise<void> => {
-      console.log('quitSub extrinsic', extrinsic)
+      // console.log('quitSub extrinsic', extrinsic)
 
       const account_id = extrinsic.signer!.toString()
       return saveEnrichment({ account_id, root_account_id: null })
