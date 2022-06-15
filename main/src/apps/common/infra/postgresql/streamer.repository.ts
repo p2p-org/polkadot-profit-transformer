@@ -50,19 +50,20 @@ export const StreamerRepository = (deps: { knex: Knex; logger: Logger; networkId
       },
       findEraPayoutEvent: async (args: { eraId: number }): Promise<EventModel | undefined> => {
         const { eraId } = args
+        logger.debug({ findEraPayoutEvent: { eraId } })
         const event = await EventModel(knex)
-          .where({
-            section: 'staking',
-            method: 'EraPaid',
-            ...network,
+          .where(function () {
+            this.where({
+              section: 'staking',
+              method: 'EraPaid',
+              ...network,
+            }).orWhere({
+              section: 'staking',
+              method: 'EraPayout',
+              ...network,
+            })
           })
-          .orWhere({
-            section: 'staking',
-            method: 'EraPayout',
-            ...network,
-          })
-          .whereRaw(`event -> 'data' -> 0 = '${eraId}'`)
-          .orderBy('id')
+          .andWhereRaw(`event -> 'data' -> 0 = '${eraId}'`)
           .first()
 
         return event

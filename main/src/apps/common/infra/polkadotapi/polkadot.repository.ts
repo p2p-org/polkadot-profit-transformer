@@ -46,12 +46,15 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       return result
     },
     async getEraData({ eraId, blockHash }: IBlockEraParams): Promise<EraModel> {
+      logger.debug({ getEraData: { eraId, blockHash } })
       const [totalReward, erasRewardPoints, totalStake, sessionStart] = await Promise.all([
         polkadotApi.query.staking.erasValidatorReward.at(blockHash, eraId),
         polkadotApi.query.staking.erasRewardPoints.at(blockHash, eraId),
         polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
         polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
       ])
+
+      logger.debug({ sessionStart: sessionStart.toHuman() })
 
       return {
         era: eraId,

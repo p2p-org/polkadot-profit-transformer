@@ -120,11 +120,15 @@ export const StakingProcessor = (args: {
 
     const eraPayoutEvent = await streamerRepository.events.findEraPayoutEvent({ eraId })
 
+    logger.debug({ eraPayoutEvent })
+
     if (!eraPayoutEvent) {
       throw new Error(`Staking processor: eraPaid event for eraId: ${eraId} not found`)
     }
 
     const blockHash = await polkadotRepository.getBlockHashByHeight(eraPayoutEvent.block_id)
+
+    logger.debug({ blockHash })
 
     try {
       const blockTime = await polkadotRepository.getBlockTime(blockHash)
@@ -154,6 +158,7 @@ export const StakingProcessor = (args: {
 
   return {
     process: async (eraId: number): Promise<void> => {
+      logger.debug('staking processor: process era' + eraId)
       await processEraPayout(eraId)
     },
   }
