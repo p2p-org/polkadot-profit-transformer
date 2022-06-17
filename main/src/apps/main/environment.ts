@@ -15,6 +15,7 @@ export type Environment = {
   START_BLOCK_ID: number
   SUBSCRIBE: boolean
   CONCURRENCY: number
+  RABBITMQ: string | undefined
 }
 
 export const environment: Environment = {
@@ -28,4 +29,5 @@ export const environment: Environment = {
   START_BLOCK_ID: process.env.START_BLOCK_ID ? Number(process.env.START_BLOCK_ID) : -1, // -1 = continue from last preloaded block from db
   SUBSCRIBE: process.env.SUBSCRIBE ? process.env.SUBSCRIBE === 'true' : false,
   CONCURRENCY: process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 5,
+  RABBITMQ: process.env.RABBITMQ ?? 'amqp://username:password@localhost:5672',
 }

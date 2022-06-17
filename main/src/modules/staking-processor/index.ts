@@ -3,10 +3,8 @@ import { NominatorModel } from './../../apps/common/infra/postgresql/models/nomi
 import { StakingRepository } from './../../apps/common/infra/postgresql/staking.repository'
 import { Logger } from './../../apps/common/infra/logger/logger'
 import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
-import fastq from 'fastq'
 import { IGetValidatorsNominatorsResult, TBlockHash } from './staking.types'
 import { StreamerRepository } from 'apps/common/infra/postgresql/streamer.repository'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 import { Vec } from '@polkadot/types'
 import { IndividualExposure } from '@polkadot/types/interfaces'
 
@@ -60,8 +58,6 @@ export const StakingProcessor = (args: {
       )
 
       logger.info(`validator ${validatorAccountId} has ${others.length} nominators`)
-
-      const newNominators = []
 
       for (const chunk of nominatorsChunked) {
         // this.logger.info({ chunk })
@@ -118,13 +114,21 @@ export const StakingProcessor = (args: {
     }
   }
 
-  const processEraPayout = async (event: EventModel, cb: (arg0: null) => void): Promise<void> => {
-    const eraId = event.event.data[0]
-
+  const processEraPayout = async (eraId: number): Promise<void> => {
     const start = Date.now()
     logger.info(`Process staking payout for era: ${eraId}`)
 
-    const blockHash = await polkadotRepository.getBlockHashByHeight(event.block_id)
+    const eraPayoutEvent = await streamerRepository.events.findEraPayoutEvent({ eraId })
+
+    logger.debug({ eraPayoutEvent })
+
+    if (!eraPayoutEvent) {
+      throw new Error(`Staking processor: eraPaid event for eraId: ${eraId} not found`)
+    }
+
+    const blockHash = await polkadotRepository.getBlockHashByHeight(eraPayoutEvent.block_id)
+
+    logger.debug({ blockHash })
 
     try {
       const blockTime = await polkadotRepository.getBlockTime(blockHash)
@@ -147,19 +151,15 @@ export const StakingProcessor = (args: {
 
       logger.info(`Era ${eraId.toString()} staking processing finished in ${(finish - start) / 1000} seconds.`)
     } catch (error: any) {
-      logger.error(`error in processing era staking`, error.message)
+      logger.info(`error in processing era staking: ${error.message}`)
       throw error
     }
-
-    cb(null)
   }
 
-  const queue = fastq(this, processEraPayout, 1)
-
   return {
-    addToQueue(event: EventModel): void {
-      logger.info('StakingProcessor addToQueue event processing started from event: ' + JSON.stringify(event))
-      queue.push(event)
+    process: async (eraId: number): Promise<void> => {
+      logger.debug('staking processor: process era' + eraId)
+      await processEraPayout(eraId)
     },
   }
 }
