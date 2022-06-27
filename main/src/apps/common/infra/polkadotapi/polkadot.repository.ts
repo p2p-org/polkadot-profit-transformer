@@ -152,7 +152,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
     ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]> {
       const historicalApi = await polkadotApi.at(blockHash)
 
-      console.log(blockId + ': getInfoToProcessBlock historicalApi done')
+      // console.log(blockId + ': getInfoToProcessBlock historicalApi done')
       const [[blockTime, events], signedBlock, extHeader] = await Promise.all([
         historicalApi.queryMulti([historicalApi.query.timestamp.now, [historicalApi.query.system.events, blockHash]]) as Promise<
           [Moment, Vec<EventRecord>]
@@ -173,7 +173,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
       //   polkadotApi.query.system.events.at(blockHash),
       // ])
 
-      console.log(blockId + ': getInfoToProcessBlock signedBlock done')
+      // console.log(blockId + ': getInfoToProcessBlock signedBlock done')
 
       return [signedBlock, extHeader, blockTime, events]
     },

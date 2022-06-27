@@ -39,7 +39,7 @@ export const BlockProcessor = (deps: {
 
         const [signedBlock, extHeader, blockTime, events] = await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
 
-        console.log(blockId + ': getInfoToProcessBlock done')
+        // console.log(blockId + ': getInfoToProcessBlock done')
 
         const extrinsicsData: ExtrinsicsProcessorInput = {
           eraId: 0,
@@ -49,11 +49,11 @@ export const BlockProcessor = (deps: {
           extrinsics: signedBlock.block.extrinsics,
         }
         const extractedExtrinsics = await extrinsicsProcessor(extrinsicsData)
-        console.log(blockId + ': extractedExtrinsics done')
+        // console.log(blockId + ': extractedExtrinsics done')
 
         const processedEvents = eventsProcessor(signedBlock.block.header.number.toNumber(), events)
 
-        console.log(blockId + ': processedEvents done')
+        // console.log(blockId + ': processedEvents done')
 
         const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
@@ -72,7 +72,7 @@ export const BlockProcessor = (deps: {
           block_time: new Date(blockTime.toNumber()),
         }
 
-        console.log(blockId + ': BlockModel created')
+        // console.log(blockId + ': BlockModel created')
 
         // save extrinsics events and block to main tables
         for (const extrinsic of extractedExtrinsics) {
@@ -119,7 +119,7 @@ export const BlockProcessor = (deps: {
           }
         }
 
-        console.log(blockId + ': extrinsics send to eventBus')
+        // console.log(blockId + ': extrinsics send to eventBus')
 
         for (const event of processedEvents) {
           if (event.section === 'staking' && event.method === 'EraPayout') {
@@ -144,7 +144,7 @@ export const BlockProcessor = (deps: {
           }
         }
 
-        console.log(blockId + ': events send to eventBus')
+        // console.log(blockId + ': events send to eventBus')
 
         counter.inc(1)
         return

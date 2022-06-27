@@ -33,7 +33,7 @@ export const IdentityProcessor = (args: {
   }
 
   const onNewAccount = async (event: EventModel): Promise<void> => {
-    console.log('onNewAccount event', event)
+    // console.log('onNewAccount event', event)
 
     return saveEnrichment({
       account_id: event.event.data[0].toString(),

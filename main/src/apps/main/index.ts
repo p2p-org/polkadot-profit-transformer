@@ -96,16 +96,16 @@ const main = async () => {
     logger.info('start listening to the finalized blocks')
     // now we have all previous blocks pprocessed and we are listening to the finalized block events
     polkadotRepository.subscribeFinalizedHeads(async (header) => {
-      logger.info('new finalized block received', header.number.toNumber())
+      logger.info('new finalized block received: ' + header.number.toNumber())
       // check if there is a gap between last and current finalized block
       const lastBlockIdInDb = await streamerRepository.blocks.findLastBlockId()
-      logger.debug('lastBlockIdInDb', lastBlockIdInDb)
+      logger.debug('lastBlockIdInDb: ' + lastBlockIdInDb)
 
       if (!lastBlockIdInDb) return blockProcessor(header.number.toNumber())
 
       const tasks = []
       for (let id = lastBlockIdInDb + 1; id <= header.number.toNumber(); id++) {
-        logger.debug('create block processing task for block#', id)
+        logger.debug('create block processing task for block# ' + id)
         tasks.push(blockProcessor(id))
       }
 
