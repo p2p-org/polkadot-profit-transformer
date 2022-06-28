@@ -5,6 +5,12 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
 dotenv.config()
 
+enum MODE {
+  LISTENER = 'LISTENER',
+  BLOCK_PROCESSOR = 'BLOCK_PROCESSOR',
+  STAKING_PROCESSOR = 'STAKING_PROCESSOR',
+}
+
 export type Environment = {
   PG_CONNECTION_STRING: string
   LOG_LEVEL: string
@@ -15,9 +21,12 @@ export type Environment = {
   START_BLOCK_ID: number
   RABBITMQ: string
   NETWORK: string
+  MODE: MODE
 }
 
-export const environment: Environment = cleanEnv(process.env, {
+const parseModeEnum = (env: typeof preEnv) => ({ ...env, MODE: MODE[env.MODE] })
+
+const preEnv = cleanEnv(process.env, {
   PG_CONNECTION_STRING: url(),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
@@ -27,4 +36,7 @@ export const environment: Environment = cleanEnv(process.env, {
   START_BLOCK_ID: num({ default: -1 }), // -1 = continue from last preloaded block from db
   RABBITMQ: url(),
   NETWORK: str(),
+  MODE: str({ choices: ['LISTENER', 'BLOCK_PROCESSOR', 'STAKING_PROCESSOR'] }),
 })
+
+export const environment: Environment = parseModeEnum(preEnv)
