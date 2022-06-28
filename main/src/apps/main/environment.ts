@@ -1,33 +1,30 @@
 import dotenv from 'dotenv'
+import { cleanEnv, str, num, bool, url } from 'envalid'
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
 dotenv.config()
 
 export type Environment = {
-  PG_CONNECTION_STRING: string | undefined
-  LOG_LEVEL: string | undefined
-  SUBSTRATE_URI: string | undefined
+  PG_CONNECTION_STRING: string
+  LOG_LEVEL: string
+  SUBSTRATE_URI: string
   REST_API_PORT: number
-  BASIC_AUTH: boolean | undefined
+  BASIC_AUTH: boolean
   REST_API_BASIC_AUTH_PASSWORD: string
-  PRELOAD: boolean
   START_BLOCK_ID: number
-  SUBSCRIBE: boolean
-  CONCURRENCY: number
-  RABBITMQ: string | undefined
+  RABBITMQ: string
+  NETWORK: string
 }
 
-export const environment: Environment = {
-  PG_CONNECTION_STRING: process.env.PG_CONNECTION_STRING,
-  LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-  SUBSTRATE_URI: process.env.SUBSTRATE_URI,
-  REST_API_PORT: Number(process.env.REST_API_PORT) || 3000,
-  BASIC_AUTH: process.env.BASIC_AUTH ? process.env.BASIC_AUTH === 'true' : false,
-  REST_API_BASIC_AUTH_PASSWORD: process.env.REST_API_BASIC_AUTH_PASSWORD ?? 'password',
-  PRELOAD: process.env.PRELOAD ? process.env.PRELOAD === 'true' : false,
-  START_BLOCK_ID: process.env.START_BLOCK_ID ? Number(process.env.START_BLOCK_ID) : -1, // -1 = continue from last preloaded block from db
-  SUBSCRIBE: process.env.SUBSCRIBE ? process.env.SUBSCRIBE === 'true' : false,
-  CONCURRENCY: process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 5,
-  RABBITMQ: process.env.RABBITMQ ?? 'amqp://username:password@localhost:5672',
-}
+export const environment: Environment = cleanEnv(process.env, {
+  PG_CONNECTION_STRING: url(),
+  LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
+  SUBSTRATE_URI: url(),
+  REST_API_PORT: num({ default: 3000 }),
+  BASIC_AUTH: bool({ default: true }),
+  REST_API_BASIC_AUTH_PASSWORD: str({ default: 'pwd' }),
+  START_BLOCK_ID: num({ default: -1 }), // -1 = continue from last preloaded block from db
+  RABBITMQ: url(),
+  NETWORK: str(),
+})

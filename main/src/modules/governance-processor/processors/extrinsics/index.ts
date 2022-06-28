@@ -28,12 +28,8 @@ export type ExtrincicProcessorInput = {
 
 export type ExtrinsicProcessor = ReturnType<typeof ExtrinsicProcessor>
 
-export const ExtrinsicProcessor = (deps: {
-  governanceRepository: GovernanceRepository
-  logger: Logger
-  polkadotApi: ApiPromise
-}) => {
-  const { governanceRepository, logger, polkadotApi } = deps
+export const ExtrinsicProcessor = (deps: { logger: Logger; polkadotApi: ApiPromise }) => {
+  const { logger, polkadotApi } = deps
 
   return {
     technicalCommitee: {

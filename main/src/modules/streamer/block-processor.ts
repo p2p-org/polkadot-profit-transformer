@@ -4,7 +4,6 @@ import { StreamerRepository } from '../../apps/common/infra/postgresql/streamer.
 import { ExtrinsicsProcessor, ExtrinsicsProcessorInput } from './extrinsics-processor'
 import { Logger } from 'apps/common/infra/logger/logger'
 import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
-import { EventBus, EventName } from '@modules/event-bus/event-bus'
 import { EventsProcessor } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
@@ -24,7 +23,6 @@ export const BlockProcessor = (deps: {
   logger: Logger
   eventsProcessor: EventsProcessor
   extrinsicsProcessor: ExtrinsicsProcessor
-  eventBus: EventBus
   streamerRepository: StreamerRepository
   chainName: string
   rabbitMQ: Rabbit
