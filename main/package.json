@@ -29,8 +29,10 @@
     "knex": "^2.1.0",
     "pg": "^8.7.3",
     "pino": "^8.1.0",
+    "pino-pretty": "^8.1.0",
     "prom-client": "^14.0.1",
-    "tsconfig-paths": "^3.14.1"
+    "tsconfig-paths": "^3.14.1",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.14.3",
