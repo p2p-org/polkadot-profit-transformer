@@ -5,44 +5,43 @@ import client, { Connection } from 'amqplib'
 import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
 import { EventsProcessor } from '../../modules/streamer/events-processor'
 import { BlockProcessor } from '../../modules/streamer/block-processor'
+import { StakingProcessor } from '@modules/staking-processor'
 
-import { environment } from './environment'
+import { environment, MODE } from './environment'
 import { polkadotFactory } from '../common/infra/polkadotapi/index'
-import { LoggerFactory as PinoLogger } from '../common/infra/logger/logger'
 
 import { PolkadotRepository } from './../common/infra/polkadotapi/polkadot.repository'
 import { StakingRepository } from './../common/infra/postgresql/staking.repository'
 import { StreamerRepository } from './../common/infra/postgresql/streamer.repository'
 
 import { BlocksPreloader } from '../../modules/streamer/blocks-preloader'
-import { StakingProcessor } from '@modules/staking-processor'
-import { NetworksRepository } from '@apps/common/infra/postgresql/networks_repository'
-import { NetworkModel } from '@apps/common/infra/postgresql/models/config.model'
-import { QUEUES, RABBIT } from '@apps/common/infra/rabbitmq'
+
+import { RABBIT } from '@apps/common/infra/rabbitmq'
+import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/preloader.repository'
+import { logger } from '@apps/common/infra/logger/logger'
 
 const main = async () => {
   console.log({ environment })
-  // const logger = PinoLogger({ logLevel: environment.LOG_LEVEL! })
-  // logger.info('Main app started')
-  // const pg = knex({
-  //   client: 'pg',
-  //   debug: process.env.LOG_LEVEL === 'debug',
-  //   connection: {
-  //     connectionString: environment.PG_CONNECTION_STRING,
-  //     ssl: false,
-  //   },
-  //   searchPath: ['knex', 'public'],
-  // })
-  // const rabbitConnection: Connection = await client.connect(environment.RABBITMQ!)
-  // const rabbitMQ = await RABBIT(rabbitConnection)
-  // const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
-  // const polkadotRepository = async () => PolkadotRepository({ polkadotApi: await polkadotApi(), logger })
-  // const networksRepository = NetworksRepository({ knex: pg, logger })
-  // // get current network from node
-  // const chainName = await (await polkadotRepository()).getChainInfo()
-  // const network: NetworkModel = { name: chainName }
-  // await networksRepository.save(network)
-  // const networkId = await networksRepository.getIdByName(chainName)
+
+  logger.info('Main app started')
+
+  const pg = knex({
+    client: 'pg',
+    debug: false, //process.env.LOG_LEVEL === 'debug',
+    connection: {
+      connectionString: environment.PG_CONNECTION_STRING,
+      ssl: false,
+    },
+    searchPath: ['knex', 'public'],
+  })
+
+  const rabbitConnection: Connection = await client.connect(environment.RABBITMQ!)
+  const rabbitMQ = await RABBIT(rabbitConnection)
+
+  const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI)()
+  const polkadotRepository = await PolkadotRepository({ polkadotApi })
+  const processingTasksRepository = await ProcessingTasksRepository({ knex: pg })
+
   // const streamerRepository = StreamerRepository({ knex: pg, logger, networkId })
   // const stakingRepository = StakingRepository({ knex: pg, logger, networkId })
   // const eventsProcessor = EventsProcessor({ logger })
@@ -62,26 +61,28 @@ const main = async () => {
   //   stakingRepository,
   //   logger,
   // })
+
   // const stakingQueue: QUEUES = QUEUES.Staking
   // rabbitMQ.process(stakingQueue, stakingProcessor)
-  // const blocksPreloader = BlocksPreloader({
-  //   streamerRepository,
-  //   blockProcessor,
-  //   polkadotRepository: await polkadotRepository(),
-  //   logger,
-  //   concurrency,
-  // })
+
+  const blocksPreloader = BlocksPreloader({
+    processingTasksRepository,
+    polkadotRepository: polkadotRepository,
+    rabbitMQ,
+  })
+
+  if (environment.MODE === MODE.LISTENER) {
+    logger.debug('preload blocks')
+    await blocksPreloader.preload()
+
+    logger.debug('preload done, go listening to the new blocks')
+
+    polkadotRepository.subscribeFinalizedHeads((header) => blocksPreloader.newBlock(header.number.toNumber()))
+  }
+
   // // express rest api
   // const restApi = RestApi({ environment, blocksPreloader, blockProcessor, stakingProcessor, rabbitMQ })
   // restApi.init()
-  // // blocksPreloader fills up database from block 0 to current block
-  // if (environment.PRELOAD) {
-  //   const startBlockId = environment.START_BLOCK_ID
-  //   await blocksPreloader.start(startBlockId)
-  // }
-  // if (environment.SUBSCRIBE)
-  //   // now we have all previous blocks pprocessed and we are listening to the finalized block events
-  //   (await polkadotRepository()).subscribeFinalizedHeads((header) => blockProcessor(header.number.toNumber()))
 }
 
 main().catch((error) => console.log('Error in igniter main function', error.message))
