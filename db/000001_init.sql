@@ -1,7 +1,7 @@
 CREATE TABLE networks (
     "id" SERIAL,
-    "name" VARCHAR (100)  PRIMARY KEY
-    "row_id" int NOT NULL AUTO_INCREMENT
+    "name" VARCHAR (100)  PRIMARY KEY,
+    "row_id" SERIAL
 );
 
 CREATE TABLE blocks (
@@ -14,7 +14,7 @@ CREATE TABLE blocks (
     "author" VARCHAR(66),
     "digest" JSONB,
     "block_time" TIMESTAMP,
-    "row_id" int NOT NULL AUTO_INCREMENT,
+    "row_id" SERIAL,
     PRIMARY KEY ("id", "network_id")
 );
 
@@ -28,7 +28,7 @@ CREATE TABLE events (
     "method" VARCHAR(50),
     "data" JSONB,
     "event" JSONB,
-    "row_id" int NOT NULL AUTO_INCREMENT,
+    "row_id" SERIAL,
     PRIMARY KEY ("id", "network_id")
 
 );
@@ -51,7 +51,7 @@ CREATE TABLE extrinsics (
     "version" INT,
     "extrinsic" JSONB,
     "args" JSONB,
-    "row_id" int NOT NULL AUTO_INCREMENT,
+    "row_id" SERIAL,
     PRIMARY KEY ("id", "network_id")
 
 );
@@ -65,7 +65,7 @@ CREATE TABLE eras (
     "total_reward" BIGINT,
     "total_stake" BIGINT,
     "total_reward_points" INT,
-    "row_id" int NOT NULL AUTO_INCREMENT,
+    "row_id" SERIAL,
     PRIMARY KEY ("era", "network_id")
 );
 
@@ -82,7 +82,7 @@ CREATE TABLE validators (
     "reward_account_id" VARCHAR (150),
     "prefs" JSONB,
     "block_time" TIMESTAMP,
-    "row_id" int NOT NULL AUTO_INCREMENT,
+    "row_id" SERIAL,
     PRIMARY KEY ("era", "account_id", "network_id")
 );
 
@@ -96,7 +96,7 @@ CREATE TABLE nominators (
     "reward_dest" VARCHAR (50),
     "reward_account_id" VARCHAR (150),
     "block_time" TIMESTAMP,
-    "row_id" int NOT NULL AUTO_INCREMENT,
+    "row_id" SERIAL,
     PRIMARY KEY ("era", "account_id", "validator", "network_id")
 );
 
@@ -111,7 +111,7 @@ CREATE TABLE processing_tasks (
     "start_timestamp" TIMESTAMP,
     "finish_timestamp" TIMESTAMP,
     "data" JSONB,
-    "row_id" int NOT NULL AUTO_INCREMENT,
+    "row_id" SERIAL,
     PRIMARY KEY ("row_id")
 );
 
