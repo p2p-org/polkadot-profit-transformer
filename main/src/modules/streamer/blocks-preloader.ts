@@ -1,55 +1,93 @@
-import { BlockProcessor } from './block-processor'
-import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
-import { Logger } from '../../apps/common/infra/logger/logger'
-import { StreamerRepository } from '../../apps/common/infra/postgresql/streamer.repository'
-import { counter } from '@apps/common/infra/prometheus'
+const { v4 } = require('uuid')
 
-export enum PRELOADER_STATUS {
-  IN_PROGRESS = 'preloading in progress',
-  DONE = 'listening for finalized blocks',
-}
+import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
+import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/preloader.repository'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
+import { logger } from '@apps/common/infra/logger/logger'
+import { QUEUES, Rabbit } from '@apps/common/infra/rabbitmq'
+
 export type BlocksPreloader = ReturnType<typeof BlocksPreloader>
 
 export const BlocksPreloader = (deps: {
-  streamerRepository: StreamerRepository
+  processingTasksRepository: ProcessingTasksRepository
   polkadotRepository: PolkadotRepository
-  blockProcessor: BlockProcessor
-  logger: Logger
-  concurrency: number
+  rabbitMQ: Rabbit
 }) => {
-  const { streamerRepository, polkadotRepository, blockProcessor, logger, concurrency } = deps
-  let status = PRELOADER_STATUS.IN_PROGRESS
-  let blockNumber = 0
-  return {
-    start: async (startBlockParam: number) => {
-      logger.info('BlocksPreloader started with startBlockParam = ' + startBlockParam)
-      const lastBlockIdInDb = await streamerRepository.blocks.findLastBlockId()
-      const startBlockId = startBlockParam === -1 ? lastBlockIdInDb || 0 : startBlockParam
-      let lastBlockNumber = await polkadotRepository.getFinBlockNumber()
-      logger.info('last finalized block id: ' + lastBlockNumber)
+  const { processingTasksRepository, polkadotRepository, rabbitMQ } = deps
 
-      blockNumber = startBlockId
-      counter.inc(blockNumber)
+  const createTask = (id: number): ProcessingTaskModel => {
+    const task: ProcessingTaskModel = {
+      entity: ENTITY.BLOCK,
+      entity_id: id,
+      status: PROCESSING_STATUS.NOT_PROCESSED,
+      collect_uid: v4(),
+      start_timestamp: new Date(),
+      data: {},
+    }
+    // logger.debug({ event: 'createTask', task })
+    return task
+  }
 
-      while (blockNumber <= lastBlockNumber) {
-        logger.info('BlocksPreloader: get new loop of 10 blocks from blockNumber=' + blockNumber)
+  const ingestPreloadTasks = async (args: { fromBlock: number; toBlock: number }): Promise<ProcessingTaskModel[]> => {
+    const { fromBlock, toBlock } = args
 
-        const processTasks = Array(concurrency)
-          .fill('')
-          .map((_, i) => blockProcessor(blockNumber + i))
+    if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
 
-        await Promise.all(processTasks)
+    logger.debug(`create series of block tasks from ${fromBlock} to ${toBlock}`)
 
-        blockNumber += concurrency
+    let tasks: ProcessingTaskModel[] = []
 
-        console.log('next blockNumber', blockNumber)
+    for (let id = fromBlock; id <= toBlock; id++) {
+      const task = createTask(id)
+      tasks.push(task)
 
-        if (blockNumber >= lastBlockNumber) lastBlockNumber = await polkadotRepository.getFinBlockNumber()
+      if (id % 10000 === 0) {
+        logger.debug(id)
+        await ingestTasksChunk(tasks)
+        tasks = []
       }
+    }
 
-      status = PRELOADER_STATUS.DONE
+    await ingestTasksChunk(tasks)
+
+    return tasks
+  }
+
+  const sendToRabbit = async (tasks: ProcessingTaskModel[]) => {
+    for (const block of tasks) {
+      await rabbitMQ.send(QUEUES.Blocks, {
+        block_id: block.entity_id,
+        collect_uid: block.collect_uid,
+      })
+    }
+    logger.debug({ event: 'blocks preloader sendToRabbit blocks', from: tasks[0].entity_id, to: tasks.at(-1)?.entity_id })
+  }
+
+  const ingestTasksChunk = async (tasks: ProcessingTaskModel[]) => {
+    await processingTasksRepository.batchAddEntities(tasks)
+    await sendToRabbit(tasks)
+  }
+
+  return {
+    // todo: add logic to re-collect from certain past block
+    preload: async () => {
+      logger.debug({ event: 'BlocksPreloader.preload' })
+      const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
+      logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
+
+      const lastFinalizedBlockId = await polkadotRepository.getFinBlockNumber()
+      logger.debug({ event: 'BlocksPreloader.preload', lastFinalizedBlockId })
+
+      await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: lastFinalizedBlockId })
+      logger.debug({ event: 'BlocksPreloader.preload ingested' })
     },
-    status: () => status,
-    currentBlock: () => blockNumber,
+
+    newBlock: async (blockId: number) => {
+      logger.debug({ event: 'BlocksPreloader.preload', newFinalizedBlockId: blockId })
+      const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
+      logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
+
+      await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
+    },
   }
 }
