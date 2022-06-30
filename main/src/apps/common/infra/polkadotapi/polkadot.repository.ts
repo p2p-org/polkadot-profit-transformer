@@ -1,4 +1,4 @@
-import { Logger } from './../logger/logger'
+import { logger } from './../logger/logger'
 import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
 import {
@@ -21,8 +21,8 @@ import { EraModel } from '../postgresql/models/era.model'
 
 export type PolkadotRepository = ReturnType<typeof PolkadotRepository>
 
-export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logger }) => {
-  const { polkadotApi, logger } = deps
+export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
+  const { polkadotApi } = deps
   return {
     createType<T>(type: string, data: any): T {
       //todo fix generic
