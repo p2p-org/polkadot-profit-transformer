@@ -112,7 +112,7 @@ CREATE TABLE processing_tasks (
     "finish_timestamp" TIMESTAMP,
     "data" JSONB,
     "row_id" int NOT NULL AUTO_INCREMENT,
-    PRIMARY KEY ("network_id", "entity")
+    PRIMARY KEY ("row_id")
 );
 
 
