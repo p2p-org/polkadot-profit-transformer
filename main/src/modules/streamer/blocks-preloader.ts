@@ -1,7 +1,7 @@
-const { v4 } = require('uuid')
+import { v4 } from 'uuid'
 
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
-import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/preloader.repository'
+import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
 import { logger } from '@apps/common/infra/logger/logger'
 import { QUEUES, Rabbit } from '@apps/common/infra/rabbitmq'
@@ -55,10 +55,11 @@ export const BlocksPreloader = (deps: {
 
   const sendToRabbit = async (tasks: ProcessingTaskModel[]) => {
     for (const block of tasks) {
-      await rabbitMQ.send(QUEUES.Blocks, {
+      const data = {
         block_id: block.entity_id,
         collect_uid: block.collect_uid,
-      })
+      }
+      await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
     }
     logger.debug({ event: 'blocks preloader sendToRabbit blocks', from: tasks[0].entity_id, to: tasks.at(-1)?.entity_id })
   }

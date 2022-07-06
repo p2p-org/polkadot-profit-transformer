@@ -2,8 +2,6 @@ import { RestApi } from './rest-api/index'
 import knex from 'knex'
 import client, { Connection } from 'amqplib'
 
-import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
-import { EventsProcessor } from '../../modules/streamer/events-processor'
 import { BlockProcessor } from '../../modules/streamer/block-processor'
 import { StakingProcessor } from '@modules/staking-processor'
 
@@ -16,8 +14,8 @@ import { StreamerRepository } from './../common/infra/postgresql/streamer.reposi
 
 import { BlocksPreloader } from '../../modules/streamer/blocks-preloader'
 
-import { RABBIT } from '@apps/common/infra/rabbitmq'
-import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/preloader.repository'
+import { QUEUES, RABBIT } from '@apps/common/infra/rabbitmq'
+import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { logger } from '@apps/common/infra/logger/logger'
 
 const main = async () => {
@@ -42,10 +40,9 @@ const main = async () => {
   const polkadotRepository = await PolkadotRepository({ polkadotApi })
   const processingTasksRepository = await ProcessingTasksRepository({ knex: pg })
 
-  // const streamerRepository = StreamerRepository({ knex: pg, logger, networkId })
+  const streamerRepository = StreamerRepository({ knex: pg })
+
   // const stakingRepository = StakingRepository({ knex: pg, logger, networkId })
-  // const eventsProcessor = EventsProcessor({ logger })
-  // const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository: await polkadotRepository() })
   // const blockProcessor = BlockProcessor({
   //   polkadotRepository: await polkadotRepository(),
   //   eventsProcessor,
@@ -65,19 +62,34 @@ const main = async () => {
   // const stakingQueue: QUEUES = QUEUES.Staking
   // rabbitMQ.process(stakingQueue, stakingProcessor)
 
-  const blocksPreloader = BlocksPreloader({
-    processingTasksRepository,
-    polkadotRepository: polkadotRepository,
-    rabbitMQ,
-  })
-
   if (environment.MODE === MODE.LISTENER) {
     logger.debug('preload blocks')
+
+    const blocksPreloader = BlocksPreloader({
+      processingTasksRepository,
+      polkadotRepository: polkadotRepository,
+      rabbitMQ,
+    })
+
     await blocksPreloader.preload()
 
     logger.debug('preload done, go listening to the new blocks')
 
     polkadotRepository.subscribeFinalizedHeads((header) => blocksPreloader.newBlock(header.number.toNumber()))
+  }
+
+  if (environment.MODE === MODE.BLOCK_PROCESSOR) {
+    logger.debug('process blocks')
+
+    const blockProcessor = await BlockProcessor({
+      polkadotRepository,
+      streamerRepository,
+      processingTasksRepository,
+      rabbitMQ,
+      knex: pg,
+    })
+
+    rabbitMQ.process(QUEUES.Blocks, blockProcessor)
   }
 
   // // express rest api

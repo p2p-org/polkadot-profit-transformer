@@ -7,13 +7,23 @@ export enum QUEUES {
   Staking = 'process_staking',
 }
 
-export type QueueProcessor = {
-  process: (msg: any) => Promise<void>
+export type TaskMessage<T> = T extends QUEUES.Blocks
+  ? {
+      block_id: number
+      collect_uid: string
+    }
+  : {
+      era_id: number
+      collect_uid: string
+    }
+
+export type QueueProcessor<T extends QUEUES> = {
+  processTaskMessage: (msg: TaskMessage<T>) => Promise<void>
 }
 
 export type Rabbit = {
-  send: (queue: QUEUES, message: any) => Promise<void>
-  process: (queue: QUEUES, processor: QueueProcessor) => Promise<void>
+  send: <T extends QUEUES>(queue: T, message: TaskMessage<T>) => Promise<void>
+  process: <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => Promise<void>
 }
 
 export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
@@ -23,20 +33,17 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
   await channel.prefetch(1)
 
   return {
-    send: async (queue: QUEUES, message: any) => {
+    send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
       await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)))
     },
-    process: async (queue: QUEUES, processor: QueueProcessor) => {
+    process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
       const consumer =
         (channel: Channel) =>
         async (msg: ConsumeMessage | null): Promise<void> => {
           if (msg) {
-            // Display the received message
             logger.debug('rabbit received message', msg.content.toString())
-            const jsonMessage = JSON.parse(msg.content.toString())
-            await processor.process(jsonMessage)
-            // Acknowledge the message
-
+            const message = JSON.parse(msg.content.toString()) as TaskMessage<T>
+            await processor.processTaskMessage(message)
             channel.ack(msg)
           }
         }

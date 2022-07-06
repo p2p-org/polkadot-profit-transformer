@@ -1,162 +1,158 @@
-import { QUEUES, Rabbit } from './../../apps/common/infra/rabbitmq/index'
-import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
+import { v4 } from 'uuid'
+
+import { QUEUES, Rabbit, TaskMessage } from './../../apps/common/infra/rabbitmq/index'
 import { StreamerRepository } from '../../apps/common/infra/postgresql/streamer.repository'
 import { ExtrinsicsProcessor, ExtrinsicsProcessorInput } from './extrinsics-processor'
-import { Logger } from 'apps/common/infra/logger/logger'
 import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
-import { EventsProcessor } from './events-processor'
+import { processEvents } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
 import { ExtrincicProcessorInput } from '@modules/governance-processor/processors/extrinsics'
 import { counter } from '@apps/common/infra/prometheus'
-
-const sleep = async (ms: number): Promise<any> => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
+import { logger } from '@apps/common/infra/logger/logger'
+import { Knex } from 'knex'
+import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
+import { ENTITY, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
 
 export type BlockProcessor = ReturnType<typeof BlockProcessor>
 
 export const BlockProcessor = (deps: {
   polkadotRepository: PolkadotRepository
-  logger: Logger
-  eventsProcessor: EventsProcessor
-  extrinsicsProcessor: ExtrinsicsProcessor
   streamerRepository: StreamerRepository
-  chainName: string
+  processingTasksRepository: ProcessingTasksRepository
   rabbitMQ: Rabbit
+  knex: Knex
 }) => {
-  const { polkadotRepository, eventsProcessor, logger, extrinsicsProcessor, streamerRepository, eventBus, chainName, rabbitMQ } =
-    deps
+  const { polkadotRepository, streamerRepository, rabbitMQ, knex, processingTasksRepository } = deps
   logger.info('BlockProcessor initialized')
 
-  return async (blockId: number) => {
-    for (let attempts = 0; attempts < 5; attempts++) {
-      console.log('attempt' + attempts)
-      try {
-        const blockHash = await polkadotRepository.getBlockHashByHeight(blockId)
+  const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository })
 
-        logger.info('BlockProcessor: start processing block with id: ' + blockId)
+  const onNewBlock = async (metadata: any, blockId: number, trx: Knex.Transaction<any, any[]>) => {
+    const blockHash = await polkadotRepository.getBlockHashByHeight(blockId)
 
-        const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] =
-          await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
+    logger.info('BlockProcessor: start processing block with id: ' + blockId)
 
-        const current_era = parseInt(blockCurrentEra.toString(), 10)
-        const eraId = activeEra || current_era
+    const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] =
+      await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
 
-        const extrinsicsData: ExtrinsicsProcessorInput = {
-          eraId,
-          sessionId: sessionId.toNumber(),
-          blockNumber: signedBlock.block.header.number,
-          events,
-          extrinsics: signedBlock.block.extrinsics,
-        }
-        const extractedExtrinsics = await extrinsicsProcessor(extrinsicsData)
+    const current_era = parseInt(blockCurrentEra.toString(), 10)
+    const eraId = activeEra || current_era
 
-        const processedEvents = eventsProcessor(signedBlock.block.header.number.toNumber(), events, sessionId, eraId)
+    const extrinsicsData: ExtrinsicsProcessorInput = {
+      eraId,
+      sessionId: sessionId.toNumber(),
+      blockNumber: signedBlock.block.header.number,
+      events,
+      extrinsics: signedBlock.block.extrinsics,
+    }
+    const extractedExtrinsics = await extrinsicsProcessor(extrinsicsData)
 
-        const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
+    const processedEvents = processEvents(signedBlock.block.header.number.toNumber(), events)
 
-        const block: BlockModel = {
-          id: signedBlock.block.header.number.toNumber(),
-          hash: signedBlock.block.header.hash.toHex(),
-          author: extHeader?.author ? extHeader.author.toString() : '',
-          session_id: sessionId.toNumber(),
-          current_era,
-          era: eraId,
-          state_root: signedBlock.block.header.stateRoot.toHex(),
-          extrinsics_root: signedBlock.block.header.extrinsicsRoot.toHex(),
-          parent_hash: signedBlock.block.header.parentHash.toHex(),
-          last_log: lastDigestLogEntryIndex > -1 ? signedBlock.block.header.digest.logs[lastDigestLogEntryIndex].type : '',
-          digest: signedBlock.block.header.digest.toString(),
-          block_time: new Date(blockTime.toNumber()),
-        }
+    const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
-        // save extrinsics events and block to main tables
-        for (const extrinsic of extractedExtrinsics) {
-          await streamerRepository.extrinsics.save(extrinsic)
-        }
+    const block: BlockModel = {
+      id: signedBlock.block.header.number.toNumber(),
+      hash: signedBlock.block.header.hash.toHex(),
+      author: extHeader?.author ? extHeader.author.toString() : '',
+      session_id: sessionId.toNumber(),
+      current_era,
+      era: eraId,
+      state_root: signedBlock.block.header.stateRoot.toHex(),
+      extrinsics_root: signedBlock.block.header.extrinsicsRoot.toHex(),
+      parent_hash: signedBlock.block.header.parentHash.toHex(),
+      last_log: lastDigestLogEntryIndex > -1 ? signedBlock.block.header.digest.logs[lastDigestLogEntryIndex].type : '',
+      digest: signedBlock.block.header.digest.toString(),
+      block_time: new Date(blockTime.toNumber()),
+    }
 
-        console.log(blockId + ': extrinsics saved')
+    // save extrinsics events and block to main tables
+    for (const extrinsic of extractedExtrinsics) {
+      await streamerRepository(trx).extrinsics.save(extrinsic)
+    }
 
-        for (const event of processedEvents) {
-          await streamerRepository.events.save(event)
-        }
+    console.log(blockId + ': extrinsics saved')
 
-        console.log(blockId + ': events saved')
+    for (const event of processedEvents) {
+      await streamerRepository(trx).events.save(event)
+    }
 
-        await streamerRepository.blocks.save(block)
+    console.log(blockId + ': events saved')
 
-        console.log(blockId + ': block saved')
+    await streamerRepository(trx).blocks.save(block)
 
-        // here we send needed events and successfull extrinsics to the eventBus
-        for (const extrinsic of extractedExtrinsics) {
-          if (!extrinsic.success) continue
+    console.log(blockId + ': block saved')
 
-          if (extrinsic.section === 'identity') {
-            if (['clearIdentity', 'killIdentity', 'setFields', 'setIdentity'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>(EventName.identityExtrinsic, extrinsic)
-            }
-            if (['addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'].includes(extrinsic.method)) {
-              eventBus.dispatch<ExtrinsicModel>(EventName.subIdentityExtrinsic, extrinsic)
-            }
-          }
+    // here we send needed events and successfull extrinsics to the eventBus
 
-          if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'].includes(extrinsic.section)) {
-            // for governance processing we need extrinsics with corresponding events
-            const extrinsicIndex = Number(extrinsic.id.split('-')[1])
-            const extrinsicEvents = events.filter(
-              ({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex),
-            )
-            const extrinsicEntry: ExtrincicProcessorInput = {
-              extrinsic,
-              events: extrinsicEvents,
-              block: block,
-            }
-            eventBus.dispatch<ExtrincicProcessorInput>(EventName.governanceExtrinsic, extrinsicEntry)
-          }
-        }
+    console.log(blockId + ': extrinsics send to eventBus')
 
-        console.log(blockId + ': extrinsics send to eventBus')
-
-        for (const event of processedEvents) {
-          if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
-            logger.info('BlockProcessor eraPayout detected, eraId = ', event.event.data[0])
-            // eventBus.dispatch<EventModel>(EventName.eraPayout, event)
-            rabbitMQ.send(QUEUES.Staking, event.event.data[0])
-          }
-
-          if (event.section === 'system') {
-            if (['NewAccount', 'KilledAccount'].includes(event.method)) {
-              eventBus.dispatch<EventModel>(EventName.identityEvent, event)
-            }
-          }
-
-          if (event.section === 'identity') {
-            if (['JudgementRequested', 'JudgementGiven', 'JudgementUnrequested'].includes(event.method)) {
-              eventBus.dispatch<EventModel>(EventName.identityEvent, event)
-            }
-          }
-
-          // we skip kusama governance events and process only last year events, because of the hardness of the old api types decoding.
-          if (['technicalCommittee', 'democracy', 'council', 'treasury', 'tips'.includes(event.section)]) {
-            if (chainName === 'Kusama' && blockId < 4655884) return // here is Kusama block near the end of the 2020
-            eventBus.dispatch<EventModel>(EventName.governanceEvent, event)
-          }
-        }
-
-        counter.inc(1)
-        return
-      } catch (error: any) {
-        logger.error('BlockProcessor error: ', error.message)
-        console.error('BlockProcessor error: ', error.message)
-        if (error.message === 'Unable to retrieve header and parent from supplied hash') return
-        await sleep(2000)
+    for (const event of processedEvents) {
+      if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
+        logger.info('BlockProcessor eraPayout detected, eraId = ', event.event.data[0])
+        // eventBus.dispatch<EventModel>(EventName.eraPayout, event)
+        // rabbitMQ.send(QUEUES.Staking, event.event.data[0])
       }
     }
 
-    console.log('Error process block after 5 atempts for blockId=' + blockId)
-    throw Error('Error process block after 5 atempts for blockId=' + blockId)
+    counter.inc(1)
+    return
+  }
+
+  const processTaskMessage = async <T extends QUEUES.Blocks>(message: TaskMessage<T>) => {
+    const { block_id: blockId, collect_uid } = message
+    logger.info('new process block  task block_collect_uid received')
+
+    const metadata = {
+      block_process_uid: v4(),
+      processing_timestamp: new Date(),
+    }
+
+    knex.transaction(async (trx) => {
+      try {
+        const taskRecord = await processingTasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
+
+        if (!taskRecord) {
+          throw new Error('BlockProcessor record not found. Skip processing.')
+        }
+
+        if (taskRecord.collect_uid !== collect_uid) {
+          throw new Error(
+            `possible block ${blockId} processing task duplication. 
+Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+          )
+        }
+
+        if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
+          throw new Error(`Block  ${blockId} has been already processed. Skip processing.`)
+        }
+
+        // all is good, start processing
+        logger.info({
+          event: `Block processor start processing block ${blockId}`,
+          ...metadata,
+          collect_uid,
+        })
+
+        await onNewBlock(metadata, blockId, trx)
+      } catch (error: any) {
+        logger.warn({
+          event: error.message,
+          data: {
+            ...metadata,
+            collect_uid,
+          },
+        })
+        await trx.rollback()
+        throw error
+      }
+
+      await trx.commit()
+    })
+  }
+
+  return {
+    processTaskMessage,
   }
 }

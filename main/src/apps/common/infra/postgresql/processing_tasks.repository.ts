@@ -49,5 +49,18 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
     async addProcessingTask(task: ProcessingTaskModel) {
       await ProcessingTaskModel(knex).insert({ ...task, ...network })
     },
+    async readTaskAndLockRow(
+      entity: ENTITY,
+      entity_id: number,
+      trx: Knex.Transaction<any, any[]>,
+    ): Promise<ProcessingTaskModel | undefined> {
+      return ProcessingTaskModel(knex)
+        .transacting(trx)
+        .forUpdate()
+        .select()
+        .where({ entity, entity_id, ...network })
+        .orderBy('raw_id', 'desc')
+        .first()
+    },
   }
 }
