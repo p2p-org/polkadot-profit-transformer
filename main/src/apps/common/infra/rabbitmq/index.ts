@@ -34,7 +34,9 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
 
   return {
     send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
-      await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)))
+      await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)), {
+        persistent: true,
+      })
     },
     process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
       const consumer =
