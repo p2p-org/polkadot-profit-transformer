@@ -18,6 +18,7 @@ export type ProcessingTaskModel = {
   start_timestamp: Date
   finish_timestamp?: Date
   data: any
+  row_id?: number
 }
 
 export const ProcessingTaskModel = (knex: Knex) => knex<ProcessingTaskModel>('processing_tasks')

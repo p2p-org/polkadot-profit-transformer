@@ -5,8 +5,8 @@ export type ExtrinsicModel = {
   block_id: number
   parent_id?: string
   success: boolean
-  session_id: number
-  era: number
+  // session_id: number
+  // era: number
   section: string
   method: string
   mortal_period: number | null

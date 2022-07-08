@@ -1,15 +1,15 @@
-import { RestApi } from './rest-api/index'
+// import { RestApi } from './rest-api/index'
 import knex from 'knex'
 import client, { Connection } from 'amqplib'
 
 import { BlockProcessor } from '../../modules/streamer/block-processor'
-import { StakingProcessor } from '@modules/staking-processor'
+// import { StakingProcessor } from '@modules/staking-processor'
 
 import { environment, MODE } from './environment'
 import { polkadotFactory } from '../common/infra/polkadotapi/index'
 
 import { PolkadotRepository } from './../common/infra/polkadotapi/polkadot.repository'
-import { StakingRepository } from './../common/infra/postgresql/staking.repository'
+// import { StakingRepository } from './../common/infra/postgresql/staking.repository'
 import { StreamerRepository } from './../common/infra/postgresql/streamer.repository'
 
 import { BlocksPreloader } from '../../modules/streamer/blocks-preloader'
@@ -79,7 +79,7 @@ const main = async () => {
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
-    logger.debug('process blocks')
+    logger.debug('BLOCK_PROCESSOR mode')
 
     const blockProcessor = await BlockProcessor({
       polkadotRepository,

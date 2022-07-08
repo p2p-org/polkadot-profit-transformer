@@ -6,8 +6,8 @@ import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.mo
 import { AnyTuple } from '@polkadot/types/types'
 
 export type ExtrinsicsProcessorInput = {
-  eraId: number
-  sessionId: number
+  // eraId: number
+  // sessionId: number
   blockNumber: Compact<BlockNumber>
   events: Vec<EventRecord>
   extrinsics: Vec<GenericExtrinsic>
@@ -19,7 +19,7 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
   const { polkadotRepository } = args
 
   return async (input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> => {
-    const { eraId, sessionId, blockNumber, events, extrinsics } = input
+    const { /* eraId, sessionId, */ blockNumber, events, extrinsics } = input
 
     const createExtrinsicModelFromCall = (
       call: Call,
@@ -32,8 +32,8 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
         id: `${blockNumber}-${index}`,
         success: isSuccess,
         block_id: blockNumber.toNumber(),
-        session_id: sessionId,
-        era: eraId,
+        // session_id: sessionId,
+        // era: eraId,
         section: call.section,
         method: call.method,
         mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,

@@ -7,10 +7,10 @@ export type BlockModel = {
   extrinsics_root: string
   parent_hash: string
   author: string
-  session_id: number
-  era: number
-  current_era: number
-  last_log: string
+  // session_id: number
+  // era: number
+  // current_era: number
+  // last_log: string
   digest: any
   block_time: Date
 }

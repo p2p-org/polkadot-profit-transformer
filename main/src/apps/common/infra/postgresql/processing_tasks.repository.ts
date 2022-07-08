@@ -1,7 +1,7 @@
 import { environment } from '@apps/main/environment'
 import { Knex } from 'knex'
 import { logger } from '../logger/logger'
-import { ENTITY, ProcessingTaskModel } from './models/processing_task.model'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from './models/processing_task.model'
 
 const BATCH_INSERT_CHUNK_SIZE = 1000
 
@@ -16,7 +16,7 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
     findLastEntityId: async (entity: ENTITY): Promise<number> => {
       const lastEntity = await ProcessingTaskModel(knex)
         .where({ entity: entity, ...network })
-        .orderBy('entity_id', 'desc')
+        .orderBy('row_id', 'desc')
         .first()
 
       logger.debug({
@@ -28,20 +28,19 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
       logger.debug({ lastEntityId })
       return lastEntityId
     },
-    isEntityExists: async (entity: ENTITY, entity_id: number): Promise<boolean> => {
-      const record = await ProcessingTaskModel(knex)
-        .where({ entity, entity_id, ...network })
-        .orderBy('entity_id', 'desc')
-        .first()
+    // isEntityExists: async (entity: ENTITY, entity_id: number): Promise<boolean> => {
+    //   const record = await ProcessingTaskModel(knex)
+    //     .where({ entity, entity_id, ...network })
+    //     .first()
 
-      logger.debug({
-        event: 'ProcessingTasksRepository isEntityExists',
-        entity,
-        entity_id,
-        record,
-      })
-      return !!record
-    },
+    //   logger.debug({
+    //     event: 'ProcessingTasksRepository isEntityExists',
+    //     entity,
+    //     entity_id,
+    //     record,
+    //   })
+    //   return !!record
+    // },
     async batchAddEntities(records: ProcessingTaskModel[]) {
       const insert = records.map((record) => ({ ...record, ...network }))
       await knex.batchInsert('processing_tasks', insert, BATCH_INSERT_CHUNK_SIZE)
@@ -59,8 +58,14 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
         .forUpdate()
         .select()
         .where({ entity, entity_id, ...network })
-        .orderBy('raw_id', 'desc')
+        .orderBy('row_id', 'desc')
         .first()
+    },
+    setTaskRecordAsProcessed(record: ProcessingTaskModel, trx: Knex.Transaction<any, any[]>) {
+      ProcessingTaskModel(knex)
+        .transacting(trx)
+        .where({ row_id: record.row_id, ...network })
+        .update({ status: PROCESSING_STATUS.PROCESSED, finish_timestamp: new Date() })
     },
   }
 }

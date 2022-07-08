@@ -1,8 +1,3 @@
-CREATE TABLE networks (
-    "id" SERIAL,
-    "name" VARCHAR (100)  PRIMARY KEY,
-    "row_id" SERIAL
-);
 
 CREATE TABLE blocks (
     "network_id" INT,

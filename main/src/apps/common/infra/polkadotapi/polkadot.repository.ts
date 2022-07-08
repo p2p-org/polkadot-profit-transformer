@@ -45,7 +45,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
       const result = await polkadotApi.events.system.ExtrinsicSuccess.is(event.event)
       return result
     },
-    async getEraData({ eraId, blockHash }: IBlockEraParams): Promise<EraModel> {
+    async getEraData({ eraId, blockHash }: IBlockEraParams): Promise<Partial<EraModel>> {
       logger.debug({ getEraData: { eraId, blockHash } })
       const [totalReward, erasRewardPoints, totalStake, sessionStart] = await Promise.all([
         polkadotApi.query.staking.erasValidatorReward.at(blockHash, eraId),
@@ -154,27 +154,27 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
       blockHash: BlockHash,
       blockId: number,
     ): Promise<
-      [SessionIndex, Option<EraIndex>, number | null, SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
+      [/* SessionIndex, Option<EraIndex>, number | null,  */ SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
     > {
       try {
         const historicalApi = await polkadotApi.at(blockHash)
 
-        const getActiveEra = async () => {
-          if (!historicalApi.query.staking.activeEra) return null
-          const activeEra = await historicalApi.query.staking.activeEra()
-          if (activeEra.isNone || activeEra.isEmpty) return null
-          const eraId = activeEra.unwrap().get('index')
-          return eraId ? +eraId : null
-        }
+        // const getActiveEra = async () => {
+        //   if (!historicalApi.query.staking.activeEra) return null
+        //   const activeEra = await historicalApi.query.staking.activeEra()
+        //   if (activeEra.isNone || activeEra.isEmpty) return null
+        //   const eraId = activeEra.unwrap().get('index')
+        //   return eraId ? +eraId : null
+        // }
 
-        const [sessionId, blockCurrentEra, blockTime, events] = await historicalApi.queryMulti([
-          [historicalApi.query.session.currentIndex],
-          [historicalApi.query.staking.currentEra],
+        const [/* sessionId, blockCurrentEra,  */ blockTime, events] = await historicalApi.queryMulti([
+          // [historicalApi.query.session.currentIndex],
+          // [historicalApi.query.staking.currentEra],
           [historicalApi.query.timestamp.now],
           [historicalApi.query.system.events, blockHash],
         ])
 
-        const activeEra = await getActiveEra()
+        // const activeEra = await getActiveEra()
 
         console.log(blockId + ': getInfoToProcessBlock sessionId done')
 
@@ -193,7 +193,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
         //   polkadotApi.query.system.events.at(blockHash),
         // ])
 
-        return [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events]
+        return [/* sessionId, blockCurrentEra, activeEra, */ signedBlock, extHeader, blockTime, events]
       } catch (error: any) {
         console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)
         throw error
