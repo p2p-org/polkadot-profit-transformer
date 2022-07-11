@@ -61,8 +61,8 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
         .orderBy('row_id', 'desc')
         .first()
     },
-    setTaskRecordAsProcessed(record: ProcessingTaskModel, trx: Knex.Transaction<any, any[]>) {
-      ProcessingTaskModel(knex)
+    async setTaskRecordAsProcessed(record: ProcessingTaskModel, trx: Knex.Transaction<any, any[]>) {
+      await ProcessingTaskModel(knex)
         .transacting(trx)
         .where({ row_id: record.row_id, ...network })
         .update({ status: PROCESSING_STATUS.PROCESSED, finish_timestamp: new Date() })
