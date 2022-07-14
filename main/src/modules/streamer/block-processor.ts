@@ -30,8 +30,8 @@ export const BlockProcessor = (deps: {
     metadata: any,
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
-  ): Promise<ProcessingTaskModel[]> => {
-    const newProcessingTasks: ProcessingTaskModel[] = []
+  ): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> => {
+    const newProcessingTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await polkadotRepository.getBlockHashByHeight(blockId)
 
     logger.info('BlockProcessor: start processing block with id: ' + blockId)
@@ -86,17 +86,13 @@ export const BlockProcessor = (deps: {
 
     console.log(blockId + ': block saved')
 
-    // here we send needed events and successfull extrinsics to the eventBus
-
-    console.log(blockId + ': extrinsics send to eventBus')
-
     for (const event of processedEvents) {
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
-        logger.info('BlockProcessor eraPayout detected, eraId = ', event.event.data[0])
+        logger.info({ event: 'BlockProcessor eraPayout detected', eraId: event.event.data[0] })
 
-        const newEraStakingProcessingTask: ProcessingTaskModel = {
+        const newEraStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
           entity: ENTITY.ERA,
-          entity_id: event.event.data[0],
+          entity_id: parseInt(event.event.data[0].toString()),
           status: PROCESSING_STATUS.NOT_PROCESSED,
           collect_uid: v4(),
           start_timestamp: new Date(),
@@ -105,7 +101,9 @@ export const BlockProcessor = (deps: {
           },
         }
 
-        processingTasksRepository.addProcessingTask(newEraStakingProcessingTask)
+        logger.debug({ event: 'newEraStakingProcessingTask', newEraStakingProcessingTask })
+
+        newProcessingTasks.push(newEraStakingProcessingTask)
       }
     }
 
@@ -116,8 +114,13 @@ export const BlockProcessor = (deps: {
   // todo: refactor to more abstracted method to allow send different tasks
   // now we send only era staking task
 
-  const sendToRabbit = async (tasks: ProcessingTaskModel[]) => {
+  const sendToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
     for (const task of tasks) {
+      logger.debug({
+        event: 'blockProcessor.sendToRabbit',
+        task,
+      })
+
       const data = {
         era_id: task.entity_id,
         collect_uid: task.collect_uid,
@@ -145,7 +148,7 @@ export const BlockProcessor = (deps: {
         const taskRecord = await processingTasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
 
         if (!taskRecord) {
-          throw new Error('BlockProcessor record not found. Skip processing.')
+          throw new Error('BlockProcessor task record not found. Skip processing.')
         }
 
         if (taskRecord.collect_uid !== collect_uid) {
@@ -164,6 +167,7 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           event: `Block processor start processing block ${blockId}`,
           ...metadata,
           collect_uid,
+          blockId,
         })
 
         const newProcessingTasks = await onNewBlock(metadata, blockId, trx)

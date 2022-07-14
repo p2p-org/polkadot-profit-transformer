@@ -15,8 +15,8 @@ export const BlocksPreloader = (deps: {
 }) => {
   const { processingTasksRepository, polkadotRepository, rabbitMQ } = deps
 
-  const createTask = (id: number): ProcessingTaskModel => {
-    const task: ProcessingTaskModel = {
+  const createTask = (id: number): ProcessingTaskModel<ENTITY.BLOCK> => {
+    const task: ProcessingTaskModel<ENTITY.BLOCK> = {
       entity: ENTITY.BLOCK,
       entity_id: id,
       status: PROCESSING_STATUS.NOT_PROCESSED,
@@ -28,14 +28,17 @@ export const BlocksPreloader = (deps: {
     return task
   }
 
-  const ingestPreloadTasks = async (args: { fromBlock: number; toBlock: number }): Promise<ProcessingTaskModel[]> => {
+  const ingestPreloadTasks = async (args: {
+    fromBlock: number
+    toBlock: number
+  }): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> => {
     const { fromBlock, toBlock } = args
 
     if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
 
     logger.debug(`create series of block tasks from ${fromBlock} to ${toBlock}`)
 
-    let tasks: ProcessingTaskModel[] = []
+    let tasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
 
     for (let id = fromBlock; id <= toBlock; id++) {
       const task = createTask(id)
@@ -53,7 +56,7 @@ export const BlocksPreloader = (deps: {
     return tasks
   }
 
-  const sendToRabbit = async (tasks: ProcessingTaskModel[]) => {
+  const sendToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
     for (const block of tasks) {
       const data = {
         block_id: block.entity_id,
@@ -64,7 +67,7 @@ export const BlocksPreloader = (deps: {
     logger.debug({ event: 'blocks preloader sendToRabbit blocks', from: tasks[0].entity_id, to: tasks.at(-1)?.entity_id })
   }
 
-  const ingestTasksChunk = async (tasks: ProcessingTaskModel[]) => {
+  const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
     await processingTasksRepository.batchAddEntities(tasks)
     await sendToRabbit(tasks)
   }
@@ -82,7 +85,10 @@ export const BlocksPreloader = (deps: {
       await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: lastFinalizedBlockId })
       logger.debug({ event: 'BlocksPreloader.preload ingested' })
     },
-
+    preloadOneBlock: async (blockId: number) => {
+      logger.debug({ event: 'BlocksPreloader.preloadOneBlock', blockId })
+      await ingestPreloadTasks({ fromBlock: blockId, toBlock: blockId })
+    },
     newBlock: async (blockId: number) => {
       logger.debug({ event: 'BlocksPreloader.preload', newFinalizedBlockId: blockId })
       const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
