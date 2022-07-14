@@ -52,12 +52,12 @@ const main = async () => {
       rabbitMQ,
     })
 
-    // await blocksPreloader.preload()
-    await blocksPreloader.preloadOneBlock(328745)
+    await blocksPreloader.preload()
+    // await blocksPreloader.preloadOneBlock(328745)
 
     logger.debug('preload done, go listening to the new blocks')
 
-    // polkadotRepository.subscribeFinalizedHeads((header) => blocksPreloader.newBlock(header.number.toNumber()))
+    polkadotRepository.subscribeFinalizedHeads((header) => blocksPreloader.newBlock(header.number.toNumber()))
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
