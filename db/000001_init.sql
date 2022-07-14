@@ -10,7 +10,7 @@ CREATE TABLE blocks (
     "digest" JSONB,
     "block_time" TIMESTAMP,
     "row_id" SERIAL,
-    PRIMARY KEY ("id", "network_id")
+    PRIMARY KEY ("row_id")
 );
 
 
@@ -24,7 +24,7 @@ CREATE TABLE events (
     "data" JSONB,
     "event" JSONB,
     "row_id" SERIAL,
-    PRIMARY KEY ("id", "network_id")
+    PRIMARY KEY ("row_id")
 
 );
 
@@ -47,7 +47,7 @@ CREATE TABLE extrinsics (
     "extrinsic" JSONB,
     "args" JSONB,
     "row_id" SERIAL,
-    PRIMARY KEY ("id", "network_id")
+    PRIMARY KEY ("row_id")
 
 );
 
@@ -61,7 +61,7 @@ CREATE TABLE eras (
     "total_stake" BIGINT,
     "total_reward_points" INT,
     "row_id" SERIAL,
-    PRIMARY KEY ("era", "network_id")
+    PRIMARY KEY ("row_id")
 );
 
 CREATE TABLE validators (
@@ -78,7 +78,7 @@ CREATE TABLE validators (
     "prefs" JSONB,
     "block_time" TIMESTAMP,
     "row_id" SERIAL,
-    PRIMARY KEY ("era", "account_id", "network_id")
+    PRIMARY KEY ("row_id")
 );
 
 CREATE TABLE nominators (
@@ -92,7 +92,7 @@ CREATE TABLE nominators (
     "reward_account_id" VARCHAR (150),
     "block_time" TIMESTAMP,
     "row_id" SERIAL,
-    PRIMARY KEY ("era", "account_id", "validator", "network_id")
+    PRIMARY KEY ("row_id")
 );
 
 CREATE TYPE processing_status AS ENUM ('not_processed', 'processed');
