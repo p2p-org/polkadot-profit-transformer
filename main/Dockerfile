@@ -25,4 +25,4 @@ COPY --from=building /usr/src/app/tsconfig.json ./tsconfig.json
 
 EXPOSE 8080
 
-CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "--max_old_space_size=16000", "./dist/apps/main/index.js"]
+CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/apps/main/index.js"]
