@@ -1,6 +1,5 @@
 import { Knex } from 'knex'
 import { environment } from '@apps/main/environment'
-import { logger } from '../logger/logger'
 
 import { ExtrinsicModel } from './models/extrinsic.model'
 import { BlockModel } from './models/block.model'

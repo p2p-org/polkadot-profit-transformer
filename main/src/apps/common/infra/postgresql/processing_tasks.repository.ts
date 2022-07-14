@@ -41,18 +41,18 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
     //   })
     //   return !!record
     // },
-    async batchAddEntities(records: ProcessingTaskModel[]) {
+    async batchAddEntities(records: ProcessingTaskModel<ENTITY>[]) {
       const insert = records.map((record) => ({ ...record, ...network }))
       await knex.batchInsert('processing_tasks', insert, BATCH_INSERT_CHUNK_SIZE)
     },
-    async addProcessingTask(task: ProcessingTaskModel) {
+    async addProcessingTask(task: ProcessingTaskModel<ENTITY>) {
       await ProcessingTaskModel(knex).insert({ ...task, ...network })
     },
     async readTaskAndLockRow(
       entity: ENTITY,
       entity_id: number,
       trx: Knex.Transaction<any, any[]>,
-    ): Promise<ProcessingTaskModel | undefined> {
+    ): Promise<ProcessingTaskModel<ENTITY> | undefined> {
       return ProcessingTaskModel(knex)
         .transacting(trx)
         .forUpdate()
@@ -61,7 +61,7 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
         .orderBy('row_id', 'desc')
         .first()
     },
-    async setTaskRecordAsProcessed(record: ProcessingTaskModel, trx: Knex.Transaction<any, any[]>) {
+    async setTaskRecordAsProcessed(record: ProcessingTaskModel<ENTITY>, trx: Knex.Transaction<any, any[]>) {
       await ProcessingTaskModel(knex)
         .transacting(trx)
         .where({ row_id: record.row_id, ...network })

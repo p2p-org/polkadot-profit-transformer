@@ -45,7 +45,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
       const result = await polkadotApi.events.system.ExtrinsicSuccess.is(event.event)
       return result
     },
-    async getEraData({ eraId, blockHash }: IBlockEraParams): Promise<Partial<EraModel>> {
+    async getEraData({ eraId, blockHash }: IBlockEraParams): Promise<Omit<EraModel, 'payout_block_id'>> {
       logger.debug({ getEraData: { eraId, blockHash } })
       const [totalReward, erasRewardPoints, totalStake, sessionStart] = await Promise.all([
         polkadotApi.query.staking.erasValidatorReward.at(blockHash, eraId),
@@ -56,10 +56,12 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
 
       logger.debug({ sessionStart: sessionStart.toHuman() })
 
+      console.log('TOTAL REWARD', totalReward.toHuman())
+
       return {
         era: eraId,
         total_reward: totalReward.toString(),
-        total_stake: totalStake.toString(),
+        total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
         total_reward_points: +erasRewardPoints.total.toString(),
         session_start: sessionStart.unwrap().toNumber(),
       }
@@ -69,7 +71,8 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
       return blockTime.toNumber()
     },
 
-    async getDistinctValidatorsAccountsByEra(blockHash: string): Promise<Set<string>> {
+    async getDistinctValidatorsAccountsByEra(blockId: number): Promise<Set<string>> {
+      const blockHash = await this.getBlockHashByHeight(blockId)
       const distinctValidators: Set<string> = new Set()
       const validators = await polkadotApi.query.session.validators.at(blockHash)
 
