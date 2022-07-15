@@ -49,7 +49,7 @@ export const BlocksPreloader = (deps: {
         logger.debug(id)
         await ingestTasksChunk(tasks)
         tasks = []
-        await sleep(10000)
+        await sleep(30000)
       }
     }
 
