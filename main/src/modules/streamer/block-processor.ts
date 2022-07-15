@@ -127,7 +127,11 @@ export const BlockProcessor = (deps: {
       }
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, data)
     }
-    logger.debug({ event: 'blocks preloader sendToRabbit blocks', from: tasks[0].entity_id, to: tasks.at(-1)?.entity_id })
+    logger.debug({
+      event: 'blocks preloader sendToRabbit blocks',
+      from: tasks[0].entity_id,
+      to: tasks[tasks.length - 1].entity_id,
+    })
   }
 
   const processTaskMessage = async <T extends QUEUES.Blocks>(message: TaskMessage<T>) => {
