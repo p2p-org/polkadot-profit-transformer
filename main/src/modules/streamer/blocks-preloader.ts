@@ -6,6 +6,10 @@ import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/inf
 import { logger } from '@apps/common/infra/logger/logger'
 import { QUEUES, Rabbit } from '@apps/common/infra/rabbitmq'
 
+const sleep = async (time: number) => {
+  return new Promise((res) => setTimeout(res, time))
+}
+
 export type BlocksPreloader = ReturnType<typeof BlocksPreloader>
 
 export const BlocksPreloader = (deps: {
@@ -45,6 +49,7 @@ export const BlocksPreloader = (deps: {
         logger.debug(id)
         await ingestTasksChunk(tasks)
         tasks = []
+        await sleep(10000)
       }
     }
 
