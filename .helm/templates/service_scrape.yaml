@@ -1,0 +1,23 @@
+{{- range .Values.streamers }}
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: {{ template "streamer.fullname" $ }}-{{ .name }}
+  labels:
+    app: {{ template "chart.name" $ }}
+    env: {{ template "env" $ }}
+    component: streamer
+    chain: {{ .name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "chart.name" $ }}
+      env: {{ template "env" $ }}
+      component: streamer
+      chain: {{ .name }}
+  endpoints:
+  - port: http
+    scrape_interval: 10s
+    scrapeTimeout: 10s
+{{- end }}

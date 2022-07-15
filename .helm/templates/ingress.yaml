@@ -1,0 +1,29 @@
+{{- range .Values.streamers }}
+{{- if .ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "streamer.fullname" $ }}-{{ .name }}
+  labels:
+    app: {{ template "chart.name" $ }}
+    env: {{ template "env" $ }}
+    component: streamer
+    chain: {{ .name }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: {{ .ingress.tls.ssl_redirect | quote }}
+    cert-manager.io/cluster-issuer: {{ .ingress.tls.cluster_issuer | quote }}
+spec:
+  ingressClassName: {{ .ingress.class }}
+  rules:
+  - host: {{ .ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend: { service: { name: {{ template "streamer.fullname" $ }}-{{ .name }}, port: { number: 80 } } }
+  tls:
+  - hosts: [ {{ .ingress.host }} ]
+    secretName: {{ .ingress.tls.secret }}
+{{- end }}
+{{- end }}

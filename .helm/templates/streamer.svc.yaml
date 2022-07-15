@@ -1,0 +1,23 @@
+{{- range .Values.streamers }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "streamer.fullname" $ }}-{{ .name }}
+  labels:
+    app: {{ template "chart.name" $ }}
+    env: {{ template "env" $ }}
+    component: streamer
+    chain: {{ .name }}
+spec:
+  ports:
+  - port: 80
+    targetPort: {{ .port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ template "chart.name" $ }}
+    env: {{ template "env" $ }}
+    component: streamer
+    chain: {{ .name }}
+{{- end }}
