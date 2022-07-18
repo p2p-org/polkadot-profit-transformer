@@ -53,6 +53,8 @@ spec:
         - { name: NETWORK_ID,    value: {{ quote .network_id }} }
         - { name: MODE,          value: {{ quote .mode }} }
         - { name: NETWORK,       value: {{ quote .network }} }
+        - { name: SUBSCRIBE,     value: {{ quote .subscribe }} }
+        - { name: PRELOAD,       value: {{ quote .preload }} }
         {{- end }}
         resources:
           limits: { cpu: {{ .Values.limits.cpu }}, memory: {{ .Values.limits.memory }} }

@@ -7,6 +7,9 @@ limits: { cpu: 1000m, memory: 2Gi }
 requests: { cpu: 300m, memory: 2Gi }
 port: 3000
 
+metrics:
+  enabled: true
+
 vault:
   role: "mbelt"
   secret: "secret/mbelt/v2_prod"
@@ -17,7 +20,7 @@ env:
   preload: true
   subscribe: true
   start_block_id: 0
-  basic_auth: true
+  network: polkadot
 ingress:
   enabled: true
   class: nginx-external
