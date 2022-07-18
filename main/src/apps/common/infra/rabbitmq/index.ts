@@ -52,10 +52,10 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
             try {
               await processor.processTaskMessage(message)
               console.log('ACK MESSAGE')
+              channel.ack(msg)
             } catch (error: any) {
               logger.error({ event: 'rabbit.process error', error: error.message, message })
             }
-            channel.ack(msg)
           }
         }
       await channel.consume(environment.NETWORK + ':' + queue, consumer(channel))
