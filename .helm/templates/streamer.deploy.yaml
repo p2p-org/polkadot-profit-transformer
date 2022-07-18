@@ -1,38 +1,34 @@
-{{- range .Values.streamers }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "streamer.fullname" $ }}-{{ .name }}
+  name: {{ template "app.fullname" $ }}
   labels:
-    app: {{ template "chart.name" $ }}
-    env: {{ template "env" $ }}
-    component: streamer
-    chain: {{ .name }}
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: {{ template "chart.name" $ }}
-      env: {{ template "env" $ }}
-      component: streamer
-      chain: {{ .name }}
+      app: {{ .Chart.Name }}
+      env: {{ .Values.environment }}
+      chain: {{ .Values.name }}
   template:
     metadata:
       labels:
-        app: {{ template "chart.name" $ }}
-        env: {{ template "env" $ }}
-        component: streamer
-        chain: {{ .name }}
+        app: {{ .Chart.Name }}
+        env: {{ .Values.environment }}
+        chain: {{ .Values.name }}
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-pre-populate-only: "true"
-        vault.hashicorp.com/role: {{ .vault.role | quote }}
-        vault.hashicorp.com/agent-inject-secret-config: {{ .vault.secret | quote }}
+        vault.hashicorp.com/role: {{ .Values.vault.role | quote }}
+        vault.hashicorp.com/agent-inject-secret-config: {{ .Values.vault.secret | quote }}
         vault.hashicorp.com/agent-inject-template-config: |
-          {{"{{"}} with secret {{ .vault.secret | quote }} {{"-}}"}}
+          {{"{{"}} with secret {{ .Values.vault.secret | quote }} {{"-}}"}}
           {{"{{"}}- range $key, $value := .Data.data {{"}}"}}
           export {{"{{"}} $key {{"}}"}}={{"{{"}} $value {{"}}"}}
           {{"{{"}}- end {{"}}"}}
@@ -42,27 +38,26 @@ spec:
       # restartPolicy: Never  # https://github.com/kubernetes/kubernetes/issues/24725
       containers:
       - name: streamer
-        image: {{ .image.repository }}:{{ .image.tag }}
-        ports: [ containerPort: {{ .port }} ]
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        ports: [ containerPort: {{ .Values.port }} ]
         command:
         - sh
         - -c
         - |
           source /vault/secrets/config;
           node --require=./tsconfig-paths-bootstrap.js ./dist/apps/main/index.js
-        {{- with .env }}
+        {{- with .Values.env }}
         env:
         - { name: SUBSTRATE_URI, value: {{ quote .substrate_uri }} }
         - { name: LOG_LEVEL,     value: {{ quote .log_level }} }
         - { name: NETWORK_ID,    value: {{ quote .network_id }} }
         - { name: MODE,          value: {{ quote .mode }} }
+        - { name: NETWORK,       value: {{ quote .network }} }
         {{- end }}
-        - { name: NETWORK,       value: {{ quote .name }} }
         resources:
-          limits: { cpu: {{ .limits.cpu }}, memory: {{ .limits.memory }} }
-          requests: { cpu: {{ .requests.cpu }}, memory: {{ .requests.memory }} }
+          limits: { cpu: {{ .Values.limits.cpu }}, memory: {{ .Values.limits.memory }} }
+          requests: { cpu: {{ .Values.requests.cpu }}, memory: {{ .Values.requests.memory }} }
         lifecycle:
           preStop:
             exec:
               command: ["sleep","10"]
-{{- end }}

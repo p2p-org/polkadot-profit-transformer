@@ -1,0 +1,27 @@
+---
+environment: prod
+
+name: moonbeam
+image: { repository: eu.gcr.io/substrate-infra/mbelt2_streamer_moonbeam, tag: v1.0.10 }
+limits: { cpu: 700m, memory: 2Gi }
+requests: { cpu: 500m, memory: 2Gi }
+port: 3000
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/v2_prod"
+
+env:
+  substrate_uri: ws://moonbeam-node-0.moonbeam-node.moonbeam.svc.cluster.local:9945
+  log_level: warn
+  preload: true
+  subscribe: true
+  start_block_id: 0
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt-moonbeam.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt-moonbeam-polka-p2p-world
+    ssl_redirect: true

@@ -1,0 +1,28 @@
+---
+environment: prod
+
+name: kusama
+image: { repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: v1.0.9_main }
+limits: { cpu: 1000m, memory: 2Gi }
+requests: { cpu: 300m, memory: 2Gi }
+port: 3000
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/v2_prod"
+
+env:
+  substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
+  log_level: trace
+  preload: true
+  subscribe: true
+  start_block_id: 0
+  basic_auth: true
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt-kusama.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt-kusama-polka-p2p-world
+    ssl_redirect: true

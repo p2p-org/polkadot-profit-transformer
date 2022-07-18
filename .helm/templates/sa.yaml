@@ -5,4 +5,5 @@ metadata:
   name: {{ template "app.fullname" $ }}
   labels:
     app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
     release: {{ .Release.Name }}

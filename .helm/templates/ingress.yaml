@@ -1,29 +1,26 @@
-{{- range .Values.streamers }}
-{{- if .ingress.enabled }}
+{{- if .Values.ingress.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ template "streamer.fullname" $ }}-{{ .name }}
+  name: {{ template "app.fullname" $ }}
   labels:
-    app: {{ template "chart.name" $ }}
-    env: {{ template "env" $ }}
-    component: streamer
-    chain: {{ .name }}
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.name }}
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: {{ .ingress.tls.ssl_redirect | quote }}
-    cert-manager.io/cluster-issuer: {{ .ingress.tls.cluster_issuer | quote }}
+    nginx.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.tls.ssl_redirect | quote }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.cluster_issuer | quote }}
 spec:
-  ingressClassName: {{ .ingress.class }}
+  ingressClassName: {{ .Values.ingress.class }}
   rules:
-  - host: {{ .ingress.host }}
+  - host: {{ .Values.ingress.host }}
     http:
       paths:
       - path: /
         pathType: Prefix
-        backend: { service: { name: {{ template "streamer.fullname" $ }}-{{ .name }}, port: { number: 80 } } }
+        backend: { service: { name: {{ template "app.fullname" $ }}, port: { number: 80 } } }
   tls:
-  - hosts: [ {{ .ingress.host }} ]
-    secretName: {{ .ingress.tls.secret }}
-{{- end }}
+  - hosts: [ {{ .Values.ingress.host }} ]
+    secretName: {{ .Values.ingress.tls.secret }}
 {{- end }}

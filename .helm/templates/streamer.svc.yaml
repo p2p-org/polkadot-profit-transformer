@@ -1,23 +1,21 @@
-{{- range .Values.streamers }}
+{{- if .Values.ingress.enabled }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "streamer.fullname" $ }}-{{ .name }}
+  name: {{ template "app.fullname" $ }}
   labels:
-    app: {{ template "chart.name" $ }}
-    env: {{ template "env" $ }}
-    component: streamer
-    chain: {{ .name }}
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.name }}
 spec:
   ports:
   - port: 80
-    targetPort: {{ .port }}
+    targetPort: {{ .Values.port }}
     protocol: TCP
     name: http
   selector:
-    app: {{ template "chart.name" $ }}
-    env: {{ template "env" $ }}
-    component: streamer
-    chain: {{ .name }}
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.name }}
 {{- end }}
