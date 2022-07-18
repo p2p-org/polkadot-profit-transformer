@@ -92,11 +92,14 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
         const initialCall = extrinsic.registry.createType('Call', extrinsic.method)
 
         const referencedEventsIds = events
-          .filter((event) => {
+          .map((event, eventIndex) => {
             const { phase } = event
-            return phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index)
+            if (phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index)) {
+              return `${blockNumber}-${eventIndex}`
+            }
+            return ''
           })
-          .map((event) => `${blockNumber}-${parseInt(event.event.index.toString())}`)
+          .filter((event) => event !== '')
 
         if (isSuccess) {
           const extractedExtrinsics = recursiveExtrinsicDecoder({ call: initialCall, indexes: [], index })
