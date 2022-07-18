@@ -31,9 +31,9 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: |
-          yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.stage.block-processor.yaml
-          yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.stage.preloader.yaml
-          yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.stage.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.stage.block-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.stage.preloader.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.stage.staking-processor.yaml
 
       - name: Commit image changes
         uses: stefanzweifel/git-auto-commit-action@v4
