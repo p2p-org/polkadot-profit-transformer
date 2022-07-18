@@ -59,6 +59,7 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
         .select()
         .where({ entity, entity_id, ...network })
         .orderBy('row_id', 'desc')
+        .limit(1)
         .first()
     },
     async setTaskRecordAsProcessed(record: ProcessingTaskModel<ENTITY>, trx: Knex.Transaction<any, any[]>) {
