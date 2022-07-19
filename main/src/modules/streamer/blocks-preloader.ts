@@ -37,7 +37,7 @@ export const BlocksPreloader = (deps: {
 
     if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
 
-    logger.debug(`create series of block tasks from ${fromBlock} to ${toBlock}`)
+    logger.info(`create series of block tasks from ${fromBlock} to ${toBlock}`)
 
     let tasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
 
