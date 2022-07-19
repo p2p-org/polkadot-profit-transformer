@@ -2,7 +2,11 @@ name: ci
 
 on:
   push:
+<<<<<<< HEAD
     branches: ['moonbeam']
+=======
+    branches: ['monbeam']
+>>>>>>> pipelines for mbelt2 polka, kusama & moonbeam, moonriver
 
 jobs:
   docker:
@@ -31,8 +35,13 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: |
+<<<<<<< HEAD
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.moonbeam.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.moonriver.yaml
+=======
+          yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.moonbeam.yaml
+          yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.moonriver.yaml
+>>>>>>> pipelines for mbelt2 polka, kusama & moonbeam, moonriver
 
       - name: Commit image changes
         uses: stefanzweifel/git-auto-commit-action@v4

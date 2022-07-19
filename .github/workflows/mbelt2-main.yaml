@@ -31,8 +31,13 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: |
+<<<<<<< HEAD
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.polkadot.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.kusama.yaml
+=======
+          yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.polkadot.yaml
+          yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.prod.kusama.yaml
+>>>>>>> pipelines for mbelt2 polka, kusama & moonbeam, moonriver
 
       - name: Commit image changes
         uses: stefanzweifel/git-auto-commit-action@v4
