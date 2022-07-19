@@ -49,16 +49,16 @@ export const BlocksPreloader = (deps: {
       tasks.push(task)
 
       if (id % 1000 === 0) {
-        console.log({ id, messagesBeingProcessed, gracefulShutdownFlag })
+        // console.log({ id, messagesBeingProcessed, gracefulShutdownFlag })
         messagesBeingProcessed = true
         await ingestTasksChunk(tasks)
         tasks = []
         if (gracefulShutdownFlag) {
           break
         }
-        console.log('sleep')
+        // console.log('sleep')
         await sleep(3000)
-        console.log('after sleep', { id, messagesBeingProcessed, gracefulShutdownFlag })
+        // console.log('after sleep', { id, messagesBeingProcessed, gracefulShutdownFlag })
       }
     }
 
@@ -85,16 +85,16 @@ export const BlocksPreloader = (deps: {
   }
 
   const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
-    console.log('ingestTasksChunk')
+    // console.log('ingestTasksChunk')
     await Promise.all([processingTasksRepository.batchAddEntities(tasks), sendToRabbit(tasks)])
-    console.log('ingestTasksChunk ingested')
+    // console.log('ingestTasksChunk ingested')
   }
 
   const gracefullShutdown = async () => {
     gracefulShutdownFlag = true
 
     while (true) {
-      console.log({ messagesBeingProcessed })
+      // console.log({ messagesBeingProcessed })
       if (!messagesBeingProcessed) break
       await sleep(100)
     }
