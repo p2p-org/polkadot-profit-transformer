@@ -1,19 +1,15 @@
 ---
 environment: prod
-
 name: polkadot
-image: { repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: v1.0.9_main }
-limits: { cpu: 1000m, memory: 2Gi }
-requests: { cpu: 300m, memory: 2Gi }
+image: {repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: 70422e6e1934c0c7d1d810381f1dae429aacd9a5}
+limits: {cpu: 1000m, memory: 2Gi}
+requests: {cpu: 300m, memory: 2Gi}
 port: 3000
-
 metrics:
   enabled: true
-
 vault:
   role: "mbelt"
   secret: "secret/mbelt/v2_prod"
-
 env:
   substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
   log_level: trace
