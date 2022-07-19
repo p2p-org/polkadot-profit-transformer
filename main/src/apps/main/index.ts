@@ -31,6 +31,15 @@ const main = async () => {
       ssl: false,
     },
     searchPath: ['knex', 'public'],
+    pool: {
+      min: 0,
+      max: 10,
+      createTimeoutMillis: 60000,
+      acquireTimeoutMillis: 60000,
+      idleTimeoutMillis: 60000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 100,
+    },
   })
 
   const rabbitConnection: Connection = await client.connect(environment.RABBITMQ!)
@@ -52,8 +61,8 @@ const main = async () => {
       rabbitMQ,
     })
 
-    // await blocksPreloader.preload()
-    await blocksPreloader.preloadOneBlock(10000000)
+    await blocksPreloader.preload()
+    // await blocksPreloader.preloadOneBlock(10000000)
 
     logger.debug('preload done, go listening to the new blocks')
 
