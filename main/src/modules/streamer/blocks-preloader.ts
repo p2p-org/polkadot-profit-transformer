@@ -19,6 +19,9 @@ export const BlocksPreloader = (deps: {
 }) => {
   const { processingTasksRepository, polkadotRepository, rabbitMQ } = deps
 
+  let gracefulShutdownFlag = false
+  let messagesBeingProcessed = false
+
   const createTask = (id: number): ProcessingTaskModel<ENTITY.BLOCK> => {
     const task: ProcessingTaskModel<ENTITY.BLOCK> = {
       entity: ENTITY.BLOCK,
@@ -45,15 +48,25 @@ export const BlocksPreloader = (deps: {
       const task = createTask(id)
       tasks.push(task)
 
-      if (id % 10000 === 0) {
-        logger.debug(id)
+      if (id % 1000 === 0) {
+        console.log({ id, messagesBeingProcessed, gracefulShutdownFlag })
+        messagesBeingProcessed = true
         await ingestTasksChunk(tasks)
         tasks = []
-        await sleep(30000)
+        if (gracefulShutdownFlag) {
+          break
+        }
+        console.log('sleep')
+        await sleep(3000)
+        console.log('after sleep', { id, messagesBeingProcessed, gracefulShutdownFlag })
       }
     }
 
-    await ingestTasksChunk(tasks)
+    if (tasks.length) {
+      await ingestTasksChunk(tasks)
+    }
+
+    messagesBeingProcessed = false
   }
 
   const sendToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
@@ -72,9 +85,34 @@ export const BlocksPreloader = (deps: {
   }
 
   const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
-    await processingTasksRepository.batchAddEntities(tasks)
-    await sendToRabbit(tasks)
+    console.log('ingestTasksChunk')
+    await Promise.all([processingTasksRepository.batchAddEntities(tasks), sendToRabbit(tasks)])
+    console.log('ingestTasksChunk ingested')
   }
+
+  const gracefullShutdown = async () => {
+    gracefulShutdownFlag = true
+
+    while (true) {
+      console.log({ messagesBeingProcessed })
+      if (!messagesBeingProcessed) break
+      await sleep(100)
+    }
+  }
+
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM')
+    await gracefullShutdown()
+    console.log('Ready to shutdown!')
+    process.exit(0)
+  })
+
+  process.on('SIGINT', async () => {
+    console.log('SIGINT')
+    await gracefullShutdown()
+    console.log('Ready to shutdown!')
+    process.exit(0)
+  })
 
   return {
     // todo: add logic to re-collect from certain past block
