@@ -1,0 +1,9 @@
+---
+apiVersion: v2
+name: mbelt
+description: Mbelt helm chart
+version: 1.0.0
+appVersion: 1.0.0
+maintainers:
+- name: Artem Nurmatov
+  email: artem.n@p2p.org
