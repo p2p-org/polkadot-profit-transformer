@@ -48,7 +48,7 @@ export const BlocksPreloader = (deps: {
       const task = createTask(id)
       tasks.push(task)
 
-      if (id % 20000 === 0) {
+      if (id % 10000 === 0) {
         // console.log({ id, messagesBeingProcessed, gracefulShutdownFlag })
         messagesBeingProcessed = true
         await ingestTasksChunk(tasks)
