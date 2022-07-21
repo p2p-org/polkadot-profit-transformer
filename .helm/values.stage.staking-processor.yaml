@@ -2,7 +2,7 @@
 environment: stage
 name: staking-processor
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 54926525ab7261ddaa3c1de642d05b84311291e7}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b229b953a120ac97d4da3bb9d28487fe75bc4595}
 limits: {cpu: 250m, memory: 200Mi}
 requests: {cpu: 150m, memory: 200Mi}
 port: 3000
