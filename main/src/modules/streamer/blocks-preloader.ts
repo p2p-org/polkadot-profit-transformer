@@ -38,7 +38,7 @@ export const BlocksPreloader = (deps: {
   const ingestPreloadTasks = async (args: { fromBlock: number; toBlock: number }): Promise<void> => {
     const { fromBlock, toBlock } = args
 
-    if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
+    // if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
 
     logger.info(`create series of block tasks from ${fromBlock} to ${toBlock}`)
 
@@ -134,7 +134,7 @@ export const BlocksPreloader = (deps: {
       await ingestPreloadTasks({ fromBlock: blockId, toBlock: blockId })
     },
     newBlock: async (blockId: number) => {
-      logger.info({ event: 'BlocksPreloader.preload newFinalizedBlock', newFinalizedBlockId: blockId })
+      logger.debug({ event: 'BlocksPreloader.preload newFinalizedBlock', newFinalizedBlockId: blockId })
       const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
       logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
 
