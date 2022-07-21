@@ -64,9 +64,9 @@ const main = async () => {
     await blocksPreloader.preload()
     // await blocksPreloader.preloadOneBlock(10000000)
 
-    logger.debug('preload done, go listening to the new blocks')
+    logger.info('preload done, go listening to the new blocks')
 
-    // polkadotRepository.subscribeFinalizedHeads((header) => blocksPreloader.newBlock(header.number.toNumber()))
+    polkadotRepository.subscribeFinalizedHeads((header) => blocksPreloader.newBlock(header.number.toNumber()))
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {

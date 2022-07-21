@@ -49,6 +49,8 @@ export const BlocksPreloader = (deps: {
       tasks.push(task)
 
       if (id % 10000 === 0) {
+        logger.info({ event: `ingestTasksChunk up to ${id}` })
+
         // console.log({ id, messagesBeingProcessed, gracefulShutdownFlag })
         messagesBeingProcessed = true
         await ingestTasksChunk(tasks)
@@ -132,7 +134,7 @@ export const BlocksPreloader = (deps: {
       await ingestPreloadTasks({ fromBlock: blockId, toBlock: blockId })
     },
     newBlock: async (blockId: number) => {
-      logger.debug({ event: 'BlocksPreloader.preload', newFinalizedBlockId: blockId })
+      logger.info({ event: 'BlocksPreloader.preload newFinalizedBlock', newFinalizedBlockId: blockId })
       const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
       logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
 
