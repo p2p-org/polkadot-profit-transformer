@@ -22,12 +22,12 @@ export type QueueProcessor<T extends QUEUES> = {
 }
 
 export type Rabbit = {
-  send: <T extends QUEUES>(queue: T, message: TaskMessage<T>) => Promise<void>
+  send: <T extends QUEUES>(queue: T, message: TaskMessage<T>) => Promise<boolean>
   process: <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => Promise<void>
 }
 
 export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
-  const channel: Channel = await connection.createChannel()
+  const channel: Channel = await connection.createConfirmChannel()
   await channel.assertQueue(environment.NETWORK + ':' + QUEUES.Staking)
   await channel.assertQueue(environment.NETWORK + ':' + QUEUES.Blocks)
   await channel.prefetch(1)
@@ -35,9 +35,11 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
   return {
     send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
       logger.debug({ event: 'rabbitmq.send', message })
-      await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)), {
+      const ack = await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)), {
         persistent: true,
       })
+
+      return ack
     },
     process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
       const consumer =

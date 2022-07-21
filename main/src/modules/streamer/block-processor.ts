@@ -176,7 +176,7 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
 
         const newProcessingTasks = await onNewBlock(metadata, blockId, trx)
 
-        await processingTasksRepository.batchAddEntities(newProcessingTasks)
+        await processingTasksRepository.batchAddEntities(newProcessingTasks, trx)
 
         await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
 

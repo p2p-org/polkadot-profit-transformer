@@ -18,6 +18,9 @@ import { QUEUES, RABBIT } from '@apps/common/infra/rabbitmq'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { logger } from '@apps/common/infra/logger/logger'
 
+export const sleep = async (time: number) => {
+  return new Promise((res) => setTimeout(res, time))
+}
 const main = async () => {
   console.log({ environment })
 
@@ -32,13 +35,14 @@ const main = async () => {
     },
     searchPath: ['knex', 'public'],
     pool: {
-      min: 0,
+      min: 1,
       max: 10,
       createTimeoutMillis: 60000,
       acquireTimeoutMillis: 60000,
       idleTimeoutMillis: 60000,
       reapIntervalMillis: 1000,
       createRetryIntervalMillis: 100,
+      propagateCreateError: false,
     },
   })
 
@@ -59,9 +63,26 @@ const main = async () => {
       processingTasksRepository,
       polkadotRepository: polkadotRepository,
       rabbitMQ,
+      knex: pg,
     })
 
-    await blocksPreloader.preload()
+    process.on('SIGTERM', async () => {
+      console.log('SIGTERM')
+      await blocksPreloader.gracefullShutdown()
+      console.log('Ready to shutdown!')
+      await sleep(10000)
+      process.exit(0)
+    })
+
+    process.on('SIGINT', async () => {
+      console.log('SIGINT')
+      await blocksPreloader.gracefullShutdown()
+      console.log('Ready to shutdown!')
+      await sleep(10000)
+      process.exit(0)
+    })
+
+    // await blocksPreloader.preload()
     // await blocksPreloader.preloadOneBlock(10000000)
 
     logger.info('preload done, go listening to the new blocks')
@@ -102,4 +123,7 @@ const main = async () => {
   // restApi.init()
 }
 
-main().catch((error) => console.log('Error in igniter main function', error.message))
+main().catch((error) => {
+  console.log('Error in igniter main function', error.message)
+  throw error
+})
