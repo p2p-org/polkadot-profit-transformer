@@ -17,6 +17,7 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
       const lastEntity = await ProcessingTaskModel(knex)
         .where({ entity: entity, ...network })
         .orderBy('row_id', 'desc')
+        .limit(1)
         .first()
 
       logger.debug({
