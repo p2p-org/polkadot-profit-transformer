@@ -82,7 +82,7 @@ const main = async () => {
       process.exit(0)
     })
 
-    // await blocksPreloader.preload()
+    await blocksPreloader.preload()
     // await blocksPreloader.preloadOneBlock(10000000)
 
     logger.info('preload done, go listening to the new blocks')

@@ -119,6 +119,7 @@ export const BlocksPreloader = (deps: {
       await ingestPreloadTasks({ fromBlock: blockId, toBlock: blockId })
     },
     newBlock: async (blockId: number) => {
+      if (messagesBeingProcessed) return
       logger.debug({ event: 'BlocksPreloader.preload newFinalizedBlock', newFinalizedBlockId: blockId })
       const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
       logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
