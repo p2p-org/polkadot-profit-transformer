@@ -1,3 +1,4 @@
+import { sleep } from './../../apps/main/index'
 import { v4 } from 'uuid'
 
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
@@ -5,10 +6,7 @@ import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/process
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
 import { logger } from '@apps/common/infra/logger/logger'
 import { QUEUES, Rabbit } from '@apps/common/infra/rabbitmq'
-
-const sleep = async (time: number) => {
-  return new Promise((res) => setTimeout(res, time))
-}
+import { Knex } from 'knex'
 
 export type BlocksPreloader = ReturnType<typeof BlocksPreloader>
 
@@ -16,8 +14,9 @@ export const BlocksPreloader = (deps: {
   processingTasksRepository: ProcessingTasksRepository
   polkadotRepository: PolkadotRepository
   rabbitMQ: Rabbit
+  knex: Knex
 }) => {
-  const { processingTasksRepository, polkadotRepository, rabbitMQ } = deps
+  const { processingTasksRepository, polkadotRepository, rabbitMQ, knex } = deps
 
   let gracefulShutdownFlag = false
   let messagesBeingProcessed = false
@@ -35,6 +34,32 @@ export const BlocksPreloader = (deps: {
     return task
   }
 
+  const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
+    console.log('ingestTasksChunk')
+    try {
+      await knex.transaction(async (trx) => {
+        await processingTasksRepository.batchAddEntities(tasks, trx)
+        for (const block of tasks) {
+          const data = {
+            block_id: block.entity_id,
+            collect_uid: block.collect_uid,
+          }
+          await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
+          // console.log({ ack })
+        }
+      })
+
+      logger.debug({
+        event: 'blocks preloader sendToRabbitAndDb blocks',
+        from: tasks[0].entity_id,
+        to: tasks[tasks.length - 1].entity_id,
+      })
+      console.log('ingestTasksChunk ingested')
+    } catch (error: any) {
+      console.log('ingestTasksChunk error', error.message)
+    }
+  }
+
   const ingestPreloadTasks = async (args: { fromBlock: number; toBlock: number }): Promise<void> => {
     const { fromBlock, toBlock } = args
 
@@ -45,6 +70,12 @@ export const BlocksPreloader = (deps: {
     let tasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
 
     for (let id = fromBlock; id <= toBlock; id++) {
+      if (gracefulShutdownFlag) {
+        break
+      }
+
+      messagesBeingProcessed = true
+
       const task = createTask(id)
       tasks.push(task)
 
@@ -52,69 +83,23 @@ export const BlocksPreloader = (deps: {
         logger.info({ event: `ingestTasksChunk up to ${id}` })
 
         // console.log({ id, messagesBeingProcessed, gracefulShutdownFlag })
-        messagesBeingProcessed = true
+
         await ingestTasksChunk(tasks)
         tasks = []
-        if (gracefulShutdownFlag) {
-          break
-        }
+
         // console.log('sleep')
-        await sleep(3000)
+        await sleep(5000)
         // console.log('after sleep', { id, messagesBeingProcessed, gracefulShutdownFlag })
       }
     }
 
     if (tasks.length) {
       await ingestTasksChunk(tasks)
+      // await sleep(10000)
     }
 
     messagesBeingProcessed = false
   }
-
-  const sendToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
-    for (const block of tasks) {
-      const data = {
-        block_id: block.entity_id,
-        collect_uid: block.collect_uid,
-      }
-      await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
-    }
-    logger.debug({
-      event: 'blocks preloader sendToRabbit blocks',
-      from: tasks[0].entity_id,
-      to: tasks[tasks.length - 1].entity_id,
-    })
-  }
-
-  const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
-    // console.log('ingestTasksChunk')
-    await Promise.all([processingTasksRepository.batchAddEntities(tasks), sendToRabbit(tasks)])
-    // console.log('ingestTasksChunk ingested')
-  }
-
-  const gracefullShutdown = async () => {
-    gracefulShutdownFlag = true
-
-    while (true) {
-      // console.log({ messagesBeingProcessed })
-      if (!messagesBeingProcessed) break
-      await sleep(100)
-    }
-  }
-
-  process.on('SIGTERM', async () => {
-    console.log('SIGTERM')
-    await gracefullShutdown()
-    console.log('Ready to shutdown!')
-    process.exit(0)
-  })
-
-  process.on('SIGINT', async () => {
-    console.log('SIGINT')
-    await gracefullShutdown()
-    console.log('Ready to shutdown!')
-    process.exit(0)
-  })
 
   return {
     // todo: add logic to re-collect from certain past block
@@ -139,6 +124,15 @@ export const BlocksPreloader = (deps: {
       logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
 
       await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
+    },
+    gracefullShutdown: async () => {
+      gracefulShutdownFlag = true
+
+      while (true) {
+        // console.log({ messagesBeingProcessed })
+        if (!messagesBeingProcessed) break
+        await sleep(100)
+      }
     },
   }
 }
