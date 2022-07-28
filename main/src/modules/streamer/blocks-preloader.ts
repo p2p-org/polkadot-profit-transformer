@@ -95,7 +95,7 @@ export const BlocksPreloader = (deps: {
 
     if (tasks.length) {
       await ingestTasksChunk(tasks)
-      // await sleep(10000)
+      await sleep(500)
     }
 
     messagesBeingProcessed = false
