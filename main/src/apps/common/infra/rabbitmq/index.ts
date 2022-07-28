@@ -22,7 +22,7 @@ export type QueueProcessor<T extends QUEUES> = {
 }
 
 export type Rabbit = {
-  send: <T extends QUEUES>(queue: T, message: TaskMessage<T>) => Promise<boolean>
+  send: <T extends QUEUES>(queue: T, message: TaskMessage<T>) => Promise<void>
   process: <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => Promise<void>
 }
 
@@ -35,11 +35,9 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
   return {
     send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
       logger.debug({ event: 'rabbitmq.send', message })
-      const ack = await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)), {
+      await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)), {
         persistent: true,
       })
-
-      return ack
     },
     process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
       const consumer =
@@ -54,6 +52,7 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
             try {
               await processor.processTaskMessage(message)
               console.log('ACK MESSAGE')
+              console.log('memory', process.memoryUsage().heapUsed)
               channel.ack(msg)
             } catch (error: any) {
               logger.error({ event: 'rabbit.process error', error: error.message, message })
