@@ -44,7 +44,8 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
     // },
     async batchAddEntities(records: ProcessingTaskModel<ENTITY>[], trx: Knex.Transaction<any, any[]>) {
       const insert = records.map((record) => ({ ...record, ...network }))
-      await knex.batchInsert('processing_tasks', insert, BATCH_INSERT_CHUNK_SIZE).transacting(trx)
+      // await knex.batchInsert('processing_tasks', insert, BATCH_INSERT_CHUNK_SIZE).transacting(trx).returning('entity_id')
+      await ProcessingTaskModel(knex).transacting(trx).insert(insert) // .returning('entity_id')
     },
     async addProcessingTask(task: ProcessingTaskModel<ENTITY>) {
       await ProcessingTaskModel(knex).insert({ ...task, ...network })

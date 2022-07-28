@@ -79,7 +79,7 @@ export const BlocksPreloader = (deps: {
       const task = createTask(id)
       tasks.push(task)
 
-      if (id % 10000 === 0) {
+      if (id % 1000 === 0) {
         logger.info({ event: `ingestTasksChunk up to ${id}` })
 
         // console.log({ id, messagesBeingProcessed, gracefulShutdownFlag })
@@ -88,7 +88,7 @@ export const BlocksPreloader = (deps: {
         tasks = []
 
         // console.log('sleep')
-        await sleep(5000)
+        await sleep(500)
         // console.log('after sleep', { id, messagesBeingProcessed, gracefulShutdownFlag })
       }
     }
