@@ -53,10 +53,10 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
               await processor.processTaskMessage(message)
               console.log('ACK MESSAGE')
               console.log('memory', process.memoryUsage().heapUsed)
-              channel.ack(msg)
             } catch (error: any) {
               logger.error({ event: 'rabbit.process error', error: error.message, message })
             }
+            channel.ack(msg)
           }
         }
       await channel.consume(environment.NETWORK + ':' + queue, consumer(channel))
