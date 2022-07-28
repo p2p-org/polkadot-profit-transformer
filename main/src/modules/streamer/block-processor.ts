@@ -6,7 +6,6 @@ import { ExtrinsicsProcessor, ExtrinsicsProcessorInput } from './extrinsics-proc
 import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
 import { processEvents } from './events-processor'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
-import { counter } from '@apps/common/infra/prometheus'
 import { logger } from '@apps/common/infra/logger/logger'
 import { Knex } from 'knex'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
@@ -107,7 +106,6 @@ export const BlockProcessor = (deps: {
       }
     }
 
-    counter.inc(1)
     return newProcessingTasks
   }
 
