@@ -37,17 +37,20 @@ export const BlocksPreloader = (deps: {
   const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
     console.log('ingestTasksChunk')
     try {
-      await knex.transaction(async (trx) => {
-        await processingTasksRepository.batchAddEntities(tasks, trx)
-        for (const block of tasks) {
-          const data = {
-            block_id: block.entity_id,
-            collect_uid: block.collect_uid,
+      await knex
+        .transaction(async (trx) => {
+          await processingTasksRepository.batchAddEntities(tasks, trx)
+        })
+        .then(async () => {
+          for (const block of tasks) {
+            const data = {
+              block_id: block.entity_id,
+              collect_uid: block.collect_uid,
+            }
+            await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
+            // console.log({ ack })
           }
-          await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
-          // console.log({ ack })
-        }
-      })
+        })
 
       logger.debug({
         event: 'blocks preloader sendToRabbitAndDb blocks',
@@ -86,10 +89,7 @@ export const BlocksPreloader = (deps: {
 
         await ingestTasksChunk(tasks)
         tasks = []
-
-        // console.log('sleep')
         await sleep(500)
-        // console.log('after sleep', { id, messagesBeingProcessed, gracefulShutdownFlag })
       }
     }
 
