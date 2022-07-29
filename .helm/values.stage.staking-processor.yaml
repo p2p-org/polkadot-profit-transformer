@@ -17,5 +17,12 @@ env:
   network_id: 1
   mode: STAKING_PROCESSOR
   network: polkadot
+
 ingress:
-  enabled: false
+  enabled: true
+  class: nginx-external
+  host: mbelt-stage-staking-processor.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt-stage-staking-processor-polka-p2p-world
+    ssl_redirect: true

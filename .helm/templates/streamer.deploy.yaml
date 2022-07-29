@@ -56,6 +56,8 @@ spec:
         - { name: SUBSCRIBE,     value: {{ quote .subscribe }} }
         - { name: PRELOAD,       value: {{ quote .preload }} }
         {{- end }}
+        - { name: REST_API_PORT, value: {{ quote .Values.port }} }
+        - { name: BASIC_AUTH,    value: "false" }
         resources:
           limits: { cpu: {{ .Values.limits.cpu }}, memory: {{ .Values.limits.memory }} }
           requests: { cpu: {{ .Values.requests.cpu }}, memory: {{ .Values.requests.memory }} }
