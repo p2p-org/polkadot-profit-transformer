@@ -2,7 +2,7 @@
 environment: stage
 name: staking-processor
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 6697d5ffc179f9456bd4c67dc6fb0b140fdea866}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: ac50398d19b9192c10d2b68fe7c3c259a2243a70}
 limits: {cpu: 450m, memory: 512Mi}
 requests: {cpu: 350m, memory: 512Mi}
 port: 3000
@@ -17,7 +17,6 @@ env:
   network_id: 1
   mode: STAKING_PROCESSOR
   network: polkadot
-
 ingress:
   enabled: true
   class: nginx-external
