@@ -1,26 +1,17 @@
-import { StakingProcessor } from './../../../modules/staking-processor'
+import { environment } from '@apps/main/environment'
 import express from 'express'
 import basicAuth from 'express-basic-auth'
 
-import { BlockProcessor } from './../../../modules/streamer/block-processor'
-import { BlocksPreloader, PRELOADER_STATUS } from './../../../modules/streamer/blocks-preloader'
-import { Environment } from '../environment'
+import { BlocksPreloader } from './../../../modules/streamer/blocks-preloader'
 import prom from 'prom-client'
-import { QUEUES, Rabbit } from '../../common/infra/rabbitmq'
 
 const collectDefaultMetrics = prom.collectDefaultMetrics
 collectDefaultMetrics({ prefix: 'forethought' })
 
 export type RestApi = ReturnType<typeof RestApi>
 
-export const RestApi = (deps: {
-  environment: Environment
-  blocksPreloader: BlocksPreloader
-  blockProcessor: BlockProcessor
-  stakingProcessor: StakingProcessor
-  rabbitMQ: Rabbit
-}) => {
-  const { environment, blockProcessor, blocksPreloader, rabbitMQ } = deps
+export const RestApi = (deps: { blocksPreloader: BlocksPreloader }) => {
+  const { blocksPreloader } = deps
 
   const port = environment.REST_API_PORT
   return {
@@ -35,37 +26,63 @@ export const RestApi = (deps: {
         )
       }
 
-      app.get('/metrics', async function (req, res) {
-        res.set('Content-Type', prom.register.contentType)
-        res.end(await prom.register.metrics())
-      })
+      // app.get('/metrics', async function (req, res) {
+      //   res.set('Content-Type', prom.register.contentType)
+      //   res.end(await prom.register.metrics())
+      // })
 
       app.get('/health', (req, res) => {
         res.json({ status: 'live' })
       })
-      app.get('/status', (req, res) => {
-        return res.json({
-          status: blocksPreloader.status(),
-          currentBlockId: blocksPreloader.status() === PRELOADER_STATUS.IN_PROGRESS ? blocksPreloader.currentBlock() : null,
-        })
+      // app.get('/status', (req, res) => {
+      //   return res.json({
+      //     isPaused: blocksPreloader.isPaused(),
+      //     currentBlockId: blocksPreloader.currentBlock(),
+      //   })
+      // })
+
+      app.get('/pause', (req, res) => {
+        blocksPreloader.pause()
+        res.send('paused')
       })
+
+      app.get('/resume', (req, res) => {
+        blocksPreloader.resume()
+        res.send('paused')
+      })
+
+      // app.get('/restart', (req, res) => {
+      //   if (!blocksPreloader.isPaused()) {
+      //     return res.send('not paused')
+      //   }
+
+      //   blocksPreloader.restart()
+      //   return res.json({
+      //     isPaused: blocksPreloader.isPaused(),
+      //     currentBlockId: blocksPreloader.currentBlock(),
+      //   })
+      // })
+
+      // app.get('/resume', () => {
+      //   blocksPreloader.restart()
+      // })
       // app.get('/rewind/:blockId', (req, res) => {
       //   if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
       //   blocksPreloader.rewind(Number(req.params.blockId))
       //   return res.json({ result: 'ok' })
       // })
-      app.get('/processBlock/:blockId', async (req, res) => {
-        if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
-        await blockProcessor(Number(req.params.blockId))
-        return res.json({ result: 'ok' })
-      })
+      // app.get('/processBlock/:blockId', async (req, res) => {
+      //   if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
+      //   // await blockProcessor(Number(req.params.blockId))
+      //   return res.json({ result: 'ok' })
+      // })
 
-      app.get('/processEra/:eraId', async (req, res) => {
-        if (isNaN(Number(req.params.eraId))) return res.json({ error: 'blockId must be a number' })
-        // await stakingProcessor.process(Number(req.params.eraId))
-        rabbitMQ.send(QUEUES.Staking, req.params.eraId)
-        return res.json({ result: 'ok' })
-      })
+      // app.get('/processEra/:eraId', async (req, res) => {
+      //   if (isNaN(Number(req.params.eraId))) return res.json({ error: 'blockId must be a number' })
+      //   // await stakingProcessor.process(Number(req.params.eraId))
+      //   // rabbitMQ.send(QUEUES.Staking, req.params.eraId)
+      //   return res.json({ result: 'ok' })
+      // })
       app.listen(port, () => {
         console.log(`server started at http://localhost:${port}`)
       })

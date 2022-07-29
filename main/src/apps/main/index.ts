@@ -18,6 +18,8 @@ import { QUEUES, RABBIT } from '@apps/common/infra/rabbitmq'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { logger } from '@apps/common/infra/logger/logger'
 
+import { RestApi } from './rest-api/index'
+
 export const sleep = async (time: number) => {
   return new Promise((res) => setTimeout(res, time))
 }
@@ -82,12 +84,12 @@ const main = async () => {
       process.exit(0)
     })
 
+    // // express rest api
+    const restApi = RestApi({ blocksPreloader })
+    restApi.init()
+
     await blocksPreloader.preload()
     // await blocksPreloader.preloadOneBlock(10000000)
-
-    logger.info('preload done, go listening to the new blocks')
-
-    polkadotRepository.subscribeFinalizedHeads((header) => blocksPreloader.newBlock(header.number.toNumber()))
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
@@ -117,10 +119,6 @@ const main = async () => {
 
     rabbitMQ.process(QUEUES.Staking, stakingProcessor)
   }
-
-  // // express rest api
-  // const restApi = RestApi({ environment, blocksPreloader, blockProcessor, stakingProcessor, rabbitMQ })
-  // restApi.init()
 }
 
 main().catch((error) => {

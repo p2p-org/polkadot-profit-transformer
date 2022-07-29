@@ -20,6 +20,8 @@ export const BlocksPreloader = (deps: {
 
   let gracefulShutdownFlag = false
   let messagesBeingProcessed = false
+  let isPaused = false
+  const currentBlock = 0
 
   const createTask = (id: number): ProcessingTaskModel<ENTITY.BLOCK> => {
     const task: ProcessingTaskModel<ENTITY.BLOCK> = {
@@ -48,7 +50,6 @@ export const BlocksPreloader = (deps: {
               collect_uid: block.collect_uid,
             }
             await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
-            // console.log({ ack })
           }
         })
 
@@ -77,6 +78,10 @@ export const BlocksPreloader = (deps: {
         break
       }
 
+      while (isPaused) {
+        await sleep(500)
+      }
+
       messagesBeingProcessed = true
 
       const task = createTask(id)
@@ -101,39 +106,67 @@ export const BlocksPreloader = (deps: {
     messagesBeingProcessed = false
   }
 
+  const preload = async () => {
+    logger.debug({ event: 'BlocksPreloader.preload' })
+    const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
+    logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
+
+    const lastFinalizedBlockId = await polkadotRepository.getFinBlockNumber()
+    logger.debug({ event: 'BlocksPreloader.preload', lastFinalizedBlockId })
+
+    await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: lastFinalizedBlockId })
+    logger.debug({ event: 'BlocksPreloader.preload ingested' })
+
+    logger.info('preload done, go listening to the new blocks')
+    polkadotRepository.subscribeFinalizedHeads((header) => newBlock(header.number.toNumber()))
+  }
+
+  const preloadOneBlock = async (blockId: number) => {
+    logger.debug({ event: 'BlocksPreloader.preloadOneBlock', blockId })
+    await ingestPreloadTasks({ fromBlock: blockId, toBlock: blockId })
+  }
+
+  const newBlock = async (blockId: number) => {
+    if (messagesBeingProcessed || isPaused) return
+    logger.debug({ event: 'BlocksPreloader.preload newFinalizedBlock', newFinalizedBlockId: blockId })
+    const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
+    logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
+
+    await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
+  }
+
+  const gracefullShutdown = async () => {
+    gracefulShutdownFlag = true
+
+    while (true) {
+      // console.log({ messagesBeingProcessed })
+      if (!messagesBeingProcessed) break
+      await sleep(100)
+    }
+  }
+
+  const pause = () => {
+    isPaused = true
+  }
+
+  const resume = () => {
+    isPaused = false
+  }
+
+  // const restart = async () => {
+  //   await preload()
+  // }
+
   return {
     // todo: add logic to re-collect from certain past block
-    preload: async () => {
-      logger.debug({ event: 'BlocksPreloader.preload' })
-      const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
-      logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
-
-      const lastFinalizedBlockId = await polkadotRepository.getFinBlockNumber()
-      logger.debug({ event: 'BlocksPreloader.preload', lastFinalizedBlockId })
-
-      await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: lastFinalizedBlockId })
-      logger.debug({ event: 'BlocksPreloader.preload ingested' })
-    },
-    preloadOneBlock: async (blockId: number) => {
-      logger.debug({ event: 'BlocksPreloader.preloadOneBlock', blockId })
-      await ingestPreloadTasks({ fromBlock: blockId, toBlock: blockId })
-    },
-    newBlock: async (blockId: number) => {
-      if (messagesBeingProcessed) return
-      logger.debug({ event: 'BlocksPreloader.preload newFinalizedBlock', newFinalizedBlockId: blockId })
-      const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
-      logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
-
-      await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
-    },
-    gracefullShutdown: async () => {
-      gracefulShutdownFlag = true
-
-      while (true) {
-        // console.log({ messagesBeingProcessed })
-        if (!messagesBeingProcessed) break
-        await sleep(100)
-      }
-    },
+    preload,
+    preloadOneBlock,
+    newBlock,
+    gracefullShutdown,
+    pause,
+    resume,
+    // restart,
+    // isPaused: (): boolean => isPaused,
+    // currentBlock: () => currentBlock,
   }
 }
