@@ -32,7 +32,7 @@ const preEnv = cleanEnv(process.env, {
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
   REST_API_PORT: num({ default: 3000 }),
-  BASIC_AUTH: bool({ default: true }),
+  BASIC_AUTH: bool({ default: false }),
   REST_API_BASIC_AUTH_PASSWORD: str({ default: 'pwd' }),
   START_BLOCK_ID: num({ default: -1 }), // -1 = continue from last preloaded block from db
   RABBITMQ: url(),
