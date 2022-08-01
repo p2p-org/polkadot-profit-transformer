@@ -45,7 +45,12 @@ spec:
         - -c
         - |
           source /vault/secrets/config;
-          node --require=./tsconfig-paths-bootstrap.js ./dist/apps/main/index.js
+          node \
+          --require=./tsconfig-paths-bootstrap.js \
+          {{- range .Values.additional_args }}
+          {{ . }} \
+          {{- end }}
+          ./dist/apps/main/index.js
         {{- with .Values.env }}
         env:
         - { name: SUBSTRATE_URI, value: {{ quote .substrate_uri }} }
