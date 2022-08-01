@@ -19,11 +19,6 @@ export const StreamerRepository = (deps: { knex: Knex }) => (trx: Knex.Transacti
           .transacting(trx)
           .insert({ ...block, ...network })
       },
-      // findLastBlockId: async (): Promise<number | undefined> => {
-      //   const lastBlock = await BlockModel(knex).where(network).orderBy('id', 'desc').first()
-      //   const lastBlockId = lastBlock ? Number(lastBlock.id) : 0
-      //   return lastBlockId
-      // },
     },
     events: {
       save: async (event: EventModel): Promise<void> => {

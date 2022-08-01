@@ -174,7 +174,9 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
 
         const newProcessingTasks = await onNewBlock(metadata, blockId, trx)
 
-        await processingTasksRepository.batchAddEntities(newProcessingTasks, trx)
+        if (newProcessingTasks.length) {
+          await processingTasksRepository.batchAddEntities(newProcessingTasks, trx)
+        }
 
         await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
 
@@ -184,7 +186,7 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           collect_uid,
         })
 
-        await trx.commit()
+        // await trx.commit()
 
         logger.info({
           event: `block ${blockId} tx has been committed`,
@@ -210,7 +212,7 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
         })
       } catch (error: any) {
         logger.warn({
-          event: error.message,
+          event: 'BlockProcessor: processTaskMessage error: ' + error.message,
           data: {
             ...metadata,
             collect_uid,
