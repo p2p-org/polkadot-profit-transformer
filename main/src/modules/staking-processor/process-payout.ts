@@ -14,6 +14,7 @@ export const processEraPayout = async (
   metadata: any,
   eraId: number,
   payout_block_id: number,
+  collect_uid: string,
   trx: Knex.Transaction<any, any[]>,
   stakingRepository: StakingRepository,
   polkadotRepository: PolkadotRepository,
@@ -122,7 +123,7 @@ export const processEraPayout = async (
       entity: ENTITY.ERA,
       entity_id: eraId,
       status: PROCESSING_STATUS.NOT_PROCESSED,
-      collect_uid: v4(),
+      collect_uid,
       start_timestamp: new Date(),
       data: { payout_block_id },
     }
