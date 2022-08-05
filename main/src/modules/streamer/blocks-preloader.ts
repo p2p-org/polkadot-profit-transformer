@@ -146,10 +146,12 @@ export const BlocksPreloader = (deps: {
   }
 
   const pause = () => {
+    logger.info('preloader paused')
     isPaused = true
   }
 
   const resume = () => {
+    logger.info('preloader resumed')
     isPaused = false
   }
 
