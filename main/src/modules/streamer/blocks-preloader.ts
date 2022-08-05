@@ -109,13 +109,13 @@ export const BlocksPreloader = (deps: {
   const preload = async () => {
     logger.debug({ event: 'BlocksPreloader.preload' })
     const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
-    logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
+    logger.info({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
 
     const lastFinalizedBlockId = await polkadotRepository.getFinBlockNumber()
-    logger.debug({ event: 'BlocksPreloader.preload', lastFinalizedBlockId })
+    logger.info({ event: 'BlocksPreloader.preload', lastFinalizedBlockId })
 
     await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: lastFinalizedBlockId })
-    logger.debug({ event: 'BlocksPreloader.preload ingested' })
+    logger.info({ event: 'BlocksPreloader.preload ingested' })
 
     logger.info('preload done, go listening to the new blocks')
     polkadotRepository.subscribeFinalizedHeads((header) => newBlock(header.number.toNumber()))
