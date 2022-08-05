@@ -1,5 +1,6 @@
 ---
 environment: dev
+additional_args: []
 
 streamers:
   - name: polkadot

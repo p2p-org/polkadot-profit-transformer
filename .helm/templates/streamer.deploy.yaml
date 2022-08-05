@@ -45,7 +45,12 @@ spec:
         - -c
         - |
           source /vault/secrets/config;
-          node --require=./tsconfig-paths-bootstrap.js ./dist/apps/main/index.js
+          node \
+          --require=./tsconfig-paths-bootstrap.js \
+          {{- range .Values.additional_args }}
+          {{ . }} \
+          {{- end }}
+          ./dist/apps/main/index.js
         {{- with .Values.env }}
         env:
         - { name: SUBSTRATE_URI, value: {{ quote .substrate_uri }} }
@@ -56,6 +61,8 @@ spec:
         - { name: SUBSCRIBE,     value: {{ quote .subscribe }} }
         - { name: PRELOAD,       value: {{ quote .preload }} }
         {{- end }}
+        - { name: REST_API_PORT, value: {{ quote .Values.port }} }
+        - { name: BASIC_AUTH,    value: "false" }
         resources:
           limits: { cpu: {{ .Values.limits.cpu }}, memory: {{ .Values.limits.memory }} }
           requests: { cpu: {{ .Values.requests.cpu }}, memory: {{ .Values.requests.memory }} }

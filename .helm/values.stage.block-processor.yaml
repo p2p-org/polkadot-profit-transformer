@@ -15,6 +15,8 @@ metrics:
 vault:
   role: "mbelt"
   secret: "secret/mbelt/stage"
+additional_args:
+  - "--max_old_space_size=400"
 env:
   substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
   log_level: info
@@ -22,4 +24,10 @@ env:
   mode: BLOCK_PROCESSOR
   network: polkadot
 ingress:
-  enabled: false
+  enabled: true
+  class: nginx-external
+  host: mbelt-stage-block-processor.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt-stage-block-processor-polka-p2p-world
+    ssl_redirect: true
