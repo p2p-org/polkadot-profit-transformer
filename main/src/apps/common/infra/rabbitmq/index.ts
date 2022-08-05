@@ -51,7 +51,7 @@ export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
             const message = JSON.parse(msg.content.toString()) as TaskMessage<T>
             try {
               await processor.processTaskMessage(message)
-              console.log('ACK MESSAGE')
+              // console.log('ACK MESSAGE')
               console.log('memory', process.memoryUsage().heapUsed)
               channel.ack(msg)
             } catch (error: any) {

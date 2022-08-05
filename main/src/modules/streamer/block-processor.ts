@@ -33,7 +33,7 @@ export const BlockProcessor = (deps: {
     const newProcessingTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await polkadotRepository.getBlockHashByHeight(blockId)
 
-    logger.info('BlockProcessor: start processing block with id: ' + blockId)
+    // logger.info('BlockProcessor: start processing block with id: ' + blockId)
 
     const [signedBlock, extHeader, blockTime, events] = await polkadotRepository.getInfoToProcessBlock(blockHash, blockId)
 
@@ -73,17 +73,17 @@ export const BlockProcessor = (deps: {
       await streamerRepository(trx).extrinsics.save(extrinsic)
     }
 
-    console.log(blockId + ': extrinsics saved')
+    // console.log(blockId + ': extrinsics saved')
 
     for (const event of processedEvents) {
       await streamerRepository(trx).events.save(event)
     }
 
-    console.log(blockId + ': events saved')
+    // console.log(blockId + ': events saved')
 
     await streamerRepository(trx).blocks.save(block)
 
-    console.log(blockId + ': block saved')
+    // console.log(blockId + ': block saved')
 
     for (const event of processedEvents) {
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
