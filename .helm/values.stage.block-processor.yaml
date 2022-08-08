@@ -7,8 +7,8 @@ image:
     repository: eu.gcr.io/substrate-infra/mbelt3_preloader,
     tag: 54926525ab7261ddaa3c1de642d05b84311291e7,
   }
-limits: { cpu: 250m, memory: 200Mi }
-requests: { cpu: 150m, memory: 200Mi }
+limits: { cpu: 250m, memory: 512Mi }
+requests: { cpu: 150m, memory: 512Mi }
 port: 3000
 metrics:
   enabled: false
