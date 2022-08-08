@@ -46,18 +46,28 @@ export const StakingProcessor = (args: {
       const taskRecord = await processingTasksRepository.readTaskAndLockRow(ENTITY.ERA, eraId, trx)
 
       if (!taskRecord) {
-        throw new Error('StakingProcessor task record not found. Skip processing.')
+        logger.warn({
+          event: 'StakingProcessor task record not found. Skip processing.',
+          collect_uid,
+        })
+        return
       }
 
       if (taskRecord.collect_uid !== collect_uid) {
-        throw new Error(
-          `StakingProcessor: possible era ${eraId} processing task duplication. 
+        logger.warn({
+          event: `StakingProcessor: possible era ${eraId} processing task duplication. 
 Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
-        )
+          collect_uid,
+        })
+        return
       }
 
       if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-        throw new Error(`StakingProcessor: era  ${eraId} has been already processed. Skip processing.`)
+        logger.warn({
+          event: `StakingProcessor: era  ${eraId} has been already processed. Skip processing.`,
+          collect_uid,
+        })
+        return
       }
 
       // all is good, start processing era payout
