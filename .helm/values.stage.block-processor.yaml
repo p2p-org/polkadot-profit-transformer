@@ -2,7 +2,7 @@
 environment: stage
 replicas: 50
 name: block-processor
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: de5289cf07d210666ed244f8265827ad03f0db2d}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 79202fe8bc2e1684299d9c240cc3716a3bea8a9e}
 limits: {cpu: 250m, memory: 200Mi}
 requests: {cpu: 150m, memory: 200Mi}
 port: 3000
