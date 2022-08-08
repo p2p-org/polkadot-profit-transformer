@@ -34,7 +34,7 @@ export const processEraPayout = async (
     const validatorsAccountIdSet: Set<string> = await polkadotRepository.getDistinctValidatorsAccountsByEra(eraStartBlockId)
 
     const processValidator = async (validatorAccountId: string): Promise<void> => {
-      logger.info(`Process staking for validator ${validatorAccountId} `)
+      logger.info(`Era: ${eraId}. Process staking for validator ${validatorAccountId} `)
       const [{ total, own, others }, { others: othersClipped }, prefs] = await polkadotRepository.getStakersInfo(
         blockHash,
         eraId,
