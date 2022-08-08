@@ -52,7 +52,7 @@ export const processEraPayout = async (
 
       const nominatorsChunked = sliceNominatorsToChunks(
         others,
-        process.env.NOMINATORS_CUNCURRENCY ? Number(process.env.NOMINATORS_CUNCURRENCY) : 10,
+        process.env.NOMINATORS_CUNCURRENCY ? Number(process.env.NOMINATORS_CUNCURRENCY) : 20,
       )
 
       logger.info(`validator ${validatorAccountId} has ${others.length} nominators`)
