@@ -51,31 +51,11 @@ export const RestApi = (deps: { blocksPreloader: BlocksPreloader }) => {
         res.send('paused')
       })
 
-      // app.get('/restart', (req, res) => {
-      //   if (!blocksPreloader.isPaused()) {
-      //     return res.send('not paused')
-      //   }
-
-      //   blocksPreloader.restart()
-      //   return res.json({
-      //     isPaused: blocksPreloader.isPaused(),
-      //     currentBlockId: blocksPreloader.currentBlock(),
-      //   })
-      // })
-
-      // app.get('/resume', () => {
-      //   blocksPreloader.restart()
-      // })
-      // app.get('/rewind/:blockId', (req, res) => {
-      //   if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
-      //   blocksPreloader.rewind(Number(req.params.blockId))
-      //   return res.json({ result: 'ok' })
-      // })
-      // app.get('/processBlock/:blockId', async (req, res) => {
-      //   if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
-      //   // await blockProcessor(Number(req.params.blockId))
-      //   return res.json({ result: 'ok' })
-      // })
+      app.get('/processBlock/:blockId', async (req, res) => {
+        if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
+        await blocksPreloader.preloadOneBlock(Number(req.params.blockId))
+        return res.json({ result: 'ok' })
+      })
 
       // app.get('/processEra/:eraId', async (req, res) => {
       //   if (isNaN(Number(req.params.eraId))) return res.json({ error: 'blockId must be a number' })
