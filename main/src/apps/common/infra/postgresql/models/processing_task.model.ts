@@ -19,6 +19,7 @@ export type ProcessingTaskModel<T> = T extends ENTITY.BLOCK
       start_timestamp: Date
       finish_timestamp?: Date
       data: any
+      attempts: number
       row_id?: number
     }
   : {
@@ -31,6 +32,7 @@ export type ProcessingTaskModel<T> = T extends ENTITY.BLOCK
       data: {
         payout_block_id: number
       }
+      attempts: number
       row_id?: number
     }
 

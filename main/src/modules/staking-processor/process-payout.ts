@@ -125,6 +125,7 @@ export const processEraPayout = async (
       status: PROCESSING_STATUS.NOT_PROCESSED,
       collect_uid,
       start_timestamp: new Date(),
+      attempts: 0,
       data: { payout_block_id },
     }
     logger.warn({

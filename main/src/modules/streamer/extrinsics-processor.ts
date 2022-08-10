@@ -60,7 +60,6 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
       const currentIndexes = [...entry.indexes, entry.index]
 
       if (entry.call.section === 'utility' && entry.call.method === 'batch') {
-        console.log('batch')
         const processedBatchCalls = (<Vec<Call>>entry.call.args[0])
           .map((call, index) => recursiveExtrinsicDecoder({ call, indexes: currentIndexes, index }))
           .flat()
