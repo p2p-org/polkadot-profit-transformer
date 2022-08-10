@@ -52,7 +52,7 @@ export const processEraPayout = async (
 
       const nominatorsChunked = sliceNominatorsToChunks(
         others,
-        process.env.NOMINATORS_CUNCURRENCY ? Number(process.env.NOMINATORS_CUNCURRENCY) : 20,
+        process.env.NOMINATORS_CUNCURRENCY ? Number(process.env.NOMINATORS_CUNCURRENCY) : 50,
       )
 
       logger.info(`validator ${validatorAccountId} has ${others.length} nominators`)
@@ -100,7 +100,7 @@ export const processEraPayout = async (
       return res
     }
 
-    const allValidatorsChunked = sliceIntoChunks(Array.from(validatorsAccountIdSet), 1)
+    const allValidatorsChunked = sliceIntoChunks(Array.from(validatorsAccountIdSet), 5)
 
     for (const chunk of allValidatorsChunked) {
       await Promise.all(chunk.map(processValidator))
