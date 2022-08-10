@@ -11,6 +11,8 @@ import { Knex } from 'knex'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
 
+const MAX_ATTEMPTS = 5 // retry 5 times then skip processing
+
 export type BlockProcessor = ReturnType<typeof BlockProcessor>
 
 export const BlockProcessor = (deps: {
@@ -95,6 +97,7 @@ export const BlockProcessor = (deps: {
           status: PROCESSING_STATUS.NOT_PROCESSED,
           collect_uid: v4(),
           start_timestamp: new Date(),
+          attempts: 0,
           data: {
             payout_block_id: blockId,
           },
@@ -145,12 +148,22 @@ export const BlockProcessor = (deps: {
       processing_timestamp: new Date(),
     }
 
+    await processingTasksRepository.increaseAttempts(ENTITY.BLOCK, blockId)
+
     await knex.transaction(async (trx) => {
       try {
         const taskRecord = await processingTasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
 
         if (!taskRecord) {
           throw new Error('BlockProcessor task record not found. Skip processing.')
+        }
+
+        if (taskRecord.attempts > MAX_ATTEMPTS) {
+          logger.info({
+            event: 'Max attempts on block ${blockId} reached, skip processing.',
+            collect_uid,
+          })
+          return
         }
 
         if (taskRecord.collect_uid !== collect_uid) {

@@ -3,20 +3,23 @@ import { v4 } from 'uuid'
 
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
+import { ProcessingStatusRepository } from '@apps/common/infra/postgresql/processing_status.repository'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
 import { logger } from '@apps/common/infra/logger/logger'
 import { QUEUES, Rabbit } from '@apps/common/infra/rabbitmq'
 import { Knex } from 'knex'
+import { ProcessingStateModel } from '@apps/common/infra/postgresql/models/processing_status.model'
 
 export type BlocksPreloader = ReturnType<typeof BlocksPreloader>
 
 export const BlocksPreloader = (deps: {
   processingTasksRepository: ProcessingTasksRepository
+  processingStatusRepository: ProcessingStatusRepository
   polkadotRepository: PolkadotRepository
   rabbitMQ: Rabbit
   knex: Knex
 }) => {
-  const { processingTasksRepository, polkadotRepository, rabbitMQ, knex } = deps
+  const { processingTasksRepository, processingStatusRepository, polkadotRepository, rabbitMQ, knex } = deps
 
   let gracefulShutdownFlag = false
   let messagesBeingProcessed = false
@@ -30,10 +33,27 @@ export const BlocksPreloader = (deps: {
       status: PROCESSING_STATUS.NOT_PROCESSED,
       collect_uid: v4(),
       start_timestamp: new Date(),
+      attempts: 0,
       data: {},
     }
     // logger.debug({ event: 'createTask', task })
     return task
+  }
+
+  const ingestOneBlockTask = async (task: ProcessingTaskModel<ENTITY.BLOCK>) => {
+    await processingTasksRepository.addProcessingTask(task)
+
+    const data = {
+      block_id: task.entity_id,
+      collect_uid: task.collect_uid,
+    }
+
+    await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
+
+    logger.debug({
+      event: 'blocks preloader ingestOneBlockTask',
+      task: task,
+    })
   }
 
   const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
@@ -42,6 +62,11 @@ export const BlocksPreloader = (deps: {
       await knex
         .transaction(async (trx) => {
           await processingTasksRepository.batchAddEntities(tasks, trx)
+          const updatedLastInsertRecord: ProcessingStateModel<ENTITY> = {
+            entity: ENTITY.BLOCK,
+            entity_id: tasks.at(-1)!.entity_id,
+          }
+          await processingStatusRepository.updateLastTaskEntityId(updatedLastInsertRecord, trx)
         })
         .then(async () => {
           for (const block of tasks) {
@@ -67,7 +92,7 @@ export const BlocksPreloader = (deps: {
   const ingestPreloadTasks = async (args: { fromBlock: number; toBlock: number }): Promise<void> => {
     const { fromBlock, toBlock } = args
 
-    // if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
+    if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
 
     logger.info(`create series of block tasks from ${fromBlock} to ${toBlock}`)
 
@@ -108,7 +133,7 @@ export const BlocksPreloader = (deps: {
 
   const preload = async () => {
     logger.debug({ event: 'BlocksPreloader.preload' })
-    const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
+    const lastBlockIdInProcessingTasks = await processingStatusRepository.findLastEntityId(ENTITY.BLOCK)
     logger.info({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
 
     const lastFinalizedBlockId = await polkadotRepository.getFinBlockNumber()
@@ -123,13 +148,14 @@ export const BlocksPreloader = (deps: {
 
   const preloadOneBlock = async (blockId: number) => {
     logger.debug({ event: 'BlocksPreloader.preloadOneBlock', blockId })
-    await ingestPreloadTasks({ fromBlock: blockId, toBlock: blockId })
+    const task = createTask(blockId)
+    await ingestOneBlockTask(task)
   }
 
   const newBlock = async (blockId: number) => {
     if (messagesBeingProcessed || isPaused) return
     logger.debug({ event: 'BlocksPreloader.preload newFinalizedBlock', newFinalizedBlockId: blockId })
-    const lastBlockIdInProcessingTasks = await processingTasksRepository.findLastEntityId(ENTITY.BLOCK)
+    const lastBlockIdInProcessingTasks = await processingStatusRepository.findLastEntityId(ENTITY.BLOCK)
     logger.debug({ event: 'BlocksPreloader.preload', lastBlockIdInProcessingTasks })
 
     await ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
@@ -163,7 +189,6 @@ export const BlocksPreloader = (deps: {
     // todo: add logic to re-collect from certain past block
     preload,
     preloadOneBlock,
-    newBlock,
     gracefullShutdown,
     pause,
     resume,

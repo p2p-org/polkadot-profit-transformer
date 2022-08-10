@@ -19,6 +19,7 @@ import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/process
 import { logger } from '@apps/common/infra/logger/logger'
 
 import { RestApi } from './rest-api/index'
+import { ProcessingStatusRepository } from '@apps/common/infra/postgresql/processing_status.repository'
 
 export const sleep = async (time: number) => {
   return new Promise((res) => setTimeout(res, time))
@@ -54,6 +55,7 @@ const main = async () => {
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI)()
   const polkadotRepository = await PolkadotRepository({ polkadotApi })
   const processingTasksRepository = await ProcessingTasksRepository({ knex: pg })
+  const processingStatusRepository = await ProcessingStatusRepository({ knex: pg })
 
   const streamerRepository = StreamerRepository({ knex: pg })
   const stakingRepository = StakingRepository({ knex: pg })
@@ -63,6 +65,7 @@ const main = async () => {
 
     const blocksPreloader = BlocksPreloader({
       processingTasksRepository,
+      processingStatusRepository,
       polkadotRepository: polkadotRepository,
       rabbitMQ,
       knex: pg,
@@ -89,7 +92,7 @@ const main = async () => {
     restApi.init()
 
     await blocksPreloader.preload()
-    // await blocksPreloader.preloadOneBlock(10000000)
+    // await blocksPreloader.preloadOneBlock(8259074)
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {

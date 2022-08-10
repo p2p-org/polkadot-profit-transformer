@@ -50,6 +50,11 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
     async addProcessingTask(task: ProcessingTaskModel<ENTITY>) {
       await ProcessingTaskModel(knex).insert({ ...task, ...network })
     },
+    async increaseAttempts(entity: ENTITY, entity_id: number) {
+      await knex.raw(
+        `update processing_tasks set attempts = attempts+1 where entity_id = ${entity_id} and entity='${entity}' and network_id = ${network.network_id}`,
+      )
+    },
     async readTaskAndLockRow(
       entity: ENTITY,
       entity_id: number,
