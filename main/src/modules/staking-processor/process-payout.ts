@@ -123,7 +123,7 @@ export const processEraPayout = async (
       // })
 
       for (let validator of Array.from(validatorsAccountIdSet)) {
-        console.log('queues.push', validator)
+        // console.log('queues.push', validator)
         queue.push(validator)
       }
 
@@ -164,11 +164,11 @@ export const processEraPayout = async (
     return reprocessingTask
   }
 
-  logger.info({ eraStartBlockId })
+  // logger.info({ eraStartBlockId })
 
   const blockHash = await polkadotRepository.getBlockHashByHeight(payout_block_id)
 
-  logger.info({ blockHash })
+  // logger.info({ blockHash })
 
   try {
     const blockTime = await polkadotRepository.getBlockTime(blockHash)
