@@ -1,7 +1,7 @@
 ---
 environment: prod
 name: polkadot
-image: {repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: 70422e6e1934c0c7d1d810381f1dae429aacd9a5}
+image: {repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: 56ea9631c3c5a770ca330631110c132beb02aeb7}
 limits: {cpu: 1000m, memory: 2Gi}
 requests: {cpu: 300m, memory: 2Gi}
 port: 3000
