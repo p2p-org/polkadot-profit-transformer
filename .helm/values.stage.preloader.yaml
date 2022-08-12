@@ -2,7 +2,7 @@
 environment: stage
 name: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 2386fbb215ef45995c325e77f5f11d1d236bcf46}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 2889d85ea69e724ba4ae2084fa815246715beb01}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
