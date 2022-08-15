@@ -4,7 +4,7 @@ replicas: 1
 name: block-processor
 limits: {cpu: 250m, memory: 8000Mi}
 requests: {cpu: 150m, memory: 8000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 8abdd484fbf9e9d71dadc7dbcf298c4ce8861421}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 183a486a49560ac6c403922a03f7cfd52f421ea5}
 port: 3000
 metrics:
   enabled: false
