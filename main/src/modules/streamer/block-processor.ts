@@ -160,7 +160,7 @@ export const BlockProcessor = (deps: {
 
         if (taskRecord.attempts > MAX_ATTEMPTS) {
           logger.info({
-            event: 'Max attempts on block ${blockId} reached, skip processing.',
+            event: 'Max attempts on block ${blockId} reached, cancel processing.',
             collect_uid,
           })
           return
