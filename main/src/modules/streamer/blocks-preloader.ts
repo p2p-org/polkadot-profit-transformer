@@ -92,7 +92,7 @@ export const BlocksPreloader = (deps: {
   const ingestPreloadTasks = async (args: { fromBlock: number; toBlock: number }): Promise<void> => {
     const { fromBlock, toBlock } = args
 
-    if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
+    // if (toBlock < fromBlock) throw new Error('createPreloadTasks toBlock < fromBlock')
 
     logger.info(`create series of block tasks from ${fromBlock} to ${toBlock}`)
 
