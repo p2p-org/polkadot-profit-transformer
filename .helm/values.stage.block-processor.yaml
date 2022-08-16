@@ -2,8 +2,8 @@
 environment: stage
 replicas: 1
 name: block-processor
-limits: {cpu: 250m, memory: 15000Mi}
-requests: {cpu: 150m, memory: 15000Mi}
+limits: {cpu: 250m, memory: 10000Mi}
+requests: {cpu: 150m, memory: 10000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b8276a56a0317feb41b83202b51cc18e3ae2e1bc}
 port: 3000
 metrics:
@@ -12,7 +12,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/stage"
 additional_args:
-  - "--max_old_space_size=15000"
+  - "--max_old_space_size=10000"
 env:
   substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
   log_level: info
