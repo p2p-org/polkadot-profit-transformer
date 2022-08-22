@@ -14,6 +14,18 @@ helm diff upgrade --install mbelt-prod-moonriver .helm -f .helm/values.prod.moon
 ```
 
 ```
+# Mbelt3
+## Preloader
+helm diff upgrade --install mbelt3-preloader .helm -f .helm/mbelt3.preloader.yaml --namespace mbelt3
+
+## Block processor
+helm diff upgrade --install mbelt3-block-processor .helm -f .helm/mbelt3.block-processor.yaml --namespace mbelt3
+
+## Staking processor
+helm diff upgrade --install mbelt3-staking-processor .helm -f .helm/mbelt3.staking-processor.yaml --namespace mbelt3
+```
+
+```
 # Stage
 ## Preloader
 helm diff upgrade --install mbelt-stage-preloader .helm -f .helm/values.stage.preloader.yaml --namespace mbelt-stage

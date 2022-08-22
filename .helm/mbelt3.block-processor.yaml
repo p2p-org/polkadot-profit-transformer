@@ -1,0 +1,29 @@
+---
+environment: mbelt3-prod
+replicas: 1
+name: block-processor
+limits: {cpu: 250m, memory: 10000Mi}
+requests: {cpu: 150m, memory: 10000Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: a816b2a79c612111daaa1d24fd11b1d193db9781}
+port: 3000
+metrics:
+  enabled: false
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3"
+additional_args:
+  - "--max_old_space_size=10000"
+env:
+  substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 1
+  mode: BLOCK_PROCESSOR
+  network: polkadot
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt3-block-processor.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt3-block-processor-polka-p2p-world
+    ssl_redirect: true
