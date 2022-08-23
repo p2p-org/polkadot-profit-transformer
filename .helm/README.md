@@ -27,12 +27,19 @@ helm diff upgrade --install mbelt3-staking-processor .helm -f .helm/mbelt3.staki
 
 ```
 # Stage
-## Preloader
+## Polkadot
+### Preloader
 helm diff upgrade --install mbelt-stage-preloader .helm -f .helm/values.stage.preloader.yaml --namespace mbelt-stage
-
-## Block processor
+### Block processor
 helm diff upgrade --install mbelt-stage-block-processor .helm -f .helm/values.stage.block-processor.yaml --namespace mbelt-stage
-
-## Staking processor
+### Staking processor
 helm diff upgrade --install mbelt-stage-staking-processor .helm -f .helm/values.stage.staking-processor.yaml --namespace mbelt-stage
+
+## Kusama
+### Preloader
+helm diff upgrade --install mbelt-stage-kusama-preloader .helm -f .helm/kusama.stage.preloader.yaml --namespace mbelt-stage
+### Block processor
+helm diff upgrade --install mbelt-stage-kusama-block-processor .helm -f .helm/kusama.stage.block-processor.yaml --namespace mbelt-stage
+### Staking processor
+helm diff upgrade --install mbelt-stage-kusama-staking-processor .helm -f .helm/kusama.stage.staking-processor.yaml --namespace mbelt-stage
 ```
