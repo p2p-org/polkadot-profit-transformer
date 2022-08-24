@@ -10,7 +10,7 @@ metrics:
   enabled: false
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage"
+  secret: "secret/mbelt/stage_kusama"
 env:
   substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
   log_level: info
