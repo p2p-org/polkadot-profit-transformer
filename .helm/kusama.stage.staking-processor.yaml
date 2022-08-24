@@ -10,7 +10,7 @@ metrics:
   enabled: false
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage"
+  secret: "secret/mbelt/stage_kusama"
 additional_args:
   - "--max_old_space_size=4096"
 env:
