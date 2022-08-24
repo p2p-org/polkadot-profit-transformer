@@ -106,6 +106,15 @@ CREATE TABLE processing_tasks (
     "start_timestamp" TIMESTAMP,
     "finish_timestamp" TIMESTAMP,
     "data" JSONB,
+    "attempts": INT,
+    "row_id" SERIAL,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE processing_state (
+    "network_id" INT,
+    "entity" VARCHAR (50),
+    "entity_id" INT,
     "row_id" SERIAL,
     PRIMARY KEY ("row_id")
 );
