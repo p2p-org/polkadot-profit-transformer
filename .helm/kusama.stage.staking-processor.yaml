@@ -4,7 +4,7 @@ name: kusama-staking-processor
 replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 0edc705943626b45b9535bb7281fa0b18f620c72}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 8c75c01f2571b742053112e61becc2e3542e76fb}
 port: 3000
 metrics:
   enabled: false
