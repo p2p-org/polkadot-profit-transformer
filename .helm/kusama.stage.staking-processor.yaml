@@ -1,6 +1,6 @@
 ---
 environment: stage
-name: staking-processor
+name: kusama-staking-processor
 replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
@@ -10,20 +10,20 @@ metrics:
   enabled: false
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage"
+  secret: "secret/mbelt/stage_kusama"
 additional_args:
   - "--max_old_space_size=4096"
 env:
-  substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
+  substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
   log_level: info
-  network_id: 1
+  network_id: 2
   mode: STAKING_PROCESSOR
-  network: polkadot
+  network: kusama
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-staking-processor.polka.p2p.world
+  host: mbelt-stage-kusama-staking-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-staking-processor-polka-p2p-world
+    secret: mbelt-stage-kusama-staking-processor-polka-p2p-world
     ssl_redirect: true
