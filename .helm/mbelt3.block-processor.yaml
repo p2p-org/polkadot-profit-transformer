@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 50
+replicas: 10
 name: block-processor
 limits: {cpu: 250m, memory: 400Mi}
 requests: {cpu: 150m, memory: 400Mi}
