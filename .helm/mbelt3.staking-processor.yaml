@@ -1,6 +1,7 @@
 ---
 environment: mbelt3-prod
-name: staking-processor
+chain: polkadot
+role: staking-processor
 replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}

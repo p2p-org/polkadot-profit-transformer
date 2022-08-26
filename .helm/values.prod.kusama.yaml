@@ -1,7 +1,8 @@
 ---
 environment: prod
 
-name: kusama
+chain: polkadot
+role: polkadot
 image: { repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: v1.0.9_main }
 limits: { cpu: 1000m, memory: 2Gi }
 requests: { cpu: 300m, memory: 2Gi }

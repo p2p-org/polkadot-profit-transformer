@@ -7,7 +7,8 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
     env: {{ .Values.environment }}
-    chain: {{ .Values.name }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
 spec:
   ports:
   - port: 80
@@ -17,5 +18,6 @@ spec:
   selector:
     app: {{ .Chart.Name }}
     env: {{ .Values.environment }}
-    chain: {{ .Values.name }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
 {{- end }}
