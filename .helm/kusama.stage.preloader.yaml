@@ -8,7 +8,7 @@ limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
 metrics:
-  enabled: false
+  enabled: true
 vault:
   role: "mbelt"
   secret: "secret/mbelt/stage_kusama"
