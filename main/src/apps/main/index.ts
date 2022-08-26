@@ -1,3 +1,5 @@
+import { StakingProcessorRestApi } from './rest-api/staking-processor'
+import { BlockProcessorApi } from './rest-api/block-processor'
 // import { RestApi } from './rest-api/index'
 import knex from 'knex'
 import client, { Connection } from 'amqplib'
@@ -18,7 +20,7 @@ import { QUEUES, RABBIT } from '@apps/common/infra/rabbitmq'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { logger } from '@apps/common/infra/logger/logger'
 
-import { RestApi } from './rest-api/index'
+import { PreloaderRestApi } from './rest-api/preloader'
 import { ProcessingStatusRepository } from '@apps/common/infra/postgresql/processing_status.repository'
 
 export const sleep = async (time: number) => {
@@ -88,7 +90,7 @@ const main = async () => {
     })
 
     // // express rest api
-    const restApi = RestApi({ blocksPreloader })
+    const restApi = PreloaderRestApi({ blocksPreloader })
     restApi.init()
 
     await blocksPreloader.preload()
@@ -107,6 +109,9 @@ const main = async () => {
     })
 
     rabbitMQ.process(QUEUES.Blocks, blockProcessor)
+
+    const restApi = BlockProcessorApi()
+    restApi.init()
   }
 
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
@@ -121,6 +126,9 @@ const main = async () => {
     })
 
     rabbitMQ.process(QUEUES.Staking, stakingProcessor)
+
+    const restApi = StakingProcessorRestApi()
+    restApi.init()
   }
 }
 
