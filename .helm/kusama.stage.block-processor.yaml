@@ -4,7 +4,7 @@ replicas: 50
 name: kusama-block-processor
 limits: {cpu: 250m, memory: 400Mi}
 requests: {cpu: 150m, memory: 400Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: f736d2d258759102c21d6f3eed4242c5056bc2b8}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: f4ee4e98dc216ed7649d2233576934cde0695e69}
 port: 3000
 metrics:
   enabled: false
