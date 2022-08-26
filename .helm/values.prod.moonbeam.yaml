@@ -1,7 +1,8 @@
 ---
 environment: prod
 
-name: moonbeam
+chain: polkadot
+role: polkadot
 image: { repository: eu.gcr.io/substrate-infra/mbelt2_streamer_moonbeam, tag: v1.0.10 }
 limits: { cpu: 1.5, memory: 3Gi }
 requests: { cpu: 1.3, memory: 3Gi }
