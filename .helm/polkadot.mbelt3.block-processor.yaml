@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3"
 additional_args:
-  - "--max_old_space_size=10000"
+  - "--max_old_space_size=400"
 env:
   substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
   log_level: info
