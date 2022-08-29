@@ -1,13 +1,14 @@
 ---
 environment: stage
-name: staking-processor
+chain: polkadot
+role: staking-processor
 replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 0edc705943626b45b9535bb7281fa0b18f620c72}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: e754f3b8a4fb1b2aae3e500c134f8c16e70d4da8}
 port: 3000
 metrics:
-  enabled: false
+  enabled: true
 vault:
   role: "mbelt"
   secret: "secret/mbelt/stage"

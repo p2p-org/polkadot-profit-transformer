@@ -1,35 +1,23 @@
 import { environment } from '@apps/main/environment'
 import express from 'express'
-import basicAuth from 'express-basic-auth'
-
-import { BlocksPreloader } from './../../../modules/streamer/blocks-preloader'
 import prom from 'prom-client'
 
-const collectDefaultMetrics = prom.collectDefaultMetrics
-collectDefaultMetrics({ prefix: 'forethought' })
+import { BlocksPreloader } from '../../../modules/streamer/blocks-preloader'
 
-export type RestApi = ReturnType<typeof RestApi>
+export type PreloaderRestApi = ReturnType<typeof PreloaderRestApi>
 
-export const RestApi = (deps: { blocksPreloader: BlocksPreloader }) => {
+export const PreloaderRestApi = (deps: { blocksPreloader: BlocksPreloader }) => {
   const { blocksPreloader } = deps
 
   const port = environment.REST_API_PORT
   return {
     init: async () => {
       const app = express()
-      if (environment.BASIC_AUTH) {
-        app.use(
-          basicAuth({
-            challenge: true,
-            users: { admin: environment.REST_API_BASIC_AUTH_PASSWORD },
-          }),
-        )
-      }
 
-      // app.get('/metrics', async function (req, res) {
-      //   res.set('Content-Type', prom.register.contentType)
-      //   res.end(await prom.register.metrics())
-      // })
+      app.get('/metrics', async function (req, res) {
+        res.set('Content-Type', prom.register.contentType)
+        res.end(await prom.register.metrics())
+      })
 
       app.get('/health', (req, res) => {
         res.json({ status: 'live' })

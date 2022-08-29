@@ -7,7 +7,8 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
     env: {{ .Values.environment }}
-    chain: {{ .Values.name }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.tls.ssl_redirect | quote }}
     cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.cluster_issuer | quote }}

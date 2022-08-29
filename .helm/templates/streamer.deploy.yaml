@@ -6,7 +6,8 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
     env: {{ .Values.environment }}
-    chain: {{ .Values.name }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
 spec:
   replicas: {{ .Values.replicas }}
   strategy:
@@ -15,13 +16,15 @@ spec:
     matchLabels:
       app: {{ .Chart.Name }}
       env: {{ .Values.environment }}
-      chain: {{ .Values.name }}
+      chain: {{ .Values.chain }}
+      role: {{ .Values.role }}
   template:
     metadata:
       labels:
         app: {{ .Chart.Name }}
         env: {{ .Values.environment }}
-        chain: {{ .Values.name }}
+        chain: {{ .Values.chain }}
+        role: {{ .Values.role }}
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-pre-populate-only: "true"

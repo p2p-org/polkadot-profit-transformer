@@ -1,3 +1,4 @@
+import { processedBlockGauge } from './../../apps/common/infra/prometheus/index'
 import { v4 } from 'uuid'
 
 import { QUEUES, Rabbit, TaskMessage } from './../../apps/common/infra/rabbitmq/index'
@@ -223,6 +224,8 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           ...metadata,
           collect_uid,
         })
+
+        processedBlockGauge.set(blockId)
       } catch (error: any) {
         logger.warn({
           event: 'BlockProcessor: processTaskMessage error: ' + error.message,
