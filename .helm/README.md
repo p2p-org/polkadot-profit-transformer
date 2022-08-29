@@ -16,13 +16,13 @@ helm diff upgrade --install mbelt-prod-moonriver .helm -f .helm/values.prod.moon
 ```
 # Mbelt3
 ## Preloader
-helm diff upgrade --install mbelt3-preloader .helm -f .helm/mbelt3.preloader.yaml -n mbelt3
+helm diff upgrade --install mbelt3-polkadot-preloader .helm -f .helm/polkadot.mbelt3.preloader.yaml -n mbelt3
 
 ## Block processor
-helm diff upgrade --install mbelt3-block-processor .helm -f .helm/mbelt3.block-processor.yaml -n mbelt3
+helm diff upgrade --install mbelt3-polkadot-block-processor .helm -f .helm/polkadot.mbelt3.block-processor.yaml -n mbelt3
 
 ## Staking processor
-helm diff upgrade --install mbelt3-staking-processor .helm -f .helm/mbelt3.staking-processor.yaml -n mbelt3
+helm diff upgrade --install mbelt3-polkadot-staking-processor .helm -f .helm/polkadot.mbelt3.staking-processor.yaml -n mbelt3
 ```
 
 ```
