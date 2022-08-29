@@ -156,9 +156,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
     async getInfoToProcessBlock(
       blockHash: BlockHash,
       blockId: number,
-    ): Promise<
-      [/* SessionIndex, Option<EraIndex>, number | null,  */ SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>]
-    > {
+    ): Promise<[/* SessionIndex, Option<EraIndex>, number | null,  */ SignedBlock, HeaderExtended | undefined, Moment, any]> {
       try {
         const historicalApi = await polkadotApi.at(blockHash)
 
@@ -170,15 +168,10 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
         //   return eraId ? +eraId : null
         // }
 
-        const [/* sessionId, blockCurrentEra,  */ blockTime, events] = await historicalApi.queryMulti([
-          // [historicalApi.query.session.currentIndex],
-          // [historicalApi.query.staking.currentEra],
-          [historicalApi.query.timestamp.now],
-          [historicalApi.query.system.events, blockHash],
-        ])
+        const blockTime = await historicalApi.query.timestamp.now()
+        const events = await historicalApi.query.system.events()
 
         // const activeEra = await getActiveEra()
-
         const [signedBlock, extHeader] = await Promise.all([
           polkadotApi.rpc.chain.getBlock(blockHash),
           polkadotApi.derive.chain.getHeader(blockHash),

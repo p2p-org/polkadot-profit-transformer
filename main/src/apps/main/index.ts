@@ -2,7 +2,8 @@ import { StakingProcessorRestApi } from './rest-api/staking-processor'
 import { BlockProcessorApi } from './rest-api/block-processor'
 // import { RestApi } from './rest-api/index'
 import knex from 'knex'
-import client, { Connection } from 'amqplib'
+import { Connection } from 'amqplib'
+import client from 'amqp-connection-manager'
 
 import { BlockProcessor } from '../../modules/streamer/block-processor'
 import { StakingProcessor } from '../../modules/staking-processor'
@@ -51,7 +52,7 @@ const main = async () => {
     },
   })
 
-  const rabbitConnection: Connection = await client.connect(environment.RABBITMQ!)
+  const rabbitConnection = await client.connect(environment.RABBITMQ!)
   const rabbitMQ = await RABBIT(rabbitConnection)
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI)()

@@ -1,6 +1,7 @@
-import { Channel, Connection, ConsumeMessage } from 'amqplib'
+import { Channel, ConfirmChannel, Connection, ConsumeMessage } from 'amqplib'
 import { environment } from '@apps/main/environment'
 import { logger } from '../logger/logger'
+import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/esm/AmqpConnectionManager'
 
 export enum QUEUES {
   Blocks = 'process_blocks',
@@ -26,18 +27,27 @@ export type Rabbit = {
   process: <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => Promise<void>
 }
 
-export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
-  const channel: Channel = await connection.createConfirmChannel()
-  await channel.assertQueue(environment.NETWORK + ':' + QUEUES.Staking)
-  await channel.assertQueue(environment.NETWORK + ':' + QUEUES.Blocks)
-  await channel.prefetch(1)
+export const RABBIT = async (connection: IAmqpConnectionManager): Promise<Rabbit> => {
+  let channel: Channel
+
+  var channelWrapper = connection.createChannel({
+    json: true,
+    setup: function (_channel: ConfirmChannel) {
+      channel = _channel
+      // `channel` here is a regular amqplib `ConfirmChannel`.
+      // Note that `this` here is the channelWrapper instance.
+      return Promise.all([
+        channel.assertQueue(environment.NETWORK + ':' + QUEUES.Staking),
+        channel.assertQueue(environment.NETWORK + ':' + QUEUES.Blocks),
+        channel.prefetch(1),
+      ])
+    },
+  })
 
   return {
     send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
       logger.debug({ event: 'rabbitmq.send', message })
-      await channel.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)), {
-        persistent: true,
-      })
+      await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)))
     },
     process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
       const consumer =
