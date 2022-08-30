@@ -25,7 +25,11 @@ export type Environment = {
   NETWORK_ID: number
 }
 
-const parseModeEnum = (env: typeof preEnv) => ({ ...env, MODE: MODE[env.MODE] })
+const parseModeEnum = (env: typeof preEnv) => {
+  const M: MODE =
+    env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
+  return { ...env, MODE: M }
+}
 
 const preEnv = cleanEnv(process.env, {
   PG_CONNECTION_STRING: url(),
