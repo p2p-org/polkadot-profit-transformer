@@ -28,12 +28,9 @@ export type Rabbit = {
 }
 
 export const RABBIT = async (connection: IAmqpConnectionManager): Promise<Rabbit> => {
-  let channel: Channel
-
   var channelWrapper = connection.createChannel({
     json: true,
-    setup: function (_channel: ConfirmChannel) {
-      channel = _channel
+    setup: function (channel: ConfirmChannel) {
       // `channel` here is a regular amqplib `ConfirmChannel`.
       // Note that `this` here is the channelWrapper instance.
       return Promise.all([
@@ -63,13 +60,13 @@ export const RABBIT = async (connection: IAmqpConnectionManager): Promise<Rabbit
               await processor.processTaskMessage(message)
               // console.log('ACK MESSAGE')
               console.log('memory', process.memoryUsage().heapUsed)
-              channel.ack(msg)
+              channelWrapper.ack(msg)
             } catch (error: any) {
               logger.error({ event: 'rabbit.process error', error: error.message, message })
             }
           }
         }
-      await channel.consume(environment.NETWORK + ':' + queue, consumer)
+      await channelWrapper.consume(environment.NETWORK + ':' + queue, consumer)
     },
   }
 }
