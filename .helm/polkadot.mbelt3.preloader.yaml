@@ -1,16 +1,17 @@
 ---
-environment: stage
-name: preloader
+environment: mbelt3-prod
+chain: polkadot
+role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: cc275beb39f416f67bdf304d9b65d827a74b5acc}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: e754f3b8a4fb1b2aae3e500c134f8c16e70d4da8}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
 metrics:
-  enabled: false
+  enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage"
+  secret: "secret/mbelt/mbelt3"
 env:
   substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
   log_level: info
@@ -20,8 +21,8 @@ env:
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-preloader.polka.p2p.world
+  host: mbelt3-preloader.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-preloader-polka-p2p-world
+    secret: mbelt3-preloader-polka-p2p-world
     ssl_redirect: true

@@ -6,4 +6,5 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
     env: {{ .Values.environment }}
-    release: {{ .Release.Name }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}

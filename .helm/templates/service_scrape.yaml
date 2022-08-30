@@ -7,13 +7,15 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
     env: {{ .Values.environment }}
-    chain: {{ .Values.name }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
 spec:
   selector:
     matchLabels:
       app: {{ .Chart.Name }}
       env: {{ .Values.environment }}
-      chain: {{ .Values.name }}
+      chain: {{ .Values.chain }}
+      role: {{ .Values.role }}
   endpoints:
   - port: http
     scrape_interval: 10s
