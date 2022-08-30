@@ -46,19 +46,19 @@ export const RABBIT = async (connection: IAmqpConnectionManager): Promise<Rabbit
 
   return {
     send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
-      logger.debug({ event: 'rabbitmq.send', message })
-      await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)))
+      logger.debug({ event: 'rabbitmq.send', message, buffer: Buffer.from(JSON.stringify(message)) })
+      await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, message)
     },
     process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
       const consumer =
-        (channel: Channel) =>
+        // (channel) =>
         async (msg: ConsumeMessage | null): Promise<void> => {
           if (msg) {
             logger.debug({
               event: 'rabbitMq.process',
               message: msg.content.toString(),
             })
-            const message = JSON.parse(msg.content.toString()) as TaskMessage<T>
+            const message = JSON.parse(msg.content.toString()) //as TaskMessage<T>
             try {
               await processor.processTaskMessage(message)
               // console.log('ACK MESSAGE')
@@ -69,7 +69,7 @@ export const RABBIT = async (connection: IAmqpConnectionManager): Promise<Rabbit
             }
           }
         }
-      await channel.consume(environment.NETWORK + ':' + queue, consumer(channel))
+      await channel.consume(environment.NETWORK + ':' + queue, consumer)
     },
   }
 }

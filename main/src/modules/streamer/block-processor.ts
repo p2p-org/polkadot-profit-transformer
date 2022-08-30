@@ -138,6 +138,7 @@ export const BlockProcessor = (deps: {
 
   const processTaskMessage = async <T extends QUEUES.Blocks>(message: TaskMessage<T>) => {
     const { block_id: blockId, collect_uid } = message
+    console.log({ blockId, collect_uid })
     logger.info({
       event: 'new process block  task received',
       blockId,
