@@ -66,6 +66,7 @@ export const RABBIT = async (connection: IAmqpConnectionManager): Promise<Rabbit
               channel.ack(msg)
             } catch (error: any) {
               logger.error({ event: 'rabbit.process error', error: error.message, message })
+              channel.ack(msg)
             }
           }
         }
