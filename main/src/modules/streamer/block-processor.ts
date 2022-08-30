@@ -209,6 +209,7 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           newProcessingTasks,
         })
 
+        processedBlockGauge.set(blockId)
         if (!newProcessingTasks.length) return
 
         logger.info({
@@ -224,8 +225,6 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           ...metadata,
           collect_uid,
         })
-
-        processedBlockGauge.set(blockId)
       } catch (error: any) {
         logger.warn({
           event: 'BlockProcessor: processTaskMessage error: ' + error.message,
