@@ -138,6 +138,7 @@ export const BlockProcessor = (deps: {
 
   const processTaskMessage = async <T extends QUEUES.Blocks>(message: TaskMessage<T>) => {
     const { block_id: blockId, collect_uid } = message
+    console.log({ blockId, collect_uid })
     logger.info({
       event: 'new process block  task received',
       blockId,
@@ -209,6 +210,7 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           newProcessingTasks,
         })
 
+        processedBlockGauge.set(blockId)
         if (!newProcessingTasks.length) return
 
         logger.info({
@@ -224,8 +226,6 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           ...metadata,
           collect_uid,
         })
-
-        processedBlockGauge.set(blockId)
       } catch (error: any) {
         logger.warn({
           event: 'BlockProcessor: processTaskMessage error: ' + error.message,
