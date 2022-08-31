@@ -1,8 +1,9 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 10
 chain: polkadot
 role: block-processor
+
 limits: {cpu: 250m, memory: 10000Mi}
 requests: {cpu: 150m, memory: 10000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 0129db0273ea1d1a6fbfe16a704361ceb10b45a3}
