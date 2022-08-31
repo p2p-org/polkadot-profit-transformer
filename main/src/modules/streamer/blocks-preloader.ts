@@ -74,9 +74,9 @@ export const BlocksPreloader = (deps: {
               block_id: block.entity_id,
               collect_uid: block.collect_uid,
             }
-            logger.info({ event: 'send data to rabbit', data })
+            // logger.info({ event: 'send data to rabbit', data })
             await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
-            logger.info({ event: ' data sent to rabbit', data })
+            // logger.info({ event: ' data sent to rabbit', data })
           }
         })
 
