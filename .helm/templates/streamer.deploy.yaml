@@ -38,11 +38,14 @@ spec:
           {{"{{-"}} end {{"}}"}}
     spec:
       serviceAccountName: {{ template "app.fullname" $ }}
-      # restartPolicy: Never  # https://github.com/kubernetes/kubernetes/issues/24725
       containers:
       - name: streamer
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         ports: [ containerPort: {{ .Values.port }} ]
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
         command:
         - sh
         - -c
@@ -69,7 +72,3 @@ spec:
         resources:
           limits: { cpu: {{ .Values.limits.cpu }}, memory: {{ .Values.limits.memory }} }
           requests: { cpu: {{ .Values.requests.cpu }}, memory: {{ .Values.requests.memory }} }
-        lifecycle:
-          preStop:
-            exec:
-              command: ["sleep","10"]
