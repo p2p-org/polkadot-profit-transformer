@@ -1,6 +1,7 @@
 import { RestApi } from './rest-api/index'
 import knex from 'knex'
-import client, { Connection } from 'amqplib'
+import { Connection } from 'amqplib'
+import client from 'amqp-connection-manager'
 
 import { IdentityProcessor } from './../../modules/identity-processor/index'
 import { ExtrinsicsProcessor } from '../../modules/streamer/extrinsics-processor'
@@ -42,8 +43,8 @@ const main = async () => {
     searchPath: ['knex', 'public'],
   })
 
-  const rabbitConnection: Connection = await client.connect(environment.RABBITMQ!)
-  const rabbitMQ = await RABBIT(rabbitConnection)
+  const rabbitConnection = await client.connect(environment.RABBITMQ!)
+  const rabbitMQ = await RABBIT(rabbitConnection, logger)
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI!)
   const eventBus = EventBus({ logger })
@@ -115,6 +116,7 @@ const main = async () => {
   // blocksPreloader fills up database from block 0 to current block
   if (environment.PRELOAD) {
     const startBlockId = environment.START_BLOCK_ID
+    console.log({ startBlockId })
     await blocksPreloader.start(startBlockId)
   }
 

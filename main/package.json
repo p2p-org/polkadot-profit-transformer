@@ -21,8 +21,9 @@
     "test": "npx jest --maxWorkers=1"
   },
   "dependencies": {
-    "@polkadot/api": "^8.7.1",
+    "@polkadot/api": "^9.2.4",
     "@types/pino": "^6.3.11",
+    "amqp-connection-manager": "^4.1.6",
     "amqplib": "^0.9.1",
     "apollo-server": "^3.3.0",
     "axios": "^0.21.4",

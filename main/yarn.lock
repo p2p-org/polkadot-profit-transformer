@@ -2167,7 +2167,14 @@
     "json-schema-traverse" "^0.4.1"
     "uri-js" "^4.2.2"
 
-"amqplib@^0.9.1":
+"amqp-connection-manager@^4.1.6":
+  "integrity" "sha512-RFbVdA6COw+968HpZAeR4KJtgcBeKR626MTQjgHRwolaHry4Gg4Z7dJHwHerqlYbv5dAP8VB29AXYwu+XZP3JQ=="
+  "resolved" "https://registry.npmjs.org/amqp-connection-manager/-/amqp-connection-manager-4.1.6.tgz"
+  "version" "4.1.6"
+  dependencies:
+    "promise-breaker" "^6.0.0"
+
+"amqplib@*", "amqplib@^0.9.1":
   "integrity" "sha512-a1DP0H1LcLSMKPAnhUN2AKbVyEPqEUrUf7O+odhKGxaO+Tf0nWtuD7Zq5P9uZwZteu56OfW9EQozSCTKsAEk5w=="
   "resolved" "https://registry.npmjs.org/amqplib/-/amqplib-0.9.1.tgz"
   "version" "0.9.1"
@@ -6365,6 +6372,11 @@
   "version" "14.0.1"
   dependencies:
     "tdigest" "^0.1.1"
+
+"promise-breaker@^6.0.0":
+  "integrity" "sha512-BthzO9yTPswGf7etOBiHCVuugs2N01/Q/94dIPls48z2zCmrnDptUUZzfIb+41xq0MnYZ/BzmOd6ikDR4ibNZA=="
+  "resolved" "https://registry.npmjs.org/promise-breaker/-/promise-breaker-6.0.0.tgz"
+  "version" "6.0.0"
 
 "prompt@^1.2.0":
   "integrity" "sha512-iGerYRpRUg5ZyC+FJ/25G5PUKuWAGRjW1uOlhX7Pi3O5YygdK6R+KEaBjRbHSkU5vfS5PZCltSPZdDtUYwRCZA=="

@@ -1,4 +1,6 @@
-import { Channel, Connection, ConsumeMessage } from 'amqplib'
+import { Channel, ConfirmChannel, Connection, ConsumeMessage } from 'amqplib'
+import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/esm/AmqpConnectionManager'
+import { Logger } from 'apps/common/infra/logger/logger'
 
 export enum QUEUES {
   Staking = 'Staking',
@@ -15,30 +17,42 @@ export type Rabbit = {
   process: (queue: QUEUES, processor: QueueProcessor) => Promise<void>
 }
 
-export const RABBIT = async (connection: Connection): Promise<Rabbit> => {
-  const channel: Channel = await connection.createChannel()
-  await channel.assertQueue(process.env.NETWORK + ':' + QUEUES.Staking)
-  await channel.prefetch(1)
+export const RABBIT = async (connection: IAmqpConnectionManager, logger: Logger): Promise<Rabbit> => {
+  var channelWrapper = connection.createChannel({
+    json: true,
+    setup: function (channel: ConfirmChannel) {
+      // `channel` here is a regular amqplib `ConfirmChannel`.
+      // Note that `this` here is the channelWrapper instance.
+      return Promise.all([channel.assertQueue(process.env.NETWORK + ':' + QUEUES.Staking), channel.prefetch(1)])
+    },
+  })
 
   return {
     send: async (queue: QUEUES, message: any) => {
-      await channel.sendToQueue(process.env.NETWORK + ':' + queue, Buffer.from(JSON.stringify(message)))
+      await channelWrapper.sendToQueue(process.env.NETWORK + ':' + queue, message)
     },
     process: async (queue: QUEUES, processor: QueueProcessor) => {
       const consumer =
-        (channel: Channel) =>
+        // (channel: Channel) =>
         async (msg: ConsumeMessage | null): Promise<void> => {
           if (msg) {
-            // Display the received message
-            console.log('rabbit received message', msg.content.toString())
-            const jsonMessage = JSON.parse(msg.content.toString())
-            await processor.process(jsonMessage)
-            // Acknowledge the message
-
-            channel.ack(msg)
+            // logger.debug({
+            //   event: 'rabbitMq.process',
+            //   message: msg.content.toString(),
+            // })
+            const message = JSON.parse(msg.content.toString()) //as TaskMessage<T>
+            try {
+              const jsonMessage = JSON.parse(msg.content.toString())
+              await processor.process(jsonMessage)
+              // console.log('ACK MESSAGE')
+              console.log('memory', process.memoryUsage().heapUsed)
+              channelWrapper.ack(msg)
+            } catch (error: any) {
+              logger.error({ event: 'rabbit.process error', error: error.message, message })
+            }
           }
         }
-      await channel.consume(process.env.NETWORK + ':' + queue, consumer(channel))
+      await channelWrapper.consume(process.env.NETWORK + ':' + queue, consumer)
     },
   }
 }

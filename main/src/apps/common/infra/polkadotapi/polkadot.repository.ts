@@ -176,7 +176,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise; logger: Logg
 
         const activeEra = await getActiveEra()
 
-        console.log(blockId + ': getInfoToProcessBlock sessionId done')
+        // console.log(blockId + ': getInfoToProcessBlock sessionId done')
 
         const [signedBlock, extHeader] = await Promise.all([
           polkadotApi.rpc.chain.getBlock(blockHash),

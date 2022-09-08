@@ -86,7 +86,7 @@ export const BlockProcessor = (deps: {
           await streamerRepository.events.save(event)
         }
 
-        console.log(blockId + ': events saved')
+        // console.log(blockId + ': events saved')
 
         await streamerRepository.blocks.save(block)
 
@@ -120,7 +120,7 @@ export const BlockProcessor = (deps: {
           }
         }
 
-        console.log(blockId + ': extrinsics send to eventBus')
+        // console.log(blockId + ': extrinsics send to eventBus')
 
         for (const event of processedEvents) {
           if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {

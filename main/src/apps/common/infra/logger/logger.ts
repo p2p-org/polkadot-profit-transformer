@@ -12,7 +12,7 @@ export type Logger = {
 
 export const LoggerFactory = (deps: { logLevel: string }): Logger => {
   const logger = pino({
-    level: deps.logLevel
+    level: deps.logLevel,
     //prettyPrint: true
   })
   return {
@@ -48,6 +48,6 @@ export const LoggerFactory = (deps: { logLevel: string }): Logger => {
 
     child(bindings: Bindings): pino.Logger {
       return logger.child(bindings)
-    }
+    },
   }
 }
