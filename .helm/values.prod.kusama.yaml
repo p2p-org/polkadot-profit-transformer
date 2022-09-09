@@ -1,7 +1,7 @@
 ---
 environment: prod
 name: kusama
-image: {repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: e81ea8356bd30a75c01d3780b8956dd248a7ace2}
+image: {repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: d9d0487aaabce7e31db75bcf87c6ca0bb666ce9e}
 limits: {cpu: 1000m, memory: 2Gi}
 requests: {cpu: 300m, memory: 2Gi}
 port: 3000
