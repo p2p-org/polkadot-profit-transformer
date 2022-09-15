@@ -2,8 +2,7 @@ import { StakingProcessorRestApi } from './rest-api/staking-processor'
 import { BlockProcessorApi } from './rest-api/block-processor'
 // import { RestApi } from './rest-api/index'
 import knex from 'knex'
-import { Connection } from 'amqplib'
-import client from 'amqp-connection-manager'
+//import { Connection } from 'amqplib'
 
 import { BlockProcessor } from '../../modules/streamer/block-processor'
 import { StakingProcessor } from '../../modules/staking-processor'
@@ -17,14 +16,14 @@ import { StreamerRepository } from './../common/infra/postgresql/streamer.reposi
 
 import { BlocksPreloader } from '../../modules/streamer/blocks-preloader'
 
-import { QUEUES, RABBIT } from '@apps/common/infra/rabbitmq'
+import { QUEUES, RabbitMQ } from '@apps/common/infra/rabbitmq'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { logger } from '@apps/common/infra/logger/logger'
 
 import { PreloaderRestApi } from './rest-api/preloader'
 import { ProcessingStatusRepository } from '@apps/common/infra/postgresql/processing_status.repository'
 
-export const sleep = async (time: number) => {
+export const sleep = async (time: number): Promise<number> => {
   return new Promise((res) => setTimeout(res, time))
 }
 const main = async () => {
@@ -52,8 +51,7 @@ const main = async () => {
     },
   })
 
-  const rabbitConnection = await client.connect(environment.RABBITMQ!)
-  const rabbitMQ = await RABBIT(rabbitConnection)
+  const rabbitMQ = await RabbitMQ(environment.RABBITMQ!);
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI)()
   const polkadotRepository = await PolkadotRepository({ polkadotApi })
@@ -95,7 +93,7 @@ const main = async () => {
     restApi.init()
 
     await blocksPreloader.preload()
-    // await blocksPreloader.preloadOneBlock(8259074)
+    //await blocksPreloader.preloadOneBlock(8259074)
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
