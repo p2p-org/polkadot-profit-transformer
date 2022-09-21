@@ -1,10 +1,10 @@
-import { StakingRepository } from './../../apps/common/infra/postgresql/staking.repository'
-import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
+import { Knex } from 'knex'
+import { v4 } from 'uuid'
+import { StakingRepository } from '@apps/common/infra/postgresql/staking.repository'
+import { PolkadotRepository } from '@apps/common/infra/polkadotapi/polkadot.repository'
 import { logger } from '@apps/common/infra/logger/logger'
 import { QUEUES, Rabbit, TaskMessage } from '@apps/common/infra/rabbitmq'
-import { v4 } from 'uuid'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
-import { Knex } from 'knex'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { processEraPayout } from './process-payout'
 
@@ -16,9 +16,12 @@ export const StakingProcessor = (args: {
   processingTasksRepository: ProcessingTasksRepository
   rabbitMQ: Rabbit
   knex: Knex
-}) => {
+}): {
+  processTaskMessage: Promise<void>,
+} => {
   const { polkadotRepository, stakingRepository, rabbitMQ, knex, processingTasksRepository } = args
-
+  
+  /*
   const sendToRabbit = async (eraReprocessingTask: ProcessingTaskModel<ENTITY.ERA>) => {
     const data = {
       era_id: eraReprocessingTask.entity_id,
@@ -26,12 +29,14 @@ export const StakingProcessor = (args: {
     }
     await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, data)
   }
+  */
 
   const processTaskMessage = async <T extends QUEUES.Staking>(message: TaskMessage<T>) => {
     const { era_id: eraId, collect_uid } = message
 
     logger.info({
-      event: 'new process era  task received',
+      event: 'PolkadotRepository.processTaskMessage',
+      message: 'New process era task received',
       eraId,
       collect_uid,
     })
@@ -41,13 +46,14 @@ export const StakingProcessor = (args: {
       processing_timestamp: new Date(),
     }
 
-    await knex.transaction(async (trx) => {
+    await knex.transaction(async (trx: Knex.Transaction) => {
       // try {
       const taskRecord = await processingTasksRepository.readTaskAndLockRow(ENTITY.ERA, eraId, trx)
 
       if (!taskRecord) {
         logger.warn({
-          event: 'StakingProcessor task record not found. Skip processing.',
+          event: 'StakingProcessor.processTaskMessage.tx',
+          error: 'Task record not found. Skip processing.',
           collect_uid,
         })
         return
@@ -55,8 +61,9 @@ export const StakingProcessor = (args: {
 
       if (taskRecord.collect_uid !== collect_uid) {
         logger.warn({
-          event: `StakingProcessor: possible era ${eraId} processing task duplication. 
-Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+          event: `StakingProcessor.processTaskMessage.tx`,
+          error: `Possible era ${eraId} processing task duplication. `+
+                 `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           collect_uid,
         })
         return
@@ -64,7 +71,8 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
 
       if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
         logger.warn({
-          event: `StakingProcessor: era  ${eraId} has been already processed. Skip processing.`,
+          event: `StakingProcessor.processTaskMessage.tx`,
+          message: `Era ${eraId} has been already processed. Skip processing.`,
           collect_uid,
         })
         return
@@ -72,7 +80,8 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
 
       // all is good, start processing era payout
       logger.info({
-        event: `StakingProcessor: start processing payout for era ${eraId}`,
+        event: `StakingProcessor.processTaskMessage.tx`,
+        message: `Start processing payout for era ${eraId}`,
         ...metadata,
         collect_uid,
         eraId,
@@ -89,34 +98,50 @@ Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
       )
 
       if (eraReprocessingTask) {
-        logger.info({
-          event: `eraReprocessingTask found, resend to rabbit, rollback tx`,
+        logger.error({
+          event: `StakingProcessor.processTaskMessage.tx`,
+          error: `Era reprocessing task found, rollback tx`,
           ...metadata,
           collect_uid,
           eraReprocessingTask,
         })
 
         await trx.rollback()
-        await sendToRabbit(eraReprocessingTask)
+        //TODO: don't send it to rabbit. its creates infinite loop
+        //await sendToRabbit(eraReprocessingTask)
         return
       }
 
       await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
 
       logger.info({
-        event: `era ${eraId} data created, commit transaction data`,
+        event: `StakingProcessor.processTaskMessage.tx`,
+        message: `Era ${eraId} data created, commit transaction data`,
         ...metadata,
         collect_uid,
         eraId,
       })
 
+      await trx.commit()
+
       logger.info({
-        event: `era ${eraId} tx has been committed`,
+        event: `StakingProcessor.processTaskMessage.tx`,
+        message: `Era ${eraId} tx has been committed`,
         ...metadata,
         collect_uid,
         eraReprocessingTask,
         eraId,
       })
+    }).catch( (error: Error) => {
+      logger.error({
+        event: `StakingProcessor.processTaskMessage.tx`,
+        error: error.message,
+        data: {
+          ...metadata,
+          collect_uid,
+        },
+      })
+      throw error
     })
   }
   return {
