@@ -5,7 +5,7 @@ export type EventModel = {
   block_id: number
   section: string
   method: string
-  data: any
+  // data: any
   event: any
 }
 

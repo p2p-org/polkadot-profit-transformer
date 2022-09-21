@@ -18,7 +18,7 @@ export type ExtrinsicModel = {
   ref_event_ids: any
   version: number
   extrinsic: any
-  args: any
+  // args: any
 }
 
 export const ExtrinsicModel = (knex: Knex) => knex<ExtrinsicModel>('extrinsics')

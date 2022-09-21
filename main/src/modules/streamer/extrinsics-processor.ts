@@ -45,7 +45,7 @@ export const ExtrinsicsProcessor = (args: { polkadotRepository: PolkadotReposito
         ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
         version: extrinsic.version,
         extrinsic: call.toHuman(),
-        args: call.args,
+        // args: call.args,
       }
 
       return extrinsicModel
