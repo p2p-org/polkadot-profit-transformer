@@ -6,6 +6,8 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsconfig-paths-bootstrap.js ./
 COPY ./src ./src
+COPY ./migrations ./migrations
+COPY ./migrations.ts ./migrations.ts
 
 RUN apk add --no-cache --virtual .build-deps python3 make gcc g++
 RUN npm ci
