@@ -13,6 +13,9 @@ RUN npm run build
 RUN npm prune --production
 RUN apk del .build-deps
 
+RUN npm run migrations:list
+RUN npm run migrations:up
+
 FROM --platform=linux/amd64 node:18-alpine
 
 WORKDIR /usr/src/app
