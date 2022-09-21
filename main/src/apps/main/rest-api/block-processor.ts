@@ -8,7 +8,7 @@ export type RestApi = ReturnType<typeof BlockProcessorApi>
 export const BlockProcessorApi = (/* deps: { blocksPreloader: BlocksPreloader } */) => {
   // const { blocksPreloader } = deps
 
-  const port = environment.REST_API_PORT
+  const port = process.env.REST_API_PORT || environment.REST_API_PORT
   return {
     init: async () => {
       const app = express()
