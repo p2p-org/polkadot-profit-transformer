@@ -81,7 +81,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
             const message = JSON.parse(msg.content.toString()) //as TaskMessage<T>
             try {
               await processor.processTaskMessage(message)
-              console.log('memory', process.memoryUsage().heapUsed)
+              logger.debug({ event: 'memory', message: Math.ceil(process.memoryUsage().heapUsed/(1024*1024))  })
               channelWrapper.ack(msg)
             } catch (error: any) {
               logger.error({ event: 'RabbitMQ.process', error: error.message, message })

@@ -1,5 +1,5 @@
 import { sleep } from './../../apps/main/index'
-import { v4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
@@ -31,7 +31,7 @@ export const BlocksPreloader = (deps: {
       entity: ENTITY.BLOCK,
       entity_id: id,
       status: PROCESSING_STATUS.NOT_PROCESSED,
-      collect_uid: v4(),
+      collect_uid: uuidv4(),
       start_timestamp: new Date(),
       attempts: 0,
       data: {},

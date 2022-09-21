@@ -126,10 +126,11 @@ export const BlockProcessor = (deps: {
   // todo: refactor to more abstracted method to allow send different tasks
   // now we send only era staking task
 
-  const sendToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
+  const sendEraProcessingToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
     for (const task of tasks) {
       logger.debug({
-        event: 'BlockProcessor.sendToRabbit',
+        event: 'BlockProcessor.sendEraProcessingToRabbit',
+        message: 'sendToRabbit new era for processing',
         task,
       })
 
@@ -139,12 +140,6 @@ export const BlockProcessor = (deps: {
       }
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, data)
     }
-    logger.debug({
-      event: 'BlockProcessor.sendToRabbit',
-      message: 'blocks preloader sendToRabbit blocks',
-      from: tasks[0].entity_id,
-      to: tasks[tasks.length - 1].entity_id,
-    })
   }
 
   const processTaskMessage = async <T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> => {
@@ -219,10 +214,10 @@ export const BlockProcessor = (deps: {
         blockId,
       })
 
-      const newProcessingTasks = await onNewBlock(metadata, blockId, trx)
+      const newEraProcessingTasks = await onNewBlock(metadata, blockId, trx)
 
-      if (newProcessingTasks.length) {
-        await processingTasksRepository.batchAddEntities(newProcessingTasks, trx)
+      if (newEraProcessingTasks.length) {
+        await processingTasksRepository.batchAddEntities(newEraProcessingTasks, trx)
       }
 
       await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
@@ -243,11 +238,11 @@ export const BlockProcessor = (deps: {
         message: `Block ${blockId} has been processed and committed`,
         ...metadata,
         collect_uid,
-        newProcessingTasks,
+        newEraProcessingTasks,
       })
 
       processedBlockGauge.set(blockId)
-      if (!newProcessingTasks.length) return
+      if (!newEraProcessingTasks.length) return
 
       logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -256,7 +251,7 @@ export const BlockProcessor = (deps: {
         collect_uid,
       })
 
-      await sendToRabbit(newProcessingTasks)
+      await sendEraProcessingToRabbit(newEraProcessingTasks)
 
       logger.info({
         event: 'BlockProcessor.processTaskMessage',
