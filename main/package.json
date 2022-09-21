@@ -1,10 +1,10 @@
 {
-  "name": "polkadot-streamer",
-  "version": "0.0.3",
+  "name": "mbelt",
+  "version": "3.0.0",
   "description": "Stream polkadot blocks and events to Kafka",
   "main": "src/main.ts",
   "repository": "",
-  "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika & Maxim Manylov",
+  "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika & Maxim Manylov & Ivan Sidorov",
   "license": "Apache 2.0",
   "private": false,
   "scripts": {
@@ -18,10 +18,12 @@
     "lint": "npx eslint --ext .js,.ts src/main/index.ts",
     "lint:fix": "npx eslint ./src/apps/main --fix",
     "lint-staged": "lint-staged",
-    "test": "npx jest --maxWorkers=1"
+    "test": "npx jest --maxWorkers=1",
+    "migrations:up": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:latest",
+    "migrations:list": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:list"
   },
   "dependencies": {
-    "@polkadot/api": "^9.2.4",
+    "@polkadot/api": "^9.4.1",
     "@types/knex": "^0.16.1",
     "amqp-connection-manager": "^4.1.6",
     "amqplib": "^0.10.0",
@@ -30,13 +32,13 @@
     "envalid": "^7.3.1",
     "express": "^4.18.1",
     "express-basic-auth": "^1.2.1",
-    "knex": "^2.1.0",
+    "knex": "^2.3.0",
     "pg": "^8.7.3",
     "pino": "^8.1.0",
     "pino-pretty": "^8.1.0",
     "prom-client": "^14.0.1",
     "ts-node": "^10.9.1",
-    "tsconfig-paths": "^3.14.1",
+    "tsconfig-paths": "^4.1.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
