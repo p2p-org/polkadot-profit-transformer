@@ -1,7 +1,7 @@
 import { StakingProcessorRestApi } from './rest-api/staking-processor'
 import { BlockProcessorApi } from './rest-api/block-processor'
 // import { RestApi } from './rest-api/index'
-import knex from 'knex'
+//import knex from 'knex'
 //import { Connection } from 'amqplib'
 
 import { BlockProcessor } from '../../modules/streamer/block-processor'
@@ -16,6 +16,7 @@ import { StreamerRepository } from './../common/infra/postgresql/streamer.reposi
 
 import { BlocksPreloader } from '../../modules/streamer/blocks-preloader'
 
+import { KnexPG } from '@apps/common/infra/postgresql'
 import { QUEUES, RabbitMQ } from '@apps/common/infra/rabbitmq'
 import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
 import { logger } from '@apps/common/infra/logger/logger'
@@ -31,27 +32,8 @@ const main = async () => {
 
   logger.info('Main app started')
 
-  const pg = knex({
-    client: 'pg',
-    debug: environment.LOG_LEVEL === 'debug',
-    connection: {
-      connectionString: environment.PG_CONNECTION_STRING,
-      ssl: false,
-    },
-    searchPath: ['knex', 'public'],
-    pool: {
-      min: 1,
-      max: 10,
-      createTimeoutMillis: 60000,
-      acquireTimeoutMillis: 60000,
-      idleTimeoutMillis: 60000,
-      reapIntervalMillis: 1000,
-      createRetryIntervalMillis: 100,
-      propagateCreateError: false,
-    },
-  })
-
-  const rabbitMQ = await RabbitMQ(environment.RABBITMQ!);
+  const pg = await KnexPG(environment.PG_CONNECTION_STRING, environment.LOG_LEVEL === 'debug')
+  const rabbitMQ = await RabbitMQ(environment.RABBITMQ!)
 
   const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI)()
   const polkadotRepository = await PolkadotRepository({ polkadotApi })
