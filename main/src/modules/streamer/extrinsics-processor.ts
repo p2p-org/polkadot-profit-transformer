@@ -6,8 +6,8 @@ import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.mo
 import { AnyTuple } from '@polkadot/types/types'
 
 export type ExtrinsicsProcessorInput = {
-  // eraId: number
-  // sessionId: number
+  // eraId: number | null
+  // epochId: number | null
   blockNumber: Compact<BlockNumber>
   events: Vec<EventRecord>
   extrinsics: Vec<GenericExtrinsic>

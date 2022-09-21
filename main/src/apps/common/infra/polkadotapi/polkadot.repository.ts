@@ -154,40 +154,45 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
     },
 
     async getInfoToProcessBlock(
-      blockHash: BlockHash,
-      blockId: number,
-    ): Promise<[/* SessionIndex, Option<EraIndex>, number | null,  */ SignedBlock, HeaderExtended | undefined, Moment, any]> {
+      blockHash: BlockHash
+    ): Promise<[/*number | null, number | null,*/ number | null, SignedBlock, HeaderExtended | undefined, Moment, any]> {
       try {
         const historicalApi = await polkadotApi.at(blockHash)
 
-        // const getActiveEra = async () => {
-        //   if (!historicalApi.query.staking.activeEra) return null
-        //   const activeEra = await historicalApi.query.staking.activeEra()
-        //   if (activeEra.isNone || activeEra.isEmpty) return null
-        //   const eraId = activeEra.unwrap().get('index')
-        //   return eraId ? +eraId : null
-        // }
+        const getActiveEra = async () => {
+          if (!historicalApi.query.staking.activeEra) return null
+          const activeEra = await historicalApi.query.staking.activeEra()
+          if (activeEra.isNone || activeEra.isEmpty) return null
+          const eraId = activeEra.unwrap().get('index')
+          return eraId ? +eraId : null
+        }
 
-        const blockTime = await historicalApi.query.timestamp.now()
-        const events = await historicalApi.query.system.events()
+        const [/*sessionId , */ blockCurrentEra, blockTime, events] = await historicalApi.queryMulti([
+          //[historicalApi.query.session.currentIndex],
+          [historicalApi.query.staking.currentEra],
+          [historicalApi.query.timestamp.now],
+          [historicalApi.query.system.events, blockHash],
+        ])
 
-        // const activeEra = await getActiveEra()
-        const [signedBlock, extHeader] = await Promise.all([
+        const [activeEra, signedBlock, extHeader] = await Promise.all([
+          getActiveEra(),
           polkadotApi.rpc.chain.getBlock(blockHash),
           polkadotApi.derive.chain.getHeader(blockHash),
         ])
 
-        // const [sessionId, blockCurrentEra, activeEra, signedBlock, extHeader, blockTime, events] = await Promise.all([
-        //   polkadotApi.query.session.currentIndex.at(blockHash),
-        //   polkadotApi.query.staking.currentEra.at(blockHash),
-        //   polkadotApi.query.staking.activeEra.at(blockHash),
-        //   polkadotApi.rpc.chain.getBlock(blockHash),
-        //   polkadotApi.derive.chain.getHeader(blockHash),
-        //   polkadotApi.query.timestamp.now.at(blockHash),
-        //   polkadotApi.query.system.events.at(blockHash),
-        // ])
+        const currentEra = blockCurrentEra ? parseInt(blockCurrentEra.toString(), 10) : null
 
-        return [/* sessionId, blockCurrentEra, activeEra, */ signedBlock, extHeader, blockTime, events]
+        return [ 
+          /*
+          sessionId ? sessionId.toNumber() : null,
+          currentEra, 
+          */
+          activeEra || currentEra,
+          signedBlock, 
+          extHeader, 
+          blockTime, 
+          events
+        ]
       } catch (error: any) {
         console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)
         throw error
