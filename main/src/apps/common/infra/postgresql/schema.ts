@@ -154,7 +154,7 @@ export interface eras {
 
 export namespace eventsFields {
   export type block_id = number
-  export type data = Object | null
+  // export type data = Object | null
   // export type era = number | null
   // export type epoch = number | null
   export type event = Object | null
@@ -165,7 +165,7 @@ export namespace eventsFields {
 
 export interface events {
   block_id: eventsFields.block_id
-  data: eventsFields.data
+  // data: eventsFields.data
   // era: eventsFields.era
   // epoch: eventsFields.epoch
   event: eventsFields.event
@@ -175,7 +175,7 @@ export interface events {
 }
 
 export namespace extrinsicsFields {
-  export type args = Object | null
+  // export type args = Object | null
   export type block_id = number
   // export type era = number | null
   // export type epoch = number | null
@@ -196,7 +196,7 @@ export namespace extrinsicsFields {
 }
 
 export interface extrinsics {
-  args: extrinsicsFields.args
+  // args: extrinsicsFields.args
   block_id: extrinsicsFields.block_id
   // era: extrinsicsFields.era
   // epoch: extrinsicsFields.epoch
