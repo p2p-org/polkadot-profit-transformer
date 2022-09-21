@@ -7,7 +7,9 @@ export enum ENTITY {
 
 export enum PROCESSING_STATUS {
   NOT_PROCESSED = 'not_processed',
+  PROCESSING = 'processing',
   PROCESSED = 'processed',
+  CANCELLED = 'cancelled',
 }
 
 export type ProcessingTaskModel<T> = T extends ENTITY.BLOCK
