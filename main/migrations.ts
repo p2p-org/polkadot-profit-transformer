@@ -1,10 +1,12 @@
 import type { Knex } from "knex";
-import { environment, MODE } from './src/apps/main/environment'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const dbConfig: Knex.Config = {
   client: "postgresql",
   connection: {
-    connectionString: environment.PG_CONNECTION_STRING,
+    connectionString: process.env.PG_CONNECTION_STRING,
     ssl: false,
   },
   pool: {

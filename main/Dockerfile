@@ -15,9 +15,6 @@ RUN npm run build
 RUN npm prune --production
 RUN apk del .build-deps
 
-RUN npm run migrations:list
-RUN npm run migrations:up
-
 FROM --platform=linux/amd64 node:18-alpine
 
 WORKDIR /usr/src/app
@@ -27,7 +24,10 @@ COPY --from=building /usr/src/app/node_modules ./node_modules
 COPY ./package*.json ./
 COPY --from=building /usr/src/app/tsconfig-paths-bootstrap.js ./tsconfig-paths-bootstrap.js
 COPY --from=building /usr/src/app/tsconfig.json ./tsconfig.json
+COPY --from=building /usr/src/app/migrations ./migrations
+COPY --from=building /usr/src/app/migrations.ts ./migrations.ts
 
 EXPOSE 8080
 
-CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/apps/main/index.js"]
+CMD npm run migrations:up && node --require=./tsconfig-paths-bootstrap.js ./dist/apps/main/index.js
+#CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/apps/main/index.js"]
