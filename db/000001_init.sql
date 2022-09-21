@@ -3,6 +3,7 @@ CREATE TABLE blocks (
     "network_id" INT,
     "id" BIGINT,
     "hash" VARCHAR(66),
+    "era" INT,
     "state_root" VARCHAR(66),
     "extrinsics_root" VARCHAR(66),
     "parent_hash" VARCHAR(66),
@@ -21,11 +22,9 @@ CREATE TABLE events (
     "block_id" BIGINT NOT NULL,
     "section" VARCHAR(50),
     "method" VARCHAR(50),
-    "data" JSONB,
     "event" JSONB,
     "row_id" SERIAL,
     PRIMARY KEY ("row_id")
-
 );
 
 CREATE TABLE extrinsics (
@@ -45,10 +44,8 @@ CREATE TABLE extrinsics (
     "ref_event_ids" VARCHAR(150)[],
     "version" INT,
     "extrinsic" JSONB,
-    "args" JSONB,
     "row_id" SERIAL,
     PRIMARY KEY ("row_id")
-
 );
 
 
@@ -95,7 +92,7 @@ CREATE TABLE nominators (
     PRIMARY KEY ("row_id")
 );
 
-CREATE TYPE processing_status AS ENUM ('not_processed', 'processed');
+CREATE TYPE processing_status AS ENUM ('not_processed', 'processed', 'cancelled');
 
 CREATE TABLE processing_tasks (
     "network_id" INT,
@@ -106,7 +103,7 @@ CREATE TABLE processing_tasks (
     "start_timestamp" TIMESTAMP,
     "finish_timestamp" TIMESTAMP,
     "data" JSONB,
-    "attempts": INT,
+    "attempts" INT,
     "row_id" SERIAL,
     PRIMARY KEY ("row_id")
 );
@@ -118,5 +115,8 @@ CREATE TABLE processing_state (
     "row_id" SERIAL,
     PRIMARY KEY ("row_id")
 );
+ALTER TABLE IF EXISTS public.processing_state ADD CONSTRAINT processing_state_uniq_key UNIQUE (entity, network_id);
+
+CREATE INDEX processing_tasks_base_idx ON processing_tasks (entity, entity_id, network_id); 
 
 
