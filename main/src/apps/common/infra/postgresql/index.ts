@@ -1,6 +1,6 @@
 import knex, {Knex} from 'knex'
 
-export const KnexPG = async (connectionString: string, isDebug: boolean): Knex => {
+export const KnexPG = async (connectionString: string, isDebug: boolean): Promise<Knex> => {
   return knex({
     client: 'pg',
     debug: isDebug,

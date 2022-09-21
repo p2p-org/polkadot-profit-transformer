@@ -16,9 +16,7 @@ export const StakingProcessor = (args: {
   processingTasksRepository: ProcessingTasksRepository
   rabbitMQ: Rabbit
   knex: Knex
-}): {
-  processTaskMessage: Promise<void>,
-} => {
+}) => {
   const { polkadotRepository, stakingRepository, rabbitMQ, knex, processingTasksRepository } = args
   
   /*

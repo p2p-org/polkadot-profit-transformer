@@ -22,9 +22,7 @@ export const BlockProcessor = (deps: {
   processingTasksRepository: ProcessingTasksRepository
   rabbitMQ: Rabbit
   knex: Knex
-}): {
-  processTaskMessage: Promise<void>,
-} => {
+}) => {
   const { polkadotRepository, streamerRepository, rabbitMQ, knex, processingTasksRepository } = deps
   logger.info('BlockProcessor initialized')
 
