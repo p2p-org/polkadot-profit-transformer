@@ -1,4 +1,4 @@
-import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
+import { EventModel } from './../../@/models/event.model'
 import { EventProcessor } from './processors/events'
 import { Logger } from '../../loaders/logger'
 import { ExtrincicProcessorInput, ExtrinsicProcessor } from './processors/extrinsics'

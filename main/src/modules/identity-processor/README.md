@@ -22,7 +22,7 @@ Constructor returns [handlers](./index.ts#L225) to register in EventBus
 
 Identity Processor stores data in `account_identity` table, created [here](/db/000001_init.sql#L103)
 
-To work with this table we created Identity Repository [here](/main/src/apps/common/infra/postgresql/identity.repository.ts) and account identity Knex model [here](/main/src/apps/common/infra/postgresql/models/identity.model.ts)
+To work with this table we created Identity Repository [here](/main/src/apps/common/infra/postgresql/identity.repository.ts) and account identity Knex model [here](/main/src/@/models/identity.model.ts)
 
 We initialize Identity Repository [here](/main/src/apps/main/index.ts#L55) and pass it as a dependency into Identity Processor
 

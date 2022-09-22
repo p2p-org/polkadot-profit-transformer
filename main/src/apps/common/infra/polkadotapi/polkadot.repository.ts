@@ -16,8 +16,8 @@ import {
 } from '@polkadot/types/interfaces'
 import { Option, u32, Vec } from '@polkadot/types'
 import { HeaderExtended } from '@polkadot/api-derive/types'
-import { IBlockEraParams, TBlockHash } from '@modules/staking-processor/staking.types'
-import { EraModel } from '../postgresql/models/era.model'
+import { IBlockEraParams, TBlockHash } from '@/modules/staking-processor/staking.types'
+import { EraModel } from '@/models/era.model'
 
 export type PolkadotRepository = ReturnType<typeof PolkadotRepository>
 

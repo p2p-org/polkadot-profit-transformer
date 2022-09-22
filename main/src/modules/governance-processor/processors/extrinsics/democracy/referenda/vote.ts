@@ -4,7 +4,7 @@ import { Compact } from '@polkadot/types'
 import { ExtrincicProcessorInput } from '../..'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { extrinsics } from '@polkadot/types/interfaces/definitions'
-import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/models/democracy.model'
+import { DemocracyReferendaModel } from '@/models/democracy.model'
 
 export const processDemocracyReferendaVoteExtrinsic = async (
   args: ExtrincicProcessorInput,

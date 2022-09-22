@@ -1,4 +1,4 @@
-import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
+import { EventModel } from '@/models/event.model'
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
 // import { Codec } from '@polkadot/types/types'

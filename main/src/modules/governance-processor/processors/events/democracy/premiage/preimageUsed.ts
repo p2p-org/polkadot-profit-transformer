@@ -2,8 +2,8 @@ import { u128 } from '@polkadot/types'
 import { AccountId32, H256 } from '@polkadot/types/interfaces'
 import { Logger } from 'loaders/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
-import { PreimageModel } from 'apps/common/infra/postgresql/models/preimage.model'
+import { EventModel } from '@/models/event.model'
+import { PreimageModel } from '@/models/preimage.model'
 
 type NewType = EventModel
 

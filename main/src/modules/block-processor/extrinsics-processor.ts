@@ -2,7 +2,7 @@ import { isExtrinsicSuccess } from './utils/is-extrinsic-success'
 import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
 import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
 import { BlockNumber, EventRecord, Call } from '@polkadot/types/interfaces'
-import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
+import { ExtrinsicModel } from '@/models/extrinsic.model'
 import { AnyTuple } from '@polkadot/types/types'
 
 export type ExtrinsicsProcessorInput = {

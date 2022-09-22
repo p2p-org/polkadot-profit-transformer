@@ -4,7 +4,7 @@ import { AccountId, Hash, MemberCount, Proposal, ProposalIndex } from '@polkadot
 import { ExtrincicProcessorInput } from '..'
 import { Compact } from '@polkadot/types'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/models/technicalCommittee.model'
+import { TechnicalCommiteeProposalModel } from '@/models/technicalCommittee.model'
 
 export const processTechnicalCommiteeProposeExtrinsic = async (
   args: ExtrincicProcessorInput,

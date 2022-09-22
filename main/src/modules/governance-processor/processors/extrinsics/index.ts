@@ -16,8 +16,8 @@ import { processTreasuryProposeSpendExtrinsic } from './treasury/proposal/propos
 import { processTreasuryTipsNewExtrinsic } from './treasury/tips/tip-new'
 import { processTreasuryReportAwesomeExtrinsic } from './treasury/tips/report-awesome'
 import { processTreasuryTipExtrinsic } from './treasury/tips/tip'
-import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
-import { BlockModel } from 'apps/common/infra/postgresql/models/block.model'
+import { ExtrinsicModel } from '@/models/extrinsic.model'
+import { BlockModel } from '@/models/block.model'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 
 export type ExtrincicProcessorInput = {

@@ -1,8 +1,8 @@
 import { H256 } from '@polkadot/types/interfaces'
 import { Logger } from 'loaders/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { CouncilProposalModel } from 'apps/common/infra/postgresql/models/councilMotions.model'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { CouncilProposalModel } from '@/models/councilMotions.model'
+import { EventModel } from '@/models/event.model'
 
 export const processCouncilApprovedEvent = async (
   event: EventModel,

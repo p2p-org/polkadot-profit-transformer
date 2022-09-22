@@ -5,7 +5,7 @@ import { Bytes } from '@polkadot/types'
 import { findEvent } from '../../../utils/findEvent'
 import { ExtrincicProcessorInput } from '../..'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { PreimageModel } from 'apps/common/infra/postgresql/models/preimage.model'
+import { PreimageModel } from '@/models/preimage.model'
 import '@polkadot/api-augment'
 
 export const processDemocracyNotePreimageExtrinsic = async (

@@ -1,5 +1,5 @@
-import { NominatorModel } from './../../apps/common/infra/postgresql/models/nominator.model'
-import { ValidatorModel } from './../../apps/common/infra/postgresql/models/validator.model'
+import { NominatorModel } from '@/models/nominator.model'
+import { ValidatorModel } from '@/models/validator.model'
 import { BlockHash, EraIndex } from '@polkadot/types/interfaces'
 
 export type TBlockHash = string | BlockHash | Uint8Array

@@ -1,8 +1,7 @@
-import { environment } from '@/environment'
 import express from 'express'
 import prom from 'prom-client'
-
-import { BlocksPreloader } from '../../../modules/streamer/blocks-preloader'
+import { environment } from '@/environment'
+import { BlocksPreloader } from '@/modules/listener/service'
 
 export type PreloaderRestApi = ReturnType<typeof PreloaderRestApi>
 

@@ -27,7 +27,7 @@ import { processCouncilClosedEvent } from './democracy/council/closed'
 import { processTreasuryRejectedEvent } from './treasury/proposal/rejected'
 import { processTreasuryAwardedEvent } from './treasury/proposal/awarded'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { EventModel } from '@/models/event.model'
 
 export type EventProcessor = ReturnType<typeof EventProcessor>
 

@@ -1,8 +1,8 @@
-import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
+import { EventModel } from './../../@/models/event.model'
 import { Logger } from './../../loaders/logger'
 import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
 import { IdentityRepository } from 'apps/common/infra/postgresql/identity.repository'
-import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'
+import { ExtrinsicModel } from '@/models/extrinsic.model'
 import { MultiAddress, Registration } from '@polkadot/types/interfaces'
 
 export enum JudgementStatus {
