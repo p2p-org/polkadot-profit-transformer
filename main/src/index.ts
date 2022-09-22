@@ -5,14 +5,14 @@ import { KnexPG } from '@/loaders/knex'
 import { QUEUES, RabbitMQ } from '@/loaders/rabbitmq'
 import { logger } from '@/loaders/logger'
 
-import { PreloaderRestApi } from '@/apps/main/rest-api/preloader'
-import { BlocksPreloader } from '@/modules/streamer/blocks-preloader'
+import { PreloaderRestApi } from '@/modules/listener/controller'
+import { BlocksPreloader } from '@/modules/listener/service'
 
-import { BlockProcessorApi } from '@/apps/main/rest-api/block-processor'
-import { BlockProcessor } from '@/modules/streamer/block-processor'
+import { BlockProcessorApi } from '@/modules/block-processor/controller'
+import { BlockProcessor } from '@/modules/block-processor/service'
 
-import { StakingProcessorRestApi } from '@/apps/main/rest-api/staking-processor'
-import { StakingProcessor } from '@/modules/staking-processor'
+import { StakingProcessorRestApi } from '@/modules/staking-processor/controller'
+import { StakingProcessor } from '@/modules/staking-processor/service'
 
 import { polkadotFactory } from '@/apps/common/infra/polkadotapi/index'
 
