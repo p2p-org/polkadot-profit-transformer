@@ -1,8 +1,7 @@
 import express from 'express'
-
-import { BlocksPreloader } from '../../../modules/streamer/blocks-preloader'
 import prom from 'prom-client'
-import { environment } from '../environment'
+import { environment } from '@/environment'
+import { BlocksPreloader } from '../../../modules/streamer/blocks-preloader'
 
 export type StakingProcessorRestApi = ReturnType<typeof StakingProcessorRestApi>
 

@@ -1,4 +1,4 @@
-import { environment } from '@apps/main/environment'
+import { environment } from '@/environment'
 import express from 'express'
 import prom from 'prom-client'
 

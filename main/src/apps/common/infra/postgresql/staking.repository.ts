@@ -1,9 +1,9 @@
 import { Knex } from 'knex'
-import { environment } from '@apps/main/environment'
+import { environment } from '@/environment'
 
-import { EraModel } from './models/era.model'
-import { ValidatorModel } from './models/validator.model'
-import { NominatorModel } from './models/nominator.model'
+import { EraModel } from '@/models/era.model'
+import { ValidatorModel } from '@/models/validator.model'
+import { NominatorModel } from '@/models/nominator.model'
 import { logger } from '@/loaders/logger'
 
 const network = { network_id: environment.NETWORK_ID }

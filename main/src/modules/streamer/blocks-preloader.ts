@@ -4,10 +4,10 @@ import { sleep } from '@/utils/sleep'
 import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
 import { ProcessingStatusRepository } from '@/apps/common/infra/postgresql/processing_status.repository'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/apps/common/infra/postgresql/models/processing_task.model'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit } from '@/loaders/rabbitmq'
-import { ProcessingStateModel } from '@/apps/common/infra/postgresql/models/processing_status.model'
+import { ProcessingStateModel } from '@/models/processing_status.model'
 
 export type BlocksPreloader = ReturnType<typeof BlocksPreloader>
 

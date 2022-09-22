@@ -1,7 +1,7 @@
 import { ConfirmChannel, ConsumeMessage } from 'amqplib'
 import AmqpConnectionManager from 'amqp-connection-manager'
 import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/esm/AmqpConnectionManager'
-import { environment } from '@/apps/main/environment'
+import { environment } from '@/environment'
 import { logger } from '@/loaders/logger'
 
 export enum QUEUES {

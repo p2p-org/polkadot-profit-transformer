@@ -1,6 +1,6 @@
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { environment } from '@/apps/main/environment'
+import { environment } from '@/environment'
 
 const streams = [{ stream: pretty() }]
 

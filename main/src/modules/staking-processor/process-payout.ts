@@ -7,9 +7,9 @@ import { v4 } from 'uuid'
 import { logger } from '@/loaders/logger'
 import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/apps/common/infra/postgresql/models/processing_task.model'
-import { NominatorModel } from '@/apps/common/infra/postgresql/models/nominator.model'
-import { ValidatorModel } from '@/apps/common/infra/postgresql/models/validator.model'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
+import { NominatorModel } from '@/models/nominator.model'
+import { ValidatorModel } from '@/models/validator.model'
 import { IGetValidatorsNominatorsResult, TBlockHash } from './staking.types'
 
 export const processEraPayout = async (

@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
-import { environment } from '@/apps/main/environment'
+import { environment } from '@/environment'
 import { logger } from '@/loaders/logger'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from './models/processing_task.model'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 
 const BATCH_INSERT_CHUNK_SIZE = 1000
 

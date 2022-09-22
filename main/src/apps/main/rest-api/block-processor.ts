@@ -1,7 +1,6 @@
 import express from 'express'
-
 import prom from 'prom-client'
-import { environment } from '../environment'
+import { environment } from '@/environment'
 
 export type RestApi = ReturnType<typeof BlockProcessorApi>
 

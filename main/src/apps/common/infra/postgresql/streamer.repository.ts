@@ -1,9 +1,9 @@
 import { Knex } from 'knex'
-import { environment } from '@apps/main/environment'
+import { environment } from '@/environment'
 
-import { ExtrinsicModel } from './models/extrinsic.model'
-import { BlockModel } from './models/block.model'
-import { EventModel } from './models/event.model'
+import { ExtrinsicModel } from '@/models/extrinsic.model'
+import { BlockModel } from '@/models/block.model'
+import { EventModel } from '@/models/event.model'
 
 const network = { network_id: environment.NETWORK_ID }
 

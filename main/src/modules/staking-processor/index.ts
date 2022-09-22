@@ -4,7 +4,7 @@ import { StakingRepository } from '@/apps/common/infra/postgresql/staking.reposi
 import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/apps/common/infra/postgresql/models/processing_task.model'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
 import { processEraPayout } from './process-payout'
 
