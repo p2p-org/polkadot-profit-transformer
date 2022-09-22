@@ -26,7 +26,6 @@ services:
       - '6379:6379'
     restart: always
 
-
   mbelt_rabbitmq:
     container_name: mbelt_rabbitmq
     image: rabbitmq:3-management-alpine
@@ -41,20 +40,6 @@ services:
     volumes:
       - ./rabbitmq:/var/lib/rabbitmq
 
-
-
-#  hasura:
-#    image: hasura/graphql-engine:v2.0.9.cli-migrations-v3
-#    ports:
-#      - '8081:8080'
-#    depends_on:
-#      - 'db'
-#    restart: always
-#    env_file:
-#      - docker/env/.hasura.env
-#    volumes:
-#      - ./hasura:/hasura-metadata
-
   mbelt_listener:
     container_name: mbelt_listener
     build:
@@ -67,7 +52,7 @@ services:
       - mbelt_db
     volumes:
       - ./main:/usr/src/app
-      - ./main/.env_listener:/usr/src/app/.env
+      - ./docker/env/.listener.env:/usr/src/app/.env
 
   mbelt_block_processor:
     container_name: mbelt_block_processor
@@ -81,7 +66,7 @@ services:
       - mbelt_db
     volumes:
       - ./main:/usr/src/app
-      - ./main/.env_block_processor:/usr/src/app/.env
+      - ./docker/env/.block_processor.env:/usr/src/app/.env
 
   mbelt_staking_processor:
     container_name: mbelt_staking_processor
@@ -95,6 +80,6 @@ services:
       - mbelt_db
     volumes:
       - ./main:/usr/src/app
-      - ./main/.env_staking_processor:/usr/src/app/.env
+      - ./docker/env/.staking_processor.env:/usr/src/app/.env
 
        

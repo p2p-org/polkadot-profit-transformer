@@ -7,6 +7,6 @@
   "ignore": [
     "src/**/*.spec.ts"
   ],
-  "exec": "ts-node -P tsconfig.json -r tsconfig-paths/register --transpile-only ./src/apps/main/index.ts"
+  "exec": "ts-node -P tsconfig.json -r tsconfig-paths/register --transpile-only ./src/index.ts"
 }
 

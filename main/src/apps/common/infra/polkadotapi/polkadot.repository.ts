@@ -1,4 +1,4 @@
-import { logger } from './../logger/logger'
+import { logger } from '@/loaders/logger'
 import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
 import {

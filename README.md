@@ -118,8 +118,10 @@ git clone https://github.com/p2p-org/polkadot-profit-transformer.git
 
 cd polkadot-profit-transformer
 
-cp docker/env/.streamer.env.example docker/env/.streamer.env
 cp docker/env/.postgres.env.example docker/env/.postgres.env
+cp docker/env/.listener.env.example docker/env/.listener.env
+cp docker/env/.block_processor.env.example docker/env/.block_processor.env
+cp docker/env/.staking_processor.env.example docker/env/.stacking_processor.env
 
 
 make up

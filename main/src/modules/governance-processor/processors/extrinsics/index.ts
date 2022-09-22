@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import {
   processDemocracyReferendaRemoveOtherVoteExtrinsic,
   processDemocracyReferendaRemoveVoteExtrinsic,

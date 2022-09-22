@@ -1,14 +1,13 @@
-import { sleep } from './../../apps/main/index'
-import { v4 as uuidv4 } from 'uuid'
-
-import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
-import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
-import { ProcessingStatusRepository } from '@apps/common/infra/postgresql/processing_status.repository'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
-import { logger } from '@apps/common/infra/logger/logger'
-import { QUEUES, Rabbit } from '@apps/common/infra/rabbitmq'
 import { Knex } from 'knex'
-import { ProcessingStateModel } from '@apps/common/infra/postgresql/models/processing_status.model'
+import { v4 as uuidv4 } from 'uuid'
+import { sleep } from '@/utils/sleep'
+import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
+import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
+import { ProcessingStatusRepository } from '@/apps/common/infra/postgresql/processing_status.repository'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/apps/common/infra/postgresql/models/processing_task.model'
+import { logger } from '@/loaders/logger'
+import { QUEUES, Rabbit } from '@/loaders/rabbitmq'
+import { ProcessingStateModel } from '@/apps/common/infra/postgresql/models/processing_status.model'
 
 export type BlocksPreloader = ReturnType<typeof BlocksPreloader>
 

@@ -1,4 +1,4 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { ExtrincicProcessorInput } from '../..'
 import { u32 } from '@polkadot/types'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'

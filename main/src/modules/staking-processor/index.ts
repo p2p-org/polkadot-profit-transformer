@@ -1,11 +1,11 @@
 import { Knex } from 'knex'
 import { v4 } from 'uuid'
-import { StakingRepository } from '@apps/common/infra/postgresql/staking.repository'
-import { PolkadotRepository } from '@apps/common/infra/polkadotapi/polkadot.repository'
-import { logger } from '@apps/common/infra/logger/logger'
-import { QUEUES, Rabbit, TaskMessage } from '@apps/common/infra/rabbitmq'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@apps/common/infra/postgresql/models/processing_task.model'
-import { ProcessingTasksRepository } from '@apps/common/infra/postgresql/processing_tasks.repository'
+import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository'
+import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
+import { logger } from '@/loaders/logger'
+import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/apps/common/infra/postgresql/models/processing_task.model'
+import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
 import { processEraPayout } from './process-payout'
 
 export type StakingProcessor = ReturnType<typeof StakingProcessor>

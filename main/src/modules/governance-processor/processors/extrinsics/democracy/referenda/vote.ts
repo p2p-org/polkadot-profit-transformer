@@ -1,4 +1,4 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { AccountVote, ReferendumIndex } from '@polkadot/types/interfaces'
 import { Compact } from '@polkadot/types'
 import { ExtrincicProcessorInput } from '../..'

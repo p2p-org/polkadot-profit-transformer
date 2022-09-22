@@ -1,4 +1,4 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { AccountId, H256 } from '@polkadot/types/interfaces'
 import { Bytes } from '@polkadot/types'
 import { findEvent } from '@modules/governance-processor/processors/utils/findEvent'

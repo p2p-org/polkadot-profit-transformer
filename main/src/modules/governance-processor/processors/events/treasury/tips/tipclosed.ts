@@ -1,5 +1,5 @@
 import { AccountId32, H256 } from '@polkadot/types/interfaces'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
 import { TipsModel } from 'apps/common/infra/postgresql/models/tips.model'

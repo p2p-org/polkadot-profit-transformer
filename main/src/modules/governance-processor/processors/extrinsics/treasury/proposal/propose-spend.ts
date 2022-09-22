@@ -1,5 +1,5 @@
 // import { TechnicalCommiteeProposalModel } from '../../../../../apps/common/infra/postgresql/governance/models/technicalCommiteeModels'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { MultiAddress, ProposalIndex } from '@polkadot/types/interfaces'
 import { Compact, u128 } from '@polkadot/types'
 import { findEvent } from '@modules/governance-processor/processors/utils/findEvent'

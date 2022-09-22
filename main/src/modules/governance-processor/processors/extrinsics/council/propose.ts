@@ -1,4 +1,4 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { ExtrincicProcessorInput } from '..'
 import { Call, H256, Hash } from '@polkadot/types/interfaces'
 import { Compact, u32 } from '@polkadot/types'

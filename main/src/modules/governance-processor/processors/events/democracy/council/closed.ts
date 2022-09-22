@@ -1,6 +1,6 @@
 import { u32 } from '@polkadot/types'
 import { H256 } from '@polkadot/types/interfaces'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
 import { CouncilProposalModel } from 'apps/common/infra/postgresql/models/councilMotions.model'
 import { EventModel } from 'apps/common/infra/postgresql/models/event.model'

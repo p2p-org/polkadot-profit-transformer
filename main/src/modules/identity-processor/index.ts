@@ -1,5 +1,5 @@
 import { EventModel } from './../../apps/common/infra/postgresql/models/event.model'
-import { Logger } from './../../apps/common/infra/logger/logger'
+import { Logger } from './../../loaders/logger'
 import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
 import { IdentityRepository } from 'apps/common/infra/postgresql/identity.repository'
 import { ExtrinsicModel } from 'apps/common/infra/postgresql/models/extrinsic.model'

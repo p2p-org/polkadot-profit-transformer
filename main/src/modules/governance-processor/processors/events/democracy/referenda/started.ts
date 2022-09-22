@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { Hash, ProposalIndex, ReferendumIndex, VoteThreshold } from '@polkadot/types/interfaces'
 import { Compact } from '@polkadot/types'
 import { EventModel } from 'apps/common/infra/postgresql/models/event.model'

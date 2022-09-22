@@ -1,7 +1,7 @@
 import { processTipsClosedEvent } from './treasury/tips/tipclosed'
 import { ApiPromise } from '@polkadot/api'
 import { processDemocracyProposalTabled } from './democracy/proposal/tabled'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import {
   processTechnicalCommitteeApprovedEvent,
   processTechnicalCommitteeDisapprovedEvent,

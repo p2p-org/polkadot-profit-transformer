@@ -1,4 +1,4 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { findEvent } from '../../utils/findEvent'
 import { AccountId, Hash, MemberCount, ProposalIndex } from '@polkadot/types/interfaces'
 import { bool, Compact } from '@polkadot/types'

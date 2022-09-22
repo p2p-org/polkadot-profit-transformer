@@ -1,4 +1,4 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { ExtrincicProcessorInput } from '../..'
 import { u128, u32 } from '@polkadot/types'
 import { findEvent } from '@modules/governance-processor/processors/utils/findEvent'
