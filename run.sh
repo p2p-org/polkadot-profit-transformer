@@ -20,9 +20,3 @@ make docker.createnetwork
 
 docker-compose -f docker-compose.yml up -d db hasura streamer
 
-
-echo "Setting up Redash"
-
-make redash.init
-
-echo "Redash is up and running: http://localhost:5000"
