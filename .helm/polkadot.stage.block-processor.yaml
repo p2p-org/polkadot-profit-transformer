@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 40
+replicas: 1
 chain: polkadot
 role: block-processor
 limits: {cpu: 250m, memory: 10000Mi}
