@@ -38,7 +38,7 @@ export const BlockProcessor = (deps: {
     
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
 
-    const [ activeEra, signedBlock, extHeader, blockTime, events] = 
+    const [ /* activeEra, */ signedBlock, extHeader, blockTime, events] = 
       await polkadotRepository.getInfoToProcessBlock(blockHash)
 
     const extrinsicsData: ExtrinsicsProcessorInput = {
@@ -58,7 +58,7 @@ export const BlockProcessor = (deps: {
       id: signedBlock.block.header.number.toNumber(),
       hash: signedBlock.block.header.hash.toHex(),
       author: extHeader?.author ? extHeader.author.toString() : '',
-      era: activeEra,
+      // era: activeEra,
       // current_era: currentEra,
       // epoch: epoch,
       state_root: signedBlock.block.header.stateRoot.toHex(),

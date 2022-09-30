@@ -155,10 +155,11 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
 
     async getInfoToProcessBlock(
       blockHash: BlockHash
-    ): Promise<[/*number | null, number | null,*/ number | null, SignedBlock, HeaderExtended | undefined, Moment, any]> {
+    ): Promise<[/*number | null, number | null, number | null,*/ SignedBlock, HeaderExtended | undefined, Moment, any]> {
       try {
         const historicalApi = await polkadotApi.at(blockHash)
 
+        /*
         const getActiveEra = async () => {
           if (!historicalApi.query.staking.activeEra) return null
           const activeEra = await historicalApi.query.staking.activeEra()
@@ -166,28 +167,29 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
           const eraId = activeEra.unwrap().get('index')
           return eraId ? +eraId : null
         }
+        */
 
-        const [/*sessionId , */ blockCurrentEra, blockTime, events] = await historicalApi.queryMulti([
-          //[historicalApi.query.session.currentIndex],
-          [historicalApi.query.staking.currentEra],
+        const [/*sessionId , blockCurrentEra,*/  blockTime, events] = await historicalApi.queryMulti([
+          // [historicalApi.query.session.currentIndex],
+          // [historicalApi.query.staking.currentEra],
           [historicalApi.query.timestamp.now],
           [historicalApi.query.system.events, blockHash],
         ])
 
-        const [activeEra, signedBlock, extHeader] = await Promise.all([
-          getActiveEra(),
+        const [/*activeEra, */ signedBlock, extHeader] = await Promise.all([
+          //getActiveEra(),
           polkadotApi.rpc.chain.getBlock(blockHash),
           polkadotApi.derive.chain.getHeader(blockHash),
         ])
 
-        const currentEra = blockCurrentEra ? parseInt(blockCurrentEra.toString(), 10) : null
+        //const currentEra = blockCurrentEra ? parseInt(blockCurrentEra.toString(), 10) : null
 
         return [ 
           /*
           sessionId ? sessionId.toNumber() : null,
           currentEra, 
-          */
           activeEra || currentEra,
+          */
           signedBlock, 
           extHeader, 
           blockTime, 

@@ -7,7 +7,7 @@ export type BlockModel = {
   extrinsics_root: string
   parent_hash: string
   author: string  
-  era: number | null
+  era?: number | null
   // current_era: number | null
   // epoch: number | null
   // last_log: string
