@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 50
+replicas: 10
 chain: kusama
 role: block-processor
 limits: {cpu: 250m, memory: 400Mi}
