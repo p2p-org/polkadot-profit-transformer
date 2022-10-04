@@ -84,6 +84,24 @@ export const ProcessingTasksRepository = (deps: { knex: Knex }) => {
       }
     },
 
+    async getUnprocessedTasks(
+      entity: ENTITY,
+      entity_id?: number
+    ): Promise<Array<ProcessingTaskModel<ENTITY>>> {
+
+      const tasksRecords = ProcessingTaskModel(knex)
+        .select()
+        .where({ entity, ...network, status: PROCESSING_STATUS.NOT_PROCESSED })
+        .orderBy('entity_id', 'asc')
+        .limit(1000)
+
+      if (entity_id) {
+        tasksRecords.andWhere('entity_id', '>', entity_id)
+      }
+
+      return await tasksRecords
+    },
+
     async setTaskRecordAsProcessed(record: ProcessingTaskModel<ENTITY>, trx: Knex.Transaction<any, any[]>) {
       await ProcessingTaskModel(knex)
         .transacting(trx)

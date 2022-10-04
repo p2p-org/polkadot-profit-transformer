@@ -182,6 +182,35 @@ export const BlocksPreloader = (deps: {
     isPaused = false
   }
 
+
+  const restartUnprocessedTasks = async (entity: ENTITY) => {
+    let lastEntityId = 0
+    while (true) {
+      
+      const records = await processingTasksRepository.getUnprocessedTasks(entity, lastEntityId)
+      if (!records || !records.length) {
+        return
+      }
+
+      for (const record of records) {
+        if (entity === ENTITY.ERA) {
+          await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+            era_id: record.entity_id,
+            collect_uid: record.collect_uid,
+          })
+        } else if (entity === ENTITY.BLOCK) {
+          await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, {
+            block_id: record.entity_id,
+            collect_uid: record.collect_uid,
+          })
+        }
+        lastEntityId = record.entity_id || 0
+      }
+      
+      await sleep(100)
+    }
+  }
+
   // const restart = async () => {
   //   await preload()
   // }
@@ -193,6 +222,7 @@ export const BlocksPreloader = (deps: {
     gracefullShutdown,
     pause,
     resume,
+    restartUnprocessedTasks,
     // restart,
     // isPaused: (): boolean => isPaused,
     // currentBlock: () => currentBlock,

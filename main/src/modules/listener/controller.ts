@@ -2,6 +2,7 @@ import express from 'express'
 import prom from 'prom-client'
 import { environment } from '@/environment'
 import { BlocksPreloader } from '@/modules/listener/service'
+import { ENTITY } from '@/models/processing_task.model'
 
 export type PreloaderRestApi = ReturnType<typeof PreloaderRestApi>
 
@@ -36,6 +37,16 @@ export const PreloaderRestApi = (deps: { blocksPreloader: BlocksPreloader }) => 
       app.get('/resume', (req, res) => {
         blocksPreloader.resume()
         res.send('paused')
+      })
+
+      app.get('/restart-unprocessed-blocks', (req, res) => {
+        blocksPreloader.restartUnprocessedTasks(ENTITY.BLOCK)
+        res.send('restarted unprocessed')
+      })
+
+      app.get('/restart-unprocessed-eras', (req, res) => {
+        blocksPreloader.restartUnprocessedTasks(ENTITY.ERA)
+        res.send('restarted unprocessed eras')
       })
 
       app.get('/processBlock/:blockId', async (req, res) => {
