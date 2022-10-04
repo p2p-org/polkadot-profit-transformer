@@ -34,8 +34,8 @@ export const StakingProcessor = (args: {
 
     logger.info({
       event: 'PolkadotRepository.processTaskMessage',
-      message: 'New process era task received',
       eraId,
+      message: 'New process era task received',
       collect_uid,
     })
 
@@ -51,6 +51,7 @@ export const StakingProcessor = (args: {
       if (!taskRecord) {
         logger.warn({
           event: 'StakingProcessor.processTaskMessage.tx',
+          eraId,
           error: 'Task record not found. Skip processing.',
           collect_uid,
         })
@@ -60,6 +61,7 @@ export const StakingProcessor = (args: {
       if (taskRecord.collect_uid !== collect_uid) {
         logger.warn({
           event: `StakingProcessor.processTaskMessage.tx`,
+          eraId,
           error: `Possible era ${eraId} processing task duplication. `+
                  `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           collect_uid,
@@ -70,6 +72,7 @@ export const StakingProcessor = (args: {
       if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
         logger.warn({
           event: `StakingProcessor.processTaskMessage.tx`,
+          eraId,
           message: `Era ${eraId} has been already processed. Skip processing.`,
           collect_uid,
         })
@@ -79,10 +82,10 @@ export const StakingProcessor = (args: {
       // all is good, start processing era payout
       logger.info({
         event: `StakingProcessor.processTaskMessage.tx`,
+        eraId,
         message: `Start processing payout for era ${eraId}`,
         ...metadata,
         collect_uid,
-        eraId,
       })
 
       const eraReprocessingTask = await processEraPayout(
@@ -98,7 +101,8 @@ export const StakingProcessor = (args: {
       if (eraReprocessingTask) {
         logger.error({
           event: `StakingProcessor.processTaskMessage.tx`,
-          error: `Era reprocessing task found, rollback tx`,
+          eraId,
+          error: `Processing failed. Rollback tx`,
           ...metadata,
           collect_uid,
           eraReprocessingTask,
@@ -114,25 +118,26 @@ export const StakingProcessor = (args: {
 
       logger.info({
         event: `StakingProcessor.processTaskMessage.tx`,
+        eraId,
         message: `Era ${eraId} data created, commit transaction data`,
         ...metadata,
         collect_uid,
-        eraId,
       })
 
       await trx.commit()
 
       logger.info({
         event: `StakingProcessor.processTaskMessage.tx`,
+        eraId,
         message: `Era ${eraId} tx has been committed`,
         ...metadata,
         collect_uid,
         eraReprocessingTask,
-        eraId,
       })
     }).catch( (error: Error) => {
       logger.error({
         event: `StakingProcessor.processTaskMessage.tx`,
+        eraId,
         error: error.message,
         data: {
           ...metadata,
