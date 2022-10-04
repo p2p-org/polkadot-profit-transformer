@@ -92,6 +92,7 @@ export const BlockProcessor = (deps: {
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
         logger.info({ 
           event: 'BlockProcessor.onNewBlock',
+          blockId,
           message: 'eraPayout detected', 
           eraId: event.event.data[0] 
         })
@@ -110,6 +111,7 @@ export const BlockProcessor = (deps: {
 
         logger.debug({ 
           event: 'BlockProcessor.onNewBlock',
+          blockId,
           message: 'newEraStakingProcessingTask', 
           newEraStakingProcessingTask 
         })
@@ -126,7 +128,7 @@ export const BlockProcessor = (deps: {
 
   const sendEraProcessingToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
     for (const task of tasks) {
-      logger.debug({
+      logger.info({
         event: 'BlockProcessor.sendEraProcessingToRabbit',
         message: 'sendToRabbit new era for processing',
         task,
@@ -166,6 +168,7 @@ export const BlockProcessor = (deps: {
         await trx.rollback()
         logger.warn({
           event: 'BlockProcessor.processTaskMessage',
+          blockId,
           warning: 'Task record not found. Skip processing',
           collect_uid,
         })
@@ -176,7 +179,8 @@ export const BlockProcessor = (deps: {
         await trx.rollback()
         logger.warn({
           event: 'BlockProcessor.processTaskMessage',
-          warning: 'Max attempts on block ${blockId} reached, cancel processing.',
+          blockId,
+          warning: `Max attempts on block ${blockId} reached, cancel processing.`,
           collect_uid,
         })
         return
@@ -186,6 +190,7 @@ export const BlockProcessor = (deps: {
         await trx.rollback()
         logger.warn({
           event: 'BlockProcessor.processTaskMessage',
+          blockId,
           warning: `Possible block ${blockId} processing task duplication. ` +
           `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           collect_uid
@@ -197,6 +202,7 @@ export const BlockProcessor = (deps: {
         await trx.rollback()
         logger.warn({
           event: 'BlockProcessor.processTaskMessage',
+          blockId,
           warning: `Block  ${blockId} has been already processed. Skip processing.`,
           collect_uid,
         })
@@ -206,10 +212,10 @@ export const BlockProcessor = (deps: {
       // all is good, start processing
       logger.info({
         event: 'BlockProcessor.processTaskMessage',
+        blockId,
         message: `Start processing block ${blockId}`,
         ...metadata,
         collect_uid,
-        blockId,
       })
 
       const newEraProcessingTasks = await onNewBlock(metadata, blockId, trx)
@@ -233,6 +239,7 @@ export const BlockProcessor = (deps: {
 
       logger.info({
         event: 'BlockProcessor.processTaskMessage',
+        blockId,
         message: `Block ${blockId} has been processed and committed`,
         ...metadata,
         collect_uid,
@@ -244,6 +251,7 @@ export const BlockProcessor = (deps: {
 
       logger.info({
         event: 'BlockProcessor.processTaskMessage',
+        blockId,
         message: `newProcessingTasks found, send to rabbit`,
         ...metadata,
         collect_uid,
@@ -253,6 +261,7 @@ export const BlockProcessor = (deps: {
 
       logger.info({
         event: 'BlockProcessor.processTaskMessage',
+        blockId,
         message: `block ${blockId} processing done`,
         ...metadata,
         collect_uid,
@@ -260,6 +269,7 @@ export const BlockProcessor = (deps: {
     }).catch( (error: Error) => {
       logger.error({
         event: 'BlockProcessor.processTaskMessage',
+        blockId,
         error: error.message,
         data: {
           ...metadata,
