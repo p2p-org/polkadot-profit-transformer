@@ -38,6 +38,11 @@ export const StakingRepository = (deps: { knex: Knex }) => (trx: Knex.Transactio
         // we don't have era record for era 0
         if (eraId === 0) return 0
 
+        //kusama
+        if (environment.NETWORK_ID === 2 && eraId === 760) {
+          return 2204132
+        }
+
         /* 
           we are trying to find prev. era payout record to 
           determine current paid era start block id
