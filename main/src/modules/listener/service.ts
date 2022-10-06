@@ -206,6 +206,11 @@ export const BlocksPreloader = (deps: {
         }
         lastEntityId = record.entity_id || 0
       }
+
+      logger.info({ 
+        event: 'BlocksPreloader.restartUnprocessedTasks',
+        message: `Preloaded 1000 tasks to rabbit queue for processing ${entity}. Last entity id: ${lastEntityId}`
+      })
       
       await sleep(100)
     }

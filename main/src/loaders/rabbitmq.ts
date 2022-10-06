@@ -71,13 +71,14 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
     },
     process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
       const consumer =
-        // (channel) =>
         async (msg: ConsumeMessage | null): Promise<void> => {
           if (msg) {
+            /*
             logger.debug({
               event: 'RabbitMQ.process',
               message: msg.content.toString(),
             })
+            */
             const message = JSON.parse(msg.content.toString()) //as TaskMessage<T>
             try {
               await processor.processTaskMessage(message)
