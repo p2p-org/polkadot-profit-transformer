@@ -56,7 +56,7 @@ export const BlocksPreloader = (deps: {
   }
 
   const ingestTasksChunk = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
-    console.log('ingestTasksChunk')
+    //console.log('ingestTasksChunk')
     try {
       await knex
         .transaction(async (trx) => {
@@ -80,13 +80,17 @@ export const BlocksPreloader = (deps: {
         })
 
       logger.debug({
-        event: 'blocks preloader sendToRabbitAndDb blocks',
+        event: 'BlocksPreloader.ingestTasksChunk',
+        message: 'blocks preloader sendToRabbitAndDb blocks',
         from: tasks[0].entity_id,
         to: tasks[tasks.length - 1].entity_id,
       })
-      console.log('ingestTasksChunk ingested')
+      //console.log('ingestTasksChunk ingested')
     } catch (error: any) {
-      console.log('ingestTasksChunk error', error.message)
+      logger.error({
+        event: 'BlocksPreloader.ingestTasksChunk',
+        error: error.message,
+      })
     }
   }
 
@@ -212,7 +216,7 @@ export const BlocksPreloader = (deps: {
         message: `Preloaded 1000 tasks to rabbit queue for processing ${entity}. Last entity id: ${lastEntityId}`
       })
       
-      await sleep(100)
+      await sleep(5000)
     }
   }
 
