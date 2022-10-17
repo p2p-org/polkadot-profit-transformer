@@ -86,6 +86,9 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
               channelWrapper.ack(msg)
             } catch (error: any) {
               logger.error({ event: 'RabbitMQ.process', error: error.message, message })
+
+              //TODO: ?
+              channelWrapper.ack(msg);
             }
           }
         }

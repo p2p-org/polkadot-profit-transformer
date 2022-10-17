@@ -3,6 +3,7 @@ import { Knex } from 'knex'
 export enum ENTITY {
   BLOCK = 'block',
   ERA = 'era',
+  ROUND = 'round',
 }
 
 export enum PROCESSING_STATUS {

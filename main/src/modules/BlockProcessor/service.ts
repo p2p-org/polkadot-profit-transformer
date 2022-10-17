@@ -33,7 +33,7 @@ export const BlockProcessor = (deps: {
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> => {
-    const newProcessingTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
+    const newStakingProcessingTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await polkadotRepository.getBlockHashByHeight(blockId)
     
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
@@ -89,15 +89,11 @@ export const BlockProcessor = (deps: {
     // console.log(blockId + ': block saved')
 
     for (const event of processedEvents) {
-      if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
-        logger.info({ 
-          event: 'BlockProcessor.onNewBlock',
-          blockId,
-          message: 'eraPayout detected', 
-          eraId: event.event.data[0] 
-        })
+      let newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = null;
 
-        const newEraStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
+      //polkadot, kusama
+      if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
+        newStakingProcessingTask= {
           entity: ENTITY.ERA,
           entity_id: parseInt(event.event.data[0].toString()),
           status: PROCESSING_STATUS.NOT_PROCESSED,
@@ -106,52 +102,68 @@ export const BlockProcessor = (deps: {
           attempts: 0,
           data: {
             payout_block_id: blockId,
-          },
+          }
         }
+      }
 
+      //moonbeam, moonriver
+      if (event.section === 'parachainStaking' && event.method === 'NewRound') {
+        newStakingProcessingTask= {
+          entity: ENTITY.ROUND,
+          entity_id: parseInt(event.event.data[1].toString()),
+          status: PROCESSING_STATUS.NOT_PROCESSED,
+          collect_uid: uuidv4(),
+          start_timestamp: new Date(),
+          attempts: 0,
+          data: {
+            payout_block_id: blockId,
+          }
+        }
+      }
+
+      if (newStakingProcessingTask !== null) {
         logger.debug({ 
           event: 'BlockProcessor.onNewBlock',
           blockId,
-          message: 'newEraStakingProcessingTask', 
-          newEraStakingProcessingTask 
+          message: 'new staking processing task', 
+          newStakingProcessingTask 
         })
 
-        newProcessingTasks.push(newEraStakingProcessingTask)
+        newStakingProcessingTasks.push(newStakingProcessingTask)
       }
     }
 
-    return newProcessingTasks
+    return newStakingProcessingTasks
   }
 
-  // todo: refactor to more abstracted method to allow send different tasks
-  // now we send only era staking task
-
-  const sendEraProcessingToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
+  const sendStakingProcessingTasksToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
     for (const task of tasks) {
       logger.info({
-        event: 'BlockProcessor.sendEraProcessingToRabbit',
-        message: 'sendToRabbit new era for processing',
+        event: 'BlockProcessor.sendStakingProcessingTaskToRabbit',
+        message: 'sendToRabbit new task for processing',
         task,
       })
 
-      const data = {
-        era_id: task.entity_id,
-        collect_uid: task.collect_uid,
+      if (task.entity === ENTITY.ERA) {
+        await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+          era_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
+      } else if (task.entity === ENTITY.ROUND) {
+        console.log("VVVVVVVVVVVV", {
+          round_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
+        await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+          round_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
       }
-      await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, data)
     }
   }
 
   const processTaskMessage = async <T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> => {
     const { block_id: blockId, collect_uid } = message
-    //console.log({ blockId, collect_uid })
-    /*
-    logger.info({
-      event: 'new process block  task received',
-      blockId,
-      collect_uid,
-    })
-    */
 
     const metadata = {
       block_process_uid: uuidv4(),
@@ -218,10 +230,10 @@ export const BlockProcessor = (deps: {
         collect_uid,
       })
 
-      const newEraProcessingTasks = await onNewBlock(metadata, blockId, trx)
+      const newStakingProcessingTasks = await onNewBlock(metadata, blockId, trx)
 
-      if (newEraProcessingTasks.length) {
-        await processingTasksRepository.batchAddEntities(newEraProcessingTasks, trx)
+      if (newStakingProcessingTasks.length) {
+        await processingTasksRepository.batchAddEntities(newStakingProcessingTasks, trx)
       }
 
       await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
@@ -243,11 +255,11 @@ export const BlockProcessor = (deps: {
         message: `Block ${blockId} has been processed and committed`,
         ...metadata,
         collect_uid,
-        newEraProcessingTasks,
+        newStakingProcessingTasks,
       })
 
       processedBlockGauge.set(blockId)
-      if (!newEraProcessingTasks.length) return
+      if (!newStakingProcessingTasks.length) return
 
       logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -257,7 +269,7 @@ export const BlockProcessor = (deps: {
         collect_uid,
       })
 
-      await sendEraProcessingToRabbit(newEraProcessingTasks)
+      await sendStakingProcessingTasksToRabbit(newStakingProcessingTasks)
 
       logger.info({
         event: 'BlockProcessor.processTaskMessage',

@@ -202,6 +202,11 @@ export const BlocksPreloader = (deps: {
             era_id: record.entity_id,
             collect_uid: record.collect_uid,
           })
+        } else if (entity === ENTITY.ROUND) {
+          await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+            round_id: record.entity_id,
+            collect_uid: record.collect_uid,
+          })
         } else if (entity === ENTITY.BLOCK) {
           await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, {
             block_id: record.entity_id,

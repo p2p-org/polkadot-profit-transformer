@@ -49,6 +49,11 @@ export const PreloaderRestApi = (deps: { blocksPreloader: BlocksPreloader }) => 
         res.send('restarted unprocessed eras')
       })
 
+      app.get('/restart-unprocessed-rounds', (req, res) => {
+        blocksPreloader.restartUnprocessedTasks(ENTITY.ROUND)
+        res.send('restarted unprocessed rounds')
+      })
+
       app.get('/processBlock/:blockId', async (req, res) => {
         if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
         await blocksPreloader.preloadOneBlock(Number(req.params.blockId))

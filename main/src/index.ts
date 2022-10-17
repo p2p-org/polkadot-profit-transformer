@@ -5,14 +5,17 @@ import { KnexPG } from '@/loaders/knex'
 import { QUEUES, RabbitMQ } from '@/loaders/rabbitmq'
 import { logger } from '@/loaders/logger'
 
-import { PreloaderRestApi } from '@/modules/listener/controller'
-import { BlocksPreloader } from '@/modules/listener/service'
+import { PreloaderRestApi } from '@/modules/BlockListener/controller'
+import { BlocksPreloader } from '@/modules/BlockListener/service'
 
-import { BlockProcessorApi } from '@/modules/block-processor/controller'
-import { BlockProcessor } from '@/modules/block-processor/service'
+import { BlockProcessorApi } from '@/modules/BlockProcessor/controller'
+import { BlockProcessor } from '@/modules/BlockProcessor/service'
 
-import { StakingProcessorRestApi } from '@/modules/staking-processor/controller'
-import { StakingProcessor } from '@/modules/staking-processor/service'
+import { RelaychainStakingProcessorRestApi } from '@/modules/RelaychainStakingProcessor/controller'
+import { RelaychainStakingProcessor } from '@/modules/RelaychainStakingProcessor/service'
+
+import { ParachainStakingProcessorRestApi } from '@/modules/ParachainStakingProcessor/controller'
+import { ParachainStakingProcessor } from '@/modules/ParachainStakingProcessor/service'
 
 import { polkadotFactory } from '@/apps/common/infra/polkadotapi/index'
 
@@ -66,12 +69,11 @@ const main = async () => {
       process.exit(0)
     })
 
-    // // express rest api
     const restApi = PreloaderRestApi({ blocksPreloader })
     restApi.init()
 
     await blocksPreloader.preload()
-    //await blocksPreloader.preloadOneBlock(8259074)
+    //await blocksPreloader.preloadOneBlock(1858800)
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
@@ -91,21 +93,38 @@ const main = async () => {
     restApi.init()
   }
 
-  if (environment.MODE === MODE.STAKING_PROCESSOR) {
+  if (environment.MODE === MODE.STAKING_PROCESSOR ) {
     logger.debug('STAKING_PROCESSOR mode')
 
-    const stakingProcessor = StakingProcessor({
-      polkadotRepository,
-      stakingRepository,
-      processingTasksRepository,
-      rabbitMQ,
-      knex: pg,
-    })
+    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
+      const stakingProcessor = RelaychainStakingProcessor({
+        polkadotRepository,
+        stakingRepository,
+        processingTasksRepository,
+        rabbitMQ,
+        knex: pg,
+      })
 
-    rabbitMQ.process(QUEUES.Staking, stakingProcessor)
+      rabbitMQ.process(QUEUES.Staking, stakingProcessor)
 
-    const restApi = StakingProcessorRestApi()
-    restApi.init()
+      const restApi = RelaychainStakingProcessorRestApi()
+      restApi.init()
+
+    } else {
+      const stakingProcessor = ParachainStakingProcessor({
+        polkadotApi,
+        polkadotRepository,
+        stakingRepository,
+        processingTasksRepository,
+        rabbitMQ,
+        knex: pg,
+      })
+
+      rabbitMQ.process(QUEUES.Staking, stakingProcessor)
+
+      const restApi = ParachainStakingProcessorRestApi()
+      restApi.init()
+    }
   }
 }
 
@@ -113,4 +132,3 @@ main().catch((error) => {
   console.log('Error in igniter main function', error.message)
   throw error
 })
-

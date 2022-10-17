@@ -3,9 +3,9 @@ import prom from 'prom-client'
 import { environment } from '@/environment'
 import { BlocksPreloader } from '@/modules/listener/service'
 
-export type StakingProcessorRestApi = ReturnType<typeof StakingProcessorRestApi>
+export type RelaychainStakingProcessorRestApi = ReturnType<typeof StakingProcessorRestApi>
 
-export const StakingProcessorRestApi = (/* deps: { blocksPreloader: BlocksPreloader } */) => {
+export const RelaychainStakingProcessorRestApi = (/* deps: { blocksPreloader: BlocksPreloader } */) => {
   // const { blocksPreloader } = deps
 
   const port = environment.REST_API_PORT

@@ -8,9 +8,9 @@ import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/process
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
 import { processEraPayout } from './process-payout'
 
-export type StakingProcessor = ReturnType<typeof StakingProcessor>
+export type RelaychainStakingProcessor = ReturnType<typeof RelaychainStakingProcessor>
 
-export const StakingProcessor = (args: {
+export const RelaychainStakingProcessor = (args: {
   polkadotRepository: PolkadotRepository
   stakingRepository: StakingRepository
   processingTasksRepository: ProcessingTasksRepository
