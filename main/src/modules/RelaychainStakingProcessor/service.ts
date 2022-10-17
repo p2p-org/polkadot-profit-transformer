@@ -30,7 +30,7 @@ export const RelaychainStakingProcessor = (args: {
   */
 
   const processTaskMessage = async <T extends QUEUES.Staking>(message: TaskMessage<T>) => {
-    const { era_id: eraId, collect_uid } = message
+    const { entity_id: eraId, collect_uid } = message
 
     logger.info({
       event: 'PolkadotRepository.processTaskMessage',

@@ -1,4 +1,4 @@
-import { DeligatorModel } from '@/models/deligator.model'
+import { DelegatorModel } from '@/models/delegator.model'
 import { CollatorModel } from '@/models/collator.model'
 import { BlockHash, EraIndex } from '@polkadot/types/interfaces'
 
@@ -17,7 +17,7 @@ export interface IBlockEraParams {
 
 export interface IGetCollatorsDeligatorsResult {
   collators: CollatorModel[]
-  deligators: DeligatorModel[]
+  deligators: DelegatorModel[]
 }
 
 export type PayoutEvent = {

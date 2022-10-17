@@ -1,6 +1,5 @@
 import { Knex } from 'knex'
 import { environment } from '@/environment'
-import { logger } from '@/loaders/logger'
 
 import { EraModel } from '@/models/era.model'
 import { ValidatorModel } from '@/models/validator.model'
@@ -80,17 +79,17 @@ export const StakingRepository = (deps: { knex: Knex }) => (trx: Knex.Transactio
       },
     },
     round: {
-      save: async (round: EraModel): Promise<void> => {
+      save: async (round: RoundModel): Promise<void> => {
         await RoundModel(knex)
           .transacting(trx)
           .insert({ ...round, ...network })
       },
       findRoundStartBlockId: async (roundId: number): Promise<number | undefined> => {
-        // we don't have round record for era 0
+        // we don't have round record for round 0
         if (roundId === 2) return 0
 
         const record = await RoundModel(knex)
-          .where({ round: roundId - 1 })
+          .where({ round_id: roundId - 1 })
           .first()
 
         // if prev round record doesn't exist, return undefined

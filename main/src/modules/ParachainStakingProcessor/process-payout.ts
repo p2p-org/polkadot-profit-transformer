@@ -9,7 +9,6 @@ import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.rep
 import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { DelegatorModel } from '@/models/delegator.model'
-import { CollatorModel } from '@/models/collator.model'
 import { IGetCollatorsDeligatorsResult, TBlockHash } from './staking.types'
 import { CollatorModel } from '../../models/collator.model'
 import { reward } from './api'
@@ -25,7 +24,7 @@ export const processRoundPayout = async (
   stakingRepository: StakingRepository,
   polkadotRepository: PolkadotRepository,
   polkadotApi: ApiPromise
-): Promise<ProcessingTaskModel<ENTITY.ERA> | undefined> => {
+): Promise<boolean | undefined> => {
 
   const start = Date.now()
   logger.info({ event: `Process staking payout for era: ${roundId}`, metadata, roundId })
@@ -40,8 +39,8 @@ export const processRoundPayout = async (
       start_block_id: parseInt(round.startBlockId),
       start_block_time: new Date(parseInt(round.startBlockTime)),
       total_reward: round.totalRewardedAmount.toString(10),
-      total_stake: round.totalStaked.toString(10),
-      total_reward_points: parseInt(round.totalPoints.toString(10)),
+      total_stake: round.totalStaked.toString(),
+      total_reward_points: parseInt(round.totalPoints.toString()),
       collators_count: stakedValue.length,
     });
 
@@ -52,12 +51,14 @@ export const processRoundPayout = async (
       start_block_id: parseInt(round.startBlockId),
       start_block_time: new Date(parseInt(round.startBlockTime)),
       total_reward: round.totalRewardedAmount.toString(10),
-      total_stake: round.totalStaked.toString(10),
-      total_reward_points: parseInt(round.totalPoints.toString(10)),
-      collators_count: stakedValue.length,
+      total_stake: round.totalStaked.toString(),
+      total_reward_points: parseInt(round.totalPoints.toString()),
+      collators_count: Object.keys(stakedValue).length,
     });
 
-    for (const collator of Object.values(stakedValue)) {
+    
+    //Object.values(stakedValue).forEach(collator:any)=>{})
+    for (const collator of Object.values(stakedValue) as any) {
 
       await stakingRepository(trx).collators.save({
         round_id: parseInt(round.id.toString(10)),
@@ -71,7 +72,7 @@ export const processRoundPayout = async (
         payout_block_time: new Date(collator.payoutBlockTime),
       })
 
-      for (const delegator of Object.values(collator.delegators)) {
+      for (const delegator of Object.values(collator.delegators) as any) {
         await stakingRepository(trx).delegators.save({
           round_id: parseInt(round.id.toString(10)),
           account_id: delegator.id,
@@ -93,6 +94,8 @@ export const processRoundPayout = async (
       metadata,
       roundId,
     })
+
+    return true;
 
   } catch (error: any) {
     console.error(error);

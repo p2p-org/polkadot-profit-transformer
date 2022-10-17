@@ -89,11 +89,9 @@ export const BlockProcessor = (deps: {
     // console.log(blockId + ': block saved')
 
     for (const event of processedEvents) {
-      let newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = null;
-
       //polkadot, kusama
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
-        newStakingProcessingTask= {
+        const newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
           entity: ENTITY.ERA,
           entity_id: parseInt(event.event.data[0].toString()),
           status: PROCESSING_STATUS.NOT_PROCESSED,
@@ -104,11 +102,20 @@ export const BlockProcessor = (deps: {
             payout_block_id: blockId,
           }
         }
+        newStakingProcessingTasks.push(newStakingProcessingTask)
+
+        logger.debug({ 
+          event: 'BlockProcessor.onNewBlock',
+          blockId,
+          message: 'detected new era', 
+          newStakingProcessingTask 
+        })
       }
 
       //moonbeam, moonriver
       if (event.section === 'parachainStaking' && event.method === 'NewRound') {
-        newStakingProcessingTask= {
+
+        const newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
           entity: ENTITY.ROUND,
           entity_id: parseInt(event.event.data[1].toString()),
           status: PROCESSING_STATUS.NOT_PROCESSED,
@@ -119,17 +126,14 @@ export const BlockProcessor = (deps: {
             payout_block_id: blockId,
           }
         }
-      }
+        newStakingProcessingTasks.push(newStakingProcessingTask);
 
-      if (newStakingProcessingTask !== null) {
         logger.debug({ 
           event: 'BlockProcessor.onNewBlock',
           blockId,
-          message: 'new staking processing task', 
+          message: 'detected new round', 
           newStakingProcessingTask 
         })
-
-        newStakingProcessingTasks.push(newStakingProcessingTask)
       }
     }
 
@@ -146,16 +150,12 @@ export const BlockProcessor = (deps: {
 
       if (task.entity === ENTITY.ERA) {
         await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
-          era_id: task.entity_id,
+          entity_id: task.entity_id,
           collect_uid: task.collect_uid,
         })
       } else if (task.entity === ENTITY.ROUND) {
-        console.log("VVVVVVVVVVVV", {
-          round_id: task.entity_id,
-          collect_uid: task.collect_uid,
-        })
         await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
-          round_id: task.entity_id,
+          entity_id: task.entity_id,
           collect_uid: task.collect_uid,
         })
       }

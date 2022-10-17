@@ -1,9 +1,8 @@
 import express from 'express'
 import prom from 'prom-client'
 import { environment } from '@/environment'
-import { BlocksPreloader } from '@/modules/listener/service'
 
-export type RelaychainStakingProcessorRestApi = ReturnType<typeof StakingProcessorRestApi>
+export type RelaychainStakingProcessorRestApi = ReturnType<typeof RelaychainStakingProcessorRestApi>
 
 export const RelaychainStakingProcessorRestApi = (/* deps: { blocksPreloader: BlocksPreloader } */) => {
   // const { blocksPreloader } = deps

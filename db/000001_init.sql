@@ -120,3 +120,48 @@ ALTER TABLE IF EXISTS public.processing_state ADD CONSTRAINT processing_state_un
 CREATE INDEX processing_tasks_base_idx ON processing_tasks (entity, entity_id, network_id); 
 
 
+
+
+CREATE TABLE rounds (
+    "network_id" INT,
+    "round_id" INT,
+    "total_stake" VARCHAR(50),
+    "total_reward_points" INT,
+    "total_reward" VARCHAR(50),
+    "collators_count" INT,
+    "start_block_id" INT,
+    "start_block_time" TIMESTAMP,
+    "payout_block_id" INT,
+    "payout_block_time" TIMESTAMP,
+    "row_id" SERIAL,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE collators (
+    "network_id" INT,
+    "round_id" INT,
+    "account_id" VARCHAR(150),
+    "total_stake" VARCHAR(50),
+    "own_stake" VARCHAR(50),
+    "delegators_count" INT,
+    "reward_points" INT,
+    "reward" VARCHAR (50),
+    "payout_block_id" INT,
+    "payout_block_time" TIMESTAMP,
+    "row_id" SERIAL,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE delegators (
+    "network_id" INT,
+    "round_id" INT,
+    "account_id" VARCHAR(150),
+    "collator_id" VARCHAR (150),
+    "amount" VARCHAR(50),
+    "reward" VARCHAR (50),
+    "payout_block_id" INT,
+    "payout_block_time" TIMESTAMP,
+    "row_id" SERIAL,
+    PRIMARY KEY ("row_id")
+);
+

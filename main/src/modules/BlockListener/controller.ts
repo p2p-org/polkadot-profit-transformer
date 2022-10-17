@@ -1,7 +1,7 @@
 import express from 'express'
 import prom from 'prom-client'
 import { environment } from '@/environment'
-import { BlocksPreloader } from '@/modules/listener/service'
+import { BlocksPreloader } from '@/modules/BlockListener/service'
 import { ENTITY } from '@/models/processing_task.model'
 
 export type PreloaderRestApi = ReturnType<typeof PreloaderRestApi>

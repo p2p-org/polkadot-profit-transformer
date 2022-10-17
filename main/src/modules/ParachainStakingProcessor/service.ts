@@ -32,7 +32,7 @@ export const ParachainStakingProcessor = (args: {
   */
 
   const processTaskMessage = async <T extends QUEUES.Staking>(message: TaskMessage<T>) => {
-    const { round_id: roundId, collect_uid } = message
+    const { entity_id: roundId, collect_uid } = message
 
     logger.info({
       event: 'PolkadotRepository.processTaskMessage',

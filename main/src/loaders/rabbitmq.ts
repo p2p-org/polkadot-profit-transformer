@@ -15,7 +15,8 @@ export type TaskMessage<T> = T extends QUEUES.Blocks
       collect_uid: string
     }
   : {
-      era_id: number
+      entity_id: number
+      //round_id?: number
       collect_uid: string
     }
 
