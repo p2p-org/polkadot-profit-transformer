@@ -42,4 +42,20 @@ helm diff upgrade --install mbelt-stage-kusama-preloader .helm -f .helm/kusama.s
 helm diff upgrade --install mbelt-stage-kusama-block-processor .helm -f .helm/kusama.stage.block-processor.yaml -n mbelt-stage
 ### Staking processor
 helm diff upgrade --install mbelt-stage-kusama-staking-processor .helm -f .helm/kusama.stage.staking-processor.yaml -n mbelt-stage
+
+## Moonbeam
+### Preloader
+helm diff upgrade --install mbelt-stage-moonbeam-preloader .helm -f .helm/moonbeam.stage.preloader.yaml -n mbelt-stage
+### Block processor
+helm diff upgrade --install mbelt-stage-moonbeam-block-processor .helm -f .helm/moonbeam.stage.block-processor.yaml -n mbelt-stage
+### Staking processor
+helm diff upgrade --install mbelt-stage-moonbeam-staking-processor .helm -f .helm/moonbeam.stage.staking-processor.yaml -n mbelt-stage
+
+## Moonriver
+### Preloader
+helm diff upgrade --install mbelt-stage-moonriver-preloader .helm -f .helm/moonriver.stage.preloader.yaml -n mbelt-stage
+### Block processor
+helm diff upgrade --install mbelt-stage-moonriver-block-processor .helm -f .helm/moonriver.stage.block-processor.yaml -n mbelt-stage
+### Staking processor
+helm diff upgrade --install mbelt-stage-moonriver-staking-processor .helm -f .helm/moonriver.stage.staking-processor.yaml -n mbelt-stage
 ```
