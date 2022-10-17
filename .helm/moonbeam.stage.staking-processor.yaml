@@ -1,0 +1,30 @@
+---
+environment: stage
+chain: moonbeam
+role: staking-processor
+replicas: 1
+limits: {cpu: 450m, memory: 4096Mi}
+requests: {cpu: 350m, memory: 4096Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: f54cb1bdda0099b8d9c840c5a5e91f1d2e8cf860}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/stage_moonbeam"
+additional_args:
+  - "--max_old_space_size=4096"
+env:
+  substrate_uri: ws://moonbeam-node-0.moonbeam-node.moonbeam.svc.cluster.local:9945
+  log_level: info
+  network_id: 371
+  mode: STAKING_PROCESSOR
+  network: moonbeam
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt-stage-moonbeam-staking-processor.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt-stage-moonbeam-staking-processor-polka-p2p-world
+    ssl_redirect: true

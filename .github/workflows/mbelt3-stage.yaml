@@ -37,6 +37,12 @@ jobs:
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.block-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.preloader.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.block-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.preloader.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.staking-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.staking-processor.yaml
