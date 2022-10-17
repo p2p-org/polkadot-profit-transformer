@@ -11,7 +11,7 @@ import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/process
 import { DelegatorModel } from '@/models/delegator.model'
 import { IGetCollatorsDeligatorsResult, TBlockHash } from './staking.types'
 import { CollatorModel } from '../../models/collator.model'
-import { reward } from './api'
+import { reward } from './moonbeam-api'
 import { ApiPromise } from '@polkadot/api'
 import { idText } from 'typescript'
 
