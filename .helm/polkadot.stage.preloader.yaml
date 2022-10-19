@@ -3,7 +3,7 @@ environment: stage
 chain: polkadot
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 14f75180a2e272965b499d62eb81e30c68eba281}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 5a8c20aa4890d479760a0391d40274a5b6a32dc9}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
