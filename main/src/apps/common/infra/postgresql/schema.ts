@@ -53,13 +53,13 @@ export namespace blocksFields {
   export type block_time = Date | null
   export type current_era = number | null
   export type digest = Object | null
-  export type era = number | null
+  // export type era = number | null
+  // export type epoch = number | null
   export type extrinsics_root = string | null
   export type hash = string | null
   export type id = number
   export type last_log = string | null
   export type parent_hash = string | null
-  export type session_id = number | null
   export type state_root = string | null
 }
 
@@ -68,13 +68,13 @@ export interface blocks {
   block_time: blocksFields.block_time
   current_era: blocksFields.current_era
   digest: blocksFields.digest
-  era: blocksFields.era
+  // era: blocksFields.era
+  // epoch: blocksFields.epoch
   extrinsics_root: blocksFields.extrinsics_root
   hash: blocksFields.hash
   id: blocksFields.id
   last_log: blocksFields.last_log
   parent_hash: blocksFields.parent_hash
-  session_id: blocksFields.session_id
   state_root: blocksFields.state_root
 }
 
@@ -154,30 +154,31 @@ export interface eras {
 
 export namespace eventsFields {
   export type block_id = number
-  export type data = Object | null
-  export type era = number | null
+  // export type data = Object | null
+  // export type era = number | null
+  // export type epoch = number | null
   export type event = Object | null
   export type id = string
   export type method = string | null
   export type section = string | null
-  export type session_id = number | null
 }
 
 export interface events {
   block_id: eventsFields.block_id
-  data: eventsFields.data
-  era: eventsFields.era
+  // data: eventsFields.data
+  // era: eventsFields.era
+  // epoch: eventsFields.epoch
   event: eventsFields.event
   id: eventsFields.id
   method: eventsFields.method
   section: eventsFields.section
-  session_id: eventsFields.session_id
 }
 
 export namespace extrinsicsFields {
-  export type args = Object | null
+  // export type args = Object | null
   export type block_id = number
-  export type era = number | null
+  // export type era = number | null
+  // export type epoch = number | null
   export type extrinsic = Object | null
   export type id = string
   export type is_signed = boolean | null
@@ -188,7 +189,6 @@ export namespace extrinsicsFields {
   export type parent_id = string | null
   export type ref_event_ids = Array<string> | null
   export type section = string | null
-  export type session_id = number | null
   export type signer = string | null
   export type success = boolean | null
   export type tip = number | null
@@ -196,9 +196,10 @@ export namespace extrinsicsFields {
 }
 
 export interface extrinsics {
-  args: extrinsicsFields.args
+  // args: extrinsicsFields.args
   block_id: extrinsicsFields.block_id
-  era: extrinsicsFields.era
+  // era: extrinsicsFields.era
+  // epoch: extrinsicsFields.epoch
   extrinsic: extrinsicsFields.extrinsic
   id: extrinsicsFields.id
   is_signed: extrinsicsFields.is_signed
@@ -209,7 +210,6 @@ export interface extrinsics {
   parent_id: extrinsicsFields.parent_id
   ref_event_ids: extrinsicsFields.ref_event_ids
   section: extrinsicsFields.section
-  session_id: extrinsicsFields.session_id
   signer: extrinsicsFields.signer
   success: extrinsicsFields.success
   tip: extrinsicsFields.tip

@@ -1,10 +1,10 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { ExtrincicProcessorInput } from '..'
 import { Call, H256, Hash } from '@polkadot/types/interfaces'
 import { Compact, u32 } from '@polkadot/types'
 import { findEvent } from '../../utils/findEvent'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { CouncilProposalModel } from 'apps/common/infra/postgresql/models/councilMotions.model'
+import { CouncilProposalModel } from '@/models/councilMotions.model'
 
 export const processCouncilProposeExtrinsic = async (
   args: ExtrincicProcessorInput,

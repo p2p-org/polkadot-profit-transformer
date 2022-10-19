@@ -6,34 +6,80 @@ networks:
       name: streamer_network
 
 services:
-  db:
+  mbelt_db:
+    container_name: mbelt_postgres
     build: './db'
     restart: always
-    container_name: postgres
-    hostname: postgres
+    hostname: mbelt_postgres
     ports:
       - 5432:5432
     env_file:
       - docker/env/.postgres.env
     volumes:
       - ./db-data:/var/lib/postgresql/data
-  hasura:
-    image: hasura/graphql-engine:v2.0.9.cli-migrations-v3
+
+  mbelt_redis:
+    container_name: mbelt_redis
+    image: redis:latest
+    hostname: mbelt_redis
     ports:
-      - '8081:8080'
-    depends_on:
-      - 'db'
+      - '6379:6379'
     restart: always
-    env_file:
-      - docker/env/.hasura.env
+
+  mbelt_rabbitmq:
+    container_name: mbelt_rabbitmq
+    image: rabbitmq:3-management-alpine
+    hostname: mbelt_rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: username
+      RABBITMQ_DEFAULT_PASS: password
     volumes:
-      - ./hasura:/hasura-metadata
-  streamer:
-    build: ./main
+      - ./rabbitmq:/var/lib/rabbitmq
+
+  mbelt_listener:
+    container_name: mbelt_listener
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
     restart: always
     ports:
       - 3000:3000
     depends_on:
-      - db
-    env_file:
-      - docker/env/.streamer.env
+      - mbelt_db
+    volumes:
+      - ./main:/usr/src/app
+      - ./docker/env/.listener.env:/usr/src/app/.env
+
+  mbelt_block_processor:
+    container_name: mbelt_block_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3001:3001
+    depends_on:
+      - mbelt_db
+    volumes:
+      - ./main:/usr/src/app
+      - ./docker/env/.block_processor.env:/usr/src/app/.env
+
+  mbelt_staking_processor:
+    container_name: mbelt_staking_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3002:3002
+    depends_on:
+      - mbelt_db
+    volumes:
+      - ./main:/usr/src/app
+      - ./docker/env/.staking_processor.env:/usr/src/app/.env
+
+       

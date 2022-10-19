@@ -1,7 +1,7 @@
-import { environment } from './../../../main/environment'
 import { Knex } from 'knex'
-import { logger } from '../logger/logger'
-import { ENTITY, ProcessingStateModel } from './models/processing_status.model'
+import { logger } from '@/loaders/logger'
+import { environment } from '@/environment'
+import { ENTITY, ProcessingStateModel } from '@/models/processing_status.model'
 
 export type ProcessingStatusRepository = ReturnType<typeof ProcessingStatusRepository>
 

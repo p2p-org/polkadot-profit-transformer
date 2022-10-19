@@ -1,11 +1,11 @@
-// import { TechnicalCommiteeProposalModel } from '../../../../../apps/common/infra/postgresql/governance/models/technicalCommiteeModels'
-import { Logger } from 'apps/common/infra/logger/logger'
+// import { TechnicalCommiteeProposalModel } from '@/models/technicalCommiteeModels'
+import { Logger } from 'loaders/logger'
 import { MultiAddress, ProposalIndex } from '@polkadot/types/interfaces'
 import { Compact, u128 } from '@polkadot/types'
 import { findEvent } from '@modules/governance-processor/processors/utils/findEvent'
 import { ExtrincicProcessorInput } from '../..'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { TreasuryProposalModel } from 'apps/common/infra/postgresql/models/treasuryProposal.model'
+import { TreasuryProposalModel } from '@/models/treasuryProposal.model'
 
 export const processTreasuryProposeSpendExtrinsic = async (
   args: ExtrincicProcessorInput,

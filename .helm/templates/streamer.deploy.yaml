@@ -56,7 +56,7 @@ spec:
           {{- range .Values.additional_args }}
           {{ . }} \
           {{- end }}
-          ./dist/apps/main/index.js
+          ./dist/index.js
         {{- with .Values.env }}
         env:
         - { name: SUBSTRATE_URI, value: {{ quote .substrate_uri }} }

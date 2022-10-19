@@ -1,7 +1,7 @@
 import { processTipsClosedEvent } from './treasury/tips/tipclosed'
 import { ApiPromise } from '@polkadot/api'
 import { processDemocracyProposalTabled } from './democracy/proposal/tabled'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import {
   processTechnicalCommitteeApprovedEvent,
   processTechnicalCommitteeDisapprovedEvent,
@@ -27,7 +27,7 @@ import { processCouncilClosedEvent } from './democracy/council/closed'
 import { processTreasuryRejectedEvent } from './treasury/proposal/rejected'
 import { processTreasuryAwardedEvent } from './treasury/proposal/awarded'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { EventModel } from '@/models/event.model'
 
 export type EventProcessor = ReturnType<typeof EventProcessor>
 

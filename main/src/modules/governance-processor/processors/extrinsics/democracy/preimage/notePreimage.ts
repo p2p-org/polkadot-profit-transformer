@@ -1,11 +1,11 @@
 import { ApiPromise } from '@polkadot/api'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { AccountId, Balance, Call, Hash } from '@polkadot/types/interfaces'
 import { Bytes } from '@polkadot/types'
 import { findEvent } from '../../../utils/findEvent'
 import { ExtrincicProcessorInput } from '../..'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { PreimageModel } from 'apps/common/infra/postgresql/models/preimage.model'
+import { PreimageModel } from '@/models/preimage.model'
 import '@polkadot/api-augment'
 
 export const processDemocracyNotePreimageExtrinsic = async (

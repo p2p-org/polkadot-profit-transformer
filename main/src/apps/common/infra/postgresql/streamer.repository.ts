@@ -1,9 +1,9 @@
 import { Knex } from 'knex'
-import { environment } from '@apps/main/environment'
+import { environment } from '@/environment'
 
-import { ExtrinsicModel } from './models/extrinsic.model'
-import { BlockModel } from './models/block.model'
-import { EventModel } from './models/event.model'
+import { ExtrinsicModel } from '@/models/extrinsic.model'
+import { BlockModel } from '@/models/block.model'
+import { EventModel } from '@/models/event.model'
 
 const network = { network_id: environment.NETWORK_ID }
 
@@ -22,7 +22,11 @@ export const StreamerRepository = (deps: { knex: Knex }) => (trx: Knex.Transacti
     },
     events: {
       save: async (event: EventModel): Promise<void> => {
-        const eventForDb = { ...event, data: JSON.stringify(event.data), event: event.event.toJSON() }
+        const eventForDb = { 
+          ...event, 
+          event: event.event.toJSON() 
+          // data: JSON.stringify(event.data), 
+        }
         await EventModel(knex)
           .transacting(trx)
           .insert({ ...eventForDb, ...network })
@@ -53,7 +57,7 @@ export const StreamerRepository = (deps: { knex: Knex }) => (trx: Knex.Transacti
         const strigifiedDataExtrinsic = {
           ...extrinsic,
           extrinsic: JSON.stringify(extrinsic.extrinsic),
-          args: JSON.stringify(extrinsic.args),
+          // args: JSON.stringify(extrinsic.args),
         }
         await ExtrinsicModel(knex)
           .transacting(trx)

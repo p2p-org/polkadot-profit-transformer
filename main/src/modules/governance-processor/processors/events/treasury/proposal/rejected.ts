@@ -1,7 +1,7 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
-import { TreasuryProposalModel } from 'apps/common/infra/postgresql/models/treasuryProposal.model'
+import { EventModel } from '@/models/event.model'
+import { TreasuryProposalModel } from '@/models/treasuryProposal.model'
 
 export const processTreasuryRejectedEvent = async (
   event: EventModel,

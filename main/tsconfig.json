@@ -15,6 +15,7 @@
     "moduleResolution": "node",
     "baseUrl": "./src",
     "paths": {
+      "@/*": ["./*"],
       "@apps/*": ["apps/*"],
       "@modules/*": ["modules/*"]
     },
@@ -24,5 +25,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/apps/main/index.ts"]
+  "include": ["src/index.ts"]
 }

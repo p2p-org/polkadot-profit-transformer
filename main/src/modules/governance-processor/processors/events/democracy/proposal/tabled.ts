@@ -1,8 +1,8 @@
 import { ApiPromise } from '@polkadot/api'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { DemocracyProposalModel, DemocracyReferendaModel } from 'apps/common/infra/postgresql/models/democracy.model'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { DemocracyProposalModel, DemocracyReferendaModel } from '@/models/democracy.model'
+import { EventModel } from '@/models/event.model'
 
 export const processDemocracyProposalTabled = async (
   event: EventModel,

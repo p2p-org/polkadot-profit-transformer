@@ -1,10 +1,10 @@
 import { ApiPromise } from '@polkadot/api'
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { Hash, ProposalIndex, ReferendumIndex, VoteThreshold } from '@polkadot/types/interfaces'
 import { Compact } from '@polkadot/types'
-import { EventModel } from 'apps/common/infra/postgresql/models/event.model'
+import { EventModel } from '@/models/event.model'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { DemocracyReferendaModel } from 'apps/common/infra/postgresql/models/democracy.model'
+import { DemocracyReferendaModel } from '@/models/democracy.model'
 
 export const processDemocracyReferendaStarted = async (
   event: EventModel,

@@ -1,10 +1,10 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { AccountId, H256 } from '@polkadot/types/interfaces'
 import { Bytes } from '@polkadot/types'
 import { findEvent } from '@modules/governance-processor/processors/utils/findEvent'
 import { ExtrincicProcessorInput } from '../..'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { TipsModel } from 'apps/common/infra/postgresql/models/tips.model'
+import { TipsModel } from '@/models/tips.model'
 
 export const processTreasuryReportAwesomeExtrinsic = async (
   args: ExtrincicProcessorInput,

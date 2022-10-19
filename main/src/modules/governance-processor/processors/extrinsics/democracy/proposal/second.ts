@@ -1,8 +1,8 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { ExtrincicProcessorInput } from '../..'
 import { Compact, u32 } from '@polkadot/types'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { DemocracyProposalModel } from 'apps/common/infra/postgresql/models/democracy.model'
+import { DemocracyProposalModel } from '@/models/democracy.model'
 
 export const processDemocracyProposalSecondExtrinsic = async (
   args: ExtrincicProcessorInput,

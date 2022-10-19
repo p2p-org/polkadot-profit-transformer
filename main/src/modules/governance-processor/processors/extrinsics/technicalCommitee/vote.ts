@@ -1,10 +1,10 @@
-import { Logger } from 'apps/common/infra/logger/logger'
+import { Logger } from 'loaders/logger'
 import { findEvent } from '../../utils/findEvent'
 import { AccountId, Hash, MemberCount, ProposalIndex } from '@polkadot/types/interfaces'
 import { bool, Compact } from '@polkadot/types'
 import { ExtrincicProcessorInput } from '..'
 import { GovernanceRepository } from 'apps/common/infra/postgresql/governance.repository'
-import { TechnicalCommiteeProposalModel } from 'apps/common/infra/postgresql/models/technicalCommittee.model'
+import { TechnicalCommiteeProposalModel } from '@/models/technicalCommittee.model'
 
 export const processTechnicalCommiteeVoteExtrinsic = async (
   args: ExtrincicProcessorInput,

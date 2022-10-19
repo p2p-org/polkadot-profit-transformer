@@ -7,10 +7,8 @@ Multi blockchain ETL solution is an interoperability-first data warehouse with g
 # Features
 
 - Support extract and store data from Polkadot, Kusama and Parachains
-- GraphQL API built with Hasura
 - Docker-compose setup for easy deployment of the ETL and API solution
 - Materialised views for Postgresql
-- Redash with built-in dashboards
 
 # Dependencies
 
@@ -120,10 +118,10 @@ git clone https://github.com/p2p-org/polkadot-profit-transformer.git
 
 cd polkadot-profit-transformer
 
-cp docker/env/.streamer.env.example docker/env/.streamer.env
 cp docker/env/.postgres.env.example docker/env/.postgres.env
-cp docker/env/.redash.env.example docker/env/.redash.env
-cp docker/env/.hasura.env.example docker/env/.hasura.env
+cp docker/env/.listener.env.example docker/env/.listener.env
+cp docker/env/.block_processor.env.example docker/env/.block_processor.env
+cp docker/env/.staking_processor.env.example docker/env/.stacking_processor.env
 
 
 make up
@@ -153,29 +151,6 @@ password: `password` as REST_API_BASIC_AUTH_PASSWORD in .streamer.env
 
 After preload completed, the streamer will switch to the finalized blocks listening.
 
-## GraphQL
-
-Open-source Hasura edition used.
-
-Initial Hasura metadata placed in ./hasura directory
-
-Hasura deploed by directives placed in docker-compose.yml
-
-Currently we use out-of-the-box settings, so you should set up limit/offset in queries. Usage without limits could lead to memory-based errors.
-
-By default Hasura works on port `8001` (set your own port in docker-compose.yml),
-and protected by password `myadminsecretkey` as HASURA_GRAPHQL_ADMIN_SECRET in .hasura.env
-
-## Redash
-
-During the sync and after the sync ended, you can use Redash to work with data.
-
-Open your browser [https://localhost:5000](https://localhost:5000), then login to Redash:
-
-Login: admin@example.org
-
-Password: supersecret123
-
 ## Make commands
 
 `up` Create and run all containers
@@ -195,7 +170,6 @@ Password: supersecret123
 ├── db-data: external docker volume for postgres data
 ├── docker
 │   └── env: .env for docker (with examples)
-├── hasura: hasura initial metadata (place migrations here)
 ├── main
 │   └── src
 │       ├── apps
@@ -212,8 +186,6 @@ Password: supersecret123
 │       │   ├── staking-processor: track validators/nominators data
 │       │   └── streamer: initial preloader and finalized block processor
 │       └── utils
-├── redash_dashboard: pre-installation data for redash
-    └── queries
 
 ```
 
