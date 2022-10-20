@@ -1,5 +1,5 @@
 ---
-environment: stage
+environment: mbelt3-prod
 replicas: 1
 chain: kusama
 role: block-processor
@@ -11,7 +11,7 @@ metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage_kusama"
+  secret: "secret/mbelt/mbelt3_kusama"
 additional_args:
   - "--max_old_space_size=1000"
 env:
@@ -24,8 +24,8 @@ env:
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-kusama-block-processor.polka.p2p.world
+  host: mbelt3-kusama-block-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-kusama-block-processor-polka-p2p-world
+    secret: mbelt3-kusama-block-processor-polka-p2p-world
     ssl_redirect: true

@@ -1,6 +1,6 @@
 ---
-environment: stage
-chain: moonriver
+environment: mbelt3-prod
+chain: kusama
 role: preloader
 replicas: 1
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 6ddf5dfe10e50c4da3e34c5e91926ff992134aad}
@@ -11,18 +11,18 @@ metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage_moonriver"
+  secret: "secret/mbelt/mbelt3_kusama"
 env:
-  substrate_uri: ws://moonriver-node-0.moonriver-node.moonriver.svc.cluster.local:9945
+  substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
   log_level: info
-  network_id: 25
+  network_id: 2
   mode: LISTENER
-  network: moonriver
+  network: kusama
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-moonriver-preloader.polka.p2p.world
+  host: mbelt3-kusama-preloader.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-moonriver-preloader-polka-p2p-world
+    secret: mbelt3-kusama-preloader-polka-p2p-world
     ssl_redirect: true
