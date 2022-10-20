@@ -2,27 +2,32 @@
 ```
 # Polkadot
 helm diff upgrade --install mbelt-prod-polkadot .helm -f .helm/values.prod.polkadot.yaml -n mbelt
-
 # Kusama
 helm diff upgrade --install mbelt-prod-kusama .helm -f .helm/values.prod.kusama.yaml -n mbelt
-
 # Moonbeam
 helm diff upgrade --install mbelt-prod-moonbeam .helm -f .helm/values.prod.moonbeam.yaml -n mbelt
-
 # Moonriver
 helm diff upgrade --install mbelt-prod-moonriver .helm -f .helm/values.prod.moonriver.yaml -n mbelt
 ```
 
 ```
 # Mbelt3
-## Preloader
+## Polkadot
+### Preloader
 helm diff upgrade --install mbelt3-polkadot-preloader .helm -f .helm/polkadot.mbelt3.preloader.yaml -n mbelt3
-
-## Block processor
+### Block processor
 helm diff upgrade --install mbelt3-polkadot-block-processor .helm -f .helm/polkadot.mbelt3.block-processor.yaml -n mbelt3
-
-## Staking processor
+### Staking processor
 helm diff upgrade --install mbelt3-polkadot-staking-processor .helm -f .helm/polkadot.mbelt3.staking-processor.yaml -n mbelt3
+
+## Kusama
+### Preloader
+helm diff upgrade --install mbelt3-kusama-preloader .helm -f .helm/kusama.mbelt3.preloader.yaml -n mbelt3
+### Block processor
+helm diff upgrade --install mbelt3-kusama-block-processor .helm -f .helm/kusama.mbelt3.block-processor.yaml -n mbelt3
+### Staking processor
+helm diff upgrade --install mbelt3-kusama-staking-processor .helm -f .helm/kusama.mbelt3.staking-processor.yaml -n mbelt3
+
 ```
 
 ```
