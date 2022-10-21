@@ -5,6 +5,7 @@ export type DelegatorModel = {
   account_id: string
   collator_id: string
   amount: string
+  final_amount: string
   reward: string
   payout_block_id: number
   payout_block_time?: Date

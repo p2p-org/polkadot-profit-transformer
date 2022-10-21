@@ -24,10 +24,10 @@ export const processRoundPayout = async (
   stakingRepository: StakingRepository,
   polkadotRepository: PolkadotRepository,
   polkadotApi: ApiPromise
-): Promise<boolean | undefined> => {
+): Promise<void> => {
 
   const start = Date.now()
-  logger.info({ event: `Process staking payout for era: ${roundId}`, metadata, roundId })
+  logger.info({ event: `Process staking payout for round: ${roundId}`, metadata, roundId })
 
   try {
     const { round, stakedValue } = await reward(polkadotApi, payout_block_id);
@@ -41,7 +41,7 @@ export const processRoundPayout = async (
       total_reward: round.totalRewardedAmount.toString(10),
       total_stake: round.totalStaked.toString(),
       total_reward_points: parseInt(round.totalPoints.toString()),
-      collators_count: stakedValue.length,
+      collators_count: Object.keys(stakedValue).length,
     });
 
     await stakingRepository(trx).round.save({
@@ -59,17 +59,17 @@ export const processRoundPayout = async (
     
     //Object.values(stakedValue).forEach(collator:any)=>{})
     for (const collator of Object.values(stakedValue) as any) {
-
       await stakingRepository(trx).collators.save({
         round_id: parseInt(round.id.toString(10)),
         account_id: collator.id,
         total_stake: collator.total.toString(10),
         own_stake: collator.bond.toString(10),
         delegators_count: Object.keys(collator.delegators).length,
-        reward_points: parseInt(collator.points.toString(10)),
-        reward: collator.reward.total.toString(10),
-        payout_block_id: parseInt(collator.payoutBlockId),
-        payout_block_time: new Date(collator.payoutBlockTime),
+        total_reward_points: parseInt(collator.points.toString(10)),
+        total_reward: collator.reward && collator.reward.total ? collator.reward.total.toString(10) : "0",
+        collator_reward: collator.reward && collator.reward.collator ? collator.reward.collator.toString(10) : "0",
+        payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId) : null,
+        payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : null,
       })
 
       for (const delegator of Object.values(collator.delegators) as any) {
@@ -78,14 +78,13 @@ export const processRoundPayout = async (
           account_id: delegator.id,
           collator_id: collator.id,
           amount: delegator.amount.toString(10),
+          final_amount: delegator.final_amount.toString(10),
           reward: delegator.reward.toString(10),
-          payout_block_id: parseInt(collator.payoutBlockId),
-          payout_block_time: new Date(collator.payoutBlockTime),
-          //block_time: blockTime
+          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId) : null,
+          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : null,
         })
       }
     }
-
 
     const finish = Date.now()
 
@@ -94,8 +93,6 @@ export const processRoundPayout = async (
       metadata,
       roundId,
     })
-
-    return true;
 
   } catch (error: any) {
     console.error(error);

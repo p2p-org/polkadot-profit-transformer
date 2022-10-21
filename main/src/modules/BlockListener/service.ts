@@ -42,12 +42,10 @@ export const BlocksPreloader = (deps: {
   const ingestOneBlockTask = async (task: ProcessingTaskModel<ENTITY.BLOCK>) => {
     await processingTasksRepository.addProcessingTask(task)
 
-    const data = {
+    await sendTaskToToRabbit(QUEUES.Blocks, {
       block_id: task.entity_id,
       collect_uid: task.collect_uid,
-    }
-
-    await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
+    });
 
     logger.debug({
       event: 'blocks preloader ingestOneBlockTask',
@@ -74,7 +72,7 @@ export const BlocksPreloader = (deps: {
               collect_uid: block.collect_uid,
             }
             // logger.info({ event: 'send data to rabbit', data })
-            await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, data)
+            await sendTaskToToRabbit(QUEUES.Blocks, data);
             // logger.info({ event: ' data sent to rabbit', data })
           }
         })
@@ -186,7 +184,6 @@ export const BlocksPreloader = (deps: {
     isPaused = false
   }
 
-
   const restartUnprocessedTasks = async (entity: ENTITY) => {
     let lastEntityId = 0
     while (true) {
@@ -197,22 +194,7 @@ export const BlocksPreloader = (deps: {
       }
 
       for (const record of records) {
-        if (entity === ENTITY.ERA) {
-          await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
-            entity_id: record.entity_id,
-            collect_uid: record.collect_uid,
-          })
-        } else if (entity === ENTITY.ROUND) {
-          await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
-            entity_id: record.entity_id,
-            collect_uid: record.collect_uid,
-          })
-        } else if (entity === ENTITY.BLOCK) {
-          await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, {
-            block_id: record.entity_id,
-            collect_uid: record.collect_uid,
-          })
-        }
+        await sendTaskToToRabbit(entity, record);
         lastEntityId = record.entity_id || 0
       }
 
@@ -225,20 +207,49 @@ export const BlocksPreloader = (deps: {
     }
   }
 
-  // const restart = async () => {
-  //   await preload()
-  // }
+  const restartUnprocessedTask = async (entity: ENTITY, entityId: number) => {
+    const record = await processingTasksRepository.getUnprocessedTask(entity, entityId)
+    if (!record) {
+      logger.error({ 
+        event: 'BlocksPreloader.restartUnprocessedTask',
+        message: `${entity} with id ${entityId} not found`
+      })
+      return
+    }
+    await sendTaskToToRabbit(entity, record);
+
+    logger.info({ 
+      event: 'BlocksPreloader.restartUnprocessedTask',
+      message: `Send task to rabbit for processing ${entity}. Entity id: ${entityId}`
+    })
+  }
+
+  const sendTaskToToRabbit = async (entity: ENTITY, record: ProcessingTaskModel) => {
+    if (entity === ENTITY.ERA) {
+      await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+        entity_id: record.entity_id,
+        collect_uid: record.collect_uid,
+      })
+    } else if (entity === ENTITY.ROUND) {
+      await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+        entity_id: record.entity_id,
+        collect_uid: record.collect_uid,
+      })
+    } else if (entity === ENTITY.BLOCK) {
+      await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, {
+        block_id: record.entity_id,
+        collect_uid: record.collect_uid,
+      })
+    }
+  }
 
   return {
-    // todo: add logic to re-collect from certain past block
     preload,
     preloadOneBlock,
     gracefullShutdown,
     pause,
     resume,
     restartUnprocessedTasks,
-    // restart,
-    // isPaused: (): boolean => isPaused,
-    // currentBlock: () => currentBlock,
+    restartUnprocessedTask,
   }
 }
