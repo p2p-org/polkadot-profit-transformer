@@ -9,7 +9,7 @@ export type CollatorModel = {
   total_reward_points: number
   total_reward?: string
   collator_reward?: string
-  payout_block_id: number
+  payout_block_id?: number
   payout_block_time?: Date
 }
 

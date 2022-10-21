@@ -42,8 +42,8 @@ export const BlocksPreloader = (deps: {
   const ingestOneBlockTask = async (task: ProcessingTaskModel<ENTITY.BLOCK>) => {
     await processingTasksRepository.addProcessingTask(task)
 
-    await sendTaskToToRabbit(QUEUES.Blocks, {
-      block_id: task.entity_id,
+    await sendTaskToToRabbit(ENTITY.BLOCK, {
+      entity_id: task.entity_id,
       collect_uid: task.collect_uid,
     });
 
@@ -68,11 +68,11 @@ export const BlocksPreloader = (deps: {
         .then(async () => {
           for (const block of tasks) {
             const data = {
-              block_id: block.entity_id,
+              entity_id: block.entity_id,
               collect_uid: block.collect_uid,
             }
             // logger.info({ event: 'send data to rabbit', data })
-            await sendTaskToToRabbit(QUEUES.Blocks, data);
+            await sendTaskToToRabbit(ENTITY.BLOCK, data);
             // logger.info({ event: ' data sent to rabbit', data })
           }
         })
@@ -224,7 +224,7 @@ export const BlocksPreloader = (deps: {
     })
   }
 
-  const sendTaskToToRabbit = async (entity: ENTITY, record: ProcessingTaskModel) => {
+  const sendTaskToToRabbit = async (entity: ENTITY, record: {collect_uid: string, entity_id: number}) => {
     if (entity === ENTITY.ERA) {
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
         entity_id: record.entity_id,

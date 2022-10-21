@@ -68,8 +68,8 @@ export const processRoundPayout = async (
         total_reward_points: parseInt(collator.points.toString(10)),
         total_reward: collator.reward && collator.reward.total ? collator.reward.total.toString(10) : "0",
         collator_reward: collator.reward && collator.reward.collator ? collator.reward.collator.toString(10) : "0",
-        payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId) : null,
-        payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : null,
+        payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId) : undefined,
+        payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
       })
 
       for (const delegator of Object.values(collator.delegators) as any) {
@@ -80,8 +80,8 @@ export const processRoundPayout = async (
           amount: delegator.amount.toString(10),
           final_amount: delegator.final_amount.toString(10),
           reward: delegator.reward.toString(10),
-          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId) : null,
-          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : null,
+          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId) : undefined,
+          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
         })
       }
     }

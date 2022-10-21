@@ -7,7 +7,7 @@ export type DelegatorModel = {
   amount: string
   final_amount: string
   reward: string
-  payout_block_id: number
+  payout_block_id?: number
   payout_block_time?: Date
 }
 
