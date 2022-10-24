@@ -5,7 +5,7 @@ chain: moonriver
 role: block-processor
 limits: {cpu: 350m, memory: 400Mi}
 requests: {cpu: 250m, memory: 400Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 37577d65867f36f14213f488f75c339638f2d464}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: c923a257b57e544817408b5deaeb950e90a517d1}
 port: 3000
 metrics:
   enabled: true
