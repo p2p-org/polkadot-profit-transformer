@@ -259,17 +259,12 @@ async function getCollatorsAndDelegators(apiAtOriginal: ApiPromise, apiAtPriorRe
     roundNumber
   );
   const stakedValue: StakedValue = {};
-  const collatorCount = atStake.length;
+  //const collatorCount = atStake.length;
 
   const collators: Set<string> = new Set();
   const delegators: Set<string> = new Set();
 
-  for (const [
-    {
-      args: [_, accountId],
-    },
-    { bond, total, delegations },
-  ] of atStake) {
+  for (const [{args: [_, accountId]}, { bond, total, delegations } ] of atStake) {
     const collatorId = accountId.toHex();
     collators.add(collatorId);
     const points = await apiAtPriorRewarded.query.parachainStaking.awardedPts(
@@ -285,15 +280,17 @@ async function getCollatorsAndDelegators(apiAtOriginal: ApiPromise, apiAtPriorRe
       delegators: {},
     };
 
-    const _topDelegations:any = (await apiAtOriginal.query.parachainStaking.topDelegations(accountId));
-    const topDelegations = new Set(
-        _topDelegations
-        .unwrap()
-        .delegations.map((d:any) => d.owner.toHex())
-    );
-    let countedDelegationSum = new BN(0);
+    const topDelegations = new Set();
+    if (apiAtOriginal.query.parachainStaking.topDelegations) {
+      const _topDelegations:any = (await apiAtOriginal.query.parachainStaking.topDelegations(accountId));
+      _topDelegations
+      .unwrap()
+      .delegations
+      .forEeach((d:any) => topDelegations.add(d.owner.toHex()))
+    };
+    //let countedDelegationSum = new BN(0);
     for (const { owner, amount } of delegations) {
-      if (!topDelegations.has(owner.toHex())) {
+      if (apiAtOriginal.query.parachainStaking.topDelegations && !topDelegations.has(owner.toHex())) {
         continue;
       }
       const id = owner.toHex();
@@ -304,9 +301,9 @@ async function getCollatorsAndDelegators(apiAtOriginal: ApiPromise, apiAtPriorRe
         amount: amount,
         reward: new BN(0)
       };
-      countedDelegationSum = countedDelegationSum.add(amount);
+      //countedDelegationSum = countedDelegationSum.add(amount);
     }
-    const totalCountedLessTotalCounted = total.sub(countedDelegationSum.add(bond));
+    //const totalCountedLessTotalCounted = total.sub(countedDelegationSum.add(bond));
     // expect(total.toString()).to.equal(
     //   countedDelegationSum.add(bond).toString(),
     //   `Total counted (denominator) ${total} - total counted (numerator
