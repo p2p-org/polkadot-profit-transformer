@@ -90,7 +90,7 @@ export const ParachainStakingProcessor = (args: {
         collect_uid,
       })
 
-      const roundReprocessingTask = await processRoundPayout(
+      await processRoundPayout(
         metadata,
         roundId,
         taskRecord.data.payout_block_id,
@@ -100,23 +100,6 @@ export const ParachainStakingProcessor = (args: {
         polkadotRepository,
         polkadotApi
       )
-/*
-      if (roundReprocessingTask) {
-        logger.error({
-          event: `StakingProcessor.processTaskMessage.tx`,
-          roundId,
-          error: `Processing failed. Rollback tx`,
-          ...metadata,
-          collect_uid,
-          roundReprocessingTask,
-        })
-
-        await trx.rollback()
-        //TODO: don't send it to rabbit. its creates infinite loop
-        //await sendToRabbit(roundReprocessingTask)
-        return
-      }
-*/
       await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
 
       logger.info({
@@ -135,7 +118,6 @@ export const ParachainStakingProcessor = (args: {
         message: `Round ${roundId} tx has been committed`,
         ...metadata,
         collect_uid,
-        roundReprocessingTask,
       })
     }).catch( (error: Error) => {
       logger.error({

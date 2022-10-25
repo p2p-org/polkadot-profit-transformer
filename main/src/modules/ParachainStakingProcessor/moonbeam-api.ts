@@ -300,6 +300,7 @@ async function getCollatorsAndDelegators(apiAtOriginal: ApiPromise, apiAtPriorRe
       delegators.add(id);
       collatorInfo.delegators[id] = {
         id: id,
+        final_amount: amount,
         amount: amount,
         reward: new BN(0)
       };
@@ -535,6 +536,7 @@ type DelegatorReward = {
 type DelegatorInfo = {
   id: string; 
   amount: u128;
+  final_amount: u128;
   reward: BN;
 }
 
@@ -544,6 +546,7 @@ type CollatorReward = {
 
   // Total rewarded
   total: BN;
+  collator_teward: BN;
   // Contribution of commission rewards towards the total
   commissionReward: BN;
   // Contribution of bond rewards towards the total

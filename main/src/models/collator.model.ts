@@ -6,9 +6,10 @@ export type CollatorModel = {
   total_stake: string
   own_stake: string
   delegators_count: number
-  reward_points: number
-  reward?: string
-  payout_block_id: number
+  total_reward_points: number
+  total_reward?: string
+  collator_reward?: string
+  payout_block_id?: number
   payout_block_time?: Date
 }
 
