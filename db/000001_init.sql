@@ -120,8 +120,6 @@ ALTER TABLE IF EXISTS public.processing_state ADD CONSTRAINT processing_state_un
 CREATE INDEX processing_tasks_base_idx ON processing_tasks (entity, entity_id, network_id); 
 
 
-
-
 CREATE TABLE rounds (
     "network_id" INT,
     "round_id" INT,
@@ -167,3 +165,9 @@ CREATE TABLE delegators (
     PRIMARY KEY ("row_id")
 );
 
+CREATE TABLE networks (
+    "network_id" INT,
+    "name" VARCHAR(50),
+    "decimals" INT
+
+)
