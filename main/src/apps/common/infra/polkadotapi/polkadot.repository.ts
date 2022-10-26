@@ -165,7 +165,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
         const getMetadata = async (): Promise<BlockMetadata> => {
           try {
             //polkadot, kusama
-            if (environment.NETWORK_ID === 1 && environment.NETWORK_ID === 56) {
+            if (environment.NETWORK_ID === 1 || environment.NETWORK_ID === 56) {
               return {};
               /*
               if (!historicalApi.query.staking.activeEra) return {}
@@ -175,8 +175,9 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
               return eraId ? { era_id: +eraId } : {}
               */
             }
+            const round: any = await historicalApi.query.parachainStaking.round();
             return {
-              round_id: (await historicalApi.query.parachainStaking.round()).current as number,
+              round_id: round.current as number,
             };
           } catch (e) {
             return {};

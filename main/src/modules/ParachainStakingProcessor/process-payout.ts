@@ -11,7 +11,7 @@ import { ApiPromise } from '@polkadot/api';
 import { BN } from '@polkadot/util';
 import type { HexString } from '@polkadot/util/types';
 import type { u128 } from '@polkadot/types-codec';
-import { Moment, SignedBlock } from '@polkadot/types/interfaces';
+import { Moment, SignedBlock, BlockHash } from '@polkadot/types/interfaces';
 import { logger } from '@/loaders/logger';
 import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository';
 import {
@@ -128,16 +128,16 @@ export default class RoundPayoutProcessor {
     // const latestBlockHash: HexString = latestBlock.block.hash;
     const latestBlockNumber = latestBlock.block.header.number.toNumber();
     // const latestRound: any = await (await this.api.at(latestBlockHash)).query.parachainStaking.round();
-    const nowBlockHash: HexString = await this.api.rpc.chain.getBlockHash(nowBlockNumber);
+    const nowBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(nowBlockNumber);
     const apiAtNowBlock = await this.api.at(nowBlockHash);
     const nowRound: any = await apiAtNowBlock.query.parachainStaking.round();
     const nowRoundNumber = nowRound.current;
     const nowRoundFirstBlock = nowRound.first;
     const nowRoundFirstBlockTime: Moment = await apiAtNowBlock.query.timestamp.now() as Moment;
-    const nowRoundFirstBlockHash: HexString = await this.api.rpc.chain.getBlockHash(nowRoundFirstBlock);
+    const nowRoundFirstBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(nowRoundFirstBlock);
     const apiAtRewarded = await this.api.at(nowRoundFirstBlockHash);
     const rewardDelay = apiAtRewarded.consts.parachainStaking.rewardPaymentDelay;
-    const priorRewardedBlockHash: HexString = await this.api.rpc.chain.getBlockHash(nowRoundFirstBlock.subn(1));
+    const priorRewardedBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(nowRoundFirstBlock.subn(1));
     const runtime: any = await apiAtRewarded.query.system.lastRuntimeUpgrade();
     const specVersion = runtime.unwrap().specVersion.toNumber();
 
@@ -148,7 +148,7 @@ export default class RoundPayoutProcessor {
     );
     let originalRoundBlock = nowRoundFirstBlock.toBn();
     while (true) {
-      const blockHash: HexString = await this.api.rpc.chain.getBlockHash(originalRoundBlock);
+      const blockHash: BlockHash = await this.api.rpc.chain.getBlockHash(originalRoundBlock);
       const round: any = await (await this.api.at(blockHash)).query.parachainStaking.round();
       if (
         round.current.eq(originalRoundNumber)
@@ -159,13 +159,13 @@ export default class RoundPayoutProcessor {
       // go previous round
       originalRoundBlock = originalRoundBlock.sub(round.length);
     }
-    const originalRoundBlockHash: HexString = await this.api.rpc.chain.getBlockHash(originalRoundBlock);
+    const originalRoundBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(originalRoundBlock);
     const apiAtOriginal: any = await this.api.at(originalRoundBlockHash);
     const originalRoundBlockTime: Moment = await apiAtOriginal.query.timestamp.now();
 
     // we go to the last block of the (original round - 1) since data is snapshotted at round start.
     const originalRoundPriorBlock = originalRoundBlock.subn(1);
-    const originalRoundPriorBlockHash: HexString = await this.api.rpc.chain.getBlockHash(originalRoundPriorBlock);
+    const originalRoundPriorBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(originalRoundPriorBlock);
     const apiAtOriginalPrior: any = await this.api.at(originalRoundPriorBlockHash);
     const apiAtPriorRewarded = await this.api.at(priorRewardedBlockHash);
 
@@ -476,7 +476,7 @@ export default class RoundPayoutProcessor {
     totalStakingReward: BN,
     stakedValue: StakedValue,
   ): Promise<Rewarded> {
-    const nowRoundRewardBlockHash: HexString = await this.api.rpc.chain.getBlockHash(rewardedBlockNumber);
+    const nowRoundRewardBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(rewardedBlockNumber);
     const apiAtBlock = await this.api.at(nowRoundRewardBlockHash);
 
     logger.info({
