@@ -177,7 +177,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
             }
             const round: any = await historicalApi.query.parachainStaking.round();
             return {
-              round_id: round.current as number,
+              round_id: parseInt(round.current.toString(10), 10) as number,
             };
           } catch (e) {
             return {};
