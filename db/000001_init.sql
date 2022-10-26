@@ -9,6 +9,7 @@ CREATE TABLE blocks (
     "parent_hash" VARCHAR(66),
     "author" VARCHAR(66),
     "digest" JSONB,
+    "metadata" JSONB,
     "block_time" TIMESTAMP,
     "row_id" SERIAL,
     PRIMARY KEY ("row_id")
@@ -131,6 +132,7 @@ CREATE TABLE rounds (
     "start_block_time" TIMESTAMP,
     "payout_block_id" INT,
     "payout_block_time" TIMESTAMP,
+    "runtime" INT,
     "row_id" SERIAL,
     PRIMARY KEY ("row_id")
 );
@@ -171,3 +173,7 @@ CREATE TABLE networks (
     "decimals" INT
 
 )
+
+
+alter table blocks add column metadata JSONB;
+alter table rounds add column runtime INT;

@@ -9,7 +9,9 @@
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "prettier",
-    "prettier/@typescript-eslint"
+    "prettier/@typescript-eslint",
+    "airbnb-base",
+    "airbnb-typescript/base"
   ],
   "root": true,
   "env": {
@@ -37,7 +39,6 @@
     "jsx-quotes": [2, "prefer-single"],
     "no-useless-escape": 0,
     "valid-jsdoc": 0,
-    "linebreak-style": ["error", "unix"],
-    "semi": ["error", "never"]
+    "linebreak-style": ["error", "unix"]
   }
 }

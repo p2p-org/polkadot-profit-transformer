@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 10
+replicas: 0
 chain: moonbeam
 role: block-processor
 limits: {cpu: 350m, memory: 400Mi}
