@@ -10,6 +10,7 @@ export type RoundModel = {
   total_stake: string;
   total_reward_points: number;
   collators_count: number;
+  runtime: number;
 }
 
 export const RoundModel = (knex: Knex) => knex<RoundModel>('rounds')
