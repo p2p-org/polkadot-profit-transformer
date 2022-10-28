@@ -5,7 +5,7 @@ role: staking-processor
 replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 684051e189c181ce8b98712835cba714a1688f60}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 7e2ce5640304836306febdab572462fcc6f6f4fc}
 port: 3000
 metrics:
   enabled: true
