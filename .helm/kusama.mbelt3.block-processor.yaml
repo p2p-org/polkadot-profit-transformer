@@ -5,7 +5,7 @@ chain: kusama
 role: block-processor
 limits: {cpu: 350m, memory: 1000Mi}
 requests: {cpu: 250m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 5a69d77281604334b5929c947f99b0a5df32221e}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 684051e189c181ce8b98712835cba714a1688f60}
 port: 3000
 metrics:
   enabled: true
