@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 0
+replicas: 10
 chain: moonriver
 role: block-processor
 limits: {cpu: 350m, memory: 400Mi}

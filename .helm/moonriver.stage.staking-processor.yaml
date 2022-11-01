@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 0
+replicas: 1
 chain: moonriver
 role: staking-processor
 limits: {cpu: 450m, memory: 4096Mi}
