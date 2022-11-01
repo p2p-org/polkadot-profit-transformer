@@ -46,13 +46,13 @@ export type RoundValue = {
   payoutBlockTime: Moment,
   startBlockId: number,
   startBlockTime: Moment,
-  totalCollatorShare: BN,
-  totalCollatorCommissionRewarded: BN,
-  totalRewardedAmount: BN,
+  // totalCollatorShare: BN,
+  // totalCollatorCommissionRewarded: BN,
+  // totalRewardedAmount: BN,
   totalPoints: BN,
   totalStaked: BN,
-  totalBondRewarded: BN,
-  specVersion: number,
+  //totalBondRewarded: BN
+  // specVersion: number,
   // totalBondRewardedLoss,
 };
 
@@ -62,9 +62,11 @@ export type StakedValueData = {
   total: u128;
   points: u32;
   delegators: { [key: string]: DelegatorInfo };
-  payoutBlockId?: u128;
+  payoutBlockId?: BN;
   payoutBlockTime?: u128;
-  reward?: CollatorReward;
+  //reward?: CollatorReward;
+  rewardTotal: BN;
+  rewardCollator: BN;
 };
 
 export type StakedValue = {

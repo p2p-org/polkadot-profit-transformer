@@ -23,7 +23,7 @@ export const ParachainStakingProcessor = (args: {
     polkadotApi, polkadotRepository, stakingRepository, rabbitMQ, knex, processingTasksRepository,
   } = args;
 
-  const roundPayoutProcessor = new RoundPayoutProcessor(polkadotApi);
+
   /*
   const sendToRabbit = async (eraReprocessingTask: ProcessingTaskModel<ENTITY.ERA>) => {
     const data = {
@@ -36,6 +36,8 @@ export const ParachainStakingProcessor = (args: {
 
   const processTaskMessage = async <T extends QUEUES.Staking>(message: TaskMessage<T>) => {
     const { entity_id: roundId, collect_uid } = message;
+
+    const roundPayoutProcessor = new RoundPayoutProcessor(polkadotApi, stakingRepository);
 
     logger.info({
       event: 'PolkadotRepository.processTaskMessage',
@@ -96,11 +98,8 @@ export const ParachainStakingProcessor = (args: {
       });
 
       await roundPayoutProcessor.processRoundPayout(
-        metadata,
-        roundId,
         taskRecord.data.payout_block_id,
         trx,
-        stakingRepository,
       );
 
       await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx);
