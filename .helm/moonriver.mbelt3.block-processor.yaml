@@ -1,7 +1,7 @@
 ---
-environment: stage
+environment: mbelt3-prod
 replicas: 0
-chain: moonbeam
+chain: moonriver
 role: block-processor
 limits: {cpu: 350m, memory: 400Mi}
 requests: {cpu: 250m, memory: 400Mi}
@@ -11,21 +11,21 @@ metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage_moonbeam"
+  secret: "secret/mbelt/mbelt3_moonriver"
 additional_args:
   - "--max_old_space_size=400"
 env:
-  substrate_uri: ws://10.41.8.2:9945
-  # substrate_uri: ws://moonbeam-node-0.moonbeam-node.moonbeam.svc.cluster.local:9945
+  # substrate_uri: ws://moonriver-node-0.moonriver-node.moonriver.svc.cluster.local:9945
+  substrate_uri: ws://10.41.4.2:9945
   log_level: info
-  network_id: 371
+  network_id: 25
   mode: BLOCK_PROCESSOR
-  network: moonbeam
+  network: moonriver
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-moonbeam-block-processor.polka.p2p.world
+  host: mbelt3-moonriver-block-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-moonbeam-block-processor-polka-p2p-world
+    secret: mbelt3-moonriver-block-processor-polka-p2p-world
     ssl_redirect: true
