@@ -23,7 +23,7 @@
     "migrations:list": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:list"
   },
   "dependencies": {
-    "@polkadot/api": "^9.4.1",
+    "@polkadot/api": "^9.6.2",
     "@types/knex": "^0.16.1",
     "amqp-connection-manager": "^4.1.6",
     "amqplib": "^0.10.0",
@@ -33,6 +33,7 @@
     "express": "^4.18.1",
     "express-basic-auth": "^1.2.1",
     "knex": "^2.3.0",
+    "moonbeam-types-bundle": "^2.0.9",
     "pg": "^8.7.3",
     "pino": "^8.1.0",
     "pino-pretty": "^8.1.0",

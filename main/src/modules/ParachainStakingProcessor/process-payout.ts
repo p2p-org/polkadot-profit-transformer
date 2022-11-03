@@ -1,4 +1,4 @@
-/* eslint-disable import/no-extraneous-dependencies */
+
 // eslint-disable no-continue */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-restricted-syntax */
@@ -62,8 +62,6 @@ export default class RoundPayoutProcessor {
 
     try {
       const { round } = await this.getRewards(payoutBlockId)
-      console.log(this.stakedValue)
-
 
       logger.info({
         event: 'RoundPayoutProcessor.processRoundPayout',

@@ -3,6 +3,7 @@ import { Knex } from 'knex'
 export type BlockMetadata = {
   round_id?: number
   era_id?: number
+  runtime?: number
 }
 
 export type BlockModel = {
