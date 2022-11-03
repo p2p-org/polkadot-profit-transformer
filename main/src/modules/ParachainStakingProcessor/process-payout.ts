@@ -57,7 +57,7 @@ export default class RoundPayoutProcessor {
     const start = Date.now()
     logger.info({
       event: 'RoundPayoutProcessor.processRoundPayout',
-      message: `Process staking payout for round: ${payoutBlockId}`,
+      message: `Process staking payout for round with payout block id: ${payoutBlockId}`,
     })
 
     try {
@@ -176,6 +176,17 @@ export default class RoundPayoutProcessor {
       // go previous round
       originalRoundBlock = originalRoundBlock.sub(round.length)
     }
+
+    logger.info({
+      event: `Round ${originalRoundNumber.toString(10)} runtime version is ${this.specVersion}.`,
+    })
+
+    if (originalRoundBlock.toNumber() === 0) {
+      throw new Error(
+        `Couldn't process round. Because originalRoundBlock is 0`
+      )
+    }
+
     const originalRoundBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(originalRoundBlock)
     const apiAtOriginal: any = await this.api.at(originalRoundBlockHash)
     const originalRoundBlockTime: Moment = await apiAtOriginal.query.timestamp.now()
@@ -281,7 +292,7 @@ export default class RoundPayoutProcessor {
     const awardedCollatorCount = awardedCollators.length
 
     // compute max rounds respecting the current block number and the number of awarded collators
-    const maxRoundChecks = (this.specVersion === 1001) ?
+    const maxRoundChecks = (this.specVersion <= 1001) ?
       1 :
       Math.min(latestBlockNumber - nowBlockNumber + 1, awardedCollatorCount)
 
@@ -394,19 +405,21 @@ export default class RoundPayoutProcessor {
           }
         }
       }
-      for (const { owner, amount } of delegations) {
-        if (apiAtOriginalPrior.query.parachainStaking.topDelegations && !topDelegationsSet.has(owner.toHex())) {
-          continue
+      if (delegations) {
+        for (const { owner, amount } of delegations) {
+          if (apiAtOriginalPrior.query.parachainStaking.topDelegations && !topDelegationsSet.has(owner.toHex())) {
+            continue
+          }
+          const id = owner.toHex()
+          this.delegators.add(id)
+          collatorInfo.delegators[id] = {
+            id,
+            final_amount: amount,
+            amount,
+            reward: new BN(0),
+          }
+          // countedDelegationSum = countedDelegationSum.add(amount);
         }
-        const id = owner.toHex()
-        this.delegators.add(id)
-        collatorInfo.delegators[id] = {
-          id,
-          final_amount: amount,
-          amount,
-          reward: new BN(0),
-        }
-        // countedDelegationSum = countedDelegationSum.add(amount);
       }
 
       // const totalCountedLessTotalCounted = total.sub(countedDelegationSum.add(bond));

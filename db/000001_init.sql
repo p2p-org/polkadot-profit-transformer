@@ -172,3 +172,4 @@ CREATE TABLE networks (
 
 alter table blocks add column metadata JSONB;
 alter table rounds add column runtime INT;
+create index block_id_idx on events (block_id);

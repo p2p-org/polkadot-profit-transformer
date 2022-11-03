@@ -93,7 +93,7 @@ const main = async () => {
     restApi.init()
   }
 
-  if (environment.MODE === MODE.STAKING_PROCESSOR ) {
+  if (environment.MODE === MODE.STAKING_PROCESSOR) {
     logger.debug('STAKING_PROCESSOR mode')
 
     if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
