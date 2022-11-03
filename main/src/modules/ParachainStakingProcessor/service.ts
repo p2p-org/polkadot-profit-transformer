@@ -5,11 +5,11 @@ import { StakingRepository } from '@/apps/common/infra/postgresql/staking.reposi
 import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
+import { ENTITY, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
-import { processRoundPayout } from './process-payout'
+import RoundPayoutProcessor from './process-payout'
 
-export type ParachainStakingProcessor = ReturnType<typeof ParachainStakingProcessor>
+export type ParachainStakingProcessor = ReturnType<typeof ParachainStakingProcessor>;
 
 export const ParachainStakingProcessor = (args: {
   polkadotApi: ApiPromise
@@ -19,8 +19,11 @@ export const ParachainStakingProcessor = (args: {
   rabbitMQ: Rabbit
   knex: Knex
 }) => {
-  const { polkadotApi, polkadotRepository, stakingRepository, rabbitMQ, knex, processingTasksRepository } = args
-  
+  const {
+    polkadotApi, stakingRepository, knex, processingTasksRepository,
+  } = args
+
+
   /*
   const sendToRabbit = async (eraReprocessingTask: ProcessingTaskModel<ENTITY.ERA>) => {
     const data = {
@@ -34,6 +37,8 @@ export const ParachainStakingProcessor = (args: {
   const processTaskMessage = async <T extends QUEUES.Staking>(message: TaskMessage<T>) => {
     const { entity_id: roundId, collect_uid } = message
 
+    const roundPayoutProcessor = new RoundPayoutProcessor(polkadotApi, stakingRepository)
+
     logger.info({
       event: 'PolkadotRepository.processTaskMessage',
       roundId,
@@ -45,6 +50,8 @@ export const ParachainStakingProcessor = (args: {
       block_process_uid: v4(),
       processing_timestamp: new Date(),
     }
+
+    await processingTasksRepository.increaseAttempts(ENTITY.ROUND, roundId)
 
     await knex.transaction(async (trx: Knex.Transaction) => {
       // try {
@@ -62,10 +69,10 @@ export const ParachainStakingProcessor = (args: {
 
       if (taskRecord.collect_uid !== collect_uid) {
         logger.warn({
-          event: `StakingProcessor.processTaskMessage.tx`,
+          event: 'StakingProcessor.processTaskMessage.tx',
           roundId,
-          error: `Possible round ${roundId} processing task duplication. `+
-                 `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+          error: `Possible round ${roundId} processing task duplication. `
+            + `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           collect_uid,
         })
         return
@@ -73,7 +80,7 @@ export const ParachainStakingProcessor = (args: {
 
       if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
         logger.warn({
-          event: `StakingProcessor.processTaskMessage.tx`,
+          event: 'StakingProcessor.processTaskMessage.tx',
           roundId,
           message: `Round ${roundId} has been already processed. Skip processing.`,
           collect_uid,
@@ -83,27 +90,22 @@ export const ParachainStakingProcessor = (args: {
 
       // all is good, start processing round payout
       logger.info({
-        event: `StakingProcessor.processTaskMessage.tx`,
+        event: 'StakingProcessor.processTaskMessage.tx',
         roundId,
         message: `Start processing payout for round ${roundId}`,
         ...metadata,
         collect_uid,
       })
 
-      await processRoundPayout(
-        metadata,
-        roundId,
+      await roundPayoutProcessor.processRoundPayout(
         taskRecord.data.payout_block_id,
-        collect_uid,
         trx,
-        stakingRepository,
-        polkadotRepository,
-        polkadotApi
       )
+
       await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
 
       logger.info({
-        event: `StakingProcessor.processTaskMessage.tx`,
+        event: 'StakingProcessor.processTaskMessage.tx',
         roundId,
         message: `Round ${roundId} data created, commit transaction data`,
         ...metadata,
@@ -113,15 +115,15 @@ export const ParachainStakingProcessor = (args: {
       await trx.commit()
 
       logger.info({
-        event: `StakingProcessor.processTaskMessage.tx`,
+        event: 'StakingProcessor.processTaskMessage.tx',
         roundId,
         message: `Round ${roundId} tx has been committed`,
         ...metadata,
         collect_uid,
       })
-    }).catch( (error: Error) => {
+    }).catch((error: Error) => {
       logger.error({
-        event: `StakingProcessor.processTaskMessage.tx`,
+        event: 'StakingProcessor.processTaskMessage.tx',
         roundId,
         error: error.message,
         data: {

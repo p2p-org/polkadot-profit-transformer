@@ -1,8 +1,8 @@
 ---
-environment: stage
-chain: moonbeam
+environment: mbelt3-prod
+chain: moonriver
 role: preloader
-replicas: 1
+replicas: 0
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 377b48630ebb20e715974672dbdc058ce6dc2ed9}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
@@ -11,18 +11,18 @@ metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage_moonbeam"
+  secret: "secret/mbelt/mbelt3_moonriver"
 env:
-  substrate_uri: ws://moonbeam-node-0.moonbeam-node.moonbeam.svc.cluster.local:9945
+  substrate_uri: ws://moonriver-node-0.moonriver-node.moonriver.svc.cluster.local:9945
   log_level: info
-  network_id: 371
+  network_id: 25
   mode: LISTENER
-  network: moonbeam
+  network: moonriver
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-moonbeam-preloader.polka.p2p.world
+  host: mbelt3-moonriver-preloader.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-moonbeam-preloader-polka-p2p-world
+    secret: mbelt3-moonriver-preloader-polka-p2p-world
     ssl_redirect: true

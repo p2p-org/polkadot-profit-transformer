@@ -44,6 +44,8 @@ export const RelaychainStakingProcessor = (args: {
       processing_timestamp: new Date(),
     }
 
+    await processingTasksRepository.increaseAttempts(ENTITY.ERA, eraId)
+
     await knex.transaction(async (trx: Knex.Transaction) => {
       // try {
       const taskRecord = await processingTasksRepository.readTaskAndLockRow(ENTITY.ERA, eraId, trx)

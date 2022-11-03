@@ -1,5 +1,5 @@
 ---
-environment: stage
+environment: mbelt3-prod
 chain: moonbeam
 role: preloader
 replicas: 1
@@ -11,7 +11,7 @@ metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage_moonbeam"
+  secret: "secret/mbelt/mbelt3_moonbeam"
 env:
   substrate_uri: ws://moonbeam-node-0.moonbeam-node.moonbeam.svc.cluster.local:9945
   log_level: info
@@ -21,8 +21,8 @@ env:
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-moonbeam-preloader.polka.p2p.world
+  host: mbelt3-moonbeam-preloader.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-moonbeam-preloader-polka-p2p-world
+    secret: mbelt3-moonbeam-preloader-polka-p2p-world
     ssl_redirect: true
