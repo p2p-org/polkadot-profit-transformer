@@ -184,7 +184,7 @@ export const PolkadotRepository = (deps: { polkadotApi: ApiPromise }) => {
               }
             } else {
               //parachains
-              if (specVersion <= 49) return {}
+              //if (specVersion <= 49) return {}
 
               const round: any = await historicalApi.query.parachainStaking.round()
               return {
