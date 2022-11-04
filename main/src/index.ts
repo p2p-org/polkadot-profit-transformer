@@ -1,5 +1,5 @@
 import { sleep } from '@/utils/sleep'
-import { environment, MODE } from '@/environment'
+import { environment, MODE, NODE_ENV } from '@/environment'
 
 import { KnexPG } from '@/loaders/knex'
 import { QUEUES, RabbitMQ } from '@/loaders/rabbitmq'
@@ -62,7 +62,9 @@ const main = async () => {
     const restApi = PreloaderRestApi({ blocksPreloader })
     restApi.init()
 
-    await blocksPreloader.preload()
+    if (environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
+      await blocksPreloader.preload()
+    }
     //await blocksPreloader.preloadOneBlock(1858800)
   }
 

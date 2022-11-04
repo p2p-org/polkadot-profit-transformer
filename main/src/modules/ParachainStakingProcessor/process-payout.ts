@@ -25,6 +25,7 @@ import {
   Percent,
 } from './interfaces'
 import { setDefaultResultOrder } from 'dns'
+import { environment } from '@/environment'
 
 export default class RoundPayoutProcessor {
   api: ApiPromise;
@@ -212,20 +213,23 @@ export default class RoundPayoutProcessor {
     })
 
     // calculate reward amounts
-    const parachainBondInfo: any = await apiAtPriorRewarded.query.parachainStaking.parachainBondInfo()
-    const parachainBondPercent = new Percent(parachainBondInfo.percent)
+    // const parachainBondInfo: any = await apiAtPriorRewarded.query.parachainStaking.parachainBondInfo()
+    // const parachainBondPercent = new Percent(parachainBondInfo.percent)
     const totalStaked: any = await apiAtPriorRewarded.query.parachainStaking.staked(originalRoundNumber)
     const totalPoints: any = await apiAtPriorRewarded.query.parachainStaking.points(originalRoundNumber)
-    const inflation: any = await apiAtPriorRewarded.query.parachainStaking.inflationConfig()
-    const totalIssuance: BN = await apiAtPriorRewarded.query.balances.totalIssuance() as BN
-    const collatorCommissionRate: any = await apiAtPriorRewarded.query.parachainStaking.collatorCommission()
+    // const inflation: any = await apiAtPriorRewarded.query.parachainStaking.inflationConfig()
+    // const totalIssuance: BN = await apiAtPriorRewarded.query.balances.totalIssuance() as BN
+    // const collatorCommissionRate: any = await apiAtPriorRewarded.query.parachainStaking.collatorCommission()
 
+    /*
     const range = {
       min: new Perbill(inflation.round.min).of(totalIssuance),
       ideal: new Perbill(inflation.round.ideal).of(totalIssuance),
       max: new Perbill(inflation.round.max).of(totalIssuance),
     }
+    */
 
+    /*
     const totalRoundIssuance = (() => {
       if (totalStaked.lt(inflation.expect.min)) {
         return range.min
@@ -234,9 +238,11 @@ export default class RoundPayoutProcessor {
       }
       return range.ideal
     })()
-    const totalCollatorCommissionReward = new Perbill(collatorCommissionRate).of(totalRoundIssuance)
+    */
+    //const totalCollatorCommissionReward = new Perbill(collatorCommissionRate).of(totalRoundIssuance)
 
     // calculate total staking reward
+    /*
     const firstBlockRewardedEvents: any = await apiAtRewarded.query.system.events()
     let reservedForParachainBond = new BN(0)
     for (const { phase, event } of firstBlockRewardedEvents) {
@@ -248,24 +254,25 @@ export default class RoundPayoutProcessor {
         }
       }
     }
+    */
 
     // total expected staking reward minus the amount reserved for parachain bond
+    /*
     const totalStakingReward = (() => {
       const parachainBondReward = parachainBondPercent.of(totalRoundIssuance)
       if (!reservedForParachainBond.isZero()) {
-        /*
-        expect(
-          parachainBondReward.eq(reservedForParachainBond),
-          `parachain bond amount does not match \
-            ${parachainBondReward.toString()} != ${reservedForParachainBond.toString()} \
-            for round ${originalRoundNumber.toString()}`
-        ).to.be.true;
-        */
+        // expect(
+        //   parachainBondReward.eq(reservedForParachainBond),
+        //  `parachain bond amount does not match \
+        //    ${parachainBondReward.toString()} != ${reservedForParachainBond.toString()} \
+        //    for round ${originalRoundNumber.toString()}`
+        // ).to.be.true;
         return totalRoundIssuance.sub(parachainBondReward)
       }
 
       return totalRoundIssuance
     })()
+    */
 
     /*
     const delayedPayout = (
@@ -311,9 +318,9 @@ export default class RoundPayoutProcessor {
       const blockNumber = nowRoundFirstBlock.addn(i)
       await this.getRewardedFromEventsAtBlock(
         blockNumber,
-        totalCollatorCommissionReward,
-        totalPoints,
-        totalStakingReward,
+        //totalCollatorCommissionReward,
+        //totalPoints,
+        //totalStakingReward,
       )
       //totalRewardedAmount = totalRewardedAmount.add(rewarded.amount.total);
 
@@ -509,9 +516,9 @@ export default class RoundPayoutProcessor {
 
   async getRewardedFromEventsAtBlock(
     rewardedBlockNumber: BN,
-    totalCollatorCommissionReward: BN,
-    totalPoints: BN,
-    totalStakingReward: BN,
+    //totalCollatorCommissionReward: BN,
+    //totalPoints: BN,
+    //totalStakingReward: BN,
   ): Promise<void> {
     const nowRoundRewardBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(rewardedBlockNumber)
     const apiAtBlock = await this.api.at(nowRoundRewardBlockHash)
@@ -637,16 +644,44 @@ export default class RoundPayoutProcessor {
 
           if (reward.collator_id) { //runtime 1001, otherwise it should be defined in previous step.
             collatorInfo = this.stakedValue[reward.collator_id]
-          } else if (!collatorInfo.delegators) {
-            throw new Error('collator was not paid before the delegator (possibly not at all)')
           }
 
+
+          /*
+          if (!collatorInfo || !collatorInfo.delegators || !collatorInfo.delegators[accountId] && this.specVersion) {
+            for (const collator of Object.values(this.stakedValue)) {
+              if (collator.delegators[accountId] && collator.delegators[accountId].reward.isZero()) {
+                collatorInfo = collator
+                break
+              }
+            }
+            //throw new Error(`FOUND`)
+          }
+          */
+
+          if (!collatorInfo || !collatorInfo.delegators || !collatorInfo.delegators[accountId]) {
+            if (
+              (environment.NETWORK_ID === 25 && rewardedBlockNumber.toNumber() === 504000) ||
+              (environment.NETWORK_ID === 25 && rewardedBlockNumber.toNumber() === 1044000)
+            ) {
+              return
+            }
+            throw new Error(`Could not find collator for delegator ${accountId}`)
+          }
+
+          /*
+
           if (!collatorInfo.delegators[accountId]) {
+            console.log("collatorInfo.delegators", collatorInfo.delegators)
+            console.log("accountId", accountId)
+            console.log("rewards[accountId]", rewards[accountId])
+            console.log("reward", reward)
             throw new Error(`could not find ${accountId} in delegators list of collator ${collatorInfo.id}`)
           }
 
           this.stakedValue[collatorInfo.id].delegators[accountId].reward = reward.amount//delegatorReward
 
+          */
 
           /*
           const bondShare = new Perbill(collatorInfo.delegators[accountId].amount, collatorInfo.total)
@@ -659,7 +694,7 @@ export default class RoundPayoutProcessor {
           //        (accountId === '0x6ac4b6725efd8a1cb397884769730094e854efd4' && rewardedBlockNumber.toNumber() === 640219) ||
           //        (accountId === '0x5d9bc481749420cffb2bf5aef5c5e2a0ffe04e88' && rewardedBlockNumber.toNumber() === 1061443)
           // )) {
-          // throw Error(`invalid key ${accountId}, neither collator not delegator`);
+          throw Error(`invalid key ${accountId}, neither collator not delegator`);
           // }
 
           logger.error({
