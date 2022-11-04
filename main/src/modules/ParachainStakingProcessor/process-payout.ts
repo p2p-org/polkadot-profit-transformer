@@ -24,6 +24,7 @@ import {
   Perbill,
   Percent,
 } from './interfaces'
+import { setDefaultResultOrder } from 'dns'
 
 export default class RoundPayoutProcessor {
   api: ApiPromise;
@@ -151,16 +152,14 @@ export default class RoundPayoutProcessor {
     const nowRoundFirstBlockTime: Moment = await apiAtNowBlock.query.timestamp.now() as Moment
     const nowRoundFirstBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(nowRoundFirstBlock)
     const apiAtRewarded = await this.api.at(nowRoundFirstBlockHash)
-    const rewardDelay = apiAtRewarded.consts.parachainStaking.rewardPaymentDelay
+    const rewardDelay = apiAtRewarded.consts.parachainStaking?.rewardPaymentDelay || new BN(2)
     const priorRewardedBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(nowRoundFirstBlock.subn(1))
     const runtime: any = await apiAtRewarded.query.system.lastRuntimeUpgrade()
     this.specVersion = runtime.unwrap().specVersion.toNumber()
 
     // obtain data from original round
     const rewardRound: any = await apiAtRewarded.query.parachainStaking.round()
-    const originalRoundNumber = rewardRound.current.sub(
-      rewardDelay,
-    )
+    const originalRoundNumber = rewardRound.current.sub(rewardDelay)
     let originalRoundBlock = nowRoundFirstBlock.toBn()
     while (true) {
       const blockHash: BlockHash = await this.api.rpc.chain.getBlockHash(originalRoundBlock)
