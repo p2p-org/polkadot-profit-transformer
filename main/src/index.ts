@@ -72,7 +72,9 @@ const main = async () => {
     const restApi = PreloaderRestApi({ blocksPreloader })
     restApi.init()
 
-    await blocksPreloader.preload()
+    if (process.env.NODE_ENV !== 'development') {
+      await blocksPreloader.preload()
+    }
     //await blocksPreloader.preloadOneBlock(1858800)
   }
 
