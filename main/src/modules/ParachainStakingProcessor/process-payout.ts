@@ -65,6 +65,8 @@ export default class RoundPayoutProcessor {
     try {
       const { round } = await this.getRewards(payoutBlockId)
 
+      console.log(JSON.stringify(this.stakedValue, null, 2));
+
       logger.info({
         event: 'RoundPayoutProcessor.processRoundPayout',
         message: 'Round processed',
@@ -584,7 +586,8 @@ export default class RoundPayoutProcessor {
     */
     let totalBondRewardShare = new BN(0)
 
-    for (const accountId of Object.keys(rewards) as HexString[]) {
+    //collators rewards
+    Object.keys(rewards).forEach(accountId => {
       rewards[accountId].forEach(reward => {
 
         amountTotal = amountTotal.add(reward.amount)
@@ -600,39 +603,19 @@ export default class RoundPayoutProcessor {
           this.stakedValue[accountId].rewardCollator = reward.amount //collatorReward.toString(10)
           this.stakedValue[accountId].payoutBlockId = rewardedBlockNumber
           this.stakedValue[accountId].payoutBlockTime = rewardedBlockTime.toNumber()
+        }
+      })
+    })
 
 
-          /*
-          const pointsShare = new Perbill(collatorInfo.points, totalPoints)
-          const collatorReward = pointsShare.of(totalStakingReward)
-          //rewarded.amount.collatorSharePerbill = pointsShare.value();
-          const collatorCommissionReward = pointsShare.of(totalCollatorCommissionReward)
-          //rewarded.amount.commissionReward = collatorCommissionReward;
-          bondReward = collatorReward.sub(collatorCommissionReward)
-          */
+    //delegators rewards
+    Object.keys(rewards).forEach(accountId => {
+      rewards[accountId].forEach(reward => {
+        if (this.delegators.has(accountId)) {
+
+          console.log("DELEGATOR", this.specVersion, accountId, reward.amount.toString(10))
 
 
-          /*
-          if (!this.stakedValue[accountId].delegators) {
-            this.assertEqualWithAccount(reward.amount, collatorReward, `${accountId} (COL2)`)
-          } else {
-            const bondShare = new Perbill(collatorInfo.bond, collatorInfo.total)
-            totalBondRewardShare = totalBondRewardShare.add(bondShare.value())
-            const collatorBondReward = bondShare.of(bondReward)
-            //rewarded.amount.bondReward = rewarded.amount.bondReward.add(collatorBondReward);
-            const collatorTotalReward = collatorBondReward.add(collatorCommissionReward)
-            this.assertEqualWithAccount(
-              reward.amount,
-              collatorTotalReward,
-              `${accountId} (COL2)`,
-            )
-          }
-          //rewarded.collator = accountId;
-          */
-
-        } else if (this.delegators.has(accountId)) {
-
-          console.log("DELEGATOR", this.specVersion, accountId)
 
           if (reward.amount.isZero()) {
             return
@@ -642,21 +625,25 @@ export default class RoundPayoutProcessor {
           //            return
           //}
 
-          if (reward.collator_id) { //runtime 1001, otherwise it should be defined in previous step.
-            collatorInfo = this.stakedValue[reward.collator_id]
-          }
-
-
-          /*
-          if (!collatorInfo || !collatorInfo.delegators || !collatorInfo.delegators[accountId] && this.specVersion) {
+          if (this.specVersion === 1001) {
+            if (reward.collator_id) { //runtime 1001, otherwise it should be defined in previous step.
+              collatorInfo = this.stakedValue[reward.collator_id]
+            } else {
+              return
+            }
+          } else if (this.specVersion <= 900) {
             for (const collator of Object.values(this.stakedValue)) {
-              if (collator.delegators[accountId] && collator.delegators[accountId].reward.isZero()) {
+              if (!collator.rewardCollator.isZero() && collator.delegators[accountId] && collator.delegators[accountId].reward.isZero()) {
                 collatorInfo = collator
                 break
               }
             }
-            //throw new Error(`FOUND`)
           }
+
+          console.log(collatorInfo.id);
+
+          /*
+          
           */
 
           if (!collatorInfo || !collatorInfo.delegators || !collatorInfo.delegators[accountId]) {
@@ -669,42 +656,13 @@ export default class RoundPayoutProcessor {
             throw new Error(`Could not find collator for delegator ${accountId}`)
           }
 
+          console.log(2222);
+
           this.stakedValue[collatorInfo.id].delegators[accountId].reward = reward.amount//delegatorReward
-
-          /*
-
-          if (!collatorInfo.delegators[accountId]) {
-            console.log("collatorInfo.delegators", collatorInfo.delegators)
-            console.log("accountId", accountId)
-            console.log("rewards[accountId]", rewards[accountId])
-            console.log("reward", reward)
-            throw new Error(`could not find ${accountId} in delegators list of collator ${collatorInfo.id}`)
-          }
-
-          */
-
-          /*
-          const bondShare = new Perbill(collatorInfo.delegators[accountId].amount, collatorInfo.total)
-          const delegatorReward = bondShare.of(bondReward)
-
-          this.assertEqualWithAccount(reward.amount, delegatorReward, `${accountId} (DEL)`);
-          */
-        } else {
-          //      if (!(
-          //        (accountId === '0x6ac4b6725efd8a1cb397884769730094e854efd4' && rewardedBlockNumber.toNumber() === 640219) ||
-          //        (accountId === '0x5d9bc481749420cffb2bf5aef5c5e2a0ffe04e88' && rewardedBlockNumber.toNumber() === 1061443)
-          // )) {
-          throw Error(`invalid key ${accountId}, neither collator not delegator`);
-          // }
-
-          logger.error({
-            event: 'RoundPayoutProcessor.getRewardedFromEventsAtBlock',
-            error: `Error processing stake for round at block ${rewardedBlockNumber}.
-                    Invalid key ${accountId}, neither collator not delegator`,
-          })
         }
       })
-    }
+    })
+
   }
 
 
