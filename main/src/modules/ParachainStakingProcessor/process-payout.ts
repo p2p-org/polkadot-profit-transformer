@@ -586,8 +586,8 @@ export default class RoundPayoutProcessor {
           collatorInfo = this.stakedValue[accountId]
 
 
-          this.stakedValue[accountId].rewardTotal = amountTotal.toString(10)
-          this.stakedValue[accountId].rewardCollator = reward.amount;//collatorReward.toString(10)
+          this.stakedValue[accountId].rewardTotal = amountTotal
+          this.stakedValue[accountId].rewardCollator = reward.amount //collatorReward.toString(10)
           this.stakedValue[accountId].payoutBlockId = rewardedBlockNumber
           this.stakedValue[accountId].payoutBlockTime = rewardedBlockTime.toNumber()
 
