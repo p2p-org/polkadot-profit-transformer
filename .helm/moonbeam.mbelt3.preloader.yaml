@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: moonbeam
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 8ea235eba54a9428109f54a46f3a4a7897926aed}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 39b7be46b08041549872677d92c7f73ea3f2f3e8}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
