@@ -1,6 +1,6 @@
 import { Vec } from '@polkadot/types'
 import { EventRecord } from '@polkadot/types/interfaces'
-import { PolkadotRepository } from 'apps/common/infra/polkadotapi/polkadot.repository'
+import { PolkadotRepository } from './polkadot.repository'
 
 export const isExtrinsicSuccess = async (
   index: number,

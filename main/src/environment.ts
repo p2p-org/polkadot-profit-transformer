@@ -1,9 +1,12 @@
 import dotenv from 'dotenv'
 import { cleanEnv, str, num, bool, url } from 'envalid'
 
-//process.env.NODE_ENV = process.env.NODE_ENV || 'development'
-
 dotenv.config()
+
+export enum NODE_ENV {
+  DEVELOPMENT = 'development',
+  PRODUCTION = 'production',
+}
 
 export enum MODE {
   LISTENER = 'LISTENER',
@@ -21,14 +24,17 @@ export type Environment = {
   START_BLOCK_ID: number
   RABBITMQ: string
   NETWORK: string
+  NODE_ENV: NODE_ENV
   MODE: MODE
   NETWORK_ID: number
 }
 
 const parseModeEnum = (env: typeof preEnv) => {
-  const M: MODE =
+  const mode: MODE =
     env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
-  return { ...env, MODE: M }
+  const nodeEnv: NODE_ENV =
+    env.NODE_ENV === 'development' ? NODE_ENV.DEVELOPMENT : NODE_ENV.PRODUCTION
+  return { ...env, MODE: mode, NODE_ENV: nodeEnv }
 }
 
 const preEnv = cleanEnv(process.env, {
@@ -41,6 +47,7 @@ const preEnv = cleanEnv(process.env, {
   START_BLOCK_ID: num({ default: -1 }), // -1 = continue from last preloaded block from db
   RABBITMQ: url(),
   NETWORK: str(),
+  NODE_ENV: str(),
   NETWORK_ID: num(),
   MODE: str({ choices: ['LISTENER', 'BLOCK_PROCESSOR', 'STAKING_PROCESSOR'] }),
 })

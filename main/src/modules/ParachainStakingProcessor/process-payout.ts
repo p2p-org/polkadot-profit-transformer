@@ -14,7 +14,7 @@ import type { HexString } from '@polkadot/util/types'
 import type { u128, u32 } from '@polkadot/types-codec'
 import { Moment, SignedBlock, BlockHash } from '@polkadot/types/interfaces'
 import { logger } from '@/loaders/logger'
-import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository'
+import { StakingRepository } from './staking.repository'
 import {
   DelegatorReward,
   Rewarded,
@@ -528,6 +528,10 @@ export default class RoundPayoutProcessor {
     // let rewardCount = 0;
 
     for (const { phase, event } of blockEvents) {
+      if (!event.data || !event.data[0]) {
+        continue
+      }
+
       if (!rewards[event.data[0].toHex()]) {
         rewards[event.data[0].toHex()] = []
       }

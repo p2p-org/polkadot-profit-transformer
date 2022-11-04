@@ -17,14 +17,10 @@ import { RelaychainStakingProcessor } from '@/modules/RelaychainStakingProcessor
 import { ParachainStakingProcessorRestApi } from '@/modules/ParachainStakingProcessor/controller'
 import { ParachainStakingProcessor } from '@/modules/ParachainStakingProcessor/service'
 
-import { polkadotFactory } from '@/apps/common/infra/polkadotapi/index'
-
-import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
-import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository'
-import { StreamerRepository } from '@/apps/common/infra/postgresql/streamer.repository'
+import { PolkadotApi } from '@/loaders/polkadotapi'
 
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
-import { ProcessingStatusRepository } from '@/apps/common/infra/postgresql/processing_status.repository'
+
 
 const main = async () => {
   console.log({ environment })
@@ -34,21 +30,15 @@ const main = async () => {
   const pg = await KnexPG(environment.PG_CONNECTION_STRING, environment.LOG_LEVEL === 'debug')
   const rabbitMQ = await RabbitMQ(environment.RABBITMQ!)
 
-  const polkadotApi = await polkadotFactory(environment.SUBSTRATE_URI)()
-  const polkadotRepository = await PolkadotRepository({ polkadotApi })
+  const polkadotApi = await PolkadotApi(environment.SUBSTRATE_URI)()
   const processingTasksRepository = await ProcessingTasksRepository({ knex: pg })
-  const processingStatusRepository = await ProcessingStatusRepository({ knex: pg })
-
-  const streamerRepository = StreamerRepository({ knex: pg })
-  const stakingRepository = StakingRepository({ knex: pg })
 
   if (environment.MODE === MODE.LISTENER) {
     logger.debug('preload blocks')
 
     const blocksPreloader = BlocksPreloader({
+      polkadotApi,
       processingTasksRepository,
-      processingStatusRepository,
-      polkadotRepository: polkadotRepository,
       rabbitMQ,
       knex: pg,
     })
@@ -72,7 +62,7 @@ const main = async () => {
     const restApi = PreloaderRestApi({ blocksPreloader })
     restApi.init()
 
-    await blocksPreloader.preload()
+    //await blocksPreloader.preload()
     //await blocksPreloader.preloadOneBlock(1858800)
   }
 
@@ -80,8 +70,7 @@ const main = async () => {
     logger.debug('BLOCK_PROCESSOR mode')
 
     const blockProcessor = await BlockProcessor({
-      polkadotRepository,
-      streamerRepository,
+      polkadotApi,
       processingTasksRepository,
       rabbitMQ,
       knex: pg,
@@ -98,8 +87,7 @@ const main = async () => {
 
     if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
       const stakingProcessor = RelaychainStakingProcessor({
-        polkadotRepository,
-        stakingRepository,
+        polkadotApi,
         processingTasksRepository,
         rabbitMQ,
         knex: pg,
@@ -113,8 +101,6 @@ const main = async () => {
     } else {
       const stakingProcessor = ParachainStakingProcessor({
         polkadotApi,
-        polkadotRepository,
-        stakingRepository,
         processingTasksRepository,
         rabbitMQ,
         knex: pg,

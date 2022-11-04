@@ -1,28 +1,27 @@
 import { Knex } from 'knex'
 import { v4 } from 'uuid'
 import { ApiPromise } from '@polkadot/api'
-import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository'
-import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
+//import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
 import { ENTITY, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
 import RoundPayoutProcessor from './process-payout'
+import { StakingRepository } from './staking.repository'
 
 export type ParachainStakingProcessor = ReturnType<typeof ParachainStakingProcessor>;
 
 export const ParachainStakingProcessor = (args: {
   polkadotApi: ApiPromise
-  polkadotRepository: PolkadotRepository
-  stakingRepository: StakingRepository
   processingTasksRepository: ProcessingTasksRepository
   rabbitMQ: Rabbit
   knex: Knex
 }) => {
   const {
-    polkadotApi, stakingRepository, knex, processingTasksRepository,
+    polkadotApi, knex, processingTasksRepository,
   } = args
 
+  const stakingRepository = StakingRepository({ knex })
 
   /*
   const sendToRabbit = async (eraReprocessingTask: ProcessingTaskModel<ENTITY.ERA>) => {
@@ -40,7 +39,7 @@ export const ParachainStakingProcessor = (args: {
     const roundPayoutProcessor = new RoundPayoutProcessor(polkadotApi, stakingRepository)
 
     logger.info({
-      event: 'PolkadotRepository.processTaskMessage',
+      event: 'ParachainStakingProcessor.processTaskMessage',
       roundId,
       message: 'New process round task received',
       collect_uid,
