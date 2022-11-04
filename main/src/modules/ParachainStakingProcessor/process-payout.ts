@@ -669,6 +669,8 @@ export default class RoundPayoutProcessor {
             throw new Error(`Could not find collator for delegator ${accountId}`)
           }
 
+          this.stakedValue[collatorInfo.id].delegators[accountId].reward = reward.amount//delegatorReward
+
           /*
 
           if (!collatorInfo.delegators[accountId]) {
@@ -678,8 +680,6 @@ export default class RoundPayoutProcessor {
             console.log("reward", reward)
             throw new Error(`could not find ${accountId} in delegators list of collator ${collatorInfo.id}`)
           }
-
-          this.stakedValue[collatorInfo.id].delegators[accountId].reward = reward.amount//delegatorReward
 
           */
 
