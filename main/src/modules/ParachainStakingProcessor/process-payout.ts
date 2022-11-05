@@ -298,7 +298,7 @@ export default class RoundPayoutProcessor {
     const awardedCollatorCount = awardedCollators.length
 
     // compute max rounds respecting the current block number and the number of awarded collators
-    const maxRoundChecks = (this.specVersion <= 1001) ?
+    const maxRoundChecks = (this.specVersion <= 1002) ?
       1 :
       Math.min(latestBlockNumber - nowBlockNumber + 1, awardedCollatorCount)
 
@@ -474,7 +474,7 @@ export default class RoundPayoutProcessor {
       this.stakedValue[collatorId] = collatorInfo
     }
 
-    console.log(this.stakedValue['0x3abeda9f0f920fda379b59b042dd6625d9c86df3']);
+    //console.log(this.stakedValue['0x3abeda9f0f920fda379b59b042dd6625d9c86df3']);
 
     await this.fixZeroDelegatorsStakeQueue(apiAtOriginalPrior)
 
@@ -625,7 +625,7 @@ export default class RoundPayoutProcessor {
           //            return
           //}
 
-          if (this.specVersion === 1001) {
+          if (this.specVersion === 1001 || this.specVersion === 1002) {
             if (reward.collator_id) { //runtime 1001, otherwise it should be defined in previous step.
               collatorInfo = this.stakedValue[reward.collator_id]
             } else {
@@ -640,7 +640,7 @@ export default class RoundPayoutProcessor {
             }
           }
 
-          console.log(collatorInfo.id);
+          //console.log(collatorInfo.id);
 
           /*
           
@@ -656,7 +656,7 @@ export default class RoundPayoutProcessor {
             throw new Error(`Could not find collator for delegator ${accountId}`)
           }
 
-          console.log(2222);
+          //console.log(2222);
 
           this.stakedValue[collatorInfo.id].delegators[accountId].reward = reward.amount//delegatorReward
         }
