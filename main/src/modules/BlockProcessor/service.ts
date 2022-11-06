@@ -122,7 +122,7 @@ export const BlockProcessor = (deps: {
       if (event.section === 'parachainStaking' && event.method === 'NewRound') {
         const newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
           entity: ENTITY.ROUND,
-          entity_id: parseInt(event.event.data[1].toString()),
+          entity_id: parseInt(event.event.data[1].toString()) - 2,
           status: PROCESSING_STATUS.NOT_PROCESSED,
           collect_uid: uuidv4(),
           start_timestamp: new Date(),
