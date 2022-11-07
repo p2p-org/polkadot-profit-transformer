@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/stage_moonriver"
 env:
-  substrate_uri: ws://moonriver-node-0.moonriver-node.moonriver.svc.cluster.local:9945
+  substrate_uri: ws://10.41.4.2:9945
   log_level: info
   network_id: 25
   mode: LISTENER
