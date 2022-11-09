@@ -1,24 +1,27 @@
 import { Knex } from 'knex'
 import { v4 as uuidv4 } from 'uuid'
 import { sleep } from '@/utils/sleep'
-import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
-import { ProcessingStatusRepository } from '@/apps/common/infra/postgresql/processing_status.repository'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit } from '@/loaders/rabbitmq'
 import { ProcessingStateModel } from '@/models/processing_status.model'
+import { ProcessingStatusRepository } from '@/modules/BlockListener/processing_status.repository'
+import { ApiPromise } from '@polkadot/api'
+import { PolkadotRepository } from './polkadot.repository'
 
 export type BlocksPreloader = ReturnType<typeof BlocksPreloader>
 
 export const BlocksPreloader = (deps: {
+  polkadotApi: ApiPromise
   processingTasksRepository: ProcessingTasksRepository
-  processingStatusRepository: ProcessingStatusRepository
-  polkadotRepository: PolkadotRepository
   rabbitMQ: Rabbit
   knex: Knex
 }) => {
-  const { processingTasksRepository, processingStatusRepository, polkadotRepository, rabbitMQ, knex } = deps
+  const { polkadotApi, processingTasksRepository, rabbitMQ, knex } = deps
+
+  const processingStatusRepository = ProcessingStatusRepository({ knex })
+  const polkadotRepository = PolkadotRepository({ polkadotApi })
 
   let gracefulShutdownFlag = false
   let messagesBeingProcessed = false
@@ -187,7 +190,7 @@ export const BlocksPreloader = (deps: {
   const restartUnprocessedTasks = async (entity: ENTITY) => {
     let lastEntityId = 0
     while (true) {
-      
+
       const records = await processingTasksRepository.getUnprocessedTasks(entity, lastEntityId)
       if (!records || !records.length) {
         return
@@ -198,11 +201,11 @@ export const BlocksPreloader = (deps: {
         lastEntityId = record.entity_id || 0
       }
 
-      logger.info({ 
+      logger.info({
         event: 'BlocksPreloader.restartUnprocessedTasks',
         message: `Preloaded 1000 tasks to rabbit queue for processing ${entity}. Last entity id: ${lastEntityId}`
       })
-      
+
       await sleep(5000)
     }
   }
@@ -210,7 +213,7 @@ export const BlocksPreloader = (deps: {
   const restartUnprocessedTask = async (entity: ENTITY, entityId: number) => {
     const record = await processingTasksRepository.getUnprocessedTask(entity, entityId)
     if (!record) {
-      logger.error({ 
+      logger.error({
         event: 'BlocksPreloader.restartUnprocessedTask',
         message: `${entity} with id ${entityId} not found`
       })
@@ -218,13 +221,13 @@ export const BlocksPreloader = (deps: {
     }
     await sendTaskToToRabbit(entity, record);
 
-    logger.info({ 
+    logger.info({
       event: 'BlocksPreloader.restartUnprocessedTask',
       message: `Send task to rabbit for processing ${entity}. Entity id: ${entityId}`
     })
   }
 
-  const sendTaskToToRabbit = async (entity: ENTITY, record: {collect_uid: string, entity_id: number}) => {
+  const sendTaskToToRabbit = async (entity: ENTITY, record: { collect_uid: string, entity_id: number }) => {
     if (entity === ENTITY.ERA) {
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
         entity_id: record.entity_id,

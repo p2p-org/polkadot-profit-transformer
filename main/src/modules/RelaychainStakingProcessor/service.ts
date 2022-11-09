@@ -1,24 +1,27 @@
 import { Knex } from 'knex'
 import { v4 } from 'uuid'
-import { StakingRepository } from '@/apps/common/infra/postgresql/staking.repository'
-import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
 import { processEraPayout } from './process-payout'
+import { StakingRepository } from './staking.repository'
+import { PolkadotRepository } from './polkadot.repository'
+import { ApiPromise } from '@polkadot/api'
 
 export type RelaychainStakingProcessor = ReturnType<typeof RelaychainStakingProcessor>
 
 export const RelaychainStakingProcessor = (args: {
-  polkadotRepository: PolkadotRepository
-  stakingRepository: StakingRepository
+  polkadotApi: ApiPromise
   processingTasksRepository: ProcessingTasksRepository
   rabbitMQ: Rabbit
   knex: Knex
 }) => {
-  const { polkadotRepository, stakingRepository, rabbitMQ, knex, processingTasksRepository } = args
-  
+  const { polkadotApi, rabbitMQ, knex, processingTasksRepository } = args
+
+  const stakingRepository = StakingRepository({ knex })
+  const polkadotRepository = PolkadotRepository({ polkadotApi })
+
   /*
   const sendToRabbit = async (eraReprocessingTask: ProcessingTaskModel<ENTITY.ERA>) => {
     const data = {
@@ -33,7 +36,7 @@ export const RelaychainStakingProcessor = (args: {
     const { entity_id: eraId, collect_uid } = message
 
     logger.info({
-      event: 'PolkadotRepository.processTaskMessage',
+      event: 'RelaychainStakingProcessor.processTaskMessage',
       eraId,
       message: 'New process era task received',
       collect_uid,
@@ -64,8 +67,8 @@ export const RelaychainStakingProcessor = (args: {
         logger.warn({
           event: `StakingProcessor.processTaskMessage.tx`,
           eraId,
-          error: `Possible era ${eraId} processing task duplication. `+
-                 `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+          error: `Possible era ${eraId} processing task duplication. ` +
+            `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
           collect_uid,
         })
         return
@@ -136,7 +139,7 @@ export const RelaychainStakingProcessor = (args: {
         collect_uid,
         eraReprocessingTask,
       })
-    }).catch( (error: Error) => {
+    }).catch((error: Error) => {
       logger.error({
         event: `StakingProcessor.processTaskMessage.tx`,
         eraId,

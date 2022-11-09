@@ -69,6 +69,7 @@ spec:
         {{- end }}
         - { name: REST_API_PORT, value: {{ quote .Values.port }} }
         - { name: BASIC_AUTH,    value: "false" }
+        - { name: NODE_ENV,      value: "production" }
         resources:
           limits: { cpu: {{ .Values.limits.cpu }}, memory: {{ .Values.limits.memory }} }
           requests: { cpu: {{ .Values.requests.cpu }}, memory: {{ .Values.requests.memory }} }

@@ -5,7 +5,7 @@ chain: polkadot
 role: block-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 377b48630ebb20e715974672dbdc058ce6dc2ed9}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: f024069a4573c1e75087a175f316b1626262d2d3}
 port: 3000
 metrics:
   enabled: true

@@ -2,7 +2,7 @@ import { environment } from '@/environment'
 import { ApiPromise, WsProvider } from '@polkadot/api'
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
 
-export const polkadotFactory = (nodeUrl: string) => async (): Promise<ApiPromise> => {
+export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> => {
   const provider = new WsProvider(
     nodeUrl,
     2500,
@@ -11,6 +11,7 @@ export const polkadotFactory = (nodeUrl: string) => async (): Promise<ApiPromise
   )
 
   let typesBundle = {}
+  // extra types for moonbeam/moonriver
   if (environment.NETWORK_ID === 25 || environment.NETWORK_ID === 371) {
     typesBundle = typesBundlePre900
   }

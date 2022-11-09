@@ -1,5 +1,5 @@
-import { isExtrinsicSuccess } from './utils/is-extrinsic-success'
-import { PolkadotRepository } from '../../apps/common/infra/polkadotapi/polkadot.repository'
+import { isExtrinsicSuccess } from './is-extrinsic-success'
+import { PolkadotRepository } from './polkadot.repository'
 import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
 import { BlockNumber, EventRecord, Call } from '@polkadot/types/interfaces'
 import { ExtrinsicModel } from '@/models/extrinsic.model'
