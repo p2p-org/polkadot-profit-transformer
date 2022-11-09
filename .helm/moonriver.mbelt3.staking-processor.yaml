@@ -2,7 +2,7 @@
 environment: mbelt3-prod
 chain: moonriver
 role: staking-processor
-replicas: 0
+replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 3aafbb6c3d986687c012c764c9259ba90f3db283}

@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 0
+replicas: 1
 chain: moonriver
 role: block-processor
 limits: {cpu: 350m, memory: 400Mi}
