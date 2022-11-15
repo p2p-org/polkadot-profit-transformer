@@ -15,8 +15,7 @@ vault:
 additional_args:
   - "--max_old_space_size=400"
 env:
-  substrate_uri: ws://10.41.8.2:9945
-  # substrate_uri: ws://moonbeam-node-0.moonbeam-node.moonbeam.svc.cluster.local:9945
+  substrate_uri: ws://moonbeam-ssd-node.moonbeam.svc.cluster.local:9945
   log_level: info
   network_id: 371
   mode: BLOCK_PROCESSOR
