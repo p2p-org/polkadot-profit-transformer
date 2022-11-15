@@ -5,7 +5,7 @@ chain: moonriver
 role: block-processor
 limits: {cpu: 350m, memory: 400Mi}
 requests: {cpu: 250m, memory: 400Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: f024069a4573c1e75087a175f316b1626262d2d3}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: eaddbc3c53e7e09348ca494e140e1a08e7a4b2fc}
 port: 3000
 metrics:
   enabled: true
@@ -15,8 +15,7 @@ vault:
 additional_args:
   - "--max_old_space_size=400"
 env:
-  # substrate_uri: ws://moonriver-node-0.moonriver-node.moonriver.svc.cluster.local:9945
-  substrate_uri: ws://10.41.4.2:9945
+  substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
   log_level: info
   network_id: 25
   mode: BLOCK_PROCESSOR
