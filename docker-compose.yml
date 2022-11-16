@@ -13,18 +13,12 @@ services:
     hostname: mbelt_postgres
     ports:
       - 5432:5432
-    env_file:
-      - docker/env/.postgres.env
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mbelt
     volumes:
       - ./db-data:/var/lib/postgresql/data
-
-  mbelt_redis:
-    container_name: mbelt_redis
-    image: redis:latest
-    hostname: mbelt_redis
-    ports:
-      - '6379:6379'
-    restart: always
 
   mbelt_rabbitmq:
     container_name: mbelt_rabbitmq
@@ -50,9 +44,10 @@ services:
       - 3000:3000
     depends_on:
       - mbelt_db
+    environment:
+      MODE: LISTENER
     volumes:
       - ./main:/usr/src/app
-      - ./docker/env/.listener.env:/usr/src/app/.env
 
   mbelt_block_processor:
     container_name: mbelt_block_processor
@@ -64,9 +59,10 @@ services:
       - 3001:3001
     depends_on:
       - mbelt_db
+    environment:
+      MODE: BLOCK_PROCESSOR
     volumes:
       - ./main:/usr/src/app
-      - ./docker/env/.block_processor.env:/usr/src/app/.env
 
   mbelt_staking_processor:
     container_name: mbelt_staking_processor
@@ -78,8 +74,9 @@ services:
       - 3002:3002
     depends_on:
       - mbelt_db
+    environment:
+      MODE: STAKING_PROCESSOR
     volumes:
       - ./main:/usr/src/app
-      - ./docker/env/.staking_processor.env:/usr/src/app/.env
 
        

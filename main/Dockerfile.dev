@@ -4,6 +4,6 @@ WORKDIR /usr/src/app
 RUN yarn install
 RUN yarn global add nodemon pm2
 
-EXPOSE 8080
+EXPOSE 3000
 
-CMD ["nodemon", "./src/index.ts"]
+CMD ["nodemon", "./src/app.ts"]
