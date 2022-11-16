@@ -7,21 +7,19 @@ import PolkadotStakingProcessor from './PolkadotStakingProcessor';
 
 export const ModulesLoader = async (): Promise<void> => {
   if (environment.MODE === MODE.LISTENER) {
-    BlockListener();
+    BlockListener()
   }
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
-    // BlockProcessor();
-    //    require('./BlockProcessor')
-
-    BlockMetadataProcessor();
+    BlockProcessor()
+    BlockMetadataProcessor()
   }
 
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
     if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
-      PolkadotStakingProcessor();
+      PolkadotStakingProcessor()
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
-      MoonbeamStakingProcessor();
+      MoonbeamStakingProcessor()
     }
   }
 }

@@ -115,7 +115,7 @@ export class BlockListenerService {
                 rabbit queue for processing ${ENTITY.BLOCK_METADATA}. Last block id: ${lastBlockId}. End block id: ${endBlockId}`
       })
 
-      await sleep(1000)
+      await sleep(100)
     }
   }
 

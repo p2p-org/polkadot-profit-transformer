@@ -5,7 +5,7 @@ import { processedBlockGauge } from '@/loaders/prometheus'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
 import { TasksRepository } from '@/libs/tasks.repository'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
-import { BlockProcessorPolkadotHelper } from './helpers/polkadot'
+import { BlockProcessorPolkadotHelper } from '@/modules/BlockProcessor/helpers/polkadot'
 import { Logger } from 'pino'
 import { BlockModel } from '@/models/block.model'
 

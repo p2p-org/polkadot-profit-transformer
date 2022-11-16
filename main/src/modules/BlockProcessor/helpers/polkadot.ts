@@ -33,34 +33,7 @@ export class BlockProcessorPolkadotHelper {
     blockHash: BlockHash,
   ): Promise<[/* number | null, number | null, number | null, */  SignedBlock, HeaderExtended | undefined, Moment, any, any]> {
     try {
-      const historicalApi = await this.polkadotApi.at(blockHash)
-
-      const getMetadata = async (): Promise<BlockMetadata> => {
-        const metadata: BlockMetadata = {}
-        try {
-          const runtime: any = await historicalApi.query.system.lastRuntimeUpgrade()
-          metadata.runtime = runtime.unwrap().specVersion.toNumber()
-        } catch { }
-
-        try {
-          //polkadot, kusama
-          if (environment.NETWORK_ID === 1 || environment.NETWORK_ID === 56) {
-            const currentEra: any = await historicalApi.query.staking.currentEra()
-
-            if (currentEra) {
-              metadata.era_id = parseInt(currentEra.toString(10), 10) as number
-            }
-          } else {
-            //parachains
-            //if (specVersion <= 49) return {}
-
-            const round: any = await historicalApi.query.parachainStaking.round()
-            metadata.round_id = parseInt(round.current.toString(10), 10) as number
-          }
-        } catch (e) { }
-
-        return metadata
-      }
+      const historicalApi: any = await this.polkadotApi.at(blockHash)
 
       const [blockTime, events] = await historicalApi.queryMulti([
         [historicalApi.query.timestamp.now],
@@ -68,7 +41,7 @@ export class BlockProcessorPolkadotHelper {
       ])
 
       const [metadata, signedBlock, extHeader] = await Promise.all([
-        getMetadata(),
+        this.getMetadata(historicalApi),
         this.polkadotApi.rpc.chain.getBlock(blockHash),
         this.polkadotApi.derive.chain.getHeader(blockHash),
       ])
@@ -84,6 +57,54 @@ export class BlockProcessorPolkadotHelper {
       console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)
       throw error
     }
+  }
+
+  async getBlockMetadata(blockHash: BlockHash): Promise<BlockMetadata> {
+    const historicalApi: any = await this.polkadotApi.at(blockHash)
+    return this.getMetadata(historicalApi)
+  }
+
+  async getMetadata(historicalApi: ApiPromise): Promise<BlockMetadata> {
+    const metadata: BlockMetadata = {}
+    try {
+      const runtime: any = await historicalApi.query.system.lastRuntimeUpgrade()
+      metadata.runtime = runtime.unwrap().specVersion.toNumber()
+    } catch { }
+
+    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
+      try {
+        const currentEra: any = await historicalApi.query.staking.currentEra()
+        if (currentEra) {
+          metadata.era_id = parseInt(currentEra.toString(10), 10) as number
+        }
+      } catch (e) { }
+
+      try {
+        if (historicalApi.query.staking.activeEra) {
+          const activeEra: any = await historicalApi.query.staking.activeEra()
+          if (!activeEra.isNone && !activeEra.isEmpty) {
+            const eraId = activeEra.unwrap().get('index')
+            if (eraId) {
+              metadata.active_era_id = +eraId
+            }
+          }
+        }
+      } catch (e) { }
+
+      try {
+        const sessionId: any = await historicalApi.query.session.currentIndex()
+        if (sessionId) {
+          metadata.session_id = parseInt(sessionId.toString(10), 10) as number
+        }
+      } catch (e) { }
+    } else { //parachains
+      try {
+        const round: any = await historicalApi.query.parachainStaking.round()
+        metadata.round_id = parseInt(round.current.toString(10), 10) as number
+      } catch (e) { }
+    }
+
+    return metadata
   }
 
   async isExtrinsicEventsSuccess(
