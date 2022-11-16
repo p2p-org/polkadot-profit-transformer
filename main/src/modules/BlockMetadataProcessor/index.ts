@@ -4,13 +4,13 @@ import { BlockMetadataProcessorService } from './service'
 import { QUEUES, Rabbit } from '@/loaders/rabbitmq'
 import { Logger } from 'pino'
 
-export default () => {
-    const serviceInstance = Container.get(BlockMetadataProcessorService)
-    //Container.get(BlockMetadataProcessorController)
+export default (): void => {
+  const serviceInstance = Container.get(BlockMetadataProcessorService)
+  //Container.get(BlockMetadataProcessorController)
 
-    const rabbitMQ: Rabbit = Container.get('rabbitMQ')
-    rabbitMQ.process(QUEUES.BlocksMetadata, serviceInstance)
+  const rabbitMQ: Rabbit = Container.get('rabbitMQ')
+  rabbitMQ.process(QUEUES.BlocksMetadata, serviceInstance)
 
-    const logger: Logger = Container.get('logger')
-    logger.info('✌️ BlockProcessor module initialized')
+  const logger: Logger = Container.get('logger')
+  logger.info('✌️ BlockProcessor module initialized')
 }

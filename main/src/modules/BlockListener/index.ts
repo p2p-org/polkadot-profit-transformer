@@ -5,7 +5,7 @@ import { sleep } from '@/utils/sleep'
 import { environment, NODE_ENV } from '@/environment'
 import { Logger } from 'pino'
 
-export default () => {
+export default (): void => {
 
   const serviceInstance = Container.get(BlockListenerService)
   Container.get(BlockListenerController)

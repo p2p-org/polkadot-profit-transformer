@@ -46,9 +46,11 @@ export class BlockListenerDatabaseHelper {
     block_id?: number
   ): Promise<Array<BlockModel>> {
 
+    const whereFilter = { metadata: null }
+
     const blocksRecords = BlockModel(this.knex)
       .select()
-      .where('metadata IS NULL')
+      .where(whereFilter)
       .orderBy('id', 'asc')
       .limit(environment.BATCH_INSERT_CHUNK_SIZE)
 
