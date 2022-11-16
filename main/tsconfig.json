@@ -25,5 +25,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/app.ts"]
+  "include": ["src/index.ts"]
 }

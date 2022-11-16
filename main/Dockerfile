@@ -32,4 +32,4 @@ EXPOSE 8080
 #RUN npm run migrations:list
 #RUN npm run migrations:up
 
-CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/app.js"]
+CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/index.js"]
