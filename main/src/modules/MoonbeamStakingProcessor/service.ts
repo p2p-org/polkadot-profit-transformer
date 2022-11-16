@@ -9,6 +9,7 @@ import { ENTITY, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { TasksRepository } from '@/libs/tasks.repository'
 import { MoonbeamStakingProcessorRoundPayout } from './round-payout'
 import { MoonbeamStakingProcessorDatabaseHelper } from './helpers/database'
+import { Logger } from 'pino'
 
 @Service()
 export class MoonbeamStakingProcessorService {

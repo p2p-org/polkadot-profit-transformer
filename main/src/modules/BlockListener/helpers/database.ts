@@ -7,6 +7,7 @@ import { ProcessingStateModel } from '@/models/processing_status.model'
 import { BlockModel } from '@/models/block.model'
 import { environment } from '@/environment'
 
+const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class BlockListenerDatabaseHelper {
@@ -18,7 +19,7 @@ export class BlockListenerDatabaseHelper {
 
   public async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingStateModel(this.knex)
-      .where({ entity: entity, network_id: environment.NETWORK_ID })
+      .where({ entity, ...network })
       .orderBy('row_id', 'desc')
       .limit(1)
       .first()
@@ -36,7 +37,7 @@ export class BlockListenerDatabaseHelper {
   public async updateLastTaskEntityId(status: ProcessingStateModel<ENTITY>, trx: Knex.Transaction<any, any[]>): Promise<void> {
     await ProcessingStateModel(this.knex)
       .transacting(trx)
-      .insert({ ...status, network_id: environment.NETWORK_ID })
+      .insert({ ...status, ...network })
       .onConflict(['entity', 'network_id'])
       .merge()
   }
@@ -47,7 +48,7 @@ export class BlockListenerDatabaseHelper {
 
     const blocksRecords = BlockModel(this.knex)
       .select()
-      .where({ 'metadata': null })
+      .where('metadata IS NULL')
       .orderBy('id', 'asc')
       .limit(environment.BATCH_INSERT_CHUNK_SIZE)
 

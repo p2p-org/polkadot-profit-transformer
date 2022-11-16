@@ -7,9 +7,8 @@ import {
   Exposure,
   ValidatorPrefs,
 } from '@polkadot/types/interfaces'
-import { IBlockEraParams, TBlockHash } from '@/modules/RelaychainStakingProcessor/staking.types'
 import { EraModel } from '@/models/era.model'
-import { IGetValidatorsNominatorsResult, TBlockHash } from './interfaces'
+import { IBlockEraParams, IGetValidatorsNominatorsResult, TBlockHash } from '../interfaces'
 import { NominatorModel } from '@/models/nominator.model'
 import { ValidatorModel } from '@/models/validator.model'
 import { IndividualExposure } from '@polkadot/types/interfaces'

@@ -5,6 +5,7 @@ import { BlockModel } from '@/models/block.model'
 import { EventModel } from '@/models/event.model'
 import { environment } from '@/environment'
 
+const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class BlockProcessorDatabaseHelper {
 
@@ -15,7 +16,7 @@ export class BlockProcessorDatabaseHelper {
   async saveBlock(trx: Knex.Transaction<any, any[]>, block: BlockModel): Promise<void> {
     await BlockModel(this.knex)
       .transacting(trx)
-      .insert({ ...block, network_id: environment.NETWORK_ID })
+      .insert({ ...block, ...network })
   }
 
   async saveEvent(trx: Knex.Transaction<any, any[]>, event: EventModel): Promise<void> {
@@ -25,7 +26,7 @@ export class BlockProcessorDatabaseHelper {
     }
     await EventModel(this.knex)
       .transacting(trx)
-      .insert({ ...eventForDb, network_id: environment.NETWORK_ID })
+      .insert({ ...eventForDb, ...network })
   }
 
   async saveExtrinsics(trx: Knex.Transaction<any, any[]>, extrinsic: ExtrinsicModel): Promise<void> {
@@ -35,6 +36,6 @@ export class BlockProcessorDatabaseHelper {
     }
     await ExtrinsicModel(this.knex)
       .transacting(trx)
-      .insert({ ...strigifiedDataExtrinsic, network_id: environment.NETWORK_ID })
+      .insert({ ...strigifiedDataExtrinsic, ...network })
   }
 }

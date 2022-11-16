@@ -5,29 +5,33 @@ import { sleep } from '@/utils/sleep'
 import { environment, NODE_ENV } from '@/environment'
 import { Logger } from 'pino'
 
-const serviceInstance = Container.get(BlockListenerService)
-Container.get(BlockListenerController)
+export default () => {
 
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM')
-  serviceInstance.gracefullShutdown()
-  console.log('Ready to shutdown!')
-  await sleep(10000)
-  process.exit(0)
-})
+  const serviceInstance = Container.get(BlockListenerService)
+  Container.get(BlockListenerController)
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT')
-  serviceInstance.gracefullShutdown()
-  console.log('Ready to shutdown!')
-  await sleep(10000)
-  process.exit(0)
-})
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM')
+    serviceInstance.gracefullShutdown()
+    console.log('Ready to shutdown!')
+    await sleep(10000)
+    process.exit(0)
+  })
 
-if (environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
-  serviceInstance.preload()
+  process.on('SIGINT', async () => {
+    console.log('SIGINT')
+    serviceInstance.gracefullShutdown()
+    console.log('Ready to shutdown!')
+    await sleep(10000)
+    process.exit(0)
+  })
+
+  if (environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
+    serviceInstance.preload()
+  }
+  //await workerInstance.preloadOneBlock(1858800)
+
+  const logger: Logger = Container.get('logger')
+  logger.info('✌️ BlockListener module initialized')
+
 }
-//await workerInstance.preloadOneBlock(1858800)
-
-const logger: Logger = Container.get('logger')
-logger.info('✌️ BlockListener module initialized')

@@ -7,7 +7,7 @@ export enum ENTITY {
 }
 
 export type ProcessingStateModel<T> = {
-  entity: ENTITY
+  entity: string
   entity_id: number
   row_id?: number
 }
