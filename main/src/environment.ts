@@ -29,6 +29,8 @@ export type Environment = {
   NODE_ENV: NODE_ENV
   MODE: MODE
   NETWORK_ID: number
+  BATCH_INSERT_CHUNK_SIZE: number
+  MAX_ATTEMPTS: number
 }
 
 const parseModeEnum = (env: typeof preEnv) => {
@@ -52,6 +54,8 @@ const preEnv = cleanEnv(process.env, {
   NODE_ENV: str(),
   NETWORK_ID: num(),
   MODE: str({ choices: ['LISTENER', 'BLOCK_PROCESSOR', 'STAKING_PROCESSOR'] }),
+  BATCH_INSERT_CHUNK_SIZE: num({ default: 1000 }),
+  MAX_ATTEMPTS: num({ default: 5 }),
 })
 
 export const environment: Environment = parseModeEnum(preEnv)

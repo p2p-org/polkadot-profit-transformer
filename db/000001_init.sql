@@ -119,9 +119,9 @@ CREATE INDEX processing_tasks_base_idx ON processing_tasks (entity, entity_id, n
 CREATE TABLE rounds (
     "network_id" INT,
     "round_id" INT,
-    "total_stake" VARCHAR(50),
+    "total_stake" NUMERIC(35),
     "total_reward_points" INT,
-    "total_reward" VARCHAR(50),
+    "total_reward" NUMERIC(35),
     "collators_count" INT,
     "start_block_id" INT,
     "start_block_time" TIMESTAMP,
@@ -136,12 +136,12 @@ CREATE TABLE collators (
     "network_id" INT,
     "round_id" INT,
     "account_id" VARCHAR(150),
-    "total_stake" VARCHAR(50),
-    "own_stake" VARCHAR(50),
+    "total_stake" NUMERIC(35),
+    "own_stake" NUMERIC(35),
     "delegators_count" INT,
     "total_reward_points" INT,
-    "total_reward" VARCHAR (50),
-    "collator_reward" VARCHAR (50),
+    "total_reward" NUMERIC(35),
+    "collator_reward" NUMERIC(35),
     "payout_block_id" INT,
     "payout_block_time" TIMESTAMP,
     "row_id" SERIAL,
@@ -153,9 +153,9 @@ CREATE TABLE delegators (
     "round_id" INT,
     "account_id" VARCHAR(150),
     "collator_id" VARCHAR (150),
-    "amount" VARCHAR(50),
-    "final_amount" VARCHAR(50),
-    "reward" VARCHAR (50),
+    "amount" NUMERIC(35),
+    "final_amount" NUMERIC(35),
+    "reward" NUMERIC(35),
     "payout_block_id" INT,
     "payout_block_time" TIMESTAMP,
     "row_id" SERIAL,
@@ -164,7 +164,7 @@ CREATE TABLE delegators (
 
 CREATE TABLE networks (
     "network_id" INT,
-    "name" VARCHAR(50),
+    "name" VARCHAR (50),
     "decimals" INT
 
 )

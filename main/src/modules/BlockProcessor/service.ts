@@ -1,51 +1,198 @@
-/* eslint-disable no-restricted-syntax */
+import { Container, Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { v4 as uuidv4 } from 'uuid'
-import { ApiPromise } from '@polkadot/api'
 import { environment } from '@/environment'
 import { processedBlockGauge } from '@/loaders/prometheus'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
 import { BlockModel } from '@/models/block.model'
-import { logger } from '@/loaders/logger'
-import { ProcessingTasksRepository } from '@/apps/common/infra/postgresql/processing_tasks.repository'
+import { TasksRepository } from '@/libs/tasks.repository'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
-import { ExtrinsicsProcessor, ExtrinsicsProcessorInput } from './extrinsics-processor'
-import { processEvents } from './events-processor'
-import { StreamerRepository } from './streamer.repository'
-import { PolkadotRepository } from './polkadot.repository'
+import { BlockProcessorPolkadotHelper } from './helpers/polkadot'
+import { BlockProcessorDatabaseHelper } from './helpers/database'
+import { Logger } from 'pino'
+import { EventModel } from '@/models/event.model'
+import { ExtrinsicModel } from '@/models/extrinsic.model'
+import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
+import { BlockNumber, EventRecord, Call } from '@polkadot/types/interfaces'
+import { AnyTuple } from '@polkadot/types/types'
+import { ExtrinsicsProcessorInput } from './interfaces'
 
-const MAX_ATTEMPTS = 5 // retry 5 times then skip processing
+@Service()
+export class BlocksProcessorService {
 
-export type BlockProcessor = ReturnType<typeof BlockProcessor>;
+  constructor(
+    @Inject('logger') private readonly logger: Logger,
+    @Inject('knex') private readonly knex: Knex,
+    private readonly polkadotHelper: BlockProcessorPolkadotHelper,
+    private readonly databaseHelper: BlockProcessorDatabaseHelper,
+    private readonly tasksRepository: TasksRepository,
+  ) { }
 
-export const BlockProcessor = (deps: {
-  polkadotApi: ApiPromise
-  processingTasksRepository: ProcessingTasksRepository
-  rabbitMQ: Rabbit
-  knex: Knex
-}) => {
 
-  const {
-    polkadotApi, rabbitMQ, knex, processingTasksRepository,
-  } = deps
+  public async processTaskMessage<T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> {
+    const { block_id: blockId, collect_uid } = message
 
-  const polkadotRepository = PolkadotRepository({ polkadotApi })
-  const streamerRepository = StreamerRepository({ knex })
+    const metadata = {
+      block_process_uid: uuidv4(),
+      processing_timestamp: new Date(),
+    }
 
-  logger.info('BlockProcessor initialized')
+    await this.tasksRepository.increaseAttempts(ENTITY.BLOCK, blockId)
 
-  const extrinsicsProcessor = ExtrinsicsProcessor({ polkadotRepository })
+    await this.knex.transaction(async (trx) => {
+      const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
 
-  const onNewBlock = async (
+      if (!taskRecord) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BlockProcessor.processTaskMessage',
+          blockId,
+          warning: 'Task record not found. Skip processing',
+          collect_uid,
+        })
+        return
+      }
+
+      if (taskRecord.attempts > environment.MAX_ATTEMPTS) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BlockProcessor.processTaskMessage',
+          blockId,
+          warning: `Max attempts on block ${blockId} reached, cancel processing.`,
+          collect_uid,
+        })
+        return
+      }
+
+      if (taskRecord.collect_uid !== collect_uid) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BlockProcessor.processTaskMessage',
+          blockId,
+          warning: `Possible block ${blockId} processing task duplication. `
+            + `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+          collect_uid,
+        })
+        return
+      }
+
+      if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BlockProcessor.processTaskMessage',
+          blockId,
+          warning: `Block  ${blockId} has been already processed. Skip processing.`,
+          collect_uid,
+        })
+        return
+      }
+
+      // all is good, start processing
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: `Start processing block ${blockId}`,
+        ...metadata,
+        collect_uid,
+      })
+
+      const newStakingProcessingTasks = await this.processBlock(blockId, trx)
+
+      if (newStakingProcessingTasks.length) {
+        await this.tasksRepository.batchAddEntities(newStakingProcessingTasks, trx)
+      }
+
+      await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
+
+      /*
+      logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        message: `Block ${blockId} block data created, commit transaction data`,
+        ...metadata,
+        collect_uid,
+      })
+      */
+
+      await trx.commit()
+
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: `Block ${blockId} has been processed and committed`,
+        ...metadata,
+        collect_uid,
+        newStakingProcessingTasks,
+      })
+
+      processedBlockGauge.set(blockId)
+      if (!newStakingProcessingTasks.length) return
+
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: 'newProcessingTasks found, send to rabbit',
+        ...metadata,
+        collect_uid,
+      })
+
+      await this.sendStakingProcessingTasksToRabbit(newStakingProcessingTasks)
+
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: `block ${blockId} processing done`,
+        ...metadata,
+        collect_uid,
+      })
+    }).catch((error: Error) => {
+      this.logger.error({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        error: error.message,
+        data: {
+          ...metadata,
+          collect_uid,
+        },
+      })
+      throw error
+    })
+  }
+
+  private async sendStakingProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
+    const rabbitMQ: Rabbit = Container.get('rabbitMQ')
+
+    for (const task of tasks) {
+      this.logger.info({
+        event: 'BlockProcessor.sendStakingProcessingTaskToRabbit',
+        message: 'sendToRabbit new task for processing',
+        task,
+      })
+
+      if (task.entity === ENTITY.ERA) {
+        await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+          entity_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
+      } else if (task.entity === ENTITY.ROUND) {
+        await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+          entity_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
+      }
+    }
+  }
+
+
+  private async processBlock(
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
-  ): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> => {
+  ): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> {
     const newStakingProcessingTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
-    const blockHash = await polkadotRepository.getBlockHashByHeight(blockId)
+    const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
 
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
 
-    const [signedBlock, extHeader, blockTime, events, metadata] = await polkadotRepository.getInfoToProcessBlock(blockHash)
+    const [signedBlock, extHeader, blockTime, events, metadata] = await this.polkadotHelper.getInfoToProcessBlock(blockHash)
 
     const extrinsicsData: ExtrinsicsProcessorInput = {
       // eraId: activeEra,
@@ -54,9 +201,9 @@ export const BlockProcessor = (deps: {
       events,
       extrinsics: signedBlock.block.extrinsics,
     }
-    const extractedExtrinsics = await extrinsicsProcessor(extrinsicsData)
+    const extractedExtrinsics = await this.processExtrinsics(extrinsicsData)
 
-    const processedEvents = processEvents(signedBlock.block.header.number.toNumber(), events)
+    const processedEvents = this.processEvents(signedBlock.block.header.number.toNumber(), events)
 
     // const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
@@ -79,18 +226,18 @@ export const BlockProcessor = (deps: {
 
     // save extrinsics events and block to main tables
     for (const extrinsic of extractedExtrinsics) {
-      await streamerRepository(trx).extrinsics.save(extrinsic)
+      await this.databaseHelper.saveExtrinsics(trx, extrinsic)
     }
 
     // console.log(blockId + ': extrinsics saved')
 
     for (const event of processedEvents) {
-      await streamerRepository(trx).events.save(event)
+      await this.databaseHelper.saveEvent(trx, event)
     }
 
     // console.log(blockId + ': events saved')
 
-    await streamerRepository(trx).blocks.save(block)
+    await this.databaseHelper.saveBlock(trx, block)
 
     // console.log(blockId + ': block saved')
 
@@ -110,7 +257,7 @@ export const BlockProcessor = (deps: {
         }
         newStakingProcessingTasks.push(newStakingProcessingTask)
 
-        logger.debug({
+        this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
           blockId,
           message: 'detected new era',
@@ -133,7 +280,7 @@ export const BlockProcessor = (deps: {
         }
         newStakingProcessingTasks.push(newStakingProcessingTask)
 
-        logger.debug({
+        this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
           blockId,
           message: 'detected new round',
@@ -145,158 +292,99 @@ export const BlockProcessor = (deps: {
     return newStakingProcessingTasks
   };
 
-  const sendStakingProcessingTasksToRabbit = async (tasks: ProcessingTaskModel<ENTITY.BLOCK>[]) => {
-    for (const task of tasks) {
-      logger.info({
-        event: 'BlockProcessor.sendStakingProcessingTaskToRabbit',
-        message: 'sendToRabbit new task for processing',
-        task,
+  private processEvents(blockId: number, events: Vec<EventRecord>) {
+    const processEvent = (acc: EventModel[], record: EventRecord, eventIndex: number): Array<EventModel> => {
+      const { event } = record
+
+      acc.push({
+        id: `${blockId}-${eventIndex}`,
+        block_id: blockId,
+        section: event.section,
+        method: event.method,
+        // data: eventData,
+        event: event,
       })
 
-      if (task.entity === ENTITY.ERA) {
-        await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
-          entity_id: task.entity_id,
-          collect_uid: task.collect_uid,
-        })
-      } else if (task.entity === ENTITY.ROUND) {
-        await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
-          entity_id: task.entity_id,
-          collect_uid: task.collect_uid,
-        })
-      }
+      return acc
     }
+    return events.reduce(processEvent, [])
   }
 
-  const processTaskMessage = async <T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> => {
-    const { block_id: blockId, collect_uid } = message
 
-    const metadata = {
-      block_process_uid: uuidv4(),
-      processing_timestamp: new Date(),
+  private async processExtrinsics(input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> {
+    const { /* eraId, sessionId, */ blockNumber, events, extrinsics } = input
+
+    const result = await Promise.all(
+      extrinsics.map(async (extrinsic, index) => {
+        const isSuccess = await this.polkadotHelper.isExtrinsicEventsSuccess(index, events)
+        const initialCall = extrinsic.registry.createType('Call', extrinsic.method)
+
+        const referencedEventsIds = events
+          .map((event, eventIndex) => {
+            const { phase } = event
+            if (phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index)) {
+              return `${blockNumber}-${eventIndex}`
+            }
+            return ''
+          })
+          .filter((event) => event !== '')
+
+        if (isSuccess) {
+          const extractedExtrinsics = this.polkadotHelper.recursiveExtrinsicDecoder({ call: initialCall, indexes: [], index })
+
+          const extrinsicModels = extractedExtrinsics.map(({ call, indexes, index }) =>
+            this.createExtrinsicModelFromCall(blockNumber, call, isSuccess, extrinsic, [...indexes, index].join('-'), referencedEventsIds),
+          )
+          return extrinsicModels
+        } else {
+          // failed extrinsics sometimes have currupted inner call data, skip extraction and processing of extrinscics calls
+          const failedExtrinsicModel = this.createExtrinsicModelFromCall(
+            blockNumber,
+            initialCall,
+            isSuccess,
+            extrinsic,
+            index.toString(),
+            referencedEventsIds,
+          )
+
+          return [failedExtrinsicModel]
+        }
+      }),
+    )
+
+    const r = result.flat()
+    // console.log(JSON.stringify(r, null, 2))
+    return r
+  }
+
+  private createExtrinsicModelFromCall(
+    blockNumber: Compact<BlockNumber>,
+    call: Call,
+    isSuccess: boolean,
+    extrinsic: GenericExtrinsic<AnyTuple>,
+    index: string,
+    referencedEventsIds: string[],
+  ): ExtrinsicModel {
+    const extrinsicModel: ExtrinsicModel = {
+      id: `${blockNumber}-${index}`,
+      success: isSuccess,
+      block_id: blockNumber.toNumber(),
+      // session_id: sessionId,
+      // era: eraId,
+      section: call.section,
+      method: call.method,
+      mortal_period: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.period.toNumber() : null,
+      mortal_phase: extrinsic.era.isMortalEra ? extrinsic.era.asMortalEra.phase.toNumber() : null,
+      is_signed: extrinsic.isSigned,
+      signer: extrinsic.isSigned ? extrinsic.signer.toString() : null,
+      tip: extrinsic.tip.toString(),
+      nonce: extrinsic.nonce.toNumber(),
+      ref_event_ids: referencedEventsIds.length > 0 ? `{${referencedEventsIds.map((value) => `"${value}"`).join(',')}}` : null,
+      version: extrinsic.version,
+      extrinsic: call.toHuman(),
+      // args: call.args,
     }
 
-    await processingTasksRepository.increaseAttempts(ENTITY.BLOCK, blockId)
-
-    await knex.transaction(async (trx) => {
-      const taskRecord = await processingTasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
-
-      if (!taskRecord) {
-        await trx.rollback()
-        logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          warning: 'Task record not found. Skip processing',
-          collect_uid,
-        })
-        return;
-      }
-
-      if (taskRecord.attempts > MAX_ATTEMPTS) {
-        await trx.rollback()
-        logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          warning: `Max attempts on block ${blockId} reached, cancel processing.`,
-          collect_uid,
-        })
-        return;
-      }
-
-      if (taskRecord.collect_uid !== collect_uid) {
-        await trx.rollback()
-        logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          warning: `Possible block ${blockId} processing task duplication. `
-            + `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
-          collect_uid,
-        })
-        return;
-      }
-
-      if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-        await trx.rollback()
-        logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          warning: `Block  ${blockId} has been already processed. Skip processing.`,
-          collect_uid,
-        })
-        return;
-      }
-
-      // all is good, start processing
-      logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: `Start processing block ${blockId}`,
-        ...metadata,
-        collect_uid,
-      })
-
-      const newStakingProcessingTasks = await onNewBlock(blockId, trx)
-
-      if (newStakingProcessingTasks.length) {
-        await processingTasksRepository.batchAddEntities(newStakingProcessingTasks, trx)
-      }
-
-      await processingTasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-      /*
-      logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        message: `Block ${blockId} block data created, commit transaction data`,
-        ...metadata,
-        collect_uid,
-      })
-      */
-
-      await trx.commit()
-
-      logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: `Block ${blockId} has been processed and committed`,
-        ...metadata,
-        collect_uid,
-        newStakingProcessingTasks,
-      })
-
-      processedBlockGauge.set(blockId)
-      if (!newStakingProcessingTasks.length) return
-
-      logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: 'newProcessingTasks found, send to rabbit',
-        ...metadata,
-        collect_uid,
-      })
-
-      await sendStakingProcessingTasksToRabbit(newStakingProcessingTasks)
-
-      logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: `block ${blockId} processing done`,
-        ...metadata,
-        collect_uid,
-      })
-    }).catch((error: Error) => {
-      logger.error({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        error: error.message,
-        data: {
-          ...metadata,
-          collect_uid,
-        },
-      })
-      throw error
-    })
-  };
-
-  return {
-    processTaskMessage,
+    return extrinsicModel
   }
-};
+}

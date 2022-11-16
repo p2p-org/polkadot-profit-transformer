@@ -6,34 +6,26 @@
 /* eslint no-console: ["error", { allow: ["warn", "error"] }] */
 /* eslint no-constant-condition: ["error", { "checkLoops": false }] */
 
-import { Knex } from 'knex'
 import Queue from 'better-queue'
 import { ApiPromise } from '@polkadot/api'
 import { BN } from '@polkadot/util'
-import type { HexString } from '@polkadot/util/types'
 import type { u128, u32 } from '@polkadot/types-codec'
 import { Moment, SignedBlock, BlockHash } from '@polkadot/types/interfaces'
 import { logger } from '@/loaders/logger'
-import { StakingRepository } from './staking.repository'
-import {
-  DelegatorReward,
-  Rewarded,
-  StakedValueData,
-  StakedValue,
-  RoundValue,
-  Perbill,
-  Percent,
-} from './interfaces'
-import { setDefaultResultOrder } from 'dns'
 import { environment } from '@/environment'
+import {
+  StakedValue,
+  StakedValueData,
+  RoundValue
+} from './interfaces'
 
-export default class RoundPayoutProcessor {
+
+export class MoonbeamStakingProcessorRoundPayout {
   api: ApiPromise;
 
   isDebug = true;
 
   stakedValue: StakedValue = {};
-  stakingRepository: StakingRepository;
 
   collators: Set<string>;
   delegators: Set<string>;
@@ -42,101 +34,15 @@ export default class RoundPayoutProcessor {
 
   specVersion = 0;
 
-  constructor(api: ApiPromise, stakingRepository: StakingRepository) {
+  constructor(
+    api: ApiPromise,
+  ) {
     this.api = api
-    this.stakingRepository = stakingRepository
 
     this.collators = new Set()
     this.delegators = new Set()
 
     this.totalRewardedAmount = new BN(0)
-  }
-
-  async processRoundPayout(
-    payoutBlockId: number,
-    trx: Knex.Transaction,
-  ): Promise<void> {
-    const start = Date.now()
-    logger.info({
-      event: 'RoundPayoutProcessor.processRoundPayout',
-      message: `Process staking payout for round with payout block id: ${payoutBlockId}`,
-    })
-
-    try {
-      const { round } = await this.getRewards(payoutBlockId)
-
-      // console.log(JSON.stringify(this.stakedValue, null, 2));
-
-      logger.info({
-        event: 'RoundPayoutProcessor.processRoundPayout',
-        message: 'Round processed',
-        round_id: parseInt(round.id.toString(10), 10),
-        payout_block_id: round.payoutBlockId,
-        payout_block_time: new Date(parseInt(round.payoutBlockTime.toString(10), 10)),
-        start_block_id: round.startBlockId,
-        start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
-        total_reward: this.totalRewardedAmount.toString(10),
-        total_stake: round.totalStaked.toString(),
-        total_reward_points: parseInt(round.totalPoints.toString(), 10),
-        collators_count: Object.keys(this.stakedValue).length,
-        runtime: this.specVersion,
-      })
-
-
-      await this.stakingRepository(trx).round.save({
-        round_id: parseInt(round.id.toString(10), 10),
-        payout_block_id: round.payoutBlockId,
-        payout_block_time: new Date(parseInt(round.payoutBlockTime.toString(10), 10)),
-        start_block_id: round.startBlockId,
-        start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
-        total_reward: this.totalRewardedAmount.toString(10),
-        total_stake: round.totalStaked.toString(),
-        total_reward_points: parseInt(round.totalPoints.toString(), 10),
-        collators_count: Object.keys(this.stakedValue).length,
-        runtime: this.specVersion,
-      })
-
-      for (const collator of Object.values(this.stakedValue) as any) {
-        await this.stakingRepository(trx).collators.save({
-          round_id: parseInt(round.id.toString(10), 10),
-          account_id: collator.id,
-          total_stake: collator.total.toString(10),
-          own_stake: collator.bond.toString(10),
-          delegators_count: Object.keys(collator.delegators).length,
-          total_reward_points: parseInt(collator.points.toString(10), 10),
-          total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toString(10) : '0',
-          collator_reward: collator.rewardCollator && collator.rewardCollator ? collator.rewardCollator.toString(10) : '0',
-          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
-          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
-        })
-
-        for (const delegator of Object.values(collator.delegators) as any) {
-          await this.stakingRepository(trx).delegators.save({
-            round_id: parseInt(round.id.toString(10), 10),
-            account_id: delegator.id,
-            collator_id: collator.id,
-            amount: delegator.amount.toString(10),
-            final_amount: delegator.final_amount.toString(10),
-            reward: delegator.reward.toString(10),
-            payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
-            payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
-          })
-        }
-      }
-
-      const finish = Date.now()
-
-      logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${(finish - start) / 1000} seconds.`,
-      })
-    } catch (error: any) {
-      console.error(error)
-      logger.warn({
-        event: 'RoundPayoutProcessor.processRoundPayout',
-        error: `error in processing round staking: ${error.message}`,
-      })
-      throw error
-    }
   }
 
 
@@ -500,7 +406,7 @@ export default class RoundPayoutProcessor {
           }
         })
         cb()
-      };
+      }
 
       const queue = new Queue(processDelegators, { concurrent: 50 })
       for (const delegatorId of Array.from(this.delegators)) {
