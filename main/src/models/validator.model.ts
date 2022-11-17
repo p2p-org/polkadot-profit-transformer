@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
 
 export type ValidatorModel = {
-  era: number
+  era_id: number
   account_id: string
   total: string
   own: string

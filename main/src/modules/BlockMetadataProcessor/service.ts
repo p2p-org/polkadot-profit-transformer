@@ -118,7 +118,7 @@ export class BlockMetadataProcessorService {
     await BlockModel(this.knex)
       .transacting(trx)
       .update({ metadata })
-      .where({ id: blockId })
+      .where({ block_id: blockId })
 
     console.log(metadata)
   };

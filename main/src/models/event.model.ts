@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
 
 export type EventModel = {
-  id: string
+  event_id: string
   block_id: number
   section: string
   method: string

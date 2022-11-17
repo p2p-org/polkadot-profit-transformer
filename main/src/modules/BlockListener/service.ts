@@ -92,10 +92,10 @@ export class BlockListenerService {
       }
 
       for (const record of records) {
-        if (record.id < endBlockId) {
+        if (record.block_id < endBlockId) {
           const task: ProcessingTaskModel<ENTITY.BLOCK> = {
             entity: ENTITY.BLOCK_METADATA,
-            entity_id: record.id,
+            entity_id: record.block_id,
             collect_uid: uuidv4(),
             status: PROCESSING_STATUS.NOT_PROCESSED,
             start_timestamp: new Date(),
@@ -106,7 +106,7 @@ export class BlockListenerService {
           await this.sendTaskToToRabbit(ENTITY.BLOCK_METADATA, task)
         }
 
-        lastBlockId = record.id || 0
+        lastBlockId = record.block_id || 0
       }
 
       this.logger.info({

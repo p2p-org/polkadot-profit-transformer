@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
 
 export type ExtrinsicModel = {
-  id: string
+  extrinsic_id: string
   block_id: number
   parent_id?: string
   success: boolean

@@ -9,17 +9,13 @@ export type BlockMetadata = {
 }
 
 export type BlockModel = {
-  id: number
+  block_id: number
   hash: string
   state_root: string
   extrinsics_root: string
   parent_hash: string
   author: string
   metadata: BlockMetadata
-  // era?: number | null
-  // current_era: number | null
-  // epoch: number | null
-  // last_log: string
   digest: any
   block_time: Date
 }

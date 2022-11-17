@@ -208,7 +208,7 @@ export class BlocksProcessorService {
     // const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
     const block: BlockModel = {
-      id: signedBlock.block.header.number.toNumber(),
+      block_id: signedBlock.block.header.number.toNumber(),
       hash: signedBlock.block.header.hash.toHex(),
       author: extHeader?.author ? extHeader.author.toString() : '',
       metadata,
@@ -297,7 +297,7 @@ export class BlocksProcessorService {
       const { event } = record
 
       acc.push({
-        id: `${blockId}-${eventIndex}`,
+        event_id: `${blockId}-${eventIndex}`,
         block_id: blockId,
         section: event.section,
         method: event.method,
@@ -366,7 +366,7 @@ export class BlocksProcessorService {
     referencedEventsIds: string[],
   ): ExtrinsicModel {
     const extrinsicModel: ExtrinsicModel = {
-      id: `${blockNumber}-${index}`,
+      extrinsic_id: `${blockNumber}-${index}`,
       success: isSuccess,
       block_id: blockNumber.toNumber(),
       // session_id: sessionId,
