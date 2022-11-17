@@ -101,7 +101,7 @@ export class TasksRepository {
       .select()
       .where({ entity, ...network, entity_id, status: PROCESSING_STATUS.NOT_PROCESSED })
 
-    return tasksRecord && tasksRecord[0];
+    return tasksRecord && tasksRecord[0]
   }
 
   async setTaskRecordAsProcessed(record: ProcessingTaskModel<ENTITY>, trx: Knex.Transaction<any, any[]>): Promise<void> {

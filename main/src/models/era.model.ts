@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
 
 export type EraModel = {
-  era: number
+  era_id: number
   payout_block_id: number
   session_start: number
   total_reward: string

@@ -51,11 +51,11 @@ export class BlockListenerDatabaseHelper {
     const blocksRecords = BlockModel(this.knex)
       .select()
       .where(whereFilter)
-      .orderBy('id', 'asc')
+      .orderBy('block_id', 'asc')
       .limit(environment.BATCH_INSERT_CHUNK_SIZE)
 
     if (block_id) {
-      blocksRecords.andWhere('id', '>', block_id)
+      blocksRecords.andWhere('block_id', '>', block_id)
     }
 
     return await blocksRecords

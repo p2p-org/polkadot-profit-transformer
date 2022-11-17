@@ -75,7 +75,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
                 is_clipped: !!othersClipped.find((e: { who: { toString: () => any } }) => {
                   return e.who.toString() === who.toString()
                 }),
-                era: eraId,
+                era_id: eraId,
                 validator: validatorAccountId,
                 ...(await this.getStakingPayee(blockHash, who.toString())),
                 block_time: new Date(blockTime),
@@ -87,7 +87,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
         }
 
         validators.push({
-          era: eraId,
+          era_id: eraId,
           account_id: validatorAccountId,
           total: total.toString(),
           own: own.toString(),
@@ -221,7 +221,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     console.log('TOTAL REWARD', totalReward.toHuman())
 
     return {
-      era: eraId,
+      era_id: eraId,
       total_reward: totalReward.toString(),
       total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
       total_reward_points: +erasRewardPoints.total.toString(),

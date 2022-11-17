@@ -51,7 +51,7 @@ export class PolkadotStakingProcessorDatabaseHelper {
       of the rabbit queue
       */
     const record = await EraModel(this.knex)
-      .where({ era: eraId - 1 })
+      .where({ era_id: eraId - 1 })
       .first()
 
     // if prev era record doesn't exist, return undefined

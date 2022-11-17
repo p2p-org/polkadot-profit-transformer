@@ -1,7 +1,7 @@
 
 CREATE TABLE blocks (
     "network_id" INT,
-    "id" BIGINT,
+    "block_id" BIGINT,
     "hash" VARCHAR(66),
     "state_root" VARCHAR(66),
     "extrinsics_root" VARCHAR(66),
@@ -16,7 +16,7 @@ CREATE TABLE blocks (
 
 CREATE TABLE events (
     "network_id" INT,
-    "id" VARCHAR(150),
+    "event_id" VARCHAR(150),
     "block_id" BIGINT NOT NULL,
     "section" VARCHAR(50),
     "method" VARCHAR(50),
@@ -27,7 +27,7 @@ CREATE TABLE events (
 
 CREATE TABLE extrinsics (
     "network_id" INT,
-    "id" VARCHAR(150),
+    "extrinsic_id" VARCHAR(150),
     "block_id" BIGINT NOT NULL,
     "success" BOOL,
     "parent_id" VARCHAR(150),
@@ -48,7 +48,7 @@ CREATE TABLE extrinsics (
 
 CREATE TABLE eras (
     "network_id" INT,
-    "era" INT,
+    "era_id" INT,
     "payout_block_id" INT,
     "session_start" INT,
     "total_reward" BIGINT,
@@ -60,7 +60,7 @@ CREATE TABLE eras (
 
 CREATE TABLE validators (
     "network_id" INT,
-    "era" INT,
+    "era_id" INT,
     "account_id" VARCHAR(150),
     "active" BOOL,
     "total" BIGINT,
@@ -77,7 +77,7 @@ CREATE TABLE validators (
 
 CREATE TABLE nominators (
     "network_id" INT,
-    "era" INT,
+    "era_id" INT,
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
     "is_clipped" BOOL,
@@ -136,6 +136,7 @@ CREATE TABLE collators (
     "network_id" INT,
     "round_id" INT,
     "account_id" VARCHAR(150),
+    "active" BOOL,
     "total_stake" NUMERIC(35),
     "own_stake" NUMERIC(35),
     "delegators_count" INT,
