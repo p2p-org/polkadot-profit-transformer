@@ -3,6 +3,7 @@ import BlockMetadataProcessor from './BlockMetadataProcessor';
 import BlockProcessor from './BlockProcessor';
 import BlockListener from './BlockListener';
 import MoonbeamStakingProcessor from './MoonbeamStakingProcessor';
+import MoonbeamStakingProcessorRecalc from './MoonbeamStakingProcessorRecalc';
 import PolkadotStakingProcessor from './PolkadotStakingProcessor';
 
 export const ModulesLoader = async (): Promise<void> => {
@@ -12,7 +13,7 @@ export const ModulesLoader = async (): Promise<void> => {
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
     BlockProcessor()
-    BlockMetadataProcessor()
+    //BlockMetadataProcessor()
   }
 
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
@@ -20,6 +21,7 @@ export const ModulesLoader = async (): Promise<void> => {
       PolkadotStakingProcessor()
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
       MoonbeamStakingProcessor()
+      MoonbeamStakingProcessorRecalc()
     }
   }
 }
