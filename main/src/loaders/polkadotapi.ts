@@ -13,7 +13,7 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
 
   let typesBundle = {}
   // extra types for moonbeam/moonriver
-  if (environment.NETWORK_ID === 25 || environment.NETWORK_ID === 371) {
+  if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
     typesBundle = typesBundlePre900
   }
 
@@ -25,10 +25,14 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
   Promise.all([
     api.rpc.system.chain(),
     api.rpc.system.name(),
-    api.rpc.system.version()
+    api.rpc.system.version(),
+    api.rpc.system.chainType(),
+    api.rpc.system.name(),
+    api.rpc.system.properties(),
   ]).then((result) => {
-    const [chain, nodeName, nodeVersion] = result;
+    const [chain, nodeName, nodeVersion, chainType, name, properties] = result;
     logger.info(`✌️ Connected to ${nodeUrl}. Chain ${chain} using ${nodeName} v${nodeVersion}`);
+    //console.log(chainType.toHuman(), name.toHuman(), properties.toHuman());
   })
 
   return api

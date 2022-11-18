@@ -15,7 +15,7 @@ vault:
 env:
   substrate_uri: ws://polkadot-node-0.polkadot-node.polkadot.svc.cluster.local:9944
   log_level: info
-  network_id: 1
+  network_id: 0
   mode: LISTENER
   network: polkadot
 ingress:

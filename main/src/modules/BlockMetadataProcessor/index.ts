@@ -10,5 +10,5 @@ export default (): void => {
   rabbitMQ.process(QUEUES.BlocksMetadata, serviceInstance)
 
   const logger: Logger = Container.get('logger')
-  logger.info('✌️ BlockProcessor module initialized')
+  logger.info('✌️ BlockMetadataProcessor module initialized')
 }

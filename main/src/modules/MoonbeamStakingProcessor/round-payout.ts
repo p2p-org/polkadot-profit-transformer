@@ -492,12 +492,18 @@ export class MoonbeamStakingProcessorRoundPayout {
     */
     let totalBondRewardShare = new BN(0)
 
-    //collators rewards
     Object.keys(rewards).forEach(accountId => {
       rewards[accountId].forEach(reward => {
 
         amountTotal = amountTotal.add(reward.amount)
-        this.totalRewardedAmount = this.totalRewardedAmount.add(amountTotal)
+        this.totalRewardedAmount = this.totalRewardedAmount.add(reward.amount)
+      })
+    })
+
+    //collators rewards
+    Object.keys(rewards).forEach(accountId => {
+      rewards[accountId].forEach(reward => {
+
 
         if (this.collators.has(accountId)) {
           console.log("COLLATOR", this.specVersion, accountId)
