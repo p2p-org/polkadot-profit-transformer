@@ -22,7 +22,7 @@ export class MoonbeamStakingProcessorRecalcService {
       .select()
       .orderBy('round_id', 'asc')
       //.where({ round_id: 1287 })
-      .limit(5000)
+      .limit(50000)
 
     for (const round of roundRecords) {
       const collatorRecords = await CollatorModel(this.knex)
