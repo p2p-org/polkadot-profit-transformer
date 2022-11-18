@@ -31,9 +31,9 @@ export class BlockProcessorPolkadotHelper {
 
   async getInfoToProcessBlock(
     blockHash: BlockHash,
-  ): Promise<[/* number | null, number | null, number | null, */  SignedBlock, HeaderExtended | undefined, Moment, any, any]> {
+  ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata]> {
     try {
-      const historicalApi: any = await this.polkadotApi.at(blockHash)
+      const historicalApi = await this.polkadotApi.at(blockHash)
 
       const [blockTime, events] = await historicalApi.queryMulti([
         [historicalApi.query.timestamp.now],
@@ -64,7 +64,7 @@ export class BlockProcessorPolkadotHelper {
     return this.getMetadata(historicalApi)
   }
 
-  async getMetadata(historicalApi: ApiPromise): Promise<BlockMetadata> {
+  async getMetadata(historicalApi: any): Promise<BlockMetadata> {
     const metadata: BlockMetadata = {}
     try {
       const runtime: any = await historicalApi.query.system.lastRuntimeUpgrade()
