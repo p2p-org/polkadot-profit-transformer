@@ -21,7 +21,7 @@ export const ModulesLoader = async (): Promise<void> => {
       PolkadotStakingProcessor()
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
       MoonbeamStakingProcessor()
-      MoonbeamStakingProcessorRecalc()
+      //MoonbeamStakingProcessorRecalc()
     }
   }
 }
