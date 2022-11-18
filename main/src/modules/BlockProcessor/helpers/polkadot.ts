@@ -31,7 +31,7 @@ export class BlockProcessorPolkadotHelper {
 
   async getInfoToProcessBlock(
     blockHash: BlockHash,
-  ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Array<EventRecord>, BlockMetadata]> {
+  ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata]> {
     try {
       const historicalApi = await this.polkadotApi.at(blockHash)
 
@@ -53,7 +53,7 @@ export class BlockProcessorPolkadotHelper {
         events,
         metadata,
       ]
-    } catch (error) {
+    } catch (error: any) {
       console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)
       throw error
     }
