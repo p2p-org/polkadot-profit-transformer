@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 0
+replicas: 1
 chain: moonriver
 role: staking-processor
 limits: {cpu: 450m, memory: 1000Mi}
@@ -17,7 +17,7 @@ additional_args:
 env:
   substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
   log_level: info
-  network_id: 25
+  network_id: 1285
   mode: STAKING_PROCESSOR
   network: moonriver
 ingress:

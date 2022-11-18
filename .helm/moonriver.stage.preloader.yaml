@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 0
+replicas: 1
 chain: moonriver
 role: preloader
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: bc893ddd60ec3a5daed019a9497fd71c987acaa2}
@@ -15,7 +15,7 @@ vault:
 env:
   substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
   log_level: info
-  network_id: 25
+  network_id: 1285
   mode: LISTENER
   network: moonriver
 ingress:
