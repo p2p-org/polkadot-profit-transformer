@@ -21,7 +21,7 @@ export class MoonbeamStakingProcessorRecalcService {
     const roundRecords = await RoundModel(this.knex)
       .select()
       .orderBy('round_id', 'asc')
-      .where({ round_id: 1287 })
+      //.where({ round_id: 1287 })
       .limit(5000)
 
     for (const round of roundRecords) {
