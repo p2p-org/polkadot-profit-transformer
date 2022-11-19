@@ -1,11 +1,11 @@
 ---
 environment: mbelt3-prod
-replicas: 0
+replicas: 20
 chain: moonriver
 role: block-processor
-limits: {cpu: 350m, memory: 400Mi}
-requests: {cpu: 250m, memory: 400Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: bc893ddd60ec3a5daed019a9497fd71c987acaa2}
+limits: {cpu: 350m, memory: 500Mi}
+requests: {cpu: 250m, memory: 500Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 9b66adf6e7866f0aaa673058153f82d3bc10b908}
 port: 3000
 metrics:
   enabled: true
@@ -13,11 +13,11 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonriver"
 additional_args:
-  - "--max_old_space_size=400"
+  - "--max_old_space_size=500"
 env:
   substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
   log_level: info
-  network_id: 25
+  network_id: 1285
   mode: BLOCK_PROCESSOR
   network: moonriver
 ingress:
