@@ -1,10 +1,10 @@
 ---
 environment: mbelt3-prod
-replicas: 30
+replicas: 20
 chain: moonriver
 role: block-processor
-limits: {cpu: 350m, memory: 200Mi}
-requests: {cpu: 250m, memory: 200Mi}
+limits: {cpu: 350m, memory: 500Mi}
+requests: {cpu: 250m, memory: 500Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 9b66adf6e7866f0aaa673058153f82d3bc10b908}
 port: 3000
 metrics:
@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonriver"
 additional_args:
-  - "--max_old_space_size=200"
+  - "--max_old_space_size=500"
 env:
   substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
   log_level: info
