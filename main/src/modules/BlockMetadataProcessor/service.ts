@@ -18,6 +18,7 @@ export class BlockMetadataProcessorService {
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly tasksRepository: TasksRepository,
   ) {
+    console.log("!!!!!!!!!");
   }
 
   public async processTaskMessage<T extends QUEUES.BlocksMetadata>(message: TaskMessage<T>): Promise<void> {
