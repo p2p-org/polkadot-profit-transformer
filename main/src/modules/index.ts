@@ -11,6 +11,7 @@ export const ModulesLoader = async (): Promise<void> => {
     BlockListener()
   }
 
+  console.log("MODULES INIT 2. DEBUG");
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
     BlockProcessor()
     BlockMetadataProcessor()
