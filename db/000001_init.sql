@@ -184,5 +184,6 @@ create index validators_era_id_idx on validators (era_id);
 create index nominators_era_id_idx on nominators (era_id);
 
 
+CREATE INDEX blocks_block_id_idx ON public.blocks (block_id);
 
 
