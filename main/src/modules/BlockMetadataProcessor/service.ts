@@ -21,12 +21,15 @@ export class BlockMetadataProcessorService {
   }
 
   public async processTaskMessage<T extends QUEUES.BlocksMetadata>(message: TaskMessage<T>): Promise<void> {
+    this.logger.info("test 1");
     const { block_id: blockId, collect_uid } = message
 
     await this.tasksRepository.increaseAttempts(ENTITY.BLOCK_METADATA, blockId)
-
+    this.logger.info("test 2");
     await this.knex.transaction(async (trx) => {
+      this.logger.info("test 3");
       const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.BLOCK_METADATA, blockId, trx)
+      this.logger.info("test 4");
 
       if (!taskRecord) {
         await trx.rollback()
@@ -38,6 +41,7 @@ export class BlockMetadataProcessorService {
         })
         return
       }
+      this.logger.info("test 5");
 
       if (taskRecord.attempts > environment.MAX_ATTEMPTS) {
         await trx.rollback()
@@ -49,6 +53,7 @@ export class BlockMetadataProcessorService {
         })
         return
       }
+      this.logger.info("test 6");
 
       if (taskRecord.collect_uid !== collect_uid) {
         await trx.rollback()
@@ -61,6 +66,7 @@ export class BlockMetadataProcessorService {
         })
         return
       }
+      this.logger.info("test 7");
 
       if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
         await trx.rollback()
@@ -73,6 +79,8 @@ export class BlockMetadataProcessorService {
         return
       }
 
+      this.logger.info("test 8");
+
       // all is good, start processing
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -81,11 +89,17 @@ export class BlockMetadataProcessorService {
         collect_uid,
       })
 
+      this.logger.info("test 9");
+
       const newStakingProcessingTasks = await this.processBlock(blockId, trx)
 
+      this.logger.info("test 10");
+
       await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
+      this.logger.info("test 11");
 
       await trx.commit()
+      this.logger.info("test 12");
 
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -94,6 +108,7 @@ export class BlockMetadataProcessorService {
         collect_uid,
         newStakingProcessingTasks,
       })
+      this.logger.info("test 13");
 
     }).catch((error: Error) => {
       this.logger.error({
@@ -106,20 +121,24 @@ export class BlockMetadataProcessorService {
       })
       throw error
     })
+    this.logger.info("test 14");
   }
 
   private async processBlock(
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<void> {
+    this.logger.info("test 21");
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
+    this.logger.info("test 22");
     const metadata = await this.polkadotHelper.getBlockMetadata(blockHash)
+    this.logger.info("test 23");
 
     await BlockModel(this.knex)
       .transacting(trx)
       .update({ metadata })
       .where({ block_id: blockId })
-
+    this.logger.info("test 24");
     console.log(metadata)
   };
 
