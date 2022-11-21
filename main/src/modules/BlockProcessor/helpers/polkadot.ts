@@ -12,7 +12,6 @@ import {
 import { HeaderExtended } from '@polkadot/api-derive/types'
 import { BlockMetadata } from '@/models/block.model'
 import { environment } from '@/environment'
-import { Logger } from 'pino'
 
 type callEntry = {
   call: Call
@@ -23,7 +22,6 @@ type callEntry = {
 @Service()
 export class BlockProcessorPolkadotHelper {
   constructor(
-    @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
   ) { }
 
@@ -62,23 +60,18 @@ export class BlockProcessorPolkadotHelper {
   }
 
   async getBlockMetadata(blockHash: BlockHash): Promise<BlockMetadata> {
-    this.logger.info("test 31")
     const historicalApi: any = await this.polkadotApi.at(blockHash)
-    this.logger.info("test 32")
     return this.getMetadata(historicalApi)
   }
 
   async getMetadata(historicalApi: any): Promise<BlockMetadata> {
-    this.logger.info("test 41")
     const metadata: BlockMetadata = {}
     try {
       const runtime: any = await historicalApi.query.system.lastRuntimeUpgrade()
       metadata.runtime = runtime.unwrap().specVersion.toNumber()
     } catch { }
-    this.logger.info("test 42")
 
     if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
-      this.logger.info("test 43")
       try {
         const currentEra: any = await historicalApi.query.staking.currentEra()
         if (currentEra) {
@@ -104,18 +97,12 @@ export class BlockProcessorPolkadotHelper {
           metadata.session_id = parseInt(sessionId.toString(10), 10) as number
         }
       } catch (e) { }
-      this.logger.info("test 44")
     } else { //parachains
-      this.logger.info("test 45")
       try {
         const round: any = await historicalApi.query.parachainStaking.round()
-        this.logger.info("test 46")
         metadata.round_id = parseInt(round.current.toString(10), 10) as number
-        this.logger.info("test 47")
       } catch (e) { }
-      this.logger.info("test 48")
     }
-    this.logger.info("test 49")
 
     return metadata
   }

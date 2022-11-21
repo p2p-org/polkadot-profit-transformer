@@ -112,17 +112,14 @@ export class BlockMetadataProcessorService {
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<void> {
-    this.logger.info("test 21")
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
-    this.logger.info("test 22")
     const metadata = await this.polkadotHelper.getBlockMetadata(blockHash)
-    this.logger.info("test 23")
 
     await BlockModel(this.knex)
       .transacting(trx)
       .update({ metadata })
       .where({ block_id: blockId })
-    this.logger.info("test 24")
+
     console.log(metadata)
   };
 
