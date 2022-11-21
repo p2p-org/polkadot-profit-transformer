@@ -13,6 +13,7 @@ import type { u128, u32 } from '@polkadot/types-codec'
 import { Moment, SignedBlock, BlockHash } from '@polkadot/types/interfaces'
 import { logger } from '@/loaders/logger'
 import { environment } from '@/environment'
+import { sleep } from '@/utils/sleep'
 import {
   StakedValue,
   StakedValueData,
@@ -129,73 +130,6 @@ export class MoonbeamStakingProcessorRoundPayout {
     // const totalIssuance: BN = await apiAtPriorRewarded.query.balances.totalIssuance() as BN
     // const collatorCommissionRate: any = await apiAtPriorRewarded.query.parachainStaking.collatorCommission()
 
-    /*
-    const range = {
-      min: new Perbill(inflation.round.min).of(totalIssuance),
-      ideal: new Perbill(inflation.round.ideal).of(totalIssuance),
-      max: new Perbill(inflation.round.max).of(totalIssuance),
-    }
-    */
-
-    /*
-    const totalRoundIssuance = (() => {
-      if (totalStaked.lt(inflation.expect.min)) {
-        return range.min
-      } if (totalStaked.gt(inflation.expect.max)) {
-        return range.max
-      }
-      return range.ideal
-    })()
-    */
-    //const totalCollatorCommissionReward = new Perbill(collatorCommissionRate).of(totalRoundIssuance)
-
-    // calculate total staking reward
-    /*
-    const firstBlockRewardedEvents: any = await apiAtRewarded.query.system.events()
-    let reservedForParachainBond = new BN(0)
-    for (const { phase, event } of firstBlockRewardedEvents) {
-      if (phase.isInitialization) {
-        // only deduct parachainBondReward if it was transferred (event must exist)
-        if (apiAtRewarded.events.parachainStaking.ReservedForParachainBond.is(event)) {
-          reservedForParachainBond = event.data[1] as any
-          break;
-        }
-      }
-    }
-    */
-
-    // total expected staking reward minus the amount reserved for parachain bond
-    /*
-    const totalStakingReward = (() => {
-      const parachainBondReward = parachainBondPercent.of(totalRoundIssuance)
-      if (!reservedForParachainBond.isZero()) {
-        // expect(
-        //   parachainBondReward.eq(reservedForParachainBond),
-        //  `parachain bond amount does not match \
-        //    ${parachainBondReward.toString()} != ${reservedForParachainBond.toString()} \
-        //    for round ${originalRoundNumber.toString()}`
-        // ).to.be.true;
-        return totalRoundIssuance.sub(parachainBondReward)
-      }
-
-      return totalRoundIssuance
-    })()
-    */
-
-    /*
-    const delayedPayout = (
-      await apiAtRewarded.query.parachainStaking.delayedPayouts(originalRoundNumber)
-    ).unwrap();
-  */
-
-    /*
-    expect(
-      delayedPayout.totalStakingReward.eq(totalStakingReward),
-      `reward amounts do not match \
-        ${delayedPayout.totalStakingReward.toString()} != ${totalStakingReward.toString()} \
-        for round ${originalRoundNumber.toString()}`
-    ).to.be.true;
-    */
 
     // get the collators to be awarded via `awardedPts` storage
     const awardedCollators = (
@@ -203,10 +137,23 @@ export class MoonbeamStakingProcessorRoundPayout {
     ).map((awarded: any) => awarded.args[1].toHex())
     const awardedCollatorCount = awardedCollators.length
 
+
+
     // compute max rounds respecting the current block number and the number of awarded collators
-    const maxRoundChecks = (this.specVersion <= 1002) ?
-      1 :
-      Math.min(latestBlockNumber - nowBlockNumber + 1, awardedCollatorCount)
+    let maxRoundChecks = 1
+    if (this.specVersion > 1002) {
+      console.log('Collators count', awardedCollatorCount)
+      console.log('Current block number', nowBlockNumber)
+      console.log('LatestBlockNumber block number', latestBlockNumber)
+      if (awardedCollatorCount > latestBlockNumber - nowBlockNumber + 1) {
+        console.log('Console.log. need to wait while all collators rewards will be generatred')
+        console.log('Sleep for ', awardedCollatorCount * 15, 'seconds')
+        await sleep(1000 * awardedCollatorCount * 15)
+        console.log("Sleep finished")
+      }
+      maxRoundChecks = awardedCollatorCount
+    }
+
 
     logger.info({
       event: 'RoundPayoutProcessor.getRewards',
@@ -506,7 +453,7 @@ export class MoonbeamStakingProcessorRoundPayout {
 
 
         if (this.collators.has(accountId)) {
-          console.log("COLLATOR", this.specVersion, accountId)
+          console.log('COLLATOR', this.specVersion, accountId, reward.amount.toString(10))
           // collator is always paid first so this is guaranteed to execute first
           collatorInfo = this.stakedValue[accountId]
 
@@ -525,17 +472,11 @@ export class MoonbeamStakingProcessorRoundPayout {
       rewards[accountId].forEach(reward => {
         if (this.delegators.has(accountId)) {
 
-          console.log("DELEGATOR", this.specVersion, accountId, reward.amount.toString(10))
-
-
+          //console.log('DELEGATOR', this.specVersion, accountId, reward.amount.toString(10))
 
           if (reward.amount.isZero()) {
             return
           }
-
-          //if (this.specVersion <= 1001 && !reward.collator_id) {
-          //            return
-          //}
 
           if (this.specVersion === 1001 || this.specVersion === 1002) {
             if (reward.collator_id) { //runtime 1001, otherwise it should be defined in previous step.
@@ -552,23 +493,15 @@ export class MoonbeamStakingProcessorRoundPayout {
             }
           }
 
-          //console.log(collatorInfo.id);
-
-          /*
-          
-          */
-
           if (!collatorInfo || !collatorInfo.delegators || !collatorInfo.delegators[accountId]) {
             if (
-              (environment.NETWORK_ID === 25 && rewardedBlockNumber.toNumber() === 504000) ||
-              (environment.NETWORK_ID === 25 && rewardedBlockNumber.toNumber() === 1044000)
+              (environment.NETWORK === 'moonriver' && rewardedBlockNumber.toNumber() === 504000) ||
+              (environment.NETWORK === 'moonriver' && rewardedBlockNumber.toNumber() === 1044000)
             ) {
               return
             }
             throw new Error(`Could not find collator for delegator ${accountId}`)
           }
-
-          //console.log(2222);
 
           this.stakedValue[collatorInfo.id].delegators[accountId].reward = reward.amount//delegatorReward
         }

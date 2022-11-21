@@ -365,6 +365,7 @@ export class BlocksProcessorService {
     index: string,
     referencedEventsIds: string[],
   ): ExtrinsicModel {
+
     const extrinsicModel: ExtrinsicModel = {
       extrinsic_id: `${blockNumber}-${index}`,
       success: isSuccess,
@@ -384,6 +385,7 @@ export class BlocksProcessorService {
       extrinsic: call.toHuman(),
       // args: call.args,
     }
+    console.log(extrinsicModel);
 
     return extrinsicModel
   }
