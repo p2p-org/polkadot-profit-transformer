@@ -2,7 +2,7 @@
 environment: mbelt3-prod
 chain: moonbeam
 role: staking-processor
-replicas: 30
+replicas: 1
 limits: {cpu: 450m, memory: 1000Mi}
 requests: {cpu: 350m, memory: 1000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: d029b038a2c2ae1efaef5b69b45fa65cd6c1682b}
