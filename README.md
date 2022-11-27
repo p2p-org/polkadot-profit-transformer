@@ -241,7 +241,7 @@ It is used as entrypoint SQL when Postgres started by ./db/Dockerfile from ./doc
 
 
 
-## Mbelt structure diagram
+## Mbelt architecture diagram
 
 ![MBELT3 architecture diagram](./docs/arch3.png)
 
