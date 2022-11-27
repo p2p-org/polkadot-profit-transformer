@@ -13,6 +13,11 @@ Multi blockchain ETL solution is an interoperability-first data warehouse to pro
 - Staking and reward information for hundreds of validators and collators
 - Docker-compose in-house setup in 5 seconds
 
+# Data structure
+
+MBELT3 provide historical data for raw data, staking, identity, balances and governance
+
+![MBELT3 data diagram](./docs/data.png)
 
 # Dependencies
 
@@ -240,7 +245,7 @@ It is used as entrypoint SQL when Postgres started by ./db/Dockerfile from ./doc
 
 ![MBELT3 architecture diagram](./docs/arch.png)
 
-# How to add additional processor
+# How to add additional processor module
 
 To add an additional processor:
 
