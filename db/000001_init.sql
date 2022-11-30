@@ -186,4 +186,5 @@ create index nominators_era_id_idx on nominators (era_id);
 
 CREATE INDEX blocks_block_id_idx ON public.blocks (block_id);
 
+CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
 
