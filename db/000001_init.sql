@@ -37,7 +37,7 @@ CREATE TABLE extrinsics (
     "mortal_phase" INT,
     "is_signed" BOOL,
     "signer" VARCHAR(66),
-    "tip" BIGINT,
+    "tip" numeric(30),
     "nonce" DOUBLE PRECISION,
     "ref_event_ids" VARCHAR(150)[],
     "version" INT,
