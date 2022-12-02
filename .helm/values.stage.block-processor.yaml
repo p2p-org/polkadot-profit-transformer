@@ -1,7 +1,7 @@
 ---
 environment: stage
 
-replicas: 10
+replicas: 0
 
 name: block-processor
 image: { repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: v1.0.7 }
