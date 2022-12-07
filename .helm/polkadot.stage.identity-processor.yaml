@@ -1,30 +1,30 @@
 ---
-environment: mbelt3-prod
-chain: polkadot
-role: staking-processor
+environment: stage
 replicas: 1
-limits: {cpu: 450m, memory: 4096Mi}
-requests: {cpu: 350m, memory: 4096Mi}
+chain: polkadot
+role: block-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: edf734f3f3788177173b4aea04887ef102f9dbfa}
 port: 3000
 metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/mbelt3"
+  secret: "secret/mbelt/stage"
 additional_args:
-  - "--max_old_space_size=4096"
+  - "--max_old_space_size=1000"
 env:
   substrate_uri: ws://polkadot-node.polkadot.svc.cluster.local:9944
   log_level: info
   network_id: 0
-  mode: STAKING_PROCESSOR
+  mode: IDENTITY_PROCESSOR
   network: polkadot
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt3-staking-processor.polka.p2p.world
+  host: mbelt-stage-block-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt3-staking-processor-polka-p2p-world
+    secret: mbelt-stage-block-processor-polka-p2p-world
     ssl_redirect: true

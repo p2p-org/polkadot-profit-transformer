@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
 env:
-  substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
+  substrate_uri: ws://kusama-node.kusama.svc.cluster.local:9944
   log_level: info
   network_id: 2
   mode: LISTENER
