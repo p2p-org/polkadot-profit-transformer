@@ -2,7 +2,7 @@
 environment: stage
 replicas: 1
 chain: kusama
-role: block-processor
+role: identity-processor
 limits: {cpu: 350m, memory: 1000Mi}
 requests: {cpu: 250m, memory: 1000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: fcfbddd655907bd8387f7897fd33e89fd59dcbc4}
@@ -24,8 +24,8 @@ env:
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-kusama-block-processor.polka.p2p.world
+  host: mbelt-stage-kusama-identity-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-kusama-block-processor-polka-p2p-world
+    secret: mbelt-stage-kusama-identity-processor-polka-p2p-world
     ssl_redirect: true
