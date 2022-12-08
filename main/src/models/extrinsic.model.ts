@@ -19,6 +19,7 @@ export type ExtrinsicModel = {
   version: number
   extrinsic: any
   // args: any
+  row_id?: number
 }
 
 export const ExtrinsicModel = (knex: Knex) => knex<ExtrinsicModel>('extrinsics')

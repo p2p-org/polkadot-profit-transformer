@@ -5,6 +5,8 @@ export enum ENTITY {
   BLOCK_METADATA = 'block_metadata',
   ERA = 'era',
   ROUND = 'round',
+  IDENTITY_EXTRINSIC = 'identity_extrinsic',
+  IDENTITY_EVENT = 'identity_event',
 }
 
 export enum PROCESSING_STATUS {

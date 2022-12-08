@@ -14,6 +14,7 @@ export enum MODE {
   LISTENER = 'LISTENER',
   BLOCK_PROCESSOR = 'BLOCK_PROCESSOR',
   STAKING_PROCESSOR = 'STAKING_PROCESSOR',
+  IDENTITY_PROCESSOR = 'IDENTITY_PROCESSOR',
 }
 
 export type Environment = {
@@ -34,8 +35,8 @@ export type Environment = {
 }
 
 const parseModeEnum = (env: typeof preEnv) => {
-  const mode: MODE =
-    env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
+  const mode: MODE = env.MODE
+  //env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
   const nodeEnv: NODE_ENV =
     env.NODE_ENV === 'development' ? NODE_ENV.DEVELOPMENT : NODE_ENV.PRODUCTION
   return { ...env, MODE: mode, NODE_ENV: nodeEnv }
@@ -53,7 +54,7 @@ const preEnv = cleanEnv(process.env, {
   NETWORK: str(),
   NODE_ENV: str(),
   NETWORK_ID: num(),
-  MODE: str({ choices: ['LISTENER', 'BLOCK_PROCESSOR', 'STAKING_PROCESSOR'] }),
+  MODE: str({ choices: Object.values(MODE) }),
   BATCH_INSERT_CHUNK_SIZE: num({ default: 1000 }),
   MAX_ATTEMPTS: num({ default: 5 }),
 })

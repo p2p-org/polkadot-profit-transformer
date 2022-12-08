@@ -7,6 +7,7 @@ export type EventModel = {
   method: string
   // data: any
   event: any
+  row_id?: number
 }
 
 export const EventModel = (knex: Knex) => knex<EventModel>('events')
