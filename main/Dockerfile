@@ -6,8 +6,8 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsconfig-paths-bootstrap.js ./
 COPY ./src ./src
-#COPY ./migrations ./migrations
-#COPY ./migrations.ts ./migrations.ts
+COPY ./migrations ./migrations
+COPY ./migrations.ts ./migrations.ts
 
 RUN apk add --no-cache --virtual .build-deps python3 make gcc g++
 RUN npm ci
@@ -24,8 +24,8 @@ COPY --from=building /usr/src/app/node_modules ./node_modules
 COPY ./package*.json ./
 COPY --from=building /usr/src/app/tsconfig-paths-bootstrap.js ./tsconfig-paths-bootstrap.js
 COPY --from=building /usr/src/app/tsconfig.json ./tsconfig.json
-#COPY --from=building /usr/src/app/migrations ./migrations
-#COPY --from=building /usr/src/app/migrations.ts ./migrations.ts
+COPY --from=building /usr/src/app/migrations ./migrations
+COPY --from=building /usr/src/app/migrations.ts ./migrations.ts
 
 EXPOSE 8080
 
