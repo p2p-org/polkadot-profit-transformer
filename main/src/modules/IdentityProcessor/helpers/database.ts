@@ -77,14 +77,15 @@ export class IdentityDatabaseHelper {
   }
 
 
-  public async saveIdentity(data: IdentityModel, withoutOld: boolean=false, deep:number = 0): Promise<void> {
-    if (deep > 10 ) return;
+  public async saveIdentity(data: IdentityModel, withoutOld = false, deep = 0): Promise<void> {
+    if (deep > 10) return
     try {
       const oldIdentity = withoutOld ? {} : await this.findIdentityByAccountId(data.account_id, data.parent_account_id)
       const updatedIdentity = { ...(oldIdentity ?? {}), ...data }
       if (updatedIdentity.account_id === updatedIdentity.parent_account_id) {
-        delete updatedIdentity.parent_account_id;
+        delete updatedIdentity.parent_account_id
       }
+      delete updatedIdentity.row_id
       await IdentityModel(this.knex)
         .insert({ ...updatedIdentity, ...network })
         .onConflict(['account_id', 'network_id'])
@@ -95,19 +96,19 @@ export class IdentityDatabaseHelper {
         .select()
         .where({ parent_account_id: data.account_id, ...network })
       if (!children || !children.length) {
-        return;
+        return
       }
       for (const child of children) {
         const childIdentity = {
-           ...child,
-           display: updatedIdentity.display,
-           legal: updatedIdentity.legal,
-           web: updatedIdentity.web,
-           riot: updatedIdentity.riot,
-           email: updatedIdentity.email,
-           twitter: updatedIdentity.twitter
+          ...child,
+          display: updatedIdentity.display,
+          legal: updatedIdentity.legal,
+          web: updatedIdentity.web,
+          riot: updatedIdentity.riot,
+          email: updatedIdentity.email,
+          twitter: updatedIdentity.twitter
         }
-        await this.saveIdentity(childIdentity, true, deep+1);
+        await this.saveIdentity(childIdentity, true, deep + 1);
       }
     } catch (err) {
       this.logger.error({ err }, `Failed to save identity enrichment `)
@@ -116,20 +117,20 @@ export class IdentityDatabaseHelper {
   }
 
   public async findIdentityByAccountId(accountId: string, parentAccountId: string | null = null, deep: number = 0): Promise<IdentityModel | undefined> {
-    if (deep > 10 ) return;
+    if (deep > 10) return;
     const result = await IdentityModel(this.knex)
       .where({ account_id: accountId, ...network })
       .first()
 
     if (!result && parentAccountId !== null && parentAccountId !== "0") {
-      const parentResult = await this.findIdentityByAccountId(parentAccountId, null, deep+1); 
+      const parentResult = await this.findIdentityByAccountId(parentAccountId, null, deep + 1);
       return parentResult;
     } if (!result) {
       return undefined
     } else if (result.parent_account_id && result.parent_account_id !== accountId) {
-      const parentResult = await this.findIdentityByAccountId(result.parent_account_id, null, deep+1); 
-      return {...parentResult,...result};
-    } 
+      const parentResult = await this.findIdentityByAccountId(result.parent_account_id, null, deep + 1);
+      return { ...parentResult, ...result };
+    }
     return result;
   }
 

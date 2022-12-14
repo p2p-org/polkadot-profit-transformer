@@ -13,6 +13,7 @@ export type IdentityModel = {
   registrar_index?: string
   created_at_block_id?: number
   killed_at_block_id?: number
+  row_id?: number
 }
 
 export const IdentityModel = (knex: Knex) => knex<IdentityModel>('identity')
