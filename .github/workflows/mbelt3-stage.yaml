@@ -50,15 +50,19 @@ jobs:
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.identity-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.identity-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.identity-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.identity-processor.yaml
 
       - name: Commit image changes
         uses: stefanzweifel/git-auto-commit-action@v4
