@@ -2,7 +2,7 @@ import { Knex } from 'knex'
 
 export type IdentityModel = {
   account_id: string
-  root_acccount_id?: string
+  parent_account_id?: string | null
   display?: string
   legal?: string
   web?: string
@@ -11,8 +11,9 @@ export type IdentityModel = {
   twitter?: string
   judgement_status?: string
   registrar_index?: string
-  created_at?: number
-  killed_at?: number
+  created_at_block_id?: number
+  killed_at_block_id?: number
+  row_id?: number
 }
 
-export const IdentityModel = (knex: Knex) => knex<IdentityModel>('account_identity')
+export const IdentityModel = (knex: Knex) => knex<IdentityModel>('identity')

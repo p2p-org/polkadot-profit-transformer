@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: kusama
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: d3a9ba5db47e66ef41c55359a0b7f044480d1052}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 6f377de915fae3ed5bdb74d997c9b5141783ba22}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
 env:
-  substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
+  substrate_uri: ws://kusama-node.kusama.svc.cluster.local:9944
   log_level: info
   network_id: 2
   mode: LISTENER

@@ -56,7 +56,7 @@ services:
       dockerfile: Dockerfile.dev
     restart: always
     ports:
-      - 3001:3001
+      - 3001:3000
     depends_on:
       - mbelt_db
     environment:
@@ -71,7 +71,7 @@ services:
       dockerfile: Dockerfile.dev
     restart: always
     ports:
-      - 3002:3002
+      - 3002:3000
     depends_on:
       - mbelt_db
     environment:
@@ -79,4 +79,19 @@ services:
     volumes:
       - ./main:/usr/src/app
 
-       
+  mbelt_identity_processor:
+    container_name: mbelt_identity_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3003:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: IDENTITY_PROCESSOR
+    volumes:
+      - ./main:/usr/src/app
+
+ 
