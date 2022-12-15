@@ -30,7 +30,6 @@ export class BlocksProcessorService {
     console.log("Service intitialized");
   }
 
-
   public async processTaskMessage<T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> {
     console.log(1);
     const { block_id: blockId, collect_uid } = message
