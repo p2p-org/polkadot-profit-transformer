@@ -26,7 +26,7 @@ export class BlocksProcessorService {
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { 
+  ) {
     console.log("Service intitialized");
   }
 
@@ -38,8 +38,9 @@ export class BlocksProcessorService {
       block_process_uid: uuidv4(),
       processing_timestamp: new Date(),
     }
-
+    console.log(11);
     await this.tasksRepository.increaseAttempts(ENTITY.BLOCK, blockId)
+    console.log(12);
 
     await this.knex.transaction(async (trx) => {
       console.log(2);
@@ -95,7 +96,7 @@ export class BlocksProcessorService {
       }
       console.log(7);
 
-      
+
       // all is good, start processing
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
