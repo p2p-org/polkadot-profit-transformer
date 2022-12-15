@@ -84,7 +84,7 @@ export class IdentityListnerService {
       }
 
       for (const extrinsic of extrinsics) {
-        console.log('extrinsic', extrinsic)
+        //console.log('extrinsic', extrinsic)
         await this.processor.processExtrinsic(extrinsic)
 
         lastRowId = extrinsic.row_id || 0;

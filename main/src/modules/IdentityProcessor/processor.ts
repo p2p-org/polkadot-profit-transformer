@@ -22,7 +22,6 @@ export class IdentityProcessorService {
     private readonly databaseHelper: IdentityDatabaseHelper,
   ) {
 
-    console.log("I'm loaded")
   }
 
   public async processEvent(event: EventModel): Promise<void> {
@@ -143,25 +142,25 @@ export class IdentityProcessorService {
       }
       return ''
     }
-    
+
     const identity: IdentityModel = {
       account_id,
     };
 
-    ['display', 'legal', 'web', 'riot', 'email', 'twitter'].forEach(item=>{
+    ['display', 'legal', 'web', 'riot', 'email', 'twitter'].forEach(item => {
       const value = getValueOfField(identityRaw, item);
       if (value.trim() !== '') {
         //@ts-ignore
         identity[item] = value;
       }
     });
-    console.log("identity: ", identity);
+    //console.log("identity: ", identity);
 
     return await this.databaseHelper.saveIdentity(identity);
   }
 
   public async addSub(extrinsic: ExtrinsicModel): Promise<void> {
-    console.log("extrinsic.extrinsic", extrinsic.extrinsic)
+    //console.log("extrinsic.extrinsic", extrinsic.extrinsic)
     const account_id = this.getSubAccount(extrinsic)
     if (!account_id) {
       return
@@ -172,7 +171,7 @@ export class IdentityProcessorService {
   }
 
   public async setSubs(extrinsic: ExtrinsicModel): Promise<any> {
-    console.log("extrinsic.extrinsic.args", extrinsic.extrinsic.args);
+    //console.log("extrinsic.extrinsic.args", extrinsic.extrinsic.args);
     const parent_account_id = extrinsic.signer || ''
     const subs = extrinsic.extrinsic?.args?.subs
     if (!subs) return

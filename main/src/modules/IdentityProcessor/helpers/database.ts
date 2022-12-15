@@ -86,6 +86,7 @@ export class IdentityDatabaseHelper {
         delete updatedIdentity.parent_account_id
       }
       delete updatedIdentity.row_id
+
       await IdentityModel(this.knex)
         .insert({ ...updatedIdentity, ...network })
         .onConflict(['account_id', 'network_id'])
@@ -122,16 +123,15 @@ export class IdentityDatabaseHelper {
       .where({ account_id: accountId, ...network })
       .first()
 
-    if (!result && parentAccountId !== null && parentAccountId !== "0") {
-      const parentResult = await this.findIdentityByAccountId(parentAccountId, null, deep + 1);
-      return parentResult;
+    if (!result && parentAccountId !== null && parentAccountId !== '0') {
+      return await this.findIdentityByAccountId(parentAccountId, null, deep + 1)
     } if (!result) {
       return undefined
     } else if (result.parent_account_id && result.parent_account_id !== accountId) {
-      const parentResult = await this.findIdentityByAccountId(result.parent_account_id, null, deep + 1);
-      return { ...parentResult, ...result };
+      return await this.findIdentityByAccountId(result.parent_account_id, null, deep + 1)
+      //return { ...parentResult, ...result };
     }
-    return result;
+    return result
   }
 
 }
