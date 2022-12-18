@@ -27,26 +27,20 @@ export class BlocksProcessorService {
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
   ) {
-    console.log("Service intitialized");
   }
 
   public async processTaskMessage<T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> {
-    console.log(1);
     const { block_id: blockId, collect_uid } = message
 
     const metadata = {
       block_process_uid: uuidv4(),
       processing_timestamp: new Date(),
     }
-    console.log(11);
     await this.tasksRepository.increaseAttempts(ENTITY.BLOCK, blockId)
-    console.log(12);
 
     await this.knex.transaction(async (trx) => {
-      console.log(2);
       const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
 
-      console.log(3);
       if (!taskRecord) {
         await trx.rollback()
         this.logger.warn({
@@ -57,7 +51,6 @@ export class BlocksProcessorService {
         })
         return
       }
-      console.log(4);
 
       if (taskRecord.attempts > environment.MAX_ATTEMPTS) {
         await trx.rollback()
@@ -69,7 +62,6 @@ export class BlocksProcessorService {
         })
         return
       }
-      console.log(5);
 
       if (taskRecord.collect_uid !== collect_uid) {
         await trx.rollback()
@@ -82,7 +74,6 @@ export class BlocksProcessorService {
         })
         return
       }
-      console.log(6);
 
       if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
         await trx.rollback()
@@ -94,8 +85,6 @@ export class BlocksProcessorService {
         })
         return
       }
-      console.log(7);
-
 
       // all is good, start processing
       this.logger.info({
@@ -395,7 +384,6 @@ export class BlocksProcessorService {
       extrinsic: call.toHuman(),
       // args: call.args,
     }
-    console.log(extrinsicModel);
 
     return extrinsicModel
   }

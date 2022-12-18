@@ -119,8 +119,6 @@ export class BlockMetadataProcessorService {
       .transacting(trx)
       .update({ metadata })
       .where({ block_id: blockId })
-
-    console.log(metadata)
   };
 
 
