@@ -281,7 +281,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     const apiAtPreviousBlock = await this.api.at(
       await this.api.rpc.chain.getBlockHash(rewardedBlockNumber.toNumber() - 1)
     )
-    const round = await apiAtBlock.query.parachainStaking.round()
+    const round: any = await apiAtBlock.query.parachainStaking.round()
 
     logger.info({
       event: 'RoundPayoutProcessor.getRewardedFromEventsAtBlock',
@@ -330,17 +330,18 @@ export class MoonbeamStakingProcessorRoundPayout {
           // The orbiter is removed from the list at the block of the reward so we query the previous
           // block instead.
           // The round rewarded is 2 rounds before the current one.
-          let collators = await apiAtPreviousBlock.query.moonbeamOrbiters.orbiterPerRound.entries(
+          const orbiters = await apiAtPreviousBlock.query.moonbeamOrbiters.orbiterPerRound.entries(
             round.current.toNumber() - 2
           )
+          const orbiter = orbiters.find((orbit) => orbit[1].toHex() == event.data[0].toHex())
+          if (!orbiter || !orbiter.length) {
+            throw new Error(`Collator for orbiter not found ${event.data[0].toHex()}`)
+          }
 
-          const collator = `0x${collators
-            .find((orbit) => orbit[1].toHex() == event.data[0].toHex())[0]
-            .toHex()
-            .slice(-40)}`;
-          if (!rewards[collator]) rewards[collator] = [];
-          rewards[collator].push({
-            account: collator,
+          const accountId = `0x${orbiter[0].toHex().slice(-40)}`
+          if (!rewards[accountId]) rewards[accountId] = []
+          rewards[accountId].push({
+            account: accountId,
             amount: event.data[1] as u128,
           })
         }
