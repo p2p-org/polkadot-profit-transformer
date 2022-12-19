@@ -11,17 +11,13 @@ export default (): void => {
   Container.get(BlockListenerController)
 
   process.on('SIGTERM', async () => {
-    console.log('SIGTERM')
     serviceInstance.gracefullShutdown()
-    console.log('Ready to shutdown!')
     await sleep(10000)
     process.exit(0)
   })
 
   process.on('SIGINT', async () => {
-    console.log('SIGINT')
     serviceInstance.gracefullShutdown()
-    console.log('Ready to shutdown!')
     await sleep(10000)
     process.exit(0)
   })

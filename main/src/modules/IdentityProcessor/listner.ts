@@ -45,7 +45,6 @@ export class IdentityListnerService {
 
   /*
   public async restartUnprocessedEvents(startRowId: number): Promise<void> {
-    console.log(2);
     let lastRowId = startRowId
     while (true) {//lastRowId < endRowId) {
       const events = await this.databaseHelper.getUnprocessedEvents(lastRowId)
