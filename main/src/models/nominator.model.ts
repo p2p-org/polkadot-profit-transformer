@@ -9,6 +9,7 @@ export type NominatorModel = {
   reward_dest?: string
   reward_account_id?: string
   block_time: Date
+  row_time?: Date
 }
 
 export const NominatorModel = (knex: Knex) => knex<NominatorModel>('nominators')

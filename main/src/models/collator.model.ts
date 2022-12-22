@@ -11,6 +11,7 @@ export type CollatorModel = {
   collator_reward?: string
   payout_block_id?: number
   payout_block_time?: Date
+  row_time?: Date
 }
 
 export const CollatorModel = (knex: Knex) => knex<CollatorModel>('collators')

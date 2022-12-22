@@ -88,7 +88,7 @@ export class IdentityDatabaseHelper {
       delete updatedIdentity.row_id
 
       await IdentityModel(this.knex)
-        .insert({ ...updatedIdentity, ...network })
+        .insert({ ...updatedIdentity, ...network, row_time: new Date() })
         .onConflict(['account_id', 'network_id'])
         .merge()
 

@@ -11,6 +11,7 @@ export type RoundModel = {
   total_reward_points: number;
   collators_count: number;
   runtime: number;
+  row_time?: Date
 }
 
 export const RoundModel = (knex: Knex) => knex<RoundModel>('rounds')

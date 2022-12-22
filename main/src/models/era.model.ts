@@ -7,6 +7,7 @@ export type EraModel = {
   total_reward: string
   total_stake: string
   total_reward_points: number
+  row_time?: Date
 }
 
 export const EraModel = (knex: Knex) => knex<EraModel>('eras')

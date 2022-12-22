@@ -18,6 +18,7 @@ export type BlockModel = {
   metadata: BlockMetadata
   digest: any
   block_time: Date
+  row_time?: Date
 }
 
 export const BlockModel = (knex: Knex) => knex<BlockModel>('blocks')
