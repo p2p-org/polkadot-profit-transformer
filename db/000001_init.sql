@@ -11,6 +11,7 @@ CREATE TABLE blocks (
     "metadata" JSONB,
     "block_time" TIMESTAMP,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -22,6 +23,7 @@ CREATE TABLE events (
     "method" VARCHAR(50),
     "event" JSONB,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -43,6 +45,7 @@ CREATE TABLE extrinsics (
     "version" INT,
     "extrinsic" JSONB,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -55,6 +58,7 @@ CREATE TABLE eras (
     "total_stake" BIGINT,
     "total_reward_points" INT,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -72,6 +76,7 @@ CREATE TABLE validators (
     "prefs" JSONB,
     "block_time" TIMESTAMP,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -86,6 +91,7 @@ CREATE TABLE nominators (
     "reward_account_id" VARCHAR (150),
     "block_time" TIMESTAMP,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -102,6 +108,7 @@ CREATE TABLE processing_tasks (
     "data" JSONB,
     "attempts" INT,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -110,6 +117,7 @@ CREATE TABLE processing_state (
     "entity" VARCHAR (50),
     "entity_id" INT,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 ALTER TABLE IF EXISTS public.processing_state ADD CONSTRAINT processing_state_uniq_key UNIQUE (entity, network_id);
@@ -129,6 +137,7 @@ CREATE TABLE rounds (
     "payout_block_time" TIMESTAMP,
     "runtime" INT,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -146,6 +155,7 @@ CREATE TABLE collators (
     "payout_block_id" INT,
     "payout_block_time" TIMESTAMP,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -160,6 +170,7 @@ CREATE TABLE delegators (
     "payout_block_id" INT,
     "payout_block_time" TIMESTAMP,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
 
@@ -184,6 +195,7 @@ CREATE TABLE identity (
     "created_at_block_id" BIGINT,
     "killed_at_block_id" BIGINT,
     "row_id" SERIAL,
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id"),
     UNIQUE ("account_id", "network_id")
 );
