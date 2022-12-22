@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: polkadot
+role: monitoring
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4be9cba7da82ccb118a1054b0d0bfee818dcea58}
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3"
+env:
+  substrate_uri: ws://polkadot-node.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 0
+  mode: MONITORING
+  network: polkadot
+  slack_webhook: https://hooks.slack.com/services/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
+ingress:
+  enabled: false

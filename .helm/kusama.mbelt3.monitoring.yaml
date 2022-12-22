@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: kusama
+role: monitoring
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: cae94b70231f6493027dfb238c839edd1f718c59}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_kusama"
+env:
+  substrate_uri: ws://10.41.2.2:9944
+  log_level: info
+  network_id: 2
+  mode: MONITORING
+  network: kusama
+  slack_webhook: https://hooks.slack.com/services/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
+ingress:
+  enabled: false
