@@ -16,7 +16,7 @@ export class BlockProcessorDatabaseHelper {
   async saveBlock(trx: Knex.Transaction<any, any[]>, block: BlockModel): Promise<void> {
     await BlockModel(this.knex)
       .transacting(trx)
-      .insert({ ...block, ...network })
+      .insert({ ...block, ...network, row_time: new Date() })
   }
 
   async saveEvent(trx: Knex.Transaction<any, any[]>, event: EventModel): Promise<void> {
@@ -26,7 +26,7 @@ export class BlockProcessorDatabaseHelper {
     }
     await EventModel(this.knex)
       .transacting(trx)
-      .insert({ ...eventForDb, ...network })
+      .insert({ ...eventForDb, ...network, row_time: new Date() })
   }
 
   async saveExtrinsics(trx: Knex.Transaction<any, any[]>, extrinsic: ExtrinsicModel): Promise<void> {
@@ -36,6 +36,6 @@ export class BlockProcessorDatabaseHelper {
     }
     await ExtrinsicModel(this.knex)
       .transacting(trx)
-      .insert({ ...strigifiedDataExtrinsic, ...network })
+      .insert({ ...strigifiedDataExtrinsic, ...network, row_time: new Date() })
   }
 }

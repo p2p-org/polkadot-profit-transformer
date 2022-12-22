@@ -18,19 +18,19 @@ export class PolkadotStakingProcessorDatabaseHelper {
   async saveValidators(trx: Knex.Transaction<any, any[]>, validator: ValidatorModel): Promise<void> {
     await ValidatorModel(this.knex)
       .transacting(trx)
-      .insert({ ...validator, ...network })
+      .insert({ ...validator, ...network, row_time: new Date() })
   }
 
   async saveNominators(trx: Knex.Transaction<any, any[]>, nominator: NominatorModel): Promise<void> {
     await NominatorModel(this.knex)
       .transacting(trx)
-      .insert({ ...nominator, ...network })
+      .insert({ ...nominator, ...network, row_time: new Date() })
   }
 
   async saveEra(trx: Knex.Transaction<any, any[]>, era: EraModel): Promise<void> {
     await EraModel(this.knex)
       .transacting(trx)
-      .insert({ ...era, ...network })
+      .insert({ ...era, ...network, row_time: new Date() })
   }
 
   async findEraStartBlockId(trx: Knex.Transaction<any, any[]>, eraId: number): Promise<number | undefined> {

@@ -17,18 +17,18 @@ export class MoonbeamStakingProcessorDatabaseHelper {
   async saveCollators(trx: Knex.Transaction<any, any[]>, collator: CollatorModel): Promise<void> {
     await CollatorModel(this.knex)
       .transacting(trx)
-      .insert({ ...collator, ...network })
+      .insert({ ...collator, ...network, row_time: new Date() })
   }
   async saveDelegators(trx: Knex.Transaction<any, any[]>, delegator: DelegatorModel): Promise<void> {
     await DelegatorModel(this.knex)
       .transacting(trx)
-      .insert({ ...delegator, ...network })
+      .insert({ ...delegator, ...network, row_time: new Date() })
   }
 
   async saveRound(trx: Knex.Transaction<any, any[]>, round: RoundModel): Promise<void> {
     await RoundModel(this.knex)
       .transacting(trx)
-      .insert({ ...round, ...network })
+      .insert({ ...round, ...network, row_time: new Date() })
   }
 
 }

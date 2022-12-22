@@ -11,6 +11,7 @@ export type ValidatorModel = {
   reward_account_id?: string
   prefs: any
   block_time: Date
+  row_time?: Date
 }
 
 export const ValidatorModel = (knex: Knex) => knex<ValidatorModel>('validators')

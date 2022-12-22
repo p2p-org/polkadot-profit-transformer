@@ -14,6 +14,7 @@ export type IdentityModel = {
   created_at_block_id?: number
   killed_at_block_id?: number
   row_id?: number
+  row_time?: Date
 }
 
 export const IdentityModel = (knex: Knex) => knex<IdentityModel>('identity')

@@ -9,6 +9,7 @@ export type DelegatorModel = {
   reward: string
   payout_block_id?: number
   payout_block_time?: Date
+  row_time?: Date
 }
 
 export const DelegatorModel = (knex: Knex) => knex<DelegatorModel>('delegators')

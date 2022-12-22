@@ -20,6 +20,7 @@ export type ExtrinsicModel = {
   extrinsic: any
   // args: any
   row_id?: number
+  row_time?: Date
 }
 
 export const ExtrinsicModel = (knex: Knex) => knex<ExtrinsicModel>('extrinsics')

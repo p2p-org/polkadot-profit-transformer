@@ -8,6 +8,7 @@ export type EventModel = {
   // data: any
   event: any
   row_id?: number
+  row_time?: Date
 }
 
 export const EventModel = (knex: Knex) => knex<EventModel>('events')
