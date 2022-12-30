@@ -1,11 +1,11 @@
 ---
 environment: mbelt3-prod
 chain: moonriver
-role: preloader
+role: monitoring
 replicas: 1
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: cc186b9989cceb5e696b90fe747158c424d00679}
-limits: {cpu: 450m, memory: 200Mi}
-requests: {cpu: 400m, memory: 200Mi}
 port: 3000
 metrics:
   enabled: true
@@ -16,13 +16,7 @@ env:
   substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
   log_level: info
   network_id: 1285
-  mode: LISTENER
+  mode: MONITORING
   network: moonriver
 ingress:
-  enabled: true
-  class: nginx-external
-  host: mbelt3-moonriver-preloader.polka.p2p.world
-  tls:
-    cluster_issuer: cloudflare-prod
-    secret: mbelt3-moonriver-preloader-polka-p2p-world
-    ssl_redirect: true
+  enabled: false

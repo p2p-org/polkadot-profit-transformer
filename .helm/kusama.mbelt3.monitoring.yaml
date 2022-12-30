@@ -1,0 +1,22 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: kusama
+role: monitoring
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: cc186b9989cceb5e696b90fe747158c424d00679}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_kusama"
+env:
+  substrate_uri: ws://10.41.2.2:9944
+  log_level: info
+  network_id: 2
+  mode: MONITORING
+  network: kusama
+ingress:
+  enabled: false
