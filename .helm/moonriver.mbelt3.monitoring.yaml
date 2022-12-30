@@ -1,10 +1,10 @@
 ---
 environment: mbelt3-prod
 chain: moonriver
-role: staking-processor
+role: monitoring
 replicas: 1
-limits: {cpu: 450m, memory: 1000Mi}
-requests: {cpu: 350m, memory: 1000Mi}
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 03acf75fa2d0573969672d1d17a1b96b54a0209f}
 port: 3000
 metrics:
@@ -12,19 +12,11 @@ metrics:
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonriver"
-additional_args:
-  - "--max_old_space_size=1000"
 env:
   substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
   log_level: info
   network_id: 1285
-  mode: STAKING_PROCESSOR
+  mode: MONITORING
   network: moonriver
 ingress:
-  enabled: true
-  class: nginx-external
-  host: mbelt3-moonriver-staking-processor.polka.p2p.world
-  tls:
-    cluster_issuer: cloudflare-prod
-    secret: mbelt3-moonriver-staking-processor-polka-p2p-world
-    ssl_redirect: true
+  enabled: false
