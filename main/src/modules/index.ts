@@ -6,6 +6,7 @@ import MoonbeamStakingProcessor from './MoonbeamStakingProcessor'
 //import MoonbeamStakingProcessorRecalc from './MoonbeamStakingProcessorRecalc'
 import PolkadotStakingProcessor from './PolkadotStakingProcessor'
 import IdentityProcessor from './IdentityProcessor'
+import Monitoring from './Monitoring'
 
 export const ModulesLoader = async (): Promise<void> => {
   if (environment.MODE === MODE.LISTENER) {
@@ -28,5 +29,9 @@ export const ModulesLoader = async (): Promise<void> => {
 
   if (environment.MODE === MODE.IDENTITY_PROCESSOR) {
     IdentityProcessor()
+  }
+
+  if (environment.MODE === MODE.MONITORING) {
+    Monitoring()
   }
 }
