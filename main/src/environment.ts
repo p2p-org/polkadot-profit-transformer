@@ -19,7 +19,7 @@ export enum MODE {
 }
 
 export type Environment = {
-  SLACK_WEBHOOK: string
+  SLACK_WEBHOOK?: string
   PG_CONNECTION_STRING: string
   LOG_LEVEL: string
   SUBSTRATE_URI: string
@@ -45,7 +45,7 @@ const parseModeEnum = (env: typeof preEnv) => {
 }
 
 const preEnv = cleanEnv(process.env, {
-  SLACK_WEBHOOK: url(),
+  SLACK_WEBHOOK: url({ default:'' }),
   PG_CONNECTION_STRING: url(),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
