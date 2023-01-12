@@ -45,7 +45,7 @@ const parseModeEnum = (env: typeof preEnv) => {
 }
 
 const preEnv = cleanEnv(process.env, {
-  SLACK_WEBHOOK: url({ default:'' }),
+  SLACK_WEBHOOK: url({ default: '' }),
   PG_CONNECTION_STRING: url(),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),

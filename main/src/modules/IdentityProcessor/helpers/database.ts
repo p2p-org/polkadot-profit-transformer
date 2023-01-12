@@ -3,11 +3,11 @@ import { Knex } from 'knex'
 import { Logger } from 'pino'
 import { ProcessingStateModel } from '@/models/processing_status.model'
 import { ENTITY } from '@/models/processing_task.model'
-import { BlockModel } from '@/models/block.model'
 import { EventModel } from '@/models/event.model'
 import { ExtrinsicModel } from '@/models/extrinsic.model'
 import { environment } from '@/environment'
-import { IdentityModel } from '@/models/identity.model'
+import { IdentityModel } from '@/models/identities.model'
+import { AccountModel } from '@/models/accounts.model'
 
 const network = { network_id: environment.NETWORK_ID }
 @Service()
@@ -50,23 +50,6 @@ export class IdentityDatabaseHelper {
       .where('section', 'system')
       .whereIn('method', ['NewAccount', 'KilledAccount'])
       .orderBy('row_id', 'asc')
-      .limit(10)//environment.BATCH_INSERT_CHUNK_SIZE)
-
-    if (row_id) {
-      records.andWhere('row_id', '>', row_id)
-    }
-
-    return await records
-  }
-
-  public async getUnprocessedExtrinsics(
-    row_id?: number
-  ): Promise<Array<ExtrinsicModel>> {
-    const records = ExtrinsicModel(this.knex)
-      .select()
-      .where('section', 'identity')
-      .whereIn('method', ['clearIdentity', 'killIdentity', 'setFields', 'setIdentity', 'addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'])
-      .orderBy('row_id', 'asc')
       .limit(environment.BATCH_INSERT_CHUNK_SIZE)
 
     if (row_id) {
@@ -76,6 +59,36 @@ export class IdentityDatabaseHelper {
     return await records
   }
 
+  public async saveAccount(data: AccountModel): Promise<void> {
+    try {
+      await AccountModel(this.knex)
+        .insert({ ...data, ...network, row_time: new Date() })
+        .onConflict(['account_id', 'network_id'])
+        .merge()
+    } catch (err) {
+      this.logger.error({ err }, `Failed to save identity enrichment `)
+      throw err
+    }
+  }
+
+  public async getUnprocessedExtrinsics(
+    row_id?: number
+  ): Promise<Array<ExtrinsicModel>> {
+    const records = ExtrinsicModel(this.knex)
+      .select()
+      .where('section', 'identity')
+      .whereIn('method', [
+        'clearIdentity', 'killIdentity', 'setFields', 'setIdentity', 'addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'
+      ])
+      .orderBy('row_id', 'asc')
+      .limit(environment.BATCH_INSERT_CHUNK_SIZE)
+
+    if (row_id) {
+      records.andWhere('row_id', '>', row_id)
+    }
+
+    return await records
+  }
 
   public async saveIdentity(data: IdentityModel, withoutOld = false, deep = 0): Promise<void> {
     if (deep > 10) return
@@ -109,7 +122,7 @@ export class IdentityDatabaseHelper {
           email: updatedIdentity.email,
           twitter: updatedIdentity.twitter
         }
-        await this.saveIdentity(childIdentity, true, deep + 1);
+        await this.saveIdentity(childIdentity, true, deep + 1)
       }
     } catch (err) {
       this.logger.error({ err }, `Failed to save identity enrichment `)
@@ -117,8 +130,11 @@ export class IdentityDatabaseHelper {
     }
   }
 
-  public async findIdentityByAccountId(accountId: string, parentAccountId: string | null = null, deep: number = 0): Promise<IdentityModel | undefined> {
-    if (deep > 10) return;
+  public async findIdentityByAccountId(
+    accountId: string, parentAccountId: string | null = null,
+    deep = 0
+  ): Promise<IdentityModel | undefined> {
+    if (deep > 10) return
     const result = await IdentityModel(this.knex)
       .where({ account_id: accountId, ...network })
       .first()

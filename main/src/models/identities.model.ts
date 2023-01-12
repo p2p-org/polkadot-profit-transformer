@@ -9,12 +9,9 @@ export type IdentityModel = {
   riot?: string
   email?: string
   twitter?: string
-  judgement_status?: string
-  registrar_index?: string
-  created_at_block_id?: number
-  killed_at_block_id?: number
+  updated_at_block_id?: number
   row_id?: number
   row_time?: Date
 }
 
-export const IdentityModel = (knex: Knex) => knex<IdentityModel>('identity')
+export const IdentityModel = (knex: Knex) => knex<IdentityModel>('identities')
