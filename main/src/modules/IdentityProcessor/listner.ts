@@ -51,7 +51,7 @@ export class IdentityListnerService {
       }
 
       for (const event of events) {
-        console.log('event', event)
+        //console.log('event', event)
         await this.processor.processEvent(event)
 
         lastRowId = event.row_id || 0
