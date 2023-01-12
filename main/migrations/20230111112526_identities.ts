@@ -19,7 +19,7 @@ export async function up(knex: Knex): Promise<void> {
         UNIQUE ("account_id", "network_id")
     )`);
 
-    await knex.raw(`CREATE TABLE identities (
+    await knex.raw(`CREATE TABLE IF NOT EXISTS identities (
         "network_id" INT,
         "account_id" varchar(50),
         "parent_account_id" varchar(50),
