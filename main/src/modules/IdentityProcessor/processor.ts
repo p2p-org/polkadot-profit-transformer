@@ -2,7 +2,7 @@ import { Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { Logger } from 'pino'
 import { EventModel } from '@/models/event.model'
-import { IdentityModel } from '@/models/identity.model'
+import { IdentityModel } from '@/models/identities.model'
 import { ExtrinsicModel } from '@/models/extrinsic.model'
 import { IdentityDatabaseHelper } from './helpers/database'
 
@@ -11,7 +11,6 @@ export enum JudgementStatus {
   GIVEN = 'given',
   UNREQUESTED = 'unrequested',
 }
-
 
 @Service()
 export class IdentityProcessorService {
@@ -39,20 +38,18 @@ export class IdentityProcessorService {
         this.logger.info({ block_id: event.block_id }, `Process enrichment KilledAccount`)
         await this.onKilledAccount(event)
         break
-      /*
-    case 'JudgementRequested':
-      this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementRequested`)
-      await this.onJudgementEvent({ event, status: JudgementStatus.REQUESTED })
-      break
-    case 'JudgementGiven':
-      this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementGiven`)
-      await this.onJudgementEvent({ event, status: JudgementStatus.GIVEN })
-      break
-    case 'JudgementUnrequested':
-      this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementUnrequested`)
-      await this.onJudgementEvent({ event, status: JudgementStatus.UNREQUESTED })
-      break
-      */
+      case 'JudgementRequested':
+        this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementRequested`)
+        await this.onJudgementEvent({ event, status: JudgementStatus.REQUESTED })
+        break
+      case 'JudgementGiven':
+        this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementGiven`)
+        await this.onJudgementEvent({ event, status: JudgementStatus.GIVEN })
+        break
+      case 'JudgementUnrequested':
+        this.logger.info({ block_id: event.block_id }, `Process enrichment JudgementUnrequested`)
+        await this.onJudgementEvent({ event, status: JudgementStatus.UNREQUESTED })
+        break
       default:
         this.logger.error({
           event: 'IdentityProcessor.processEvent',
@@ -63,20 +60,24 @@ export class IdentityProcessorService {
   }
 
   public async onNewAccount(event: EventModel): Promise<void> {
-    // console.log('onNewAccount event', event)
-
-    return this.databaseHelper.saveIdentity({
+    return this.databaseHelper.saveAccount({
       account_id: event.event.data[0].toString(),
       created_at_block_id: event.block_id,
     })
   }
 
   public async onKilledAccount(event: EventModel): Promise<void> {
-    // console.log('onKilledAccount event', event)
-
-    return this.databaseHelper.saveIdentity({
+    return this.databaseHelper.saveAccount({
       account_id: event.event.data[0].toString(),
       killed_at_block_id: event.block_id,
+    })
+  }
+
+  public async onJudgementEvent({ event, status }: { event: EventModel; status: JudgementStatus }): Promise<void> {
+    return this.databaseHelper.saveAccount({
+      account_id: event.event.data[0].toString(),
+      judgement_status: status,
+      registrar_index: parseInt(event.event.data[1], 16),
     })
   }
 
@@ -133,30 +134,47 @@ export class IdentityProcessorService {
 
     const identityRaw = extrinsic.extrinsic.args
 
+    const formatHexString = (name: string): string => {
+      const hex2str = (hex: string): string => {
+        let str = ''
+        for (let i = 0; i < hex.length; i += 2) {
+          str += String.fromCharCode(parseInt(hex.substr(i, 2), 16))
+        }
+        return str
+      }
+
+      if (name.match(/^0x[0-9|a-z]+$/g) && name.match(/^0x[0-9]+$/g) && name.match(/^0x[a-z]+$/g)) {
+        return hex2str(name.substr(2))
+      } else if (name.match(/^0x[0-9|a-z|A-Z]+$/g)) {
+        return name.substr(2)
+      }
+      return name
+    }
+
     const getValueOfField = (identityRaw: any, field: string): string => {
       if (identityRaw.info && identityRaw.info[field]) {
         const value = identityRaw.info[field]
         if (typeof (value) === 'string' && value === 'None') { return '' }
-        if (typeof (value) === 'object' && value.raw) { return value.raw }
-        if (typeof (value) === 'object' && value.Raw) { return value.Raw }
+        if (typeof (value) === 'object' && value.raw) { return formatHexString(value.raw) }
+        if (typeof (value) === 'object' && value.Raw) { return formatHexString(value.Raw) }
       }
       return ''
     }
 
     const identity: IdentityModel = {
       account_id,
+      updated_at_block_id: extrinsic.block_id
     };
 
     ['display', 'legal', 'web', 'riot', 'email', 'twitter'].forEach(item => {
-      const value = getValueOfField(identityRaw, item);
+      const value = formatHexString(getValueOfField(identityRaw, item))
       if (value.trim() !== '') {
         //@ts-ignore
-        identity[item] = value;
+        identity[item] = value
       }
-    });
-    //console.log("identity: ", identity);
+    })
 
-    return await this.databaseHelper.saveIdentity(identity);
+    return await this.databaseHelper.saveIdentity(identity)
   }
 
   public async addSub(extrinsic: ExtrinsicModel): Promise<void> {
@@ -167,7 +185,11 @@ export class IdentityProcessorService {
     }
 
     const parent_account_id = extrinsic.signer || ''
-    return this.databaseHelper.saveIdentity({ account_id, parent_account_id })
+    return this.databaseHelper.saveIdentity({
+      account_id,
+      parent_account_id,
+      updated_at_block_id: extrinsic.block_id
+    })
   }
 
   public async setSubs(extrinsic: ExtrinsicModel): Promise<any> {
@@ -180,6 +202,7 @@ export class IdentityProcessorService {
         this.databaseHelper.saveIdentity({
           account_id: account_id.toString(),
           parent_account_id,
+          updated_at_block_id: extrinsic.block_id
         }),
       ),
     )
@@ -191,7 +214,11 @@ export class IdentityProcessorService {
       return null
     }
 
-    return this.databaseHelper.saveIdentity({ account_id, parent_account_id: null })
+    return this.databaseHelper.saveIdentity({
+      account_id,
+      parent_account_id: null,
+      updated_at_block_id: extrinsic.block_id
+    })
   }
 
   /**
@@ -201,7 +228,11 @@ export class IdentityProcessorService {
     // console.log('quitSub extrinsic', extrinsic)
 
     const account_id = extrinsic.signer!.toString()
-    return this.databaseHelper.saveIdentity({ account_id, parent_account_id: null })
+    return this.databaseHelper.saveIdentity({
+      account_id,
+      parent_account_id: null,
+      updated_at_block_id: extrinsic.block_id
+    })
   }
 
 

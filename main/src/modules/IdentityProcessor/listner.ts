@@ -38,25 +38,23 @@ export class IdentityListnerService {
       lastProcessedExtrinsicId
     })
 
-    //await this.restartUnprocessedEvents(lastProcessedEventId)
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
+    await this.restartUnprocessedEvents(lastProcessedEventId)
   }
 
-
-  /*
   public async restartUnprocessedEvents(startRowId: number): Promise<void> {
     let lastRowId = startRowId
     while (true) {//lastRowId < endRowId) {
       const events = await this.databaseHelper.getUnprocessedEvents(lastRowId)
       if (!events || !events.length) {
-        return
+        break
       }
 
       for (const event of events) {
         console.log('event', event)
         await this.processor.processEvent(event)
 
-        lastRowId = event.row_id
+        lastRowId = event.row_id || 0
       }
 
       this.logger.info({
@@ -64,14 +62,16 @@ export class IdentityListnerService {
         message: `Last row id: ${lastRowId}`
       })
 
-      //TODO. part of events could be updated.
       //tansaction here?
       await this.databaseHelper.updateLastTaskEntityId({ entity: ENTITY.IDENTITY_EVENT, entity_id: lastRowId })
 
-      await sleep(100)
+      await sleep(1000)
     }
+
+    setTimeout(() => {
+      this.restartUnprocessedEvents(lastRowId)
+    }, 30 * 1000)
   }
-  */
 
 
   public async restartUnprocessedExtrinsics(startRowId: number): Promise<void> {
@@ -79,14 +79,14 @@ export class IdentityListnerService {
     while (true) {//lastRowId < endRowId) {
       const extrinsics = await this.databaseHelper.getUnprocessedExtrinsics(lastRowId)
       if (!extrinsics || !extrinsics.length) {
-        return
+        break
       }
 
       for (const extrinsic of extrinsics) {
         //console.log('extrinsic', extrinsic)
         await this.processor.processExtrinsic(extrinsic)
 
-        lastRowId = extrinsic.row_id || 0;
+        lastRowId = extrinsic.row_id || 0
       }
 
       this.logger.info({
@@ -98,7 +98,12 @@ export class IdentityListnerService {
       //tansaction here?
       await this.databaseHelper.updateLastTaskEntityId({ entity: ENTITY.IDENTITY_EXTRINSIC, entity_id: lastRowId })
 
-      await sleep(100)
+      await sleep(1000)
     }
+
+    setTimeout(() => {
+      this.restartUnprocessedExtrinsics(lastRowId)
+    }, 30 * 1000)
   }
+
 }

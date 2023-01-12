@@ -15,7 +15,7 @@ export const ModulesLoader = async (): Promise<void> => {
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
     BlockProcessor()
-    //    BlockMetadataProcessor()
+    //BlockMetadataProcessor()
   }
 
   if (environment.MODE === MODE.STAKING_PROCESSOR) {

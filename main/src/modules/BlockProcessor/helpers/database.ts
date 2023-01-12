@@ -13,6 +13,14 @@ export class BlockProcessorDatabaseHelper {
     @Inject('knex') private readonly knex: Knex,
   ) { }
 
+  async getBlockById(blockId: number): Promise<BlockModel | null> {
+    const blocksRecords = await BlockModel(this.knex)
+      .select()
+      .where({ block_id: blockId, ...network })
+
+    return blocksRecords[0]
+  }
+
   async saveBlock(trx: Knex.Transaction<any, any[]>, block: BlockModel): Promise<void> {
     await BlockModel(this.knex)
       .transacting(trx)

@@ -86,6 +86,19 @@ export class BlocksProcessorService {
         return
       }
 
+      //check that block wasn't processed already
+      if (await this.databaseHelper.getBlockById(blockId)) {
+        this.logger.info({
+          event: 'BlockProcessor.processTaskMessage',
+          blockId,
+          message: `Block ${blockId} already present in the database`,
+        })
+
+        await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
+        await trx.commit()
+        return
+      }
+
       // all is good, start processing
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -102,15 +115,6 @@ export class BlocksProcessorService {
       }
 
       await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-      /*
-      logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        message: `Block ${blockId} block data created, commit transaction data`,
-        ...metadata,
-        collect_uid,
-      })
-      */
 
       await trx.commit()
 
