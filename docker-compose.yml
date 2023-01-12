@@ -1,0 +1,110 @@
+version: '3'
+
+networks:
+  default:
+    external:
+      name: streamer_network
+
+services:
+  mbelt_db:
+    container_name: mbelt_postgres
+    build: './db'
+    restart: always
+    hostname: mbelt_postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mbelt
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+
+  mbelt_rabbitmq:
+    container_name: mbelt_rabbitmq
+    image: rabbitmq:3-management-alpine
+    hostname: mbelt_rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: username
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+
+  mbelt_listener:
+    container_name: mbelt_listener
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3000:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: LISTENER
+    volumes:
+      - ./main:/usr/src/app
+
+  mbelt_block_processor:
+    container_name: mbelt_block_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3001:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: BLOCK_PROCESSOR
+    volumes:
+      - ./main:/usr/src/app
+
+  mbelt_staking_processor:
+    container_name: mbelt_staking_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3002:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: STAKING_PROCESSOR
+    volumes:
+      - ./main:/usr/src/app
+
+  mbelt_identity_processor:
+    container_name: mbelt_identity_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3003:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: IDENTITY_PROCESSOR
+    volumes:
+      - ./main:/usr/src/app
+
+  mbelt_monitoring:
+    container_name: mbelt_monitoring
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3004:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: MONITORING
+    volumes:
+      - ./main:/usr/src/app
