@@ -1,0 +1,27 @@
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "app.fullname" $ }}
+  labels:
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.tls.ssl_redirect | quote }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.cluster_issuer | quote }}
+spec:
+  ingressClassName: {{ .Values.ingress.class }}
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend: { service: { name: {{ template "app.fullname" $ }}, port: { number: 80 } } }
+  tls:
+  - hosts: [ {{ .Values.ingress.host }} ]
+    secretName: {{ .Values.ingress.tls.secret }}
+{{- end }}

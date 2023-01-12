@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ template "app.fullname" $ }}
+  labels:
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
