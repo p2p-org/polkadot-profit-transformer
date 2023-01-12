@@ -1,4 +1,4 @@
-import { environment, MODE } from '@/environment'
+import { environment, MODE, NODE_ENV } from '@/environment'
 //import BlockMetadataProcessor from './BlockMetadataProcessor'
 import BlockProcessor from './BlockProcessor'
 import BlockListener from './BlockListener'
@@ -31,7 +31,7 @@ export const ModulesLoader = async (): Promise<void> => {
     IdentityProcessor()
   }
 
-  if (environment.MODE === MODE.MONITORING) {
+  if (environment.MODE === MODE.MONITORING && environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
     Monitoring()
   }
 }
