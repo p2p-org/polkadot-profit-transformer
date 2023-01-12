@@ -180,7 +180,20 @@ CREATE TABLE networks (
     "decimals" INT
 )
 
-CREATE TABLE identity (
+CREATE TABLE IF NOT EXISTS accounts (
+        "network_id" INT,
+        "account_id" varchar(50),
+        "created_at_block_id" BIGINT,
+        "killed_at_block_id" BIGINT,
+        "judgement_status" varchar(256),
+        "registrar_index" BIGINT,
+        "row_id" SERIAL,
+        "row_time" TIMESTAMP,
+        PRIMARY KEY ("row_id"),
+        UNIQUE ("account_id", "network_id")
+)
+
+CREATE TABLE identities (
     "network_id" INT,
     "account_id" varchar(50),
     "parent_account_id" varchar(50),
@@ -190,15 +203,13 @@ CREATE TABLE identity (
     "riot" varchar(256),
     "email" varchar(256),
     "twitter" varchar(256),
-    "judgement_status" varchar(256),
-    "registrar_index" BIGINT,
-    "created_at_block_id" BIGINT,
-    "killed_at_block_id" BIGINT,
+    "updated_at_block_id" BIGINT,
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id"),
     UNIQUE ("account_id", "network_id")
 );
+
 CREATE INDEX identity_parent_idx ON public.identity ("parent_account_id", "network_id");
 
 
