@@ -34,12 +34,12 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     logger.info(`✌️ Connected to ${nodeUrl}. Chain ${chain} using ${nodeName} v${nodeVersion}`)
     //environment.NETWORK_ID = parseInt(properties.toHuman().ss58Format)
     //environment.NETWORK = chain.toLowerCase()
-    if (environment.NETWORK !== chain.toLowerCase()) {
-      logger.error(`Wrong network name specified in the environment: ${environment.NETWORK}. RPC-node network name is ${chain}.`)
+    if (environment.NETWORK != chain.toString()) {
+      logger.error(`Wrong network name specified in the environment: '${environment.NETWORK}'. RPC-node network name is '${chain}'.`)
     }
-    if (environment.NETWORK_ID != properties.toHuman().ss58Format) {
+    if (environment.NETWORK_ID != properties.toHuman().ss58Format && environment.NETWORK_ID != properties.toHuman().ss58format) {
       logger.error(`Wrong network id specified in the environment: ${environment.NETWORK_ID}. 
-        RPC-node network id is ${properties.toHuman().ss58Format}.`)
+        RPC-node network id is ${properties.toHuman().ss58Format || properties.toHuman().ss58format}.`)
     }
   })
 

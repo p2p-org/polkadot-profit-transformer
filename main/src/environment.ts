@@ -1,9 +1,8 @@
 import dotenv from 'dotenv'
 import { cleanEnv, str, num, bool, url } from 'envalid'
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'development'
-
 dotenv.config()
+process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
 export enum NODE_ENV {
   DEVELOPMENT = 'development',
