@@ -56,7 +56,7 @@ export class MonitoringDatabaseHelper {
 
   async getMissedEras(lastEraId?: number): Promise<Array<any>> {
     if (!lastEraId) return []
-    const startEra = environment.NETWORK === 'kusama' ? 759 : 1
+    const startEra = environment.NETWORK === 'kusama' ? 760 : 1
     const missedErasSQL = `
       SELECT generate_series(${startEra}, ${lastEraId - 2}) as missing_era except 
       SELECT era_id FROM eras WHERE network_id=${environment.NETWORK_ID} 
