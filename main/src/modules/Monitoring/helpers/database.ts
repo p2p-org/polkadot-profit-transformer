@@ -58,8 +58,9 @@ export class MonitoringDatabaseHelper {
     if (!lastEraId) return []
     const startEra = environment.NETWORK === 'kusama' ? 760 : 1
     const missedErasSQL = `
-      SELECT generate_series(${startEra}, ${lastEraId - 2}) as missing_era except 
-      SELECT era_id FROM eras WHERE network_id=${environment.NETWORK_ID} 
+      SELECT generate_series(${startEra}, ${lastEraId - 2}) as missing_era 
+      EXCEPT
+        SELECT era_id FROM eras WHERE network_id=${environment.NETWORK_ID} 
       ORDER BY missing_era
       LIMIT 10`
     const missedErasRows = await this.knex.raw(missedErasSQL)
@@ -70,7 +71,9 @@ export class MonitoringDatabaseHelper {
     const missedTasksSQL = `
       SELECT entity, entity_id 
       FROM processing_tasks pt 
-      WHERE status='not_processed' and finish_timestamp is null and start_timestamp < NOW() - INTERVAL '1 HOUR'
+      WHERE status='not_processed' 
+        AND finish_timestamp is null 
+        AND start_timestamp < NOW() - INTERVAL '1 HOUR'
       LIMIT 10`
     const missedTasksRows = await this.knex.raw(missedTasksSQL)
     return missedTasksRows.rows
