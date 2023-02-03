@@ -2,7 +2,7 @@ import { Knex } from "knex";
 
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.raw(`ALTER TABLE collators ADD column if not exists final_stake numeric(35);`);
+  await knex.raw(`ALTER TABLE if exists collators ADD column if not exists final_stake numeric(35);`);
 }
 
 
