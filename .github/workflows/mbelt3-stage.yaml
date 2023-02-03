@@ -35,6 +35,7 @@ jobs:
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.staking-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.identity-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.balances-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.staking-processor.yaml
