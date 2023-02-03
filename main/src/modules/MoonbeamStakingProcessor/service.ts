@@ -171,20 +171,9 @@ export class MoonbeamStakingProcessorService {
       })
 
       for (const collator of Object.values(roundPayoutProcessor.stakedValue) as any) {
-        await this.databaseHelper.saveCollators(trx, {
-          round_id: parseInt(round.id.toString(10), 10),
-          account_id: collator.id,
-          total_stake: collator.total.toString(10),
-          own_stake: collator.bond.toString(10),
-          delegators_count: Object.keys(collator.delegators).length,
-          total_reward_points: parseInt(collator.points.toString(10), 10),
-          total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toString(10) : '0',
-          collator_reward: collator.rewardCollator && collator.rewardCollator ? collator.rewardCollator.toString(10) : '0',
-          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
-          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
-        })
-
+        let collator_stake = BigInt(0)
         for (const delegator of Object.values(collator.delegators) as any) {
+          collator_stake += delegator.amount.toBigInt()
           await this.databaseHelper.saveDelegators(trx, {
             round_id: parseInt(round.id.toString(10), 10),
             account_id: delegator.id,
@@ -196,6 +185,20 @@ export class MoonbeamStakingProcessorService {
             payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
           })
         }
+
+        await this.databaseHelper.saveCollators(trx, {
+          round_id: parseInt(round.id.toString(10), 10),
+          account_id: collator.id,
+          total_stake: collator.bond.toBigInt() + collator_stake,
+          final_stake: collator.total.toBigInt(),
+          own_stake: collator.bond.toBigInt(),
+          delegators_count: Object.keys(collator.delegators).length,
+          total_reward_points: parseInt(collator.points.toString(10), 10),
+          total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toBigInt() : 0,
+          collator_reward: collator.rewardCollator && collator.rewardCollator ? collator.rewardCollator.toBigInt() : 0,
+          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
+          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
+        })
       }
 
       const finish = Date.now()
