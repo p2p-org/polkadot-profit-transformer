@@ -67,7 +67,7 @@ export class IdentityDatabaseHelper {
     while (true) {
       const records = AccountModel(this.knex)
         .select()
-        .where({ blake2_hash: null })
+        .whereNull('blake2_hash')
         .orderBy('row_id', 'asc')
         .limit(environment.BATCH_INSERT_CHUNK_SIZE)
 
