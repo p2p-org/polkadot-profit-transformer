@@ -20,9 +20,7 @@ export class MoonbeamStakingProcessorService {
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
     private readonly databaseHelper: MoonbeamStakingProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {
-  }
-
+  ) {  }
 
   async processTaskMessage<T extends QUEUES.Staking>(message: TaskMessage<T>): Promise<void> {
     const { entity_id: roundId, collect_uid } = message
