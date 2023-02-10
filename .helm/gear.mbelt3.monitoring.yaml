@@ -13,10 +13,10 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_gear"
 env:
-  substrate_uri: ws://gear-ssd-node.gear.svc.cluster.local:9945
+  substrate_uri: ws://gear-dev-ssd-node.gear.svc.cluster.local:9945
   log_level: info
   network_id: 137
   mode: MONITORING
-  network: polkadot
+  network: gear
 ingress:
   enabled: false
