@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: gear
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: ee4d9d62ebd728935b2da8d80822a08035420de7}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 1c25cc5a7885b57c845a3aff7c4475a06b521a5b}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_gear"
 env:
-  network: ws://gear-ssd-node.gear.svc.cluster.local:9944
+  substrate_uri: ws://gear-ssd-node.gear.svc.cluster.local:9945
   log_level: info
   network_id: 137
   mode: LISTENER

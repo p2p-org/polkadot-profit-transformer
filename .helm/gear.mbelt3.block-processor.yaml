@@ -5,7 +5,7 @@ chain: gear
 role: block-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: ee4d9d62ebd728935b2da8d80822a08035420de7}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 1c25cc5a7885b57c845a3aff7c4475a06b521a5b}
 port: 3000
 metrics:
   enabled: true
@@ -15,7 +15,7 @@ vault:
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: ws://gear-dev-ssd-node.gear.svc.cluster.local:9944
+  substrate_uri: ws://gear-dev-ssd-node.gear.svc.cluster.local:9945
   log_level: info
   network_id: 137
   mode: BLOCK_PROCESSOR
