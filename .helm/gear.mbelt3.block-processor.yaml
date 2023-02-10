@@ -1,0 +1,30 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: gear
+role: block-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4df1b461c66491a16755f7e60d81acc80a6fc4ca}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_gear"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://gear-dev-ssd-node.gear.svc.cluster.local:9944
+  log_level: info
+  network_id: 137
+  mode: BLOCK_PROCESSOR
+  network: gear
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt3-gear-block-processor.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt3-gear-block-processor-polka-p2p-world
+    ssl_redirect: true
