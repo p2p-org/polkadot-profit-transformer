@@ -212,6 +212,4 @@ export class MoonbeamStakingProcessorService {
       throw error
     }
   }
-
-
 }
