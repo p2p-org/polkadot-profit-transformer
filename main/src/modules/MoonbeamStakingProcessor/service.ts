@@ -20,9 +20,7 @@ export class MoonbeamStakingProcessorService {
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
     private readonly databaseHelper: MoonbeamStakingProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {
-  }
-
+  ) {  }
 
   async processTaskMessage<T extends QUEUES.Staking>(message: TaskMessage<T>): Promise<void> {
     const { entity_id: roundId, collect_uid } = message
@@ -194,7 +192,7 @@ export class MoonbeamStakingProcessorService {
           own_stake: collator.bond.toBigInt(),
           delegators_count: Object.keys(collator.delegators).length,
           total_reward_points: parseInt(collator.points.toString(10), 10),
-          total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toBigInt() : 0,
+          total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toString(10) : '0',
           collator_reward: collator.rewardCollator && collator.rewardCollator ? collator.rewardCollator.toBigInt() : 0,
           payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
           payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
