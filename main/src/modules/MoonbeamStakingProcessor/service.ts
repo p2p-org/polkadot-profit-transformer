@@ -121,7 +121,6 @@ export class MoonbeamStakingProcessorService {
     })
   }
 
-
   async processRoundPayout(
     trx: Knex.Transaction,
     payoutBlockId: number,
