@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_gear"
 env:
-  network: ws://gear-ssd-node.gear.svc.cluster.local:9944
+  substrate_uri: ws://gear-ssd-node.gear.svc.cluster.local:9945
   log_level: info
   network_id: 137
   mode: LISTENER

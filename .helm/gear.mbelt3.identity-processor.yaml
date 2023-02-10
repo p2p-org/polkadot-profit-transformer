@@ -15,7 +15,7 @@ vault:
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  network: ws://gear-ssd-node.gear.svc.cluster.local:9944
+  substrate_uri: ws://gear-ssd-node.gear.svc.cluster.local:9945
   log_level: info
   network_id: 137
   mode: IDENTITY_PROCESSOR
