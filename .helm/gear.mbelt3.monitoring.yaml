@@ -3,7 +3,7 @@ environment: mbelt3-prod
 replicas: 1
 chain: gear
 role: monitoring
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 1c25cc5a7885b57c845a3aff7c4475a06b521a5b}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: ea81264df0752d503c00f4f898c1255b3a442b33}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
@@ -13,10 +13,10 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_gear"
 env:
-  substrate_uri: ws://gear-ssd-node.gear.svc.cluster.local:9945
+  substrate_uri: ws://gear-dev-ssd-node.gear.svc.cluster.local:9945
   log_level: info
   network_id: 137
   mode: MONITORING
-  network: polkadot
+  network: gear
 ingress:
   enabled: false
