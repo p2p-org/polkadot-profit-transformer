@@ -68,6 +68,12 @@ jobs:
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.staking-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.identity-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.monitoring.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.block-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.preloader.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.identity-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.monitoring.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.gear-smartcontracts-processor.yaml
 
       - name: Commit image changes
         uses: stefanzweifel/git-auto-commit-action@v4
