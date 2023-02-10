@@ -2,6 +2,7 @@ import { Knex } from 'knex'
 
 export type AccountModel = {
   account_id: string
+  blake2_hash?: string
   created_at_block_id?: number
   killed_at_block_id?: number
   judgement_status?: string

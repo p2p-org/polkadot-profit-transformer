@@ -7,6 +7,7 @@ export enum ENTITY {
   ROUND = 'round',
   IDENTITY_EXTRINSIC = 'identity_extrinsic',
   IDENTITY_EVENT = 'identity_event',
+  BALANCES_BLOCK = 'balances_block',
 }
 
 export enum PROCESSING_STATUS {

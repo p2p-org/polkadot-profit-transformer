@@ -19,6 +19,7 @@ export type BlockModel = {
   digest: any
   block_time: Date
   row_time?: Date
+  row_id?: number
 }
 
 export const BlockModel = (knex: Knex) => knex<BlockModel>('blocks')

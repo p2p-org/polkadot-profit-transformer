@@ -183,6 +183,7 @@ CREATE TABLE networks (
 CREATE TABLE IF NOT EXISTS accounts (
         "network_id" INT,
         "account_id" varchar(50),
+        "blake2_hash" varchar(100),
         "created_at_block_id" BIGINT,
         "killed_at_block_id" BIGINT,
         "judgement_status" varchar(256),
@@ -192,6 +193,41 @@ CREATE TABLE IF NOT EXISTS accounts (
         PRIMARY KEY ("row_id"),
         UNIQUE ("account_id", "network_id")
 )
+
+CREATE TABLE IF NOT EXISTS balances (
+    "network_id" INT,
+    "block_id" BIGINT,
+    "account_id" varchar(50),
+    "blake2_hash" varchar(100),
+    "nonce" INT,
+    "consumers" INT,
+    "providers" INT,
+    "sufficients" INT,
+    "free" NUMERIC(35),
+    "reserved" NUMERIC(35),
+    "miscFrozen" NUMERIC(35),
+    "feeFrozen" NUMERIC(35),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "blake2_hash", "block_id")
+)
+
+
+CREATE TABLE IF NOT EXISTS accounts (
+        "network_id" INT,
+        "account_id" varchar(50),
+        "created_at_block_id" BIGINT,
+        "killed_at_block_id" BIGINT,
+        "judgement_status" varchar(256),
+        "registrar_index" BIGINT,
+        "row_id" SERIAL,
+        "row_time" TIMESTAMP,
+        PRIMARY KEY ("row_id"),
+        UNIQUE ("account_id", "network_id")
+)
+
+
 
 CREATE TABLE identities (
     "network_id" INT,
@@ -229,4 +265,3 @@ CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
 --new. need to produce evrywhere
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
-

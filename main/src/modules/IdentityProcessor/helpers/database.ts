@@ -8,6 +8,7 @@ import { ExtrinsicModel } from '@/models/extrinsic.model'
 import { environment } from '@/environment'
 import { IdentityModel } from '@/models/identities.model'
 import { AccountModel } from '@/models/accounts.model'
+import { encodeAccountIdToBlake2 } from '@/utils/crypt'
 
 const network = { network_id: environment.NETWORK_ID }
 @Service()
@@ -59,7 +60,49 @@ export class IdentityDatabaseHelper {
     return await records
   }
 
+  public async fixUnprocessedBlake2Accounts(
+    row_id?: number
+  ): Promise<void> {
+
+    while (true) {
+      const records = AccountModel(this.knex)
+        .select()
+        .whereNull('blake2_hash')
+        .orderBy('row_id', 'asc')
+        .limit(environment.BATCH_INSERT_CHUNK_SIZE)
+
+      if (row_id) {
+        records.andWhere('row_id', '>', row_id)
+      }
+
+      const accounts = await records
+      if (!accounts || !accounts.length) {
+        break
+      }
+
+      for (const account of accounts) {
+        this.logger.info({
+          event: 'IdentityDatabaseHelper.fixUnprocessedBlake2Accounts',
+          message: 'Encode blake2 account',
+          account_id: account.account_id,
+          row_id: account.row_id
+        })
+
+        await AccountModel(this.knex)
+          .update({ blake2_hash: encodeAccountIdToBlake2(account.account_id) })
+          .where({ row_id: account.row_id })
+      }
+    }
+
+    this.logger.info({
+      event: 'IdentityDatabaseHelper.fixUnprocessedBlake2Accounts',
+      message: 'All accounts have been encoded',
+    })
+  }
+
   public async saveAccount(data: AccountModel): Promise<void> {
+    data.blake2_hash = encodeAccountIdToBlake2(data.account_id)
+
     try {
       await AccountModel(this.knex)
         .insert({ ...data, ...network, row_time: new Date() })

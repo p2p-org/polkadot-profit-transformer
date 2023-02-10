@@ -14,6 +14,7 @@ export enum MODE {
   BLOCK_PROCESSOR = 'BLOCK_PROCESSOR',
   STAKING_PROCESSOR = 'STAKING_PROCESSOR',
   IDENTITY_PROCESSOR = 'IDENTITY_PROCESSOR',
+  BALANCES_PROCESSOR = 'BALANCES_PROCESSOR',
   MONITORING = 'MONITORING',
 }
 
@@ -35,14 +36,6 @@ export type Environment = {
   MAX_ATTEMPTS: number
 }
 
-const parseModeEnum = (env: typeof preEnv) => {
-  const mode: MODE = env.MODE
-  //env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
-  const nodeEnv: NODE_ENV =
-    env.NODE_ENV === 'development' ? NODE_ENV.DEVELOPMENT : NODE_ENV.PRODUCTION
-  return { ...env, MODE: mode, NODE_ENV: nodeEnv }
-}
-
 const preEnv = cleanEnv(process.env, {
   SLACK_WEBHOOK: url({ default: '' }),
   PG_CONNECTION_STRING: url(),
@@ -60,5 +53,14 @@ const preEnv = cleanEnv(process.env, {
   BATCH_INSERT_CHUNK_SIZE: num({ default: 1000 }),
   MAX_ATTEMPTS: num({ default: 5 }),
 })
+
+
+const parseModeEnum = (env: typeof preEnv) => {
+  const mode: MODE = env.MODE
+  //env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
+  const nodeEnv: NODE_ENV =
+    env.NODE_ENV === 'development' ? NODE_ENV.DEVELOPMENT : NODE_ENV.PRODUCTION
+  return { ...env, MODE: mode, NODE_ENV: nodeEnv }
+}
 
 export const environment: Environment = parseModeEnum(preEnv)
