@@ -5,7 +5,7 @@ chain: gear
 role: block-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 27191ce0cb05a7e3c411442cc84c4afef92cf568}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: bd7b8d1bfa94452cb3ee882396be51a0fa64748a}
 port: 3000
 metrics:
   enabled: true
