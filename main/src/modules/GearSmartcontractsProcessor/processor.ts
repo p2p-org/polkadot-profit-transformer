@@ -29,8 +29,9 @@ export class GearSmartcontractsProcessorService {
       event: 'GearSmartcontractsProcessor.processEvent',
       data: event
     })
-    console.log(JSON.stringify(event));
+    console.log(JSON.stringify(event))
 
+    /*
     switch (event.method) {
       case 'NewAccount':
         this.logger.info({ block_id: event.block_id }, `Process enrichment NewAccount`)
@@ -59,6 +60,7 @@ export class GearSmartcontractsProcessorService {
         })
         break
     }
+    */
   }
 
 
