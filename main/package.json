@@ -32,6 +32,7 @@
     "envalid": "^7.3.1",
     "express": "^4.18.1",
     "express-basic-auth": "^1.2.1",
+    "http-proxy-middleware": "^2.0.6",
     "knex": "^2.4.2",
     "moonbeam-types-bundle": "^2.0.9",
     "needle": "^3.2.0",

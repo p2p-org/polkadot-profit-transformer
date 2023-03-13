@@ -40,6 +40,9 @@ export class IdentityListnerService {
 
     await this.databaseHelper.fixUnprocessedBlake2Accounts()
 
+    //TODO: remove from this module
+    //we need to add signers of all extrinsics.
+
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
     await this.restartUnprocessedEvents(lastProcessedEventId)
   }

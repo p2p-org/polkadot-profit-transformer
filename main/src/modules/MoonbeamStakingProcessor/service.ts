@@ -10,6 +10,7 @@ import { TasksRepository } from '@/libs/tasks.repository'
 import { MoonbeamStakingProcessorRoundPayout } from './round-payout'
 import { MoonbeamStakingProcessorDatabaseHelper } from './helpers/database'
 import { Logger } from 'pino'
+import { SliMetrics } from '@/loaders/sli_metrics'
 
 @Service()
 export class MoonbeamStakingProcessorService {
@@ -18,9 +19,10 @@ export class MoonbeamStakingProcessorService {
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
+    @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
     private readonly databaseHelper: MoonbeamStakingProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {  }
+  ) { }
 
   async processTaskMessage<T extends QUEUES.Staking>(message: TaskMessage<T>): Promise<void> {
     const { entity_id: roundId, collect_uid } = message
@@ -125,11 +127,12 @@ export class MoonbeamStakingProcessorService {
     trx: Knex.Transaction,
     payoutBlockId: number,
   ): Promise<void> {
-    const start = Date.now()
     logger.info({
       event: 'RoundPayoutProcessor.processRoundPayout',
       message: `Process staking payout for round with payout block id: ${payoutBlockId}`,
     })
+
+    const startProcessingTime = Date.now()
 
     const roundPayoutProcessor = new MoonbeamStakingProcessorRoundPayout(this.polkadotApi)
 
@@ -198,11 +201,19 @@ export class MoonbeamStakingProcessorService {
         })
       }
 
-      const finish = Date.now()
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${(finish - start) / 1000} seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
       })
+
+      await this.sliMetrics.add(
+        { entity: 'staking', entity_id: round.id.toNumber(), name: 'process_time_ms', value: Date.now() - startProcessingTime })
+      await this.sliMetrics.add(
+        { entity: 'staking', entity_id: round.id.toNumber(), name: 'appear_time_ms', value: Date.now() - round.payoutBlockTime.toNumber() })
+
+      const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
+      await this.sliMetrics.add({ entity: 'staking', entity_id: round.id.toNumber(), name: 'memory_usage_mb', value: memorySize })
+
     } catch (error: any) {
       console.error(error)
       logger.warn({
