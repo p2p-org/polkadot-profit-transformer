@@ -249,7 +249,7 @@ export class BlocksProcessorService {
     await this.sliMetrics.add(
       { entity: 'block', entity_id: blockId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
     await this.sliMetrics.add(
-      { entity: 'block', entity_id: blockId, name: 'appear_time_ms', value: Date.now() - blockTime.toNumber() })
+      { entity: 'block', entity_id: blockId, name: 'delay_time_ms', value: Date.now() - blockTime.toNumber() })
 
     const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
     await this.sliMetrics.add({ entity: 'block', entity_id: blockId, name: 'memory_usage_mb', value: memorySize })
