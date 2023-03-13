@@ -16,6 +16,7 @@ import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
 import { BlockNumber, EventRecord, Call } from '@polkadot/types/interfaces'
 import { AnyTuple } from '@polkadot/types/types'
 import { ExtrinsicsProcessorInput } from './interfaces'
+import { SliMetrics } from '@/loaders/sli_metrics'
 
 @Service()
 export class BlocksProcessorService {
@@ -23,6 +24,8 @@ export class BlocksProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
+    @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
+
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
@@ -44,7 +47,7 @@ export class BlocksProcessorService {
       if (!taskRecord) {
         await trx.rollback()
         this.logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
+          event: 'Queue.processTaskMessage',
           blockId,
           warning: 'Task record not found. Skip processing',
           collect_uid,
@@ -99,7 +102,7 @@ export class BlocksProcessorService {
         return
       }
 
-      // all is good, start processing
+      // everything is ok, start processing
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
         blockId,
@@ -194,6 +197,7 @@ export class BlocksProcessorService {
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
 
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
+    const startProcessingTime = Date.now()
 
     const [signedBlock, extHeader, blockTime, events, metadata] = await this.polkadotHelper.getInfoToProcessBlock(blockHash)
 
@@ -241,6 +245,14 @@ export class BlocksProcessorService {
     // console.log(blockId + ': events saved')
 
     await this.databaseHelper.saveBlock(trx, block)
+
+    await this.sliMetrics.add(
+      { entity: 'block', entity_id: blockId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
+    await this.sliMetrics.add(
+      { entity: 'block', entity_id: blockId, name: 'appear_time_ms', value: Date.now() - blockTime.toNumber() })
+
+    const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
+    await this.sliMetrics.add({ entity: 'block', entity_id: blockId, name: 'memory_usage_mb', value: memorySize })
 
     // console.log(blockId + ': block saved')
 

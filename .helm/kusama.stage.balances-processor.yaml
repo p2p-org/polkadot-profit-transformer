@@ -1,30 +1,30 @@
 ---
 environment: stage
 replicas: 1
-chain: polkadot
+chain: kusama
 role: balances-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 6577296b2aef7485a8794c5e49da1ebdcdfcd5e9}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 27191ce0cb05a7e3c411442cc84c4afef92cf568}
 port: 3000
 metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/stage"
+  secret: "secret/mbelt/stage_kusama"
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: ws://polkadot-node.polkadot.svc.cluster.local:9944
+  substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
   log_level: info
-  network_id: 0
+  network_id: 2
   mode: BALANCES_PROCESSOR
-  network: polkadot
+  network: kusama
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt-stage-balances-processor.polka.p2p.world
+  host: mbelt-stage-kusama-balances-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt-stage-balances-processor-polka-p2p-world
+    secret: mbelt-stage-kusama-balances-processor-polka-p2p-world
     ssl_redirect: true

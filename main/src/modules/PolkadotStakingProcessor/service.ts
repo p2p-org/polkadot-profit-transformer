@@ -9,6 +9,7 @@ import { Logger } from 'pino'
 
 import { PolkadotStakingProcessorDatabaseHelper } from './helpers/database'
 import { PolkadotStakingProcessorPolkadotHelper } from './helpers/polkadot'
+import { SliMetrics } from '@/loaders/sli_metrics'
 
 
 @Service()
@@ -17,9 +18,10 @@ export class PolkadotStakingProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
+    @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
+
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
-
     private readonly tasksRepository: TasksRepository,
   ) {
   }
@@ -154,7 +156,7 @@ export class PolkadotStakingProcessorService {
   ): Promise<ProcessingTaskModel<ENTITY.ERA> | undefined> {
 
 
-    const start = Date.now()
+    const startProcessingTime = Date.now()
     this.logger.info({ event: `Process staking payout for era: ${eraId}`, metadata, eraId })
 
     const eraStartBlockId = await this.databaseHelper.findEraStartBlockId(trx, eraId)
@@ -208,13 +210,20 @@ export class PolkadotStakingProcessorService {
         await this.databaseHelper.saveNominators(trx, nominator)
       }
 
-      const finish = Date.now()
-
       this.logger.info({
-        event: `Era ${eraId.toString()} staking processing finished in ${(finish - start) / 1000} seconds.`,
+        event: `Era ${eraId.toString()} staking processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
         metadata,
         eraId,
       })
+
+      await this.sliMetrics.add(
+        { entity: 'staking', entity_id: eraId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
+      await this.sliMetrics.add(
+        { entity: 'staking', entity_id: eraId, name: 'appear_time_ms', value: Date.now() - blockTime })
+
+      const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
+      await this.sliMetrics.add({ entity: 'staking', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
+
     } catch (error: any) {
       this.logger.warn({
         event: `error in processing era staking: ${error.message}`,

@@ -7,6 +7,7 @@ import { MonitoringSlackHelper } from './helpers/slack'
 import { Logger } from 'pino'
 import { environment } from '@/environment'
 import cron from 'node-cron'
+import { SliMetrics } from '@/loaders/sli_metrics'
 
 @Service()
 export class MonitoringService {
@@ -14,6 +15,7 @@ export class MonitoringService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
+    @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
     private readonly polkadotHelper: MonitoringPolkadotHelper,
     private readonly databaseHelper: MonitoringDatabaseHelper,
     private readonly slackHelper: MonitoringSlackHelper,
@@ -45,6 +47,8 @@ export class MonitoringService {
     const lastNodeBlockId = await this.polkadotHelper.getFinBlockNumber()
     if (lastDBBlock.block_id < lastNodeBlockId - 10) {
       this.slackHelper.sendMessage(`Sync problem. Last RPC-node blockId: ${lastNodeBlockId}. Last DB blockId: ${lastDBBlock.block_id}`)
+
+      await this.sliMetrics.add({ entity: 'block', name: 'rpc_sync_diff_count', value: lastNodeBlockId - lastDBBlock.block_id })
     }
   }
 
@@ -53,6 +57,8 @@ export class MonitoringService {
     const missedBlocks = await this.databaseHelper.getMissedBlocks(lastBlockId)
     if (missedBlocks && missedBlocks.length) {
       this.slackHelper.sendMessage(`Detected missed blocks: ${JSON.stringify(missedBlocks)}`)
+
+      await this.sliMetrics.add({ entity: 'block', name: 'missed_count', value: missedBlocks.length })
     }
   }
 
@@ -60,6 +66,8 @@ export class MonitoringService {
     const dublicatesBlocks = await this.databaseHelper.getDublicatesBlocks()
     if (dublicatesBlocks && dublicatesBlocks.length) {
       this.slackHelper.sendMessage(`Detected dublicates blocks: ${JSON.stringify(dublicatesBlocks)}`)
+
+      await this.sliMetrics.add({ entity: 'block', name: 'dublicates_count', value: dublicatesBlocks.length })
     }
   }
 
@@ -69,12 +77,13 @@ export class MonitoringService {
       const missedRounds = await this.databaseHelper.getMissedRounds(lastDBBlock.metadata.round_id)
       if (missedRounds && missedRounds.length) {
         this.slackHelper.sendMessage(`Detected missed rounds: ${JSON.stringify(missedRounds)}`)
+        await this.sliMetrics.add({ entity: 'staking', name: 'missed_count', value: missedRounds.length })
       }
     } else {
-      console.log(lastDBBlock.metadata.era_id)
       const missedEras = await this.databaseHelper.getMissedEras(lastDBBlock.metadata.era_id)
       if (missedEras && missedEras.length) {
         this.slackHelper.sendMessage(`Detected missed eras: ${JSON.stringify(missedEras)}`)
+        await this.sliMetrics.add({ entity: 'staking', name: 'missed_count', value: missedEras.length })
       }
     }
   }
@@ -83,7 +92,8 @@ export class MonitoringService {
     const missedTasks = await this.databaseHelper.getMissedProcessingTasks()
     if (missedTasks && missedTasks.length) {
       this.slackHelper.sendMessage(`Detected not processed tasks: ${JSON.stringify(missedTasks)}`)
+
+      await this.sliMetrics.add({ entity: 'queue', name: 'not_processed_count', value: missedTasks.length })
     }
   }
-
 }
