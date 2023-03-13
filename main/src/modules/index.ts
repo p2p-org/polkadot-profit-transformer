@@ -6,6 +6,7 @@ import MoonbeamStakingProcessor from './MoonbeamStakingProcessor'
 //import MoonbeamStakingProcessorRecalc from './MoonbeamStakingProcessorRecalc'
 import PolkadotStakingProcessor from './PolkadotStakingProcessor'
 import IdentityProcessor from './IdentityProcessor'
+import GearSmartContractsProcessor from './GearSmartcontractsProcessor'
 import BalancesProcessor from './BalancesProcessor'
 import Monitoring from './Monitoring'
 
@@ -34,6 +35,10 @@ export const ModulesLoader = async (): Promise<void> => {
 
   if (environment.MODE === MODE.BALANCES_PROCESSOR) {
     BalancesProcessor()
+  }
+
+  if (environment.MODE === MODE.GEAR_SMARTCONTRACTS_PROCESSOR) {
+    GearSmartContractsProcessor()
   }
 
   if (environment.MODE === MODE.MONITORING && environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
