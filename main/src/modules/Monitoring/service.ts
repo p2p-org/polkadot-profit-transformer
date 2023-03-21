@@ -77,13 +77,13 @@ export class MonitoringService {
       const missedRounds = await this.databaseHelper.getMissedRounds(lastDBBlock.metadata.round_id)
       if (missedRounds && missedRounds.length) {
         this.slackHelper.sendMessage(`Detected missed rounds: ${JSON.stringify(missedRounds)}`)
-        await this.sliMetrics.add({ entity: 'staking', name: 'missed_count', value: missedRounds.length })
+        await this.sliMetrics.add({ entity: 'round', name: 'missed_count', value: missedRounds.length })
       }
     } else {
       const missedEras = await this.databaseHelper.getMissedEras(lastDBBlock.metadata.era_id)
       if (missedEras && missedEras.length) {
         this.slackHelper.sendMessage(`Detected missed eras: ${JSON.stringify(missedEras)}`)
-        await this.sliMetrics.add({ entity: 'staking', name: 'missed_count', value: missedEras.length })
+        await this.sliMetrics.add({ entity: 'era', name: 'missed_count', value: missedEras.length })
       }
     }
   }
