@@ -217,12 +217,12 @@ export class PolkadotStakingProcessorService {
       })
 
       await this.sliMetrics.add(
-        { entity: 'staking', entity_id: eraId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
+        { entity: 'era', entity_id: eraId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
       await this.sliMetrics.add(
-        { entity: 'staking', entity_id: eraId, name: 'delay_time_ms', value: Date.now() - blockTime })
+        { entity: 'era', entity_id: eraId, name: 'delay_time_ms', value: Date.now() - blockTime })
 
       const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
-      await this.sliMetrics.add({ entity: 'staking', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
+      await this.sliMetrics.add({ entity: 'era', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
 
     } catch (error: any) {
       this.logger.warn({

@@ -207,12 +207,12 @@ export class MoonbeamStakingProcessorService {
       })
 
       await this.sliMetrics.add(
-        { entity: 'staking', entity_id: round.id.toNumber(), name: 'process_time_ms', value: Date.now() - startProcessingTime })
+        { entity: 'round', entity_id: round.id.toNumber(), name: 'process_time_ms', value: Date.now() - startProcessingTime })
       await this.sliMetrics.add(
-        { entity: 'staking', entity_id: round.id.toNumber(), name: 'delay_time_ms', value: Date.now() - round.payoutBlockTime.toNumber() })
+        { entity: 'round', entity_id: round.id.toNumber(), name: 'delay_time_ms', value: Date.now() - round.payoutBlockTime.toNumber() })
 
       const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
-      await this.sliMetrics.add({ entity: 'staking', entity_id: round.id.toNumber(), name: 'memory_usage_mb', value: memorySize })
+      await this.sliMetrics.add({ entity: 'round', entity_id: round.id.toNumber(), name: 'memory_usage_mb', value: memorySize })
 
     } catch (error: any) {
       console.error(error)

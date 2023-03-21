@@ -24,6 +24,6 @@ export class SliMetrics {
     })
 
     await SliMetricsModel(this.knex)
-      .insert({ ...data, ...network })
+      .insert({ ...data, ...network, row_time: new Date() })
   }
 }
