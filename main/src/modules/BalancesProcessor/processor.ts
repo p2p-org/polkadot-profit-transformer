@@ -21,25 +21,32 @@ export class BalancesProcessorService {
     private readonly tasksRepository: TasksRepository,
   ) { }
 
-  async processBlock(block: BlockModel) {
+  async processBlock(block: BlockModel): Promise<void> {
+    if (block.block_id == 0) return
 
-    /*
     this.logger.info({
       event: 'BalancesProcessorService.processBlock',
       message: 'Process block',
-      block_id: block.block_id
+      block_id: block.block_id,
+      block_hash: block.hash
     })
-    */
 
-    const result = await this.polkadotApi.rpc.state.traceBlock(
-      block.hash,
-      'state',
-      '26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9',
-      'Put'
-    )
+    let result = {}
+    try {
+      result = await this.polkadotApi.rpc.state.traceBlock(
+        block.hash,
+        'state',
+        '26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9',
+        'Put'
+      )
+    } catch (e) {
+      console.error(e)
+    }
 
     const res = JSON.parse(JSON.stringify(result))
+    //console.log(res);
     if (res?.blockTrace?.events && res?.blockTrace?.events.length) {
+
       for (const event of res?.blockTrace?.events) {
         this.logger.info({
           event: 'BalancesProcessorService.processBlock',
