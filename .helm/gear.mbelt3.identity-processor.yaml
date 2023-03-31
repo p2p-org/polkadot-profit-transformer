@@ -5,7 +5,7 @@ chain: gear
 role: identity-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 748c1d0af769d63f6aecce15dc3aba156e0d2881}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 2b4af163c0efcfad9bda11b91a359316efec6652}
 port: 3000
 metrics:
   enabled: true
