@@ -44,9 +44,7 @@ export class BalancesProcessorService {
     }
 
     const res = JSON.parse(JSON.stringify(result))
-    //console.log(res);
     if (res?.blockTrace?.events && res?.blockTrace?.events.length) {
-
       for (const event of res?.blockTrace?.events) {
         this.logger.info({
           event: 'BalancesProcessorService.processBlock',
