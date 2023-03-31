@@ -40,6 +40,10 @@ export class BalancesListenerService {
     while (true) {
       const blocks = await this.databaseHelper.getUnprocessedBlocks(lastRowId)
       if (!blocks || !blocks.length) {
+        this.logger.debug({
+          event: 'BalancesListenerService.restartUnprocessedBlocks',
+          message: 'All blocks were processed'
+        })
         break
       }
 
