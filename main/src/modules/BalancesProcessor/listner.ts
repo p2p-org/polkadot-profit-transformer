@@ -34,7 +34,7 @@ export class BalancesListenerService {
 
   public async restartUnprocessedBlocks(startRowId: number): Promise<void> {
     this.logger.debug({
-      event: 'BalancesListenerService.restartUnprocessedBlocks.',
+      event: 'BalancesListenerService.restartUnprocessedBlocks',
     })
     let lastRowId = startRowId
     while (true) {
