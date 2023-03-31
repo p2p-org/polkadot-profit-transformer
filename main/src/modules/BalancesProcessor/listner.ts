@@ -22,7 +22,7 @@ export class BalancesListenerService {
   ) { }
 
   public async preload(): Promise<void> {
-    this.logger.debug({ event: 'BalancesListenerService.preload' })
+    this.logger.debug({ event: 'BalancesListenerService.preload!' })
     const lastProcessedBlockId = await this.databaseHelper.findLastEntityId(ENTITY.BALANCES_BLOCK)
     this.logger.info({
       event: 'BalancesListenerService.preload',
