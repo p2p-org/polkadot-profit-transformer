@@ -3,7 +3,7 @@ environment: mbelt3-prod
 replicas: 1
 chain: polkadot
 role: monitoring
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 9eb303bf1fb080a7ce9adbc4bbcd78f7f0b4ca1c}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 8bd983ea3a57603f449711d49906284a82b675bf}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
