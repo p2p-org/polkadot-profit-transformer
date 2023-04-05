@@ -44,7 +44,9 @@ export class TasksRepository {
       .where({ entity: task.entity, entity_id: task.entity_id, ...network })
       .first()
 
+    if (existsTask && existsTask.status === PROCESSING_STATUS.NOT_PROCESSED) return true
     if (existsTask) return false
+
     await ProcessingTaskModel(this.knex).insert({ ...task, ...network })
     return true
   }
