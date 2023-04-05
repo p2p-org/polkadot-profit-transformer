@@ -5,7 +5,7 @@ role: monitoring
 replicas: 1
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 552415b827eb0b47817d8888062984cd3c9b728d}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: e2bc4baa574ef4e9e0150448a531bea7aa068374}
 port: 3000
 metrics:
   enabled: true
