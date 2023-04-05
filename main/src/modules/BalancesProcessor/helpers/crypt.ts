@@ -49,6 +49,24 @@ export const decodeAccountBalanceValue = (value: string): AccountBalance => {
             )
           ),
         )
+
+      case 146:
+        //polkadot block 2005678
+        //01020000000000000080d37886020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        return scale.object(
+          scale.field('nonce', scale.u32),
+          scale.field('refcount', scale.u8),
+          scale.field('refcount2', scale.u8), //maybe not correct.
+          scale.field('data',
+            scale.object(
+              scale.field('free', scale.u128),
+              scale.field('reserved', scale.u128),
+              scale.field('miscFrozen', scale.u128),
+              scale.field('feeFrozen', scale.u128)
+            )
+          ),
+        )
+
       case 160:
         //00000000000000000100000000000000eaac1adc53b417060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
         return scale.object(
@@ -66,10 +84,14 @@ export const decodeAccountBalanceValue = (value: string): AccountBalance => {
           ),
         )
       default:
-        return null
+        throw new Error(`Unknown ScaleAccountBalance. Value is: ${value}. Value length: ${value.length}`)
     }
   })()
 
+  //console.log("==============")
   const encodedBytes = new Uint8Array(Buffer.from(value, 'hex'))
+  //console.log(encodedBytes)
+  //console.log("++++++++++++++")
+  //console.log(ScaleAccountBalance)
   return ScaleAccountBalance.decode(encodedBytes)
 }

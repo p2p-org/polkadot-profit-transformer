@@ -57,8 +57,20 @@ export class BalancesDatabaseHelper {
     return await blocks
   }
 
-  public async saveBalances(data: BalancesModel): Promise<void> {
+  public async getBlock(
+    block_id?: number
+  ): Promise<BlockModel | undefined> {
+    const block = BlockModel(this.knex)
+      .select()
+      .where({ block_id, ...network })
+      .first()
+
+    return await block
+  }
+
+  public async saveBalances(data: BalancesModel, trx: Knex.Transaction<any, any[]>): Promise<void> {
     const accountRow = await AccountModel(this.knex)
+      .transacting(trx)
       .where({ blake2_hash: data.blake2_hash, ...network })
       .limit(1)
       .first()

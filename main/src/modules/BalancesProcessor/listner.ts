@@ -1,3 +1,4 @@
+/*
 import { Inject, Service } from 'typedi'
 import { Logger } from 'pino'
 import { Knex } from 'knex'
@@ -29,7 +30,7 @@ export class BalancesListenerService {
       lastProcessedBlockId,
     })
 
-    await this.restartUnprocessedBlocks(lastProcessedBlockId)
+    //await this.restartUnprocessedBlocks(lastProcessedBlockId)
   }
 
   public async restartUnprocessedBlocks(startRowId: number): Promise<void> {
@@ -70,3 +71,4 @@ export class BalancesListenerService {
 
 
 }
+*/

@@ -1,13 +1,15 @@
 import { Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { TasksRepository } from '@/libs/tasks.repository'
-import { BlockProcessorPolkadotHelper } from '@/modules/BlockProcessor/helpers/polkadot'
 import { Logger } from 'pino'
 import { BlockModel } from '@/models/block.model'
 import { decodeAccountBalanceValue, AccountBalance } from './helpers/crypt'
 import { BalancesModel } from '@/models/balances.model'
 import { BalancesDatabaseHelper } from './helpers/database'
 import { ApiPromise } from '@polkadot/api'
+import { environment } from '@/environment'
+import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 
 @Service()
 export class BalancesProcessorService {
@@ -17,13 +19,108 @@ export class BalancesProcessorService {
     @Inject('knex') private readonly knex: Knex,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
     private readonly databaseHelper: BalancesDatabaseHelper,
-    private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly tasksRepository: TasksRepository,
   ) { }
 
-  async processBlock(block: BlockModel): Promise<void> {
-    if (block.block_id == 0) return
 
+  public async processTaskMessage<T extends QUEUES.Balances>(message: TaskMessage<T>): Promise<void> {
+    const { block_id: blockId, collect_uid } = message
+
+    await this.tasksRepository.increaseAttempts(ENTITY.BLOCK_BALANCE, blockId)
+
+    await this.knex.transaction(async (trx) => {
+      const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.BLOCK_BALANCE, blockId, trx)
+
+      if (!taskRecord) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BalanceProcessor.processTaskMessage',
+          blockId,
+          warning: 'Task record not found. Skip processing',
+          collect_uid,
+        })
+        return
+      }
+
+      if (taskRecord.attempts > environment.MAX_ATTEMPTS) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BalanceProcessor.processTaskMessage',
+          blockId,
+          warning: `Max attempts on block ${blockId} reached, cancel processing.`,
+          collect_uid,
+        })
+        return
+      }
+
+      if (taskRecord.collect_uid !== collect_uid) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BalanceProcessor.processTaskMessage',
+          blockId,
+          warning: `Possible block ${blockId} processing task duplication. `
+            + `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+          collect_uid,
+        })
+        return
+      }
+
+      if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
+        await trx.rollback()
+        this.logger.warn({
+          event: 'BalanceProcessor.processTaskMessage',
+          blockId,
+          warning: `Block  ${blockId} has been already processed. Skip processing.`,
+          collect_uid,
+        })
+        return
+      }
+
+      // all is good, start processing
+      this.logger.info({
+        event: 'BalanceProcessor.processTaskMessage',
+        blockId,
+        message: `Start processing block ${blockId}`,
+        collect_uid,
+      })
+
+      const newStakingProcessingTasks = await this.processBlock(blockId, trx)
+
+      await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
+
+      await trx.commit()
+
+      this.logger.info({
+        event: 'BalanceProcessor.processTaskMessage',
+        blockId,
+        message: `Block ${blockId} has been processed and committed`,
+        collect_uid,
+        newStakingProcessingTasks,
+      })
+
+    }).catch((error: Error) => {
+      this.logger.error({
+        event: 'BalanceProcessor.processTaskMessage',
+        blockId,
+        error: error.message,
+        data: {
+          collect_uid,
+        },
+      })
+      throw error
+    })
+  }
+
+
+  async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<void> {
+    const block = await this.databaseHelper.getBlock(blockId);
+    console.log(block)
+    if (!block) {
+      throw Error(`Block with id ${blockId} not found in DB`)
+    }
+    console.log(2);
+    if (block.block_id == 0) return
+    console.log(3);
     this.logger.info({
       event: 'BalancesProcessorService.processBlock',
       message: 'Process block',
@@ -80,7 +177,7 @@ export class BalancesProcessorService {
             feeFrozen: balance.data.feeFrozen
           }
 
-          await this.databaseHelper.saveBalances(data)
+          await this.databaseHelper.saveBalances(data, trx)
         }
       }
     }

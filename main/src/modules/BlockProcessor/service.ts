@@ -111,10 +111,10 @@ export class BlocksProcessorService {
         collect_uid,
       })
 
-      const newStakingProcessingTasks = await this.processBlock(blockId, trx)
+      const newTasks = await this.processBlock(blockId, trx)
 
-      if (newStakingProcessingTasks.length) {
-        await this.tasksRepository.batchAddEntities(newStakingProcessingTasks, trx)
+      if (newTasks.length) {
+        await this.tasksRepository.batchAddEntities(newTasks, trx)
       }
 
       await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
@@ -127,11 +127,11 @@ export class BlocksProcessorService {
         message: `Block ${blockId} has been processed and committed`,
         ...metadata,
         collect_uid,
-        newStakingProcessingTasks,
+        newTasks,
       })
 
       processedBlockGauge.set(blockId)
-      if (!newStakingProcessingTasks.length) return
+      if (!newTasks.length) return
 
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -141,7 +141,7 @@ export class BlocksProcessorService {
         collect_uid,
       })
 
-      await this.sendStakingProcessingTasksToRabbit(newStakingProcessingTasks)
+      await this.sendStakingProcessingTasksToRabbit(newTasks)
 
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -193,7 +193,7 @@ export class BlocksProcessorService {
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> {
-    const newStakingProcessingTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
+    const newTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
 
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
@@ -256,6 +256,17 @@ export class BlocksProcessorService {
 
     // console.log(blockId + ': block saved')
 
+    const newBalancesProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
+      entity: ENTITY.BLOCK_BALANCE,
+      entity_id: blockId,
+      status: PROCESSING_STATUS.NOT_PROCESSED,
+      collect_uid: uuidv4(),
+      start_timestamp: new Date(),
+      attempts: 0,
+      data: {}
+    }
+    newTasks.push(newBalancesProcessingTask)
+
     for (const event of processedEvents) {
       // polkadot, kusama
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
@@ -270,7 +281,7 @@ export class BlocksProcessorService {
             payout_block_id: blockId,
           },
         }
-        newStakingProcessingTasks.push(newStakingProcessingTask)
+        newTasks.push(newStakingProcessingTask)
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
@@ -293,7 +304,7 @@ export class BlocksProcessorService {
             payout_block_id: blockId,
           },
         }
-        newStakingProcessingTasks.push(newStakingProcessingTask)
+        newTasks.push(newStakingProcessingTask)
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
@@ -304,7 +315,7 @@ export class BlocksProcessorService {
       }
     }
 
-    return newStakingProcessingTasks
+    return newTasks
   };
 
   private processEvents(blockId: number, events: Vec<EventRecord>) {
