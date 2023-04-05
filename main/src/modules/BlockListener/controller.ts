@@ -74,8 +74,8 @@ export class BlockListenerController {
     })
 
     this.expressApp.get('/restart-balances/:startBlockId/:endBlockId', (req, res) => {
+      res.send('restarted unprocessed blocks balances')
       this.listnerService.restartUnprocessedBalances(parseInt(req.params.startBlockId), parseInt(req.params.endBlockId))
-      res.send('restarted unprocessed blocks metadata')
     })
 
     this.expressApp.get('/restart-balances/:blockId', (req, res) => {

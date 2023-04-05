@@ -37,7 +37,7 @@ export class MonitoringService {
     cron.schedule('30 * * * *', async () => {
       this.checkMissingBlocks()
     })
-    cron.schedule('45 * * * *', async () => {
+    cron.schedule('45 0 * * *', async () => {
       this.checkDublicatesBlocks()
     })
   }

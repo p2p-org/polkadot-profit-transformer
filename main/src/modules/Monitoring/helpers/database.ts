@@ -35,7 +35,7 @@ export class MonitoringDatabaseHelper {
 
   async getMissedBlocks(lastBlockId: number): Promise<Array<any>> {
     const missedBlocksSQL = `
-      SELECT generate_series(1, ${lastBlockId - 2}) as missing_block except 
+      SELECT generate_series(${lastBlockId - 1002}, ${lastBlockId - 2}) as missing_block except 
       SELECT block_id FROM blocks WHERE network_id=${environment.NETWORK_ID} 
       ORDER BY missing_block
       LIMIT 10`

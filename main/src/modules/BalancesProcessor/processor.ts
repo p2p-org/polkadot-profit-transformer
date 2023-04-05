@@ -178,12 +178,12 @@ export class BalancesProcessorService {
           await this.databaseHelper.saveBalances(data, trx)
         }
       }
+    } else {
+      this.logger.info({
+        event: 'BalancesProcessorService.processBlock',
+        message: 'No balances events',
+        block_id: block.block_id,
+      })
     }
-
-    //} catch (e) {
-    //  console.log(e)
-    //
-    //  this.sdfsd2222f();
-    //}
   }
 }
