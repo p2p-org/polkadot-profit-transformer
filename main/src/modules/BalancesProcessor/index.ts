@@ -4,7 +4,8 @@ import { BalancesProcessorService } from './processor'
 import { QUEUES, Rabbit } from '@/loaders/rabbitmq'
 import { Logger } from 'pino'
 //import { decodeAccountBalanceValue, AccountBalance } from './helpers/crypt'
-//console.log(decodeAccountBalanceValue("0164000000000000000100000000000000cbba91e41f5e3f2900000000000000000000f4224c06e3d730000000000000000000000000000000000000000000000000000000000000000000000000000000"));
+//console.log(decodeAccountBalanceValue("01020000000000000000f94a7d020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"));
+
 
 export default (): void => {
   const serviceInstance = Container.get(BalancesProcessorService)

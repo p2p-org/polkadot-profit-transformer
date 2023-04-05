@@ -51,24 +51,26 @@ export const decodeAccountBalanceValue = (value: string): AccountBalance => {
           ),
         )
 
-      /*
-    case 146:
-      //polkadot block 2005678
-      //01020000000000000080d37886020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-      return scale.object(
-        scale.field('nonce', scale.u32),
-        scale.field('refcount', scale.u8),
-        scale.field('refcount2', scale.u8), //maybe not correct.
-        scale.field('data',
-          scale.object(
-            scale.field('free', scale.u128),
-            scale.field('reserved', scale.u128),
-            scale.field('miscFrozen', scale.u128),
-            scale.field('feeFrozen', scale.u128)
-          )
-        ),
-      )
-      */
+      case 146:
+        //polkadot block 2005678
+        //01020000000000000080d37886020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        //0x020000000000000000f94a7d020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        //{nonce: 2, refcount: 0, data: {free: 10692000000, reserved: 0, miscFrozen: 0, feeFrozen: 0}}
+        return scale.object(
+          scale.field('refcount2', scale.u8), //maybe not correct.
+          scale.field('nonce', scale.u32),
+          scale.field('refcount', scale.u16),
+          scale.field('refcount3', scale.u16),
+
+          scale.field('data',
+            scale.object(
+              scale.field('free', scale.u128),
+              scale.field('reserved', scale.u128),
+              scale.field('miscFrozen', scale.u128),
+              scale.field('feeFrozen', scale.u128)
+            )
+          ),
+        )
 
 
       case 160:
