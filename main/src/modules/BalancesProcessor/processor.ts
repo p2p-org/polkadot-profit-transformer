@@ -114,13 +114,11 @@ export class BalancesProcessorService {
 
   async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<void> {
     const block = await this.databaseHelper.getBlock(blockId);
-    console.log(block)
     if (!block) {
       throw Error(`Block with id ${blockId} not found in DB`)
     }
-    console.log(2);
+
     if (block.block_id == 0) return
-    console.log(3);
     this.logger.info({
       event: 'BalancesProcessorService.processBlock',
       message: 'Process block',
