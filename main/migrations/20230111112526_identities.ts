@@ -19,11 +19,31 @@ export async function up(knex: Knex): Promise<void> {
         UNIQUE ("account_id", "network_id")
     )`);
 
+    await knex.raw(`CREATE TABLE IF NOT EXISTS identities (
+        "network_id" INT,
+        "account_id" varchar(50),
+        "parent_account_id" varchar(50),
+        "display" varchar(256),
+        "legal" varchar(256),
+        "web" varchar(256),
+        "riot" varchar(256),
+        "email" varchar(256),
+        "twitter" varchar(256),
+        "updated_at_block_id" BIGINT,
+        "row_id" SERIAL,
+        "row_time" TIMESTAMP,
+        PRIMARY KEY ("row_id"),
+        UNIQUE ("account_id", "network_id")
+      )
+    `);
+
+    /*
     await knex.raw(`ALTER TABLE IF EXISTS public.identity RENAME COLUMN created_at_block_id TO updated_at_block_id`);
     await knex.raw(`ALTER TABLE IF EXISTS public.identity DROP COLUMN killed_at_block_id`);
     await knex.raw(`ALTER TABLE IF EXISTS public.identity DROP COLUMN judgement_status`);
     await knex.raw(`ALTER TABLE IF EXISTS public.identity DROP COLUMN registrar_index`);
     await knex.raw(`ALTER TABLE IF EXISTS public.identity RENAME TO identities`);
+    */
 
 }
 

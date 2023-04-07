@@ -9,9 +9,10 @@ import { logger } from '@/loaders/logger'
 import { PolkadotApi } from '@/loaders/polkadotapi'
 import { ExpressLoader } from '@/loaders/express'
 import { ModulesLoader } from '@/modules'
+import { SliMetrics } from '@/loaders/sli_metrics'
 
 export default async (): Promise<void> => {
-  console.log({ environment })
+  //console.log({ environment })
 
   logger.info('✌️ Main app started')
 
@@ -25,6 +26,10 @@ export default async (): Promise<void> => {
   const rabbitMQ = await RabbitMQ(environment.RABBITMQ!)
   Container.set('rabbitMQ', rabbitMQ)
   logger.info('✌️ RabbitMQ loaded')
+
+  const sliMetrics = new SliMetrics(knex, logger)
+  Container.set('sliMetrics', sliMetrics)
+  logger.info('✌️ SliMetrics loaded')
 
   const polkadotApi = await PolkadotApi(environment.SUBSTRATE_URI)()
   Container.set('polkadotApi', polkadotApi)

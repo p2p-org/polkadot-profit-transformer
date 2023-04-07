@@ -16,6 +16,7 @@ import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
 import { BlockNumber, EventRecord, Call } from '@polkadot/types/interfaces'
 import { AnyTuple } from '@polkadot/types/types'
 import { ExtrinsicsProcessorInput } from './interfaces'
+import { SliMetrics } from '@/loaders/sli_metrics'
 
 @Service()
 export class BlocksProcessorService {
@@ -23,6 +24,8 @@ export class BlocksProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
+    @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
+
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
@@ -30,7 +33,7 @@ export class BlocksProcessorService {
   }
 
   public async processTaskMessage<T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> {
-    const { block_id: blockId, collect_uid } = message
+    const { entity_id: blockId, collect_uid } = message
 
     const metadata = {
       block_process_uid: uuidv4(),
@@ -44,7 +47,7 @@ export class BlocksProcessorService {
       if (!taskRecord) {
         await trx.rollback()
         this.logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
+          event: 'Queue.processTaskMessage',
           blockId,
           warning: 'Task record not found. Skip processing',
           collect_uid,
@@ -99,7 +102,7 @@ export class BlocksProcessorService {
         return
       }
 
-      // all is good, start processing
+      // everything is ok, start processing
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
         blockId,
@@ -108,10 +111,10 @@ export class BlocksProcessorService {
         collect_uid,
       })
 
-      const newStakingProcessingTasks = await this.processBlock(blockId, trx)
+      const newTasks = await this.processBlock(blockId, trx)
 
-      if (newStakingProcessingTasks.length) {
-        await this.tasksRepository.batchAddEntities(newStakingProcessingTasks, trx)
+      if (newTasks.length) {
+        await this.tasksRepository.batchAddEntities(newTasks, trx)
       }
 
       await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
@@ -124,11 +127,11 @@ export class BlocksProcessorService {
         message: `Block ${blockId} has been processed and committed`,
         ...metadata,
         collect_uid,
-        newStakingProcessingTasks,
+        newTasks,
       })
 
       processedBlockGauge.set(blockId)
-      if (!newStakingProcessingTasks.length) return
+      if (!newTasks.length) return
 
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -138,7 +141,7 @@ export class BlocksProcessorService {
         collect_uid,
       })
 
-      await this.sendStakingProcessingTasksToRabbit(newStakingProcessingTasks)
+      await this.sendProcessingTasksToRabbit(newTasks)
 
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -161,12 +164,12 @@ export class BlocksProcessorService {
     })
   }
 
-  private async sendStakingProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
+  private async sendProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
     const rabbitMQ: Rabbit = Container.get('rabbitMQ')
 
     for (const task of tasks) {
       this.logger.info({
-        event: 'BlockProcessor.sendStakingProcessingTaskToRabbit',
+        event: 'BlockProcessor.sendProcessingTasksToRabbit',
         message: 'sendToRabbit new task for processing',
         task,
       })
@@ -181,6 +184,11 @@ export class BlocksProcessorService {
           entity_id: task.entity_id,
           collect_uid: task.collect_uid,
         })
+      } else if (task.entity === ENTITY.BLOCK_BALANCE) {
+        await rabbitMQ.send<QUEUES.Balances>(QUEUES.Balances, {
+          entity_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
       }
     }
   }
@@ -190,10 +198,11 @@ export class BlocksProcessorService {
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> {
-    const newStakingProcessingTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
+    const newTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
 
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
+    const startProcessingTime = Date.now()
 
     const [signedBlock, extHeader, blockTime, events, metadata] = await this.polkadotHelper.getInfoToProcessBlock(blockHash)
 
@@ -242,7 +251,26 @@ export class BlocksProcessorService {
 
     await this.databaseHelper.saveBlock(trx, block)
 
+    await this.sliMetrics.add(
+      { entity: 'block', entity_id: blockId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
+    await this.sliMetrics.add(
+      { entity: 'block', entity_id: blockId, name: 'delay_time_ms', value: Date.now() - blockTime.toNumber() })
+
+    const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
+    await this.sliMetrics.add({ entity: 'block', entity_id: blockId, name: 'memory_usage_mb', value: memorySize })
+
     // console.log(blockId + ': block saved')
+
+    const newBalancesProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
+      entity: ENTITY.BLOCK_BALANCE,
+      entity_id: blockId,
+      status: PROCESSING_STATUS.NOT_PROCESSED,
+      collect_uid: uuidv4(),
+      start_timestamp: new Date(),
+      attempts: 0,
+      data: {}
+    }
+    newTasks.push(newBalancesProcessingTask)
 
     for (const event of processedEvents) {
       // polkadot, kusama
@@ -258,7 +286,7 @@ export class BlocksProcessorService {
             payout_block_id: blockId,
           },
         }
-        newStakingProcessingTasks.push(newStakingProcessingTask)
+        newTasks.push(newStakingProcessingTask)
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
@@ -281,7 +309,7 @@ export class BlocksProcessorService {
             payout_block_id: blockId,
           },
         }
-        newStakingProcessingTasks.push(newStakingProcessingTask)
+        newTasks.push(newStakingProcessingTask)
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
@@ -292,7 +320,7 @@ export class BlocksProcessorService {
       }
     }
 
-    return newStakingProcessingTasks
+    return newTasks
   };
 
   private processEvents(blockId: number, events: Vec<EventRecord>) {

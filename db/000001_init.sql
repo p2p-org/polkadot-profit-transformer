@@ -178,11 +178,12 @@ CREATE TABLE networks (
     "network_id" INT,
     "name" VARCHAR (50),
     "decimals" INT
-)
+);
 
 CREATE TABLE IF NOT EXISTS accounts (
         "network_id" INT,
         "account_id" varchar(50),
+        "blake2_hash" varchar(100),
         "created_at_block_id" BIGINT,
         "killed_at_block_id" BIGINT,
         "judgement_status" varchar(256),
@@ -190,8 +191,31 @@ CREATE TABLE IF NOT EXISTS accounts (
         "row_id" SERIAL,
         "row_time" TIMESTAMP,
         PRIMARY KEY ("row_id"),
-        UNIQUE ("account_id", "network_id")
-)
+        UNIQUE ("account_id", "network_id"),
+        UNIQUE ("blake2_hash", "network_id")
+);
+CREATE INDEX accounts_blake2_hash_idx ON public.accounts (blake2_hash, network_id);
+
+
+
+CREATE TABLE IF NOT EXISTS balances (
+    "network_id" INT,
+    "block_id" BIGINT,
+    "account_id" varchar(50),
+    "blake2_hash" varchar(100),
+    "nonce" INT,
+    "consumers" INT,
+    "providers" INT,
+    "sufficients" INT,
+    "free" NUMERIC(35),
+    "reserved" NUMERIC(35),
+    "miscFrozen" NUMERIC(35),
+    "feeFrozen" NUMERIC(35),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "blake2_hash", "block_id")
+);
 
 CREATE TABLE identities (
     "network_id" INT,
@@ -209,6 +233,54 @@ CREATE TABLE identities (
     PRIMARY KEY ("row_id"),
     UNIQUE ("account_id", "network_id")
 );
+
+
+CREATE TABLE gear_smartcontracts (
+    "network_id" INT,
+    "block_id" BIGINT,
+    "extrinsic_id" VARCHAR(150),
+    "account_id" VARCHAR(50),
+    "program_id" VARCHAR(100),
+    "expiration" VARCHAR(20),
+    "gas_limit" VARCHAR(20),
+    "init_payload" TEXT,
+    "init_payload_decoded" JSONB,
+    "code" TEXT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("program_id", "network_id")
+);
+
+CREATE TABLE gear_smartcontracts_messages (
+    "network_id" INT,
+    "block_id" BIGINT,
+    "extrinsic_id" VARCHAR(150),
+    "account_id" VARCHAR(50),
+    "program_id" VARCHAR(100),
+    "gas_limit" VARCHAR(20),
+    "payload" TEXT,
+    "payload_decoded" JSONB,
+    "value" TEXT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    UNIQUE ("extrinsic_id", "network_id"),
+    PRIMARY KEY ("row_id")
+);
+
+
+CREATE TABLE sli_metrics (
+    "network_id" INT,
+    "entity" VARCHAR(66),
+    "entity_id" INT,
+    "name" VARCHAR(20),
+    "value" INT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+
 
 CREATE INDEX identity_parent_idx ON public.identity ("parent_account_id", "network_id");
 
@@ -229,4 +301,3 @@ CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
 --new. need to produce evrywhere
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
-

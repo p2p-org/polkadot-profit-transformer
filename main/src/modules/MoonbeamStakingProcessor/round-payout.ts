@@ -136,6 +136,9 @@ export class MoonbeamStakingProcessorRoundPayout {
       }
       maxRoundChecks = awardedCollatorCount
     }
+    if (this.specVersion >= 2000 && maxRoundChecks === 68) {
+      maxRoundChecks = 72
+    }
 
     logger.info({
       event: 'RoundPayoutProcessor.getRewards',
@@ -149,6 +152,7 @@ export class MoonbeamStakingProcessorRoundPayout {
         blockNumber,
       )
     }
+
 
     return {
       round: {

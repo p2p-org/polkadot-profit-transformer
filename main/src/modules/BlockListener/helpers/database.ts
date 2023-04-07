@@ -60,4 +60,5 @@ export class BlockListenerDatabaseHelper {
 
     return await blocksRecords
   }
+
 }

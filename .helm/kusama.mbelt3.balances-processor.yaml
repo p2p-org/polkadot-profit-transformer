@@ -1,0 +1,30 @@
+---
+environment: mbelt3-prod
+replicas: 10
+chain: kusama
+role: balances-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: cdf3f0de46c31e74a5fecea6cc310f16e73b30d3}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_kusama"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
+  log_level: info
+  network_id: 2
+  mode: BALANCES_PROCESSOR
+  network: kusama
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt3-kusama-balances-processor.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt3-kusama-balances-processor-polka-p2p-world
+    ssl_redirect: true

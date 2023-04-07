@@ -38,11 +38,19 @@ export class IdentityListnerService {
       lastProcessedExtrinsicId
     })
 
+    await this.databaseHelper.fixUnprocessedBlake2Accounts()
+
+    //TODO: remove from this module
+    //we need to add signers of all extrinsics.
+
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
     await this.restartUnprocessedEvents(lastProcessedEventId)
   }
 
   public async restartUnprocessedEvents(startRowId: number): Promise<void> {
+    this.logger.debug({
+      event: 'IdentityListener.restartUnprocessedEvents',
+    })
     let lastRowId = startRowId
     while (true) {//lastRowId < endRowId) {
       const events = await this.databaseHelper.getUnprocessedEvents(lastRowId)
@@ -51,7 +59,7 @@ export class IdentityListnerService {
       }
 
       for (const event of events) {
-        console.log('event', event)
+        //console.log('event', event)
         await this.processor.processEvent(event)
 
         lastRowId = event.row_id || 0
@@ -75,6 +83,9 @@ export class IdentityListnerService {
 
 
   public async restartUnprocessedExtrinsics(startRowId: number): Promise<void> {
+    this.logger.debug({
+      event: 'IdentityListener.restartUnprocessedExtrinsics',
+    })
     let lastRowId = startRowId
     while (true) {//lastRowId < endRowId) {
       const extrinsics = await this.databaseHelper.getUnprocessedExtrinsics(lastRowId)
