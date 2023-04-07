@@ -5,7 +5,7 @@ role: gear-smartcontracts-processor
 replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4bec7fc5a7c8a4824fbf7ec858467e8e3022f7c9}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 7eef2d85f3a1c697868d254876f62fbe434fd4f8}
 port: 3000
 metrics:
   enabled: true
