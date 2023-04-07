@@ -1,3 +1,4 @@
+/*
 import { Inject, Service } from 'typedi'
 import { Logger } from 'pino'
 import { Knex } from 'knex'
@@ -22,14 +23,14 @@ export class BalancesListenerService {
   ) { }
 
   public async preload(): Promise<void> {
-    this.logger.debug({ event: 'BalancesListenerService.preload' })
+    this.logger.debug({ event: 'BalancesListenerService.preload!' })
     const lastProcessedBlockId = await this.databaseHelper.findLastEntityId(ENTITY.BALANCES_BLOCK)
     this.logger.info({
       event: 'BalancesListenerService.preload',
       lastProcessedBlockId,
     })
 
-    await this.restartUnprocessedBlocks(lastProcessedBlockId)
+    //await this.restartUnprocessedBlocks(lastProcessedBlockId)
   }
 
   public async restartUnprocessedBlocks(startRowId: number): Promise<void> {
@@ -40,6 +41,10 @@ export class BalancesListenerService {
     while (true) {
       const blocks = await this.databaseHelper.getUnprocessedBlocks(lastRowId)
       if (!blocks || !blocks.length) {
+        this.logger.debug({
+          event: 'BalancesListenerService.restartUnprocessedBlocks',
+          message: 'All blocks were processed'
+        })
         break
       }
 
@@ -66,3 +71,4 @@ export class BalancesListenerService {
 
 
 }
+*/

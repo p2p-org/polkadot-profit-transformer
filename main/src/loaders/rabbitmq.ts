@@ -6,11 +6,15 @@ import { logger } from '@/loaders/logger'
 
 export enum QUEUES {
   Blocks = 'process_blocks',
-  BlocksMetadata = 'process_blocks_metadata',
+  Balances = 'process_balances',
+  BlocksMetadata = 'process_metadata',
   Staking = 'process_staking',
 }
 
 export type TaskMessage<T> = T extends QUEUES.Blocks ? {
+  block_id: number
+  collect_uid: string
+} : T extends QUEUES.Balances ? {
   block_id: number
   collect_uid: string
 } : T extends QUEUES.BlocksMetadata ? {
@@ -62,7 +66,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
       return Promise.all([
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Staking),
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Blocks),
-        channel.assertQueue(environment.NETWORK + ':' + QUEUES.BlocksMetadata),
+        channel.assertQueue(environment.NETWORK + ':' + QUEUES.Balances),
         channel.prefetch(1),
       ])
     },

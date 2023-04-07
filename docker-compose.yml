@@ -124,8 +124,6 @@ services:
     volumes:
       - ./main:/usr/src/app
 
-
-
   mbelt_monitoring:
     container_name: mbelt_monitoring
     build:

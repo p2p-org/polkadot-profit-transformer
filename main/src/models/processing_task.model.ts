@@ -9,7 +9,7 @@ export enum ENTITY {
   IDENTITY_EVENT = 'identity_event',
   GEAR_EXTRINSIC = 'gear_extrinsic',
   GEAR_EVENT = 'gear_event',
-  BALANCES_BLOCK = 'balances_block',
+  BLOCK_BALANCE = 'block_balances',
 }
 
 export enum PROCESSING_STATUS {

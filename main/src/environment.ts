@@ -24,6 +24,9 @@ export type Environment = {
   PG_CONNECTION_STRING: string
   LOG_LEVEL: string
   SUBSTRATE_URI: string
+  RESTART_BLOCKS_URI?: string
+  RESTART_ROUNDS_URI?: string
+  RESTART_ERAS_URI?: string
   REST_API_PORT: number
   BASIC_AUTH: boolean
   REST_API_BASIC_AUTH_PASSWORD: string
@@ -42,6 +45,9 @@ const preEnv = cleanEnv(process.env, {
   PG_CONNECTION_STRING: url(),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
+  RESTART_BLOCKS_URI: url({ default: '' }),
+  RESTART_ROUNDS_URI: url({ default: '' }),
+  RESTART_ERAS_URI: url({ default: '' }),
   REST_API_PORT: num({ default: 3000 }),
   BASIC_AUTH: bool({ default: false }),
   REST_API_BASIC_AUTH_PASSWORD: str({ default: 'pwd' }),

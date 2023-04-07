@@ -1,5 +1,5 @@
 import { environment } from '@/environment'
-import { ApiPromise, WsProvider } from '@polkadot/api'
+import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api'
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
 import { logger } from '@/loaders/logger'
 

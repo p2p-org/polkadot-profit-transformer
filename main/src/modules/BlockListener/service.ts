@@ -119,6 +119,23 @@ export class BlockListenerService {
     }
   }
 
+  public async restartUnprocessedBalances(startBlockId: number, endBlockId: number): Promise<void> {
+    for (let blockId = startBlockId; blockId <= endBlockId; blockId++) {
+      const task: ProcessingTaskModel<ENTITY.BLOCK> = {
+        entity: ENTITY.BLOCK_BALANCE,
+        entity_id: blockId,
+        collect_uid: uuidv4(),
+        status: PROCESSING_STATUS.NOT_PROCESSED,
+        start_timestamp: new Date(),
+        attempts: 0,
+        data: {},
+      }
+      if (await this.tasksRepository.addProcessingTask(task)) {
+        await this.sendTaskToToRabbit(ENTITY.BLOCK_BALANCE, task)
+      };
+    }
+  }
+
   public async restartUnprocessedTask(entity: ENTITY, entityId: number): Promise<void> {
     const record = await this.tasksRepository.getUnprocessedTask(entity, entityId)
     if (!record) {
@@ -279,6 +296,11 @@ export class BlockListenerService {
       })
     } else if (entity === ENTITY.BLOCK_METADATA) {
       await rabbitMQ.send<QUEUES.BlocksMetadata>(QUEUES.BlocksMetadata, {
+        block_id: record.entity_id,
+        collect_uid: record.collect_uid,
+      })
+    } else if (entity === ENTITY.BLOCK_BALANCE) {
+      await rabbitMQ.send<QUEUES.Balances>(QUEUES.Balances, {
         block_id: record.entity_id,
         collect_uid: record.collect_uid,
       })

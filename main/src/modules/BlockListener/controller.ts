@@ -35,6 +35,12 @@ export class BlockListenerController {
       this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK)
       res.send('restarted unprocessed')
     })
+    this.expressApp.get('/process-block/:blockId', async (req, res) => {
+      if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
+      await this.listnerService.preloadOneBlock(Number(req.params.blockId))
+      return res.json({ result: 'ok' })
+    })
+
 
     this.expressApp.get('/restart-unprocessed-eras', (req, res) => {
       this.listnerService.restartUnprocessedTasks(ENTITY.ERA)
@@ -61,10 +67,20 @@ export class BlockListenerController {
       res.send('restarted unprocessed round')
     })
 
-    this.expressApp.get('/process-block/:blockId', async (req, res) => {
-      if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
-      await this.listnerService.preloadOneBlock(Number(req.params.blockId))
-      return res.json({ result: 'ok' })
+
+    this.expressApp.get('/restart-balances', (req, res) => {
+      this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK_BALANCE)
+      res.send('restarted unprocessed round')
+    })
+
+    this.expressApp.get('/restart-balances/:startBlockId/:endBlockId', (req, res) => {
+      res.send('restarted unprocessed blocks balances')
+      this.listnerService.restartUnprocessedBalances(parseInt(req.params.startBlockId), parseInt(req.params.endBlockId))
+    })
+
+    this.expressApp.get('/restart-balances/:blockId', (req, res) => {
+      this.listnerService.restartUnprocessedTask(ENTITY.BLOCK_BALANCE, Number(req.params.blockId))
+      res.send('restarted unprocessed round')
     })
   }
 }

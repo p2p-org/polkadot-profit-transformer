@@ -5,7 +5,7 @@ chain: kusama
 role: monitoring
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 5361222108708d7620b5764bf2808e620e8b57b1}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 7eef2d85f3a1c697868d254876f62fbe434fd4f8}
 port: 3000
 metrics:
   enabled: true
@@ -14,6 +14,8 @@ vault:
   secret: "secret/mbelt/mbelt3_kusama"
 env:
   substrate_uri: ws://10.41.2.2:9944
+  restart_blocks_uri: https://mbelt3-kusama-preloader.polka.p2p.world/restart-unprocessed-blocks
+  restart_eras_uri: https://mbelt3-kusama-preloader.polka.p2p.world/restart-unprocessed-eras
   log_level: info
   network_id: 2
   mode: MONITORING
