@@ -141,7 +141,7 @@ export class BlocksProcessorService {
         collect_uid,
       })
 
-      await this.sendStakingProcessingTasksToRabbit(newTasks)
+      await this.sendProcessingTasksToRabbit(newTasks)
 
       this.logger.info({
         event: 'BlockProcessor.processTaskMessage',
@@ -164,12 +164,12 @@ export class BlocksProcessorService {
     })
   }
 
-  private async sendStakingProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
+  private async sendProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
     const rabbitMQ: Rabbit = Container.get('rabbitMQ')
 
     for (const task of tasks) {
       this.logger.info({
-        event: 'BlockProcessor.sendStakingProcessingTaskToRabbit',
+        event: 'BlockProcessor.sendProcessingTasksToRabbit',
         message: 'sendToRabbit new task for processing',
         task,
       })
@@ -182,6 +182,11 @@ export class BlocksProcessorService {
       } else if (task.entity === ENTITY.ROUND) {
         await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
           entity_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
+      } else if (task.entity === ENTITY.BLOCK_BALANCE) {
+        await rabbitMQ.send<QUEUES.Balances>(QUEUES.Balances, {
+          block_id: task.entity_id,
           collect_uid: task.collect_uid,
         })
       }
