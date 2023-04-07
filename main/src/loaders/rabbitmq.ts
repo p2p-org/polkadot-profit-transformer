@@ -12,13 +12,13 @@ export enum QUEUES {
 }
 
 export type TaskMessage<T> = T extends QUEUES.Blocks ? {
-  block_id: number
+  entity_id: number
   collect_uid: string
 } : T extends QUEUES.Balances ? {
-  block_id: number
+  entity_id: number
   collect_uid: string
 } : T extends QUEUES.BlocksMetadata ? {
-  block_id: number
+  entity_id: number
   collect_uid: string
 } : {
   entity_id: number

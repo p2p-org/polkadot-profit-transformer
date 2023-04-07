@@ -33,7 +33,7 @@ export class BlocksProcessorService {
   }
 
   public async processTaskMessage<T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> {
-    const { block_id: blockId, collect_uid } = message
+    const { entity_id: blockId, collect_uid } = message
 
     const metadata = {
       block_process_uid: uuidv4(),
@@ -186,7 +186,7 @@ export class BlocksProcessorService {
         })
       } else if (task.entity === ENTITY.BLOCK_BALANCE) {
         await rabbitMQ.send<QUEUES.Balances>(QUEUES.Balances, {
-          block_id: task.entity_id,
+          entity_id: task.entity_id,
           collect_uid: task.collect_uid,
         })
       }

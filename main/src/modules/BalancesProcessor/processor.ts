@@ -24,7 +24,7 @@ export class BalancesProcessorService {
 
 
   public async processTaskMessage<T extends QUEUES.Balances>(message: TaskMessage<T>): Promise<void> {
-    const { block_id: blockId, collect_uid } = message
+    const { entity_id: blockId, collect_uid } = message
 
     await this.tasksRepository.increaseAttempts(ENTITY.BLOCK_BALANCE, blockId)
 

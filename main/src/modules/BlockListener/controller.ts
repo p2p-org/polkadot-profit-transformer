@@ -70,7 +70,7 @@ export class BlockListenerController {
 
     this.expressApp.get('/restart-balances', (req, res) => {
       this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK_BALANCE)
-      res.send('restarted unprocessed round')
+      res.send('restarted unprocessed balances')
     })
 
     this.expressApp.get('/restart-balances/:startBlockId/:endBlockId', (req, res) => {
@@ -80,7 +80,7 @@ export class BlockListenerController {
 
     this.expressApp.get('/restart-balances/:blockId', (req, res) => {
       this.listnerService.restartUnprocessedTask(ENTITY.BLOCK_BALANCE, Number(req.params.blockId))
-      res.send('restarted unprocessed round')
+      res.send('restarted balance with specified id')
     })
   }
 }
