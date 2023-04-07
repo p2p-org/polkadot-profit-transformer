@@ -14,6 +14,8 @@ vault:
   secret: "secret/mbelt/mbelt3"
 env:
   substrate_uri: ws://polkadot-node.polkadot.svc.cluster.local:9944
+  restart_blocks_uri: https://mbelt3-preloader.polka.p2p.world/restart-unprocessed-blocks
+  restart_eras_uri: https://mbelt3-preloader.polka.p2p.world/restart-unprocessed-eras
   log_level: info
   network_id: 0
   mode: MONITORING

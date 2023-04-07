@@ -8,6 +8,7 @@ import { Logger } from 'pino'
 import { environment } from '@/environment'
 import cron from 'node-cron'
 import { SliMetrics } from '@/loaders/sli_metrics'
+import needle from 'needle'
 
 @Service()
 export class MonitoringService {
@@ -59,6 +60,16 @@ export class MonitoringService {
       this.slackHelper.sendMessage(`Detected missed blocks: ${JSON.stringify(missedBlocks)}`)
 
       await this.sliMetrics.add({ entity: 'block', name: 'missed_count', value: missedBlocks.length })
+
+      try {
+        await needle.get(environment.RESTART_ROUNDS_URI)
+      } catch (error: any) {
+        this.logger.error({
+          event: 'MonitoringService.checkMissingBlocks',
+          error: error.message,
+          missedBlocks
+        })
+      }
     }
   }
 
@@ -78,14 +89,35 @@ export class MonitoringService {
       if (missedRounds && missedRounds.length) {
         this.slackHelper.sendMessage(`Detected missed rounds: ${JSON.stringify(missedRounds)}`)
         await this.sliMetrics.add({ entity: 'round', name: 'missed_count', value: missedRounds.length })
+
+        try {
+          await needle.get(environment.RESTART_ROUNDS_URI)
+        } catch (error: any) {
+          this.logger.error({
+            event: 'MonitoringService.checkMissingRounds',
+            error: error.message,
+            missedRounds
+          })
+        }
       }
     } else {
       const missedEras = await this.databaseHelper.getMissedEras(lastDBBlock.metadata.era_id)
       if (missedEras && missedEras.length) {
         this.slackHelper.sendMessage(`Detected missed eras: ${JSON.stringify(missedEras)}`)
         await this.sliMetrics.add({ entity: 'era', name: 'missed_count', value: missedEras.length })
+
+        try {
+          await needle.get(environment.RESTART_ERAS_URI)
+        } catch (error: any) {
+          this.logger.error({
+            event: 'MonitoringService.checkMissingRounds',
+            error: error.message,
+            missedEras
+          })
+        }
       }
     }
+
   }
 
   public async checkProcessingTasks(): Promise<void> {

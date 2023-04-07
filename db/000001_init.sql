@@ -191,8 +191,10 @@ CREATE TABLE IF NOT EXISTS accounts (
         "row_id" SERIAL,
         "row_time" TIMESTAMP,
         PRIMARY KEY ("row_id"),
-        UNIQUE ("account_id", "network_id")
+        UNIQUE ("account_id", "network_id"),
+        UNIQUE ("blake2_hash", "network_id")
 );
+CREATE INDEX accounts_blake2_hash_idx ON public.accounts (blake2_hash, network_id);
 
 
 

@@ -84,15 +84,15 @@ export class BalancesProcessorService {
         collect_uid,
       })
 
-      console.log('Start block processing', Date.now())
+      //console.log('Start block processing', Date.now())
       const newStakingProcessingTasks = await this.processBlock(blockId, trx)
-      console.log('End block processing', Date.now())
+      //console.log('End block processing', Date.now())
 
       await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
 
-      console.log('Set task record as processed', Date.now())
+      //console.log('Set task record as processed', Date.now())
       await trx.commit()
-      console.log('Record commiter', Date.now())
+      //console.log('Record commiter', Date.now())
 
       this.logger.info({
         event: 'BalanceProcessor.processTaskMessage',
@@ -117,9 +117,9 @@ export class BalancesProcessorService {
 
 
   async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<void> {
-    console.log('Bfore get block from DB', Date.now())
+    //console.log('Bfore get block from DB', Date.now())
     const block = await this.databaseHelper.getBlock(blockId)
-    console.log('After get block from DB', Date.now())
+    //console.log('After get block from DB', Date.now())
     if (!block) {
       throw Error(`Block with id ${blockId} not found in DB`)
     }
@@ -143,7 +143,7 @@ export class BalancesProcessorService {
     } catch (e) {
       console.error(e)
     }
-    console.log('After get block  trace from RPC', Date.now())
+    //console.log('After get block  trace from RPC', Date.now())
 
     const res = JSON.parse(JSON.stringify(result))
     if (res?.blockTrace?.events && res?.blockTrace?.events.length) {
@@ -182,9 +182,9 @@ export class BalancesProcessorService {
             feeFrozen: balance.data.feeFrozen
           }
 
-          console.log('Before save balance', Date.now())
+          //console.log('Before save balance', Date.now())
           await this.databaseHelper.saveBalances(data, trx)
-          console.log('After save balance', Date.now())
+          //console.log('After save balance', Date.now())
         }
       }
     } else {
