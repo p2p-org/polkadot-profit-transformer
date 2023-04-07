@@ -15,7 +15,7 @@ vault:
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
+  substrate_uri: ws://substrate-ws-proxy-prod.moonriver.svc.cluster.local:9945
   log_level: info
   network_id: 1285
   mode: STAKING_PROCESSOR
