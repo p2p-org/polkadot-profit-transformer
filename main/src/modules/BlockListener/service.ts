@@ -291,17 +291,17 @@ export class BlockListenerService {
       })
     } else if (entity === ENTITY.BLOCK) {
       await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, {
-        block_id: record.entity_id,
+        entity_id: record.entity_id,
         collect_uid: record.collect_uid,
       })
     } else if (entity === ENTITY.BLOCK_METADATA) {
       await rabbitMQ.send<QUEUES.BlocksMetadata>(QUEUES.BlocksMetadata, {
-        block_id: record.entity_id,
+        entity_id: record.entity_id,
         collect_uid: record.collect_uid,
       })
     } else if (entity === ENTITY.BLOCK_BALANCE) {
       await rabbitMQ.send<QUEUES.Balances>(QUEUES.Balances, {
-        block_id: record.entity_id,
+        entity_id: record.entity_id,
         collect_uid: record.collect_uid,
       })
     }
