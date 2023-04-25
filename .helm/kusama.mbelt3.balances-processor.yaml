@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 20
+replicas: 30
 chain: kusama
 role: balances-processor
 limits: {cpu: 250m, memory: 1000Mi}
