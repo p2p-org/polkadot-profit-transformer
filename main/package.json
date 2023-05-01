@@ -23,7 +23,7 @@
     "migrations:list": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:list"
   },
   "dependencies": {
-    "@polkadot/api": "^9.6.2",
+    "@polkadot/api": "^10.5.1",
     "@types/knex": "^0.16.1",
     "amqp-connection-manager": "^4.1.6",
     "amqplib": "^0.10.0",

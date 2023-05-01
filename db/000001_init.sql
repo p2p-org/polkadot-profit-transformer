@@ -111,6 +111,7 @@ CREATE TABLE processing_tasks (
     "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
 );
+CREATE INDEX processing_tasks_entity_idx ON public.processing_tasks USING btree (entity, entity_id, network_id);
 
 CREATE TABLE processing_state (
     "network_id" INT,
