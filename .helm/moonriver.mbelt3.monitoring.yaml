@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonriver"
 env:
-  substrate_uri: ws://moonriver-ssd-node.moonriver.svc.cluster.local:9945
+  substrate_uri: ws://substrate-ws-proxy-prod.moonriver.svc.cluster.local:9945
   restart_blocks_uri: https://mbelt3-moonriver-preloader.polka.p2p.world/restart-unprocessed-blocks
   restart_rounds_uri: https://mbelt3-moonriver-preloader.polka.p2p.world/restart-unprocessed-rounds
   log_level: info

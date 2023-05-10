@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3"
 env:
-  substrate_uri: ws://polkadot-node.polkadot.svc.cluster.local:9944
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
   log_level: info
   network_id: 0
   mode: LISTENER
