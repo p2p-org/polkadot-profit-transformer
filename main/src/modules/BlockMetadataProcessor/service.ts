@@ -1,10 +1,9 @@
-import { Container, Inject, Service } from 'typedi'
+import { Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { environment } from '@/environment'
-import { processedBlockGauge } from '@/loaders/prometheus'
-import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
+import { QUEUES, TaskMessage } from '@/loaders/rabbitmq'
 import { TasksRepository } from '@/libs/tasks.repository'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
+import { ENTITY, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { BlockProcessorPolkadotHelper } from '@/modules/BlockProcessor/helpers/polkadot'
 import { Logger } from 'pino'
 import { BlockModel } from '@/models/block.model'
@@ -21,7 +20,7 @@ export class BlockMetadataProcessorService {
   }
 
   public async processTaskMessage<T extends QUEUES.BlocksMetadata>(message: TaskMessage<T>): Promise<void> {
-    const { block_id: blockId, collect_uid } = message
+    const { entity_id: blockId, collect_uid } = message
 
     await this.tasksRepository.increaseAttempts(ENTITY.BLOCK_METADATA, blockId)
 
