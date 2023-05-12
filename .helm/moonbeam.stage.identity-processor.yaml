@@ -5,7 +5,7 @@ chain: moonbeam
 role: identity-processor
 limits: {cpu: 350m, memory: 200Mi}
 requests: {cpu: 250m, memory: 200Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 0e83baabdbbbed8e6ed444d28215cc01e16b63b0}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 3900bfd19d1645bc1e777960534d0145c0ffda8f}
 port: 3000
 metrics:
   enabled: true

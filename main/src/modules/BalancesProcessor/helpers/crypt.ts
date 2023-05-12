@@ -97,6 +97,23 @@ export const decodeAccountBalanceValue = (value: string): AccountBalance => {
           ),
         )
 
+      case 154:
+        //010300000000000000010000000003df51300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        //Balance 1 {"nonce":3,"consumers":0,"providers":1,"data":{"free":207532000000,"reserved":0,"miscFrozen":0,"feeFrozen":0}}
+        return scale.object(
+          scale.field('refcount2', scale.u8),
+          scale.field('nonce', scale.u32),
+          scale.field('consumers', scale.u32),
+          scale.field('providers', scale.u32),
+          scale.field('data',
+            scale.object(
+              scale.field('free', scale.u128),
+              scale.field('reserved', scale.u128),
+              scale.field('miscFrozen', scale.u128),
+              scale.field('feeFrozen', scale.u128)
+            )
+          ),
+        )
 
       case 160:
         //00000000000000000100000000000000eaac1adc53b417060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
