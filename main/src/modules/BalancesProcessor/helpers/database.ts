@@ -85,7 +85,7 @@ export class BalancesDatabaseHelper {
         .onConflict(['block_id', 'blake2_hash', 'network_id'])
         .merge()
     } catch (err) {
-      this.logger.error({ err }, `Failed to save balances enrichment `)
+      this.logger.error({ err, data: { ...data, ...network, row_time: new Date() } }, `Failed to save balances enrichment `)
       throw err
     }
   }
