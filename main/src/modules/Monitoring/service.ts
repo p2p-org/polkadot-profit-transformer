@@ -61,9 +61,14 @@ export class MonitoringService {
 
       await this.sliMetrics.add({ entity: 'block', name: 'missed_count', value: missedBlocks.length })
 
+      this.logger.info({
+        event: 'MonitoringService.checkMissingBlocks',
+        message: `Need to restart blocks. ENV url is ${environment.RESTART_BLOCKS_URI}`
+      })
+
       try {
-        if (environment.RESTART_ROUNDS_URI)
-          await needle.get(environment.RESTART_ROUNDS_URI)
+        if (environment.RESTART_BLOCKS_URI)
+          await needle.get(environment.RESTART_BLOCKS_URI)
       } catch (error: any) {
         this.logger.error({
           event: 'MonitoringService.checkMissingBlocks',
@@ -91,6 +96,11 @@ export class MonitoringService {
         this.slackHelper.sendMessage(`Detected missed rounds: ${JSON.stringify(missedRounds)}`)
         await this.sliMetrics.add({ entity: 'round', name: 'missed_count', value: missedRounds.length })
 
+        this.logger.info({
+          event: 'MonitoringService.checkMissingRounds',
+          message: `Need to restart rounds. ENV url is ${environment.RESTART_ROUNDS_URI}`
+        })
+
         try {
           if (environment.RESTART_ROUNDS_URI)
             await needle.get(environment.RESTART_ROUNDS_URI)
@@ -107,6 +117,11 @@ export class MonitoringService {
       if (missedEras && missedEras.length) {
         this.slackHelper.sendMessage(`Detected missed eras: ${JSON.stringify(missedEras)}`)
         await this.sliMetrics.add({ entity: 'era', name: 'missed_count', value: missedEras.length })
+
+        this.logger.info({
+          event: 'MonitoringService.checkMissingRounds',
+          message: `Need to restart eras. ENV url is ${environment.RESTART_ERAS_URI}`
+        })
 
         try {
           if (environment.RESTART_ERAS_URI)
