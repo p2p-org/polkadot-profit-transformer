@@ -1,17 +1,12 @@
-import { Container, Inject, Service } from 'typedi'
+import { Inject, Service } from 'typedi'
 import { Logger } from 'pino'
 import { Knex } from 'knex'
-import { v4 as uuidv4 } from 'uuid'
 import { sleep } from '@/utils/sleep'
 import { TasksRepository } from '@/libs/tasks.repository'
-import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
-import { QUEUES, Rabbit } from '@/loaders/rabbitmq'
-import { ProcessingStateModel } from '@/models/processing_status.model'
+import { ENTITY } from '@/models/processing_task.model'
 import { IdentityDatabaseHelper } from './helpers/database'
 import { IdentityProcessorService } from './processor'
 
-import { environment } from '@/environment'
-import { servicesVersion } from 'typescript'
 
 @Service()
 export class IdentityListnerService {
@@ -38,10 +33,11 @@ export class IdentityListnerService {
       lastProcessedExtrinsicId
     })
 
-    await this.databaseHelper.fixUnprocessedBlake2Accounts()
-
     //TODO: remove from this module
     //we need to add signers of all extrinsics.
+
+    //await this.databaseHelper.fixUnprocessedBlake2Accounts()
+    //await this.databaseHelper.fixHexDisplay()
 
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
     await this.restartUnprocessedEvents(lastProcessedEventId)
@@ -76,6 +72,10 @@ export class IdentityListnerService {
       await sleep(1000)
     }
 
+    this.logger.info({
+      event: 'IdentityListner.restartUnprocessedEvents',
+      message: `Set timeout`
+    })
     setTimeout(() => {
       this.restartUnprocessedEvents(lastRowId)
     }, 30 * 1000)
@@ -112,6 +112,10 @@ export class IdentityListnerService {
       await sleep(1000)
     }
 
+    this.logger.info({
+      event: 'IdentityListner.restartUnprocessedExtrinsics',
+      message: `Set timeout`
+    })
     setTimeout(() => {
       this.restartUnprocessedExtrinsics(lastRowId)
     }, 30 * 1000)

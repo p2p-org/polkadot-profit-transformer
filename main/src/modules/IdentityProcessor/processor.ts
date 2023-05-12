@@ -140,13 +140,13 @@ export class IdentityProcessorService {
         for (let i = 0; i < hex.length; i += 2) {
           str += String.fromCharCode(parseInt(hex.substr(i, 2), 16))
         }
-        return str
+        return str.replace(/[^a-zA-Z0-9_\-\. ]/g, '').trim()
       }
 
-      if (name.match(/^0x[0-9|a-z]+$/g) && name.match(/^0x[0-9]+$/g) && name.match(/^0x[a-z]+$/g)) {
+      if (name.match(/^0x[0-9|a-f|A-F]+$/g) && name.length > 8) {
         return hex2str(name.substr(2))
-      } else if (name.match(/^0x[0-9|a-z|A-Z]+$/g)) {
-        return name.substr(2)
+      } else if (name.match(/^[0-9|a-f|A-F]+$/g) && name.length > 8) {
+        return hex2str(name)
       }
       return name
     }
