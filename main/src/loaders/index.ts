@@ -12,8 +12,6 @@ import { ModulesLoader } from '@/modules'
 import { SliMetrics } from '@/loaders/sli_metrics'
 
 export default async (): Promise<void> => {
-  console.log({ environment })
-
   logger.info('✌️ Main app started')
 
   Container.set('logger', logger)
