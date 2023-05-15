@@ -192,6 +192,14 @@ export class BalancesProcessorService {
 
       //we save only last balalance of account for this block.
       for (const blake2_hash in balances) {
+        this.logger.info({
+          event: 'BalancesProcessorService.processBlock',
+          message: 'Insert balance',
+          block_id: block.block_id,
+          blake2_hash,
+          data: balances[blake2_hash]
+        })
+
         await this.databaseHelper.saveBalances(balances[blake2_hash], trx)
       }
     } else {
