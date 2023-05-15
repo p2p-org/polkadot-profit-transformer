@@ -147,6 +147,7 @@ export class BalancesProcessorService {
 
     const res = JSON.parse(JSON.stringify(result))
     if (res?.blockTrace?.events && res?.blockTrace?.events.length) {
+      const balances: any = {}
       for (const event of res?.blockTrace?.events) {
         this.logger.info({
           event: 'BalancesProcessorService.processBlock',
@@ -183,9 +184,15 @@ export class BalancesProcessorService {
           }
 
           //console.log('Before save balance', Date.now())
-          await this.databaseHelper.saveBalances(data, trx)
+          //await this.databaseHelper.saveBalances(data, trx)
+          balances[blake2_hash] = data
           //console.log('After save balance', Date.now())
         }
+      }
+
+      //we save only last balalance of account for this block.
+      for (const blake2_hash in balances) {
+        await this.databaseHelper.saveBalances(balances[blake2_hash], trx)
       }
     } else {
       this.logger.info({
