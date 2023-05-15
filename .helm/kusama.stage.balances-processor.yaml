@@ -16,8 +16,6 @@ additional_args:
   - "--max_old_space_size=1000"
 env:
   substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
-  restart_eras_uri: https://mbelt3-kusama-preloader.polka.p2p.world/restart-unprocessed-eras1
-  RESTART_ERAS_URI: https://mbelt3-kusama-preloader.polka.p2p.world/restart-unprocessed-eras2
   log_level: info
   network_id: 2
   mode: BALANCES_PROCESSOR
