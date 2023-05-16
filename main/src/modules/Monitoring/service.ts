@@ -41,6 +41,12 @@ export class MonitoringService {
     cron.schedule('45 0 * * *', async () => {
       this.checkDublicatesBlocks()
     })
+
+    console.log('restart blocks')
+    if (environment.RESTART_BLOCKS_URI) {
+      const res = await needle('get', environment.RESTART_BLOCKS_URI)
+      console.log(res)
+    }
   }
 
   public async checkBlocksSync(): Promise<void> {
