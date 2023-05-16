@@ -35,7 +35,7 @@ export class MonitoringService {
     cron.schedule('0 * * * *', async () => {
       this.checkMissingRounds()
     })
-    cron.schedule('30 * * * *', async () => {
+    cron.schedule('*/30 * * * *', async () => {
       this.checkMissingBlocks()
     })
     cron.schedule('45 0 * * *', async () => {
@@ -67,8 +67,10 @@ export class MonitoringService {
       })
 
       try {
-        if (environment.RESTART_BLOCKS_URI)
-          await needle.get(environment.RESTART_BLOCKS_URI)
+        if (environment.RESTART_BLOCKS_URI) {
+          const res = await needle.get(environment.RESTART_BLOCKS_URI)
+          console.log(res)
+        }
       } catch (error: any) {
         this.logger.error({
           event: 'MonitoringService.checkMissingBlocks',
