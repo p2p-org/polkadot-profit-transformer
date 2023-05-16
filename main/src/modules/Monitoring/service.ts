@@ -68,7 +68,7 @@ export class MonitoringService {
 
       try {
         if (environment.RESTART_BLOCKS_URI) {
-          const res = await needle.get(environment.RESTART_BLOCKS_URI)
+          const res = await needle('get', environment.RESTART_BLOCKS_URI)
           console.log(res)
         }
       } catch (error: any) {
@@ -105,7 +105,7 @@ export class MonitoringService {
 
         try {
           if (environment.RESTART_ROUNDS_URI)
-            await needle.get(environment.RESTART_ROUNDS_URI)
+            await needle('get', environment.RESTART_ROUNDS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
@@ -127,7 +127,7 @@ export class MonitoringService {
 
         try {
           if (environment.RESTART_ERAS_URI)
-            await needle.get(environment.RESTART_ERAS_URI)
+            await needle('get', environment.RESTART_ERAS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
