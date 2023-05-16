@@ -42,11 +42,13 @@ export class MonitoringService {
       this.checkDublicatesBlocks()
     })
 
+    /*
     console.log('restart blocks')
     if (environment.RESTART_BLOCKS_URI) {
       const res = await needle('get', environment.RESTART_BLOCKS_URI)
       console.log(res)
     }
+    */
   }
 
   public async checkBlocksSync(): Promise<void> {
