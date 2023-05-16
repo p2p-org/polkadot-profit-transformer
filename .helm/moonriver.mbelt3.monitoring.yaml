@@ -14,8 +14,8 @@ vault:
   secret: "secret/mbelt/mbelt3_moonriver"
 env:
   substrate_uri: ws://substrate-ws-proxy-prod.moonriver.svc.cluster.local:9945
-  restart_blocks_uri: https://mbelt-mbelt3-prod-moonriver-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
-  restart_rounds_uri: https://mbelt-mbelt3-prod-moonriver-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
+  restart_blocks_uri: http://mbelt-mbelt3-prod-moonriver-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
+  restart_rounds_uri: http://mbelt-mbelt3-prod-moonriver-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
   log_level: info
   network_id: 1285
   mode: MONITORING
