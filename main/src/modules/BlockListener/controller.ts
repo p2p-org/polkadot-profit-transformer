@@ -57,6 +57,11 @@ export class BlockListenerController {
       res.send('restarted unprocessed blocks metadata')
     })
 
+    this.expressApp.get('/restart-unprocessed-blocks-metadata-tasks', (req, res) => {
+      this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK_METADATA)
+      res.send('restarted unprocessed block metadata tasks')
+    })
+
     this.expressApp.get('/restart-era/:eraId', (req, res) => {
       this.listnerService.restartUnprocessedTask(ENTITY.ROUND, Number(req.params.eraId))
       res.send('restarted unprocessed era')
