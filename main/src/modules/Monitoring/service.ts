@@ -42,6 +42,9 @@ export class MonitoringService {
       this.checkDublicatesBlocks()
     })
 
+    this.sliMetrics.add({ entity: 'system', name: `restart_${environment.MODE}`, row_time: new Date() })
+    this.slackHelper.sendMessage(`Restart Last DB blockId: ${environment.MODE}: ${new Date()}`)
+
     /*
     console.log('restart blocks')
     if (environment.RESTART_BLOCKS_URI) {
