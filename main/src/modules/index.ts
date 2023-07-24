@@ -17,9 +17,9 @@ export const ModulesLoader = async (): Promise<void> => {
 
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
     BlockProcessor()
-    if (environment.NETWORK === 'kusama') {
-      BlockMetadataProcessor()
-    }
+    //if (environment.NETWORK === 'kusama') {
+    BlockMetadataProcessor()
+    //}
   }
 
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
