@@ -4,9 +4,10 @@ import { environment } from '@/environment'
 import { QUEUES, TaskMessage } from '@/loaders/rabbitmq'
 import { TasksRepository } from '@/libs/tasks.repository'
 import { ENTITY, PROCESSING_STATUS } from '@/models/processing_task.model'
-import { BlockProcessorPolkadotHelper } from '@/modules/BlockProcessor/helpers/polkadot'
 import { Logger } from 'pino'
 import { BlockModel } from '@/models/block.model'
+import { TotalIssuance } from '@/models/total_issuance.model'
+import { ApiPromise } from '@polkadot/api'
 
 @Service()
 export class BlockMetadataProcessorService {
@@ -14,8 +15,8 @@ export class BlockMetadataProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
-    private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly tasksRepository: TasksRepository,
+    @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
   ) {
   }
 
@@ -111,14 +112,22 @@ export class BlockMetadataProcessorService {
     blockId: number,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<void> {
-    const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
-    const metadata = await this.polkadotHelper.getBlockMetadata(blockHash)
+    const blockHash = await this.polkadotApi.rpc.chain.getBlockHash(blockId)
 
-    await BlockModel(this.knex)
+    const historicalApi = await this.polkadotApi.at(blockHash)
+
+    const totalIssuance = await historicalApi.query.balances.totalIssuance()
+
+    const network = { network_id: environment.NETWORK_ID }
+    await TotalIssuance(this.knex)
       .transacting(trx)
-      .update({ metadata })
-      .where({ block_id: blockId })
-  };
+      .insert({
+        block_id: blockId,
+        total_issuance: totalIssuance.toString(10),
+        ...network,
+        row_time: new Date()
+      })
+  }
 
 
 }

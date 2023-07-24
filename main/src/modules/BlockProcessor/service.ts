@@ -204,7 +204,7 @@ export class BlocksProcessorService {
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
     const startProcessingTime = Date.now()
 
-    const [signedBlock, extHeader, blockTime, events, metadata] = await this.polkadotHelper.getInfoToProcessBlock(blockHash)
+    const [signedBlock, extHeader, blockTime, events, metadata, totalIssuance] = await this.polkadotHelper.getInfoToProcessBlock(blockHash)
 
     const extrinsicsData: ExtrinsicsProcessorInput = {
       // eraId: activeEra,
@@ -251,6 +251,8 @@ export class BlocksProcessorService {
 
     await this.databaseHelper.saveBlock(trx, block)
 
+    await this.databaseHelper.saveTotalIssuance(trx, block.block_id, totalIssuance.toString(10))
+
     await this.sliMetrics.add(
       { entity: 'block', entity_id: blockId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
     await this.sliMetrics.add(
@@ -268,7 +270,7 @@ export class BlocksProcessorService {
       collect_uid: uuidv4(),
       start_timestamp: new Date(),
       attempts: 0,
-      data: {}
+      data: {},
     }
     newTasks.push(newBalancesProcessingTask)
 

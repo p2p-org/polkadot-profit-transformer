@@ -2,6 +2,7 @@ import { Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { ExtrinsicModel } from '@/models/extrinsic.model'
 import { BlockModel } from '@/models/block.model'
+import { TotalIssuance } from '@/models/total_issuance.model'
 import { EventModel } from '@/models/event.model'
 import { environment } from '@/environment'
 
@@ -25,6 +26,12 @@ export class BlockProcessorDatabaseHelper {
     await BlockModel(this.knex)
       .transacting(trx)
       .insert({ ...block, ...network, row_time: new Date() })
+  }
+
+  async saveTotalIssuance(trx: Knex.Transaction<any, any[]>, blockId: number, totalIssuance: string): Promise<void> {
+    await TotalIssuance(this.knex)
+      .transacting(trx)
+      .insert({ block_id: blockId, total_issuance: totalIssuance, ...network, row_time: new Date() })
   }
 
   async saveEvent(trx: Knex.Transaction<any, any[]>, event: EventModel): Promise<void> {

@@ -14,7 +14,6 @@ export class SliMetrics {
     @Inject('knex') private readonly knex: Knex,
     @Inject('logger') private readonly logger: Logger,
   ) {
-    this.add({ entity: 'system', name: `restart_${environment.MODE}`, row_time: new Date() })
   }
 
   public async add(data: SliMetricsModel): Promise<void> {

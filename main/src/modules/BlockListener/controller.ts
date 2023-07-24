@@ -52,12 +52,13 @@ export class BlockListenerController {
       res.send('restarted unprocessed rounds')
     })
 
-    this.expressApp.get('/restart-unprocessed-blocks-metadata/:startBlockId/:endBlockId', (req, res) => {
-      this.listnerService.restartUnprocessedBlocksMetadata(parseInt(req.params.startBlockId), parseInt(req.params.endBlockId))
+    this.expressApp.get('/process-metadata/:startBlockId/:endBlockId', (req, res) => {
+      this.listnerService.processMetadata(parseInt(req.params.startBlockId), parseInt(req.params.endBlockId))
       res.send('restarted unprocessed blocks metadata')
     })
 
-    this.expressApp.get('/restart-unprocessed-blocks-metadata-tasks', (req, res) => {
+
+    this.expressApp.get('/restart-unprocessed-blocks-metadata', (req, res) => {
       this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK_METADATA)
       res.send('restarted unprocessed block metadata tasks')
     })
