@@ -1,11 +1,11 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 20
 chain: moonbeam
 role: block-processor
 limits: {cpu: 450m, memory: 1000Mi}
 requests: {cpu: 450m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: dc902259f5f48cf338cb3303df6b58fa2747f7e9}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 454edcefc2107342e7521496f950f32aadf7abd0}
 port: 3000
 metrics:
   enabled: true
