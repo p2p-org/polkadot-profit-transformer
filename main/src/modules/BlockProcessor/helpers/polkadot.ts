@@ -24,7 +24,7 @@ export class BlockProcessorPolkadotHelper {
   async getInfoToProcessBlock(
     blockHash: BlockHash,
   ): Promise<[SignedBlock, HeaderExtended | undefined, any, any, BlockMetadata, any]> {
-  //): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata, any]> {
+    //): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata, any]> {
     try {
       const historicalApi = await this.polkadotApi.at(blockHash)
 
