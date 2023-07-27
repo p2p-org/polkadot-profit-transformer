@@ -2,7 +2,7 @@ name: Build and test mbelt
 
 on:
   push:
-    branches: ['dev']
+    branches: ['mbelt3/stage']
 
 jobs:
   lint:
