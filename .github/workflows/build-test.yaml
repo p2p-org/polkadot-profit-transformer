@@ -8,24 +8,26 @@ jobs:
   lint:
     name: Lint with prettier, eslint and tslint
     runs-on: ubuntu-latest
+    env: 
+      working-directory: ./main
     
     steps:
       - uses: actions/checkout@v3
 
       - name: Install modules
-        context: ./main
+        working-directory: ${{env.working-directory}}
         run: yarn
 
       - name: Run Prettier
-        context: ./main
+        working-directory: ${{env.working-directory}}
         run: yarn prettier --check src
 
       - name: Run ESLint
-        context: ./main
+        working-directory: ${{env.working-directory}}
         run: yarn lint
 
       - name: Run tsc
-        context: ./main
+        working-directory: ${{env.working-directory}}
         run: yarn tsc          
 
   test:
