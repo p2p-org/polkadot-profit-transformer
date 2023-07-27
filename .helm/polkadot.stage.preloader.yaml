@@ -3,7 +3,7 @@ environment: stage
 chain: polkadot
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 771b6ce176b48adb005e43d949abbabdd92b9713}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 6c539636ce47770759d652bba25efd938234717e}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/stage"
 env:
-  substrate_uri: ws://polkadot-node.polkadot.svc.cluster.local:9944
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
   log_level: info
   network_id: 0
   mode: LISTENER

@@ -5,7 +5,7 @@ chain: kusama
 role: block-processor
 limits: {cpu: 350m, memory: 1000Mi}
 requests: {cpu: 250m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 771b6ce176b48adb005e43d949abbabdd92b9713}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 6c539636ce47770759d652bba25efd938234717e}
 port: 3000
 metrics:
   enabled: true
@@ -16,7 +16,7 @@ additional_args:
   - "--max_old_space_size=1000"
 env:
   # substrate_uri: ws://kusama-node-0.kusama-node.kusama.svc.cluster.local:9944
-  substrate_uri: ws://10.41.2.2:9944
+  substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
   log_level: info
   network_id: 2
   mode: BLOCK_PROCESSOR
