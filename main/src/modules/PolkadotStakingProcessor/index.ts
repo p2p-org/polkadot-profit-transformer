@@ -11,5 +11,4 @@ export default (): void => {
 
   const logger: Logger = Container.get('logger')
   logger.info('✌️ PolkadotStakingProcessor module initialized')
-
 }

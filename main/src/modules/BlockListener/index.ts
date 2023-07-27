@@ -6,7 +6,6 @@ import { environment, NODE_ENV } from '@/environment'
 import { Logger } from 'pino'
 
 export default (): void => {
-
   const serviceInstance = Container.get(BlockListenerService)
   Container.get(BlockListenerController)
 

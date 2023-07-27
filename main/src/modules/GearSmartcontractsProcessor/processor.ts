@@ -15,19 +15,16 @@ export enum JudgementStatus {
 
 @Service()
 export class GearSmartcontractsProcessorService {
-
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
     private readonly databaseHelper: GearSmartcontractsDatabaseHelper,
-  ) {
-
-  }
+  ) {}
 
   public async processEvent(event: EventModel): Promise<void> {
     this.logger.info({
       event: 'GearSmartcontractsProcessor.processEvent',
-      data: event
+      data: event,
     })
     console.log(JSON.stringify(event))
 
@@ -63,13 +60,12 @@ export class GearSmartcontractsProcessorService {
     */
   }
 
-
   public async processExtrinsic(extrinsic: ExtrinsicModel): Promise<void> {
     this.logger.info({
       event: 'GearSmartcontractsProcessor.processExtrinsic',
       extrinsic_id: extrinsic.extrinsic_id,
       section: extrinsic.section,
-      method: extrinsic.method
+      method: extrinsic.method,
     })
 
     switch (extrinsic.method) {
@@ -84,11 +80,10 @@ export class GearSmartcontractsProcessorService {
       default:
         this.logger.error({
           event: 'GearSmartcontractsProcessor.processExtrinsic',
-          message: `failed to process undefined entry with extrnisic type "${extrinsic.method}"`
+          message: `failed to process undefined entry with extrnisic type "${extrinsic.method}"`,
         })
     }
   }
-
 
   /*
 
@@ -114,7 +109,6 @@ export class GearSmartcontractsProcessorService {
   const handlePayload = "0x0003d9cdceabcde8c14d4ea73d1a8970ca014c0350198b89b238c1d21854f98e50";
   const handlePayloadDecoded = programMetadata.createType(programMetadata.types.handle.input, handlePayload);
 */
-
 
   private async uploadProgram(extrinsic: ExtrinsicModel) {
     const events = await this.databaseHelper.getExtrinsicEvents(extrinsic, ['CodeChanged', 'ProgramChanged'])

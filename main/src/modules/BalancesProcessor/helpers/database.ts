@@ -11,11 +11,7 @@ import { AccountModel } from '@/models/accounts.model'
 const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class BalancesDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-    @Inject('logger') private readonly logger: Logger,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
 
   public async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingStateModel(this.knex)
@@ -41,9 +37,7 @@ export class BalancesDatabaseHelper {
       .merge()
   }
 
-  public async getUnprocessedBlocks(
-    row_id?: number
-  ): Promise<Array<BlockModel>> {
+  public async getUnprocessedBlocks(row_id?: number): Promise<Array<BlockModel>> {
     const blocks = BlockModel(this.knex)
       .select()
       .where({ ...network })
@@ -57,9 +51,7 @@ export class BalancesDatabaseHelper {
     return await blocks
   }
 
-  public async getBlock(
-    block_id?: number
-  ): Promise<BlockModel | undefined> {
+  public async getBlock(block_id?: number): Promise<BlockModel | undefined> {
     const block = BlockModel(this.knex)
       .select()
       .where({ block_id, ...network })

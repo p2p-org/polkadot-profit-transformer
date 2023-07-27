@@ -11,11 +11,7 @@ const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class BlockListenerDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-    @Inject('logger') private readonly logger: Logger,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
 
   public async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingStateModel(this.knex)
@@ -42,10 +38,7 @@ export class BlockListenerDatabaseHelper {
       .merge()
   }
 
-  public async getUnprocessedBlocksMetadata(
-    block_id?: number
-  ): Promise<Array<BlockModel>> {
-
+  public async getUnprocessedBlocksMetadata(block_id?: number): Promise<Array<BlockModel>> {
     const whereFilter = { metadata: null }
 
     const blocksRecords = BlockModel(this.knex)
@@ -60,5 +53,4 @@ export class BlockListenerDatabaseHelper {
 
     return await blocksRecords
   }
-
 }

@@ -4,7 +4,7 @@ export type BalancesModel = {
   block_id: number
   account_id?: string
   blake2_hash: string
-  nonce: number;
+  nonce: number
   consumers: number
   providers: number
   sufficients: number

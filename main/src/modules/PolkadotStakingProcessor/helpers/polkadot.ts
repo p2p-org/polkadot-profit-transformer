@@ -2,11 +2,7 @@ import { Inject, Service } from 'typedi'
 import { Logger } from 'pino'
 import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
-import {
-  BlockHash,
-  Exposure,
-  ValidatorPrefs,
-} from '@polkadot/types/interfaces'
+import { BlockHash, Exposure, ValidatorPrefs } from '@polkadot/types/interfaces'
 import { EraModel } from '@/models/era.model'
 import { IBlockEraParams, IGetValidatorsNominatorsResult, TBlockHash } from '../interfaces'
 import { NominatorModel } from '@/models/nominator.model'
@@ -20,8 +16,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
-
+  ) {}
 
   async getValidatorsAndNominatorsData(args: {
     eraId: number
@@ -142,8 +137,6 @@ export class PolkadotStakingProcessorPolkadotHelper {
     })
   }
 
-
-
   async getRewardPoints(blockHash: TBlockHash, eraId: number): Promise<Map<string, number>> {
     const { individual } = await this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, eraId)
     const eraRewardPointsMap: Map<string, number> = new Map()
@@ -189,8 +182,8 @@ export class PolkadotStakingProcessorPolkadotHelper {
     reward_account_id?: string
   }> {
     const payee = await this.polkadotApi.query.staking.payee.at(blockHash, accountId)
-    let reward_dest; let
-      reward_account_id
+    let reward_dest
+    let reward_account_id
     if (payee) {
       if (payee) {
         if (!payee.isAccount) {
@@ -237,6 +230,4 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const blockTime = await this.polkadotApi.query.timestamp.now.at(blockHash)
     return blockTime.toNumber()
   }
-
 }
-

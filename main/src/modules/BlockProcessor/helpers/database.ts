@@ -9,10 +9,7 @@ import { environment } from '@/environment'
 const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class BlockProcessorDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex) {}
 
   async getBlockById(blockId: number): Promise<BlockModel | null> {
     const blocksRecords = await BlockModel(this.knex)
@@ -37,7 +34,7 @@ export class BlockProcessorDatabaseHelper {
   async saveEvent(trx: Knex.Transaction<any, any[]>, event: EventModel): Promise<void> {
     const eventForDb = {
       ...event,
-      event: event.event.toJSON()
+      event: event.event.toJSON(),
     }
     await EventModel(this.knex)
       .transacting(trx)
