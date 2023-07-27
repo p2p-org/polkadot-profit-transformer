@@ -11,10 +11,8 @@ import { PolkadotStakingProcessorDatabaseHelper } from './helpers/database'
 import { PolkadotStakingProcessorPolkadotHelper } from './helpers/polkadot'
 import { SliMetrics } from '@/loaders/sli_metrics'
 
-
 @Service()
 export class PolkadotStakingProcessorService {
-
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
@@ -23,9 +21,7 @@ export class PolkadotStakingProcessorService {
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {
-  }
-
+  ) {}
 
   async processTaskMessage<T extends QUEUES.Staking>(message: TaskMessage<T>): Promise<void> {
     const { entity_id: eraId, collect_uid } = message
@@ -44,108 +40,110 @@ export class PolkadotStakingProcessorService {
 
     await this.tasksRepository.increaseAttempts(ENTITY.ERA, eraId)
 
-    await this.knex.transaction(async (trx: Knex.Transaction) => {
-      // try {
-      const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.ERA, eraId, trx)
+    await this.knex
+      .transaction(async (trx: Knex.Transaction) => {
+        // try {
+        const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.ERA, eraId, trx)
 
-      if (!taskRecord) {
-        logger.warn({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          eraId,
-          error: 'Task record not found. Skip processing.',
-          collect_uid,
-        })
-        return
-      }
+        if (!taskRecord) {
+          logger.warn({
+            event: 'StakingProcessor.processTaskMessage.tx',
+            eraId,
+            error: 'Task record not found. Skip processing.',
+            collect_uid,
+          })
+          return
+        }
 
-      if (taskRecord.collect_uid !== collect_uid) {
-        logger.warn({
+        if (taskRecord.collect_uid !== collect_uid) {
+          logger.warn({
+            event: `StakingProcessor.processTaskMessage.tx`,
+            eraId,
+            error:
+              `Possible era ${eraId} processing task duplication. ` +
+              `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+            collect_uid,
+          })
+          return
+        }
+
+        if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
+          logger.warn({
+            event: `StakingProcessor.processTaskMessage.tx`,
+            eraId,
+            message: `Era ${eraId} has been already processed. Skip processing.`,
+            collect_uid,
+          })
+          return
+        }
+
+        // all is good, start processing era payout
+        logger.info({
           event: `StakingProcessor.processTaskMessage.tx`,
           eraId,
-          error: `Possible era ${eraId} processing task duplication. ` +
-            `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+          message: `Start processing payout for era ${eraId}`,
+          ...metadata,
           collect_uid,
         })
-        return
-      }
 
-      if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-        logger.warn({
+        const eraReprocessingTask = await this.processEraPayout(
+          metadata,
+          eraId,
+          taskRecord.data.payout_block_id,
+          collect_uid,
+          trx,
+        )
+
+        if (eraReprocessingTask) {
+          logger.error({
+            event: `StakingProcessor.processTaskMessage.tx`,
+            eraId,
+            error: `Processing failed. Rollback tx`,
+            ...metadata,
+            collect_uid,
+            eraReprocessingTask,
+          })
+
+          await trx.rollback()
+          //TODO: don't send it to rabbit. its creates infinite loop
+          //await sendToRabbit(eraReprocessingTask)
+          return
+        }
+
+        await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
+
+        logger.info({
           event: `StakingProcessor.processTaskMessage.tx`,
           eraId,
-          message: `Era ${eraId} has been already processed. Skip processing.`,
+          message: `Era ${eraId} data created, commit transaction data`,
+          ...metadata,
           collect_uid,
         })
-        return
-      }
 
-      // all is good, start processing era payout
-      logger.info({
-        event: `StakingProcessor.processTaskMessage.tx`,
-        eraId,
-        message: `Start processing payout for era ${eraId}`,
-        ...metadata,
-        collect_uid,
-      })
+        await trx.commit()
 
-      const eraReprocessingTask = await this.processEraPayout(
-        metadata,
-        eraId,
-        taskRecord.data.payout_block_id,
-        collect_uid,
-        trx,
-      )
-
-      if (eraReprocessingTask) {
-        logger.error({
+        logger.info({
           event: `StakingProcessor.processTaskMessage.tx`,
           eraId,
-          error: `Processing failed. Rollback tx`,
+          message: `Era ${eraId} tx has been committed`,
           ...metadata,
           collect_uid,
           eraReprocessingTask,
         })
-
-        await trx.rollback()
-        //TODO: don't send it to rabbit. its creates infinite loop
-        //await sendToRabbit(eraReprocessingTask)
-        return
-      }
-
-      await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-      logger.info({
-        event: `StakingProcessor.processTaskMessage.tx`,
-        eraId,
-        message: `Era ${eraId} data created, commit transaction data`,
-        ...metadata,
-        collect_uid,
       })
-
-      await trx.commit()
-
-      logger.info({
-        event: `StakingProcessor.processTaskMessage.tx`,
-        eraId,
-        message: `Era ${eraId} tx has been committed`,
-        ...metadata,
-        collect_uid,
-        eraReprocessingTask,
+      .catch((error: Error) => {
+        logger.error({
+          event: `StakingProcessor.processTaskMessage.tx`,
+          eraId,
+          error: error.message,
+          data: {
+            ...metadata,
+            collect_uid,
+          },
+        })
+        throw error
       })
-    }).catch((error: Error) => {
-      logger.error({
-        event: `StakingProcessor.processTaskMessage.tx`,
-        eraId,
-        error: error.message,
-        data: {
-          ...metadata,
-          collect_uid,
-        },
-      })
-      throw error
-    })
   }
-
 
   async processEraPayout(
     metadata: any,
@@ -154,8 +152,6 @@ export class PolkadotStakingProcessorService {
     collect_uid: string,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<ProcessingTaskModel<ENTITY.ERA> | undefined> {
-
-
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process staking payout for era: ${eraId}`, metadata, eraId })
 
@@ -197,7 +193,10 @@ export class PolkadotStakingProcessorService {
       })
 
       const { validators, nominators } = await this.polkadotHelper.getValidatorsAndNominatorsData({
-        blockHash, eraStartBlockId, eraId, blockTime
+        blockHash,
+        eraStartBlockId,
+        eraId,
+        blockTime,
       })
 
       await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
@@ -216,14 +215,16 @@ export class PolkadotStakingProcessorService {
         eraId,
       })
 
-      await this.sliMetrics.add(
-        { entity: 'era', entity_id: eraId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
-      await this.sliMetrics.add(
-        { entity: 'era', entity_id: eraId, name: 'delay_time_ms', value: Date.now() - blockTime })
+      await this.sliMetrics.add({
+        entity: 'era',
+        entity_id: eraId,
+        name: 'process_time_ms',
+        value: Date.now() - startProcessingTime,
+      })
+      await this.sliMetrics.add({ entity: 'era', entity_id: eraId, name: 'delay_time_ms', value: Date.now() - blockTime })
 
       const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
       await this.sliMetrics.add({ entity: 'era', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
-
     } catch (error: any) {
       this.logger.warn({
         event: `error in processing era staking: ${error.message}`,

@@ -5,10 +5,7 @@ import { environment } from '@/environment'
 
 @Service()
 export class MonitoringDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex) {}
 
   async getLastBlock(): Promise<BlockModel> {
     const sql = `

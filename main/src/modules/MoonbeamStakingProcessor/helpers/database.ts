@@ -9,10 +9,7 @@ const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class MoonbeamStakingProcessorDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex) {}
 
   async saveCollators(trx: Knex.Transaction<any, any[]>, collator: CollatorModel): Promise<void> {
     await CollatorModel(this.knex)
@@ -30,5 +27,4 @@ export class MoonbeamStakingProcessorDatabaseHelper {
       .transacting(trx)
       .insert({ ...round, ...network, row_time: new Date() })
   }
-
 }

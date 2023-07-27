@@ -33,7 +33,6 @@ export const ExpressLoader = async (): Promise<express.Application> => {
     res.json({ status: 'live' })
   })
 
-
   const port = environment.REST_API_PORT
   app.listen(port, () => {
     logger.info(`✌️ Server started at http://localhost:${port}`)

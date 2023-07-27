@@ -14,7 +14,6 @@ import { environment } from '@/environment'
 
 @Service()
 export class BlockListenerService {
-
   gracefulShutdownFlag = false
   messagesBeingProcessed = false
   isPaused = false
@@ -25,7 +24,7 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
@@ -61,7 +60,6 @@ export class BlockListenerService {
   public async restartUnprocessedTasks(entity: ENTITY): Promise<void> {
     let lastEntityId = 0
     while (true) {
-
       const records = await this.tasksRepository.getUnprocessedTasks(entity, lastEntityId)
       if (!records || !records.length) {
         return
@@ -75,13 +73,12 @@ export class BlockListenerService {
       this.logger.info({
         event: 'BlocksListener.restartUnprocessedTasks',
         message: `Preloaded ${environment.BATCH_INSERT_CHUNK_SIZE} tasks to 
-                rabbit queue for processing ${entity}. Last entity id: ${lastEntityId}`
+                rabbit queue for processing ${entity}. Last entity id: ${lastEntityId}`,
       })
 
       await sleep(5000)
     }
   }
-
 
   public async processMetadata(startBlockId: number, endBlockId: number): Promise<void> {
     for (let blockId = startBlockId; blockId <= endBlockId; blockId++) {
@@ -96,16 +93,15 @@ export class BlockListenerService {
       }
       if (await this.tasksRepository.addProcessingTask(task)) {
         await this.sendTaskToToRabbit(ENTITY.BLOCK_METADATA, task)
-      };
+      }
     }
   }
   public async restartUnprocessedBlocksMetadata(startBlockId: number, endBlockId: number): Promise<void> {
     let lastBlockId = startBlockId
     while (lastBlockId < endBlockId) {
-
-      console.log(1);
+      console.log(1)
       const records = await this.databaseHelper.getUnprocessedBlocksMetadata(lastBlockId)
-      console.log(records.length);
+      console.log(records.length)
       if (!records || !records.length) {
         return
       }
@@ -131,7 +127,7 @@ export class BlockListenerService {
       this.logger.info({
         event: 'BlocksListener.restartUnprocessedTasks',
         message: `Preloaded ${environment.BATCH_INSERT_CHUNK_SIZE} tasks to 
-                rabbit queue for processing ${ENTITY.BLOCK_METADATA}. Last block id: ${lastBlockId}. End block id: ${endBlockId}`
+                rabbit queue for processing ${ENTITY.BLOCK_METADATA}. Last block id: ${lastBlockId}. End block id: ${endBlockId}`,
       })
 
       await sleep(100)
@@ -151,7 +147,7 @@ export class BlockListenerService {
       }
       if (await this.tasksRepository.addProcessingTask(task)) {
         await this.sendTaskToToRabbit(ENTITY.BLOCK_BALANCE, task)
-      };
+      }
     }
   }
 
@@ -160,7 +156,7 @@ export class BlockListenerService {
     if (!record) {
       this.logger.error({
         event: 'BlocksListener.restartUnprocessedTask',
-        message: `${entity} with id ${entityId} not found`
+        message: `${entity} with id ${entityId} not found`,
       })
       return
     }
@@ -168,7 +164,7 @@ export class BlockListenerService {
 
     this.logger.info({
       event: 'BlocksListener.restartUnprocessedTask',
-      message: `Send task to rabbit for processing ${entity}. Entity id: ${entityId}`
+      message: `Send task to rabbit for processing ${entity}. Entity id: ${entityId}`,
     })
   }
 
@@ -282,7 +278,6 @@ export class BlockListenerService {
     this.messagesBeingProcessed = false
   }
 
-
   private createTask(id: number): ProcessingTaskModel<ENTITY.BLOCK> {
     const task: ProcessingTaskModel<ENTITY.BLOCK> = {
       entity: ENTITY.BLOCK,
@@ -296,7 +291,7 @@ export class BlockListenerService {
     return task
   }
 
-  private async sendTaskToToRabbit(entity: ENTITY, record: { collect_uid: string, entity_id: number }): Promise<void> {
+  private async sendTaskToToRabbit(entity: ENTITY, record: { collect_uid: string; entity_id: number }): Promise<void> {
     const rabbitMQ: Rabbit = Container.get('rabbitMQ')
     if (entity === ENTITY.ERA) {
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
@@ -325,6 +320,4 @@ export class BlockListenerService {
       })
     }
   }
-
-
 }
