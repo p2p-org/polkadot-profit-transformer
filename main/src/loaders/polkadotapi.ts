@@ -2,6 +2,7 @@ import { environment } from '@/environment'
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api'
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
 import { logger } from '@/loaders/logger'
+import process from 'node:process';
 
 export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> => {
   const provider = new WsProvider(nodeUrl, 2500, {}, 300 * 1000)
@@ -16,10 +17,12 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     logger.info('PolkadotAPI connected')
   })
   provider.on('disconnected', () => {
-    logger.info('PolkadotAPI disconnected')
+    logger.error('PolkadotAPI error: disconnected')
+    process.exit(1);
   })
   provider.on('error', () => {
-    logger.info('PolkadotAPI error')
+    logger.error('PolkadotAPI error')
+    process.exit(2);
   })
 
   let api = await ApiPromise.create({
