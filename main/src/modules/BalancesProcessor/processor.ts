@@ -140,7 +140,8 @@ export class BalancesProcessorService {
         'Put',
       )
     } catch (e) {
-      console.error(e)
+      console.error(`Unable to fetch traceBlock: ${e}`)
+      throw e
     }
     //console.log('After get block  trace from RPC', Date.now())
 
