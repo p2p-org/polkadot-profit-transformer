@@ -148,6 +148,7 @@ CREATE TABLE collators (
     "account_id" VARCHAR(150),
     "active" BOOL,
     "total_stake" NUMERIC(35),
+    "final_stake" NUMERIC(35),
     "own_stake" NUMERIC(35),
     "delegators_count" INT,
     "total_reward_points" INT,
