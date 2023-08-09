@@ -72,6 +72,49 @@ export const decodeAccountBalanceValue = (value: string): AccountBalance => {
           ),
         )
 
+      case 152:
+        //polkadot
+        //"block_id":"4120373","block_hash":"0x6a6b36a26bff56544e00af0c29ad77c5dfc20e8bbe5763ca80cfa21e37dd9451"
+        //26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9 12YunyNQq8WhDYUbcBW4qK6sa1XTPSuG8yd6nPRGqbW6t7kz
+        //26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9 fce1bcf451d386328a149b768eb48ebf44928e896b1c891f12aa15b6ff2132e8b7d9e97dadcf15e6e20724b8d17fe73e
+        //26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9 56dc20413f5d004459dd4d0648114dd59678195132e101ab4227585a6b64b893
+
+        //03000000000000000100000000a2e99b550000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+        //0300000000000000010000000003df51300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        //Balance 1 {"nonce":3,"consumers":0,"providers":1,"data":{"free":207532000000,"reserved":0,"miscFrozen":0,"feeFrozen":0}}
+
+        return scale.object(
+          scale.field('nonce', scale.u32),
+          scale.field('consumers', scale.u32),
+          scale.field('providers', scale.u32),
+          scale.field('data',
+            scale.object(
+              scale.field('free', scale.u128),
+              scale.field('reserved', scale.u128),
+              scale.field('miscFrozen', scale.u128),
+              scale.field('feeFrozen', scale.u128)
+            )
+          ),
+        )
+
+      case 154:
+        //010300000000000000010000000003df51300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        //Balance 1 {"nonce":3,"consumers":0,"providers":1,"data":{"free":207532000000,"reserved":0,"miscFrozen":0,"feeFrozen":0}}
+        return scale.object(
+          scale.field('refcount2', scale.u8),
+          scale.field('nonce', scale.u32),
+          scale.field('consumers', scale.u32),
+          scale.field('providers', scale.u32),
+          scale.field('data',
+            scale.object(
+              scale.field('free', scale.u128),
+              scale.field('reserved', scale.u128),
+              scale.field('miscFrozen', scale.u128),
+              scale.field('feeFrozen', scale.u128)
+            )
+          ),
+        )
 
       case 160:
         //00000000000000000100000000000000eaac1adc53b417060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

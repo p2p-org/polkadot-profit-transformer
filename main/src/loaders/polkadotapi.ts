@@ -17,7 +17,17 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     typesBundle = typesBundlePre900
   }
 
-  const api = await ApiPromise.create({
+  provider.on('connected', () => {
+    logger.info('PolkadotAPI connected')
+  })
+  provider.on('disconnected', () => {
+    logger.info('PolkadotAPI disconnected')
+  })
+  provider.on('error', () => {
+    logger.info('PolkadotAPI error')
+  })
+
+  let api = await ApiPromise.create({
     provider,
     typesBundle
   })

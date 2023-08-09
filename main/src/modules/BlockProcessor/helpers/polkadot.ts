@@ -31,13 +31,14 @@ export class BlockProcessorPolkadotHelper {
 
   async getInfoToProcessBlock(
     blockHash: BlockHash,
-  ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata]> {
+  ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata, any]> {
     try {
       const historicalApi = await this.polkadotApi.at(blockHash)
 
-      const [blockTime, events] = await historicalApi.queryMulti([
+      const [blockTime, events, totalIssuance] = await historicalApi.queryMulti([
         [historicalApi.query.timestamp.now],
         [historicalApi.query.system.events, blockHash],
+        [historicalApi.query.balances.totalIssuance]
       ])
 
       const [metadata, signedBlock, extHeader] = await Promise.all([
@@ -52,6 +53,7 @@ export class BlockProcessorPolkadotHelper {
         blockTime,
         events,
         metadata,
+        totalIssuance
       ]
     } catch (error: any) {
       console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)

@@ -82,11 +82,30 @@ export class BlockListenerService {
     }
   }
 
+
+  public async processMetadata(startBlockId: number, endBlockId: number): Promise<void> {
+    for (let blockId = startBlockId; blockId <= endBlockId; blockId++) {
+      const task: ProcessingTaskModel<ENTITY.BLOCK> = {
+        entity: ENTITY.BLOCK_METADATA,
+        entity_id: blockId,
+        collect_uid: uuidv4(),
+        status: PROCESSING_STATUS.NOT_PROCESSED,
+        start_timestamp: new Date(),
+        attempts: 0,
+        data: {},
+      }
+      if (await this.tasksRepository.addProcessingTask(task)) {
+        await this.sendTaskToToRabbit(ENTITY.BLOCK_METADATA, task)
+      };
+    }
+  }
   public async restartUnprocessedBlocksMetadata(startBlockId: number, endBlockId: number): Promise<void> {
     let lastBlockId = startBlockId
     while (lastBlockId < endBlockId) {
 
+      console.log(1);
       const records = await this.databaseHelper.getUnprocessedBlocksMetadata(lastBlockId)
+      console.log(records.length);
       if (!records || !records.length) {
         return
       }

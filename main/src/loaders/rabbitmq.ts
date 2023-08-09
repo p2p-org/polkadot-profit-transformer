@@ -67,6 +67,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Staking),
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Blocks),
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Balances),
+        channel.assertQueue(environment.NETWORK + ':' + QUEUES.BlocksMetadata),
         channel.prefetch(1),
       ])
     },

@@ -100,6 +100,37 @@ export class IdentityDatabaseHelper {
     })
   }
 
+
+  public async fixHexDisplay(): Promise<void> {
+    const hex2str = (hex: string): string => {
+      let str = ''
+      for (let i = 0; i < hex.length; i += 2) {
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16))
+      }
+      return str.replace(/[^a-zA-Z0-9_\-\. ]/g, '').trim()
+    }
+
+    const records = await IdentityModel(this.knex)
+      .select(['row_id', 'display'])
+      .orderBy('row_id', 'asc')
+      .limit(50000)
+
+    for (const record of records) {
+      let newDisplay = ''
+      if (record.display?.match(/^0x[0-9|a-f|A-F]+$/g) && record.display.length > 8) {
+        newDisplay = hex2str(record.display.substr(2))
+      } else if (record.display?.match(/^[0-9|a-f|A-F]+$/g) && record.display.length > 8) {
+        newDisplay = hex2str(record.display)
+      }
+      if (record.display !== newDisplay && newDisplay !== '') {
+        console.log(record.display + ':' + newDisplay)
+        await IdentityModel(this.knex)
+          .update({ display: newDisplay })
+          .where({ row_id: record.row_id })
+      }
+    }
+  }
+
   public async saveAccount(data: AccountModel): Promise<void> {
     data.blake2_hash = encodeAccountIdToBlake2(data.account_id)
 

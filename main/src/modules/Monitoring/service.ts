@@ -35,12 +35,23 @@ export class MonitoringService {
     cron.schedule('0 * * * *', async () => {
       this.checkMissingRounds()
     })
-    cron.schedule('30 * * * *', async () => {
+    cron.schedule('*/30 * * * *', async () => {
       this.checkMissingBlocks()
     })
     cron.schedule('45 0 * * *', async () => {
       this.checkDublicatesBlocks()
     })
+
+    this.sliMetrics.add({ entity: 'system', name: `restart_${environment.MODE}`, row_time: new Date() })
+    this.slackHelper.sendMessage(`Restart Last DB blockId: ${environment.MODE}: ${new Date()}`)
+
+    /*
+    console.log('restart blocks')
+    if (environment.RESTART_BLOCKS_URI) {
+      const res = await needle('get', environment.RESTART_BLOCKS_URI)
+      console.log(res)
+    }
+    */
   }
 
   public async checkBlocksSync(): Promise<void> {
@@ -61,9 +72,16 @@ export class MonitoringService {
 
       await this.sliMetrics.add({ entity: 'block', name: 'missed_count', value: missedBlocks.length })
 
+      this.logger.info({
+        event: 'MonitoringService.checkMissingBlocks',
+        message: `Need to restart blocks. ENV url is ${environment.RESTART_BLOCKS_URI}`
+      })
+
       try {
-        if (environment.RESTART_ROUNDS_URI)
-          await needle.get(environment.RESTART_ROUNDS_URI)
+        if (environment.RESTART_BLOCKS_URI) {
+          const res = await needle('get', environment.RESTART_BLOCKS_URI)
+          console.log(res)
+        }
       } catch (error: any) {
         this.logger.error({
           event: 'MonitoringService.checkMissingBlocks',
@@ -91,9 +109,14 @@ export class MonitoringService {
         this.slackHelper.sendMessage(`Detected missed rounds: ${JSON.stringify(missedRounds)}`)
         await this.sliMetrics.add({ entity: 'round', name: 'missed_count', value: missedRounds.length })
 
+        this.logger.info({
+          event: 'MonitoringService.checkMissingRounds',
+          message: `Need to restart rounds. ENV url is ${environment.RESTART_ROUNDS_URI}`
+        })
+
         try {
           if (environment.RESTART_ROUNDS_URI)
-            await needle.get(environment.RESTART_ROUNDS_URI)
+            await needle('get', environment.RESTART_ROUNDS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
@@ -108,9 +131,14 @@ export class MonitoringService {
         this.slackHelper.sendMessage(`Detected missed eras: ${JSON.stringify(missedEras)}`)
         await this.sliMetrics.add({ entity: 'era', name: 'missed_count', value: missedEras.length })
 
+        this.logger.info({
+          event: 'MonitoringService.checkMissingRounds',
+          message: `Need to restart eras. ENV url is ${environment.RESTART_ERAS_URI}`
+        })
+
         try {
           if (environment.RESTART_ERAS_URI)
-            await needle.get(environment.RESTART_ERAS_URI)
+            await needle('get', environment.RESTART_ERAS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
