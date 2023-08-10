@@ -282,6 +282,18 @@ CREATE TABLE sli_metrics (
 );
 
 
+CREATE TABLE total_issuance (
+    "network_id" INT,
+    "block_id" BIGINT,
+    "total_issuance" NUMERIC(40),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+CREATE UNIQUE INDEX total_issuance_network_id_idx ON public.total_issuance (network_id,block_id);
+
+
+
 
 CREATE INDEX identity_parent_idx ON public.identity ("parent_account_id", "network_id");
 
