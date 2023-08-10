@@ -12,7 +12,6 @@ import needle from 'needle'
 
 @Service()
 export class MonitoringService {
-
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
@@ -58,7 +57,9 @@ export class MonitoringService {
     const lastDBBlock = await this.databaseHelper.getLastBlock()
     const lastNodeBlockId = await this.polkadotHelper.getFinBlockNumber()
     if (lastDBBlock.block_id < lastNodeBlockId - 10) {
-      this.slackHelper.sendMessage(`Sync problem. Last RPC-node blockId: ${lastNodeBlockId}. Last DB blockId: ${lastDBBlock.block_id}`)
+      this.slackHelper.sendMessage(
+        `Sync problem. Last RPC-node blockId: ${lastNodeBlockId}. Last DB blockId: ${lastDBBlock.block_id}`,
+      )
 
       await this.sliMetrics.add({ entity: 'block', name: 'rpc_sync_diff_count', value: lastNodeBlockId - lastDBBlock.block_id })
     }
@@ -74,7 +75,7 @@ export class MonitoringService {
 
       this.logger.info({
         event: 'MonitoringService.checkMissingBlocks',
-        message: `Need to restart blocks. ENV url is ${environment.RESTART_BLOCKS_URI}`
+        message: `Need to restart blocks. ENV url is ${environment.RESTART_BLOCKS_URI}`,
       })
 
       try {
@@ -86,7 +87,7 @@ export class MonitoringService {
         this.logger.error({
           event: 'MonitoringService.checkMissingBlocks',
           error: error.message,
-          missedBlocks
+          missedBlocks,
         })
       }
     }
@@ -111,17 +112,16 @@ export class MonitoringService {
 
         this.logger.info({
           event: 'MonitoringService.checkMissingRounds',
-          message: `Need to restart rounds. ENV url is ${environment.RESTART_ROUNDS_URI}`
+          message: `Need to restart rounds. ENV url is ${environment.RESTART_ROUNDS_URI}`,
         })
 
         try {
-          if (environment.RESTART_ROUNDS_URI)
-            await needle('get', environment.RESTART_ROUNDS_URI)
+          if (environment.RESTART_ROUNDS_URI) await needle('get', environment.RESTART_ROUNDS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
             error: error.message,
-            missedRounds
+            missedRounds,
           })
         }
       }
@@ -133,22 +133,20 @@ export class MonitoringService {
 
         this.logger.info({
           event: 'MonitoringService.checkMissingRounds',
-          message: `Need to restart eras. ENV url is ${environment.RESTART_ERAS_URI}`
+          message: `Need to restart eras. ENV url is ${environment.RESTART_ERAS_URI}`,
         })
 
         try {
-          if (environment.RESTART_ERAS_URI)
-            await needle('get', environment.RESTART_ERAS_URI)
+          if (environment.RESTART_ERAS_URI) await needle('get', environment.RESTART_ERAS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
             error: error.message,
-            missedEras
+            missedEras,
           })
         }
       }
     }
-
   }
 
   public async checkProcessingTasks(): Promise<void> {

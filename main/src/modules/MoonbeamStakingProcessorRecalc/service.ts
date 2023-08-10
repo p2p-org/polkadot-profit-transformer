@@ -7,7 +7,6 @@ import { Logger } from 'pino'
 
 @Service()
 export class MoonbeamStakingProcessorRecalcService {
-
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
@@ -15,7 +14,6 @@ export class MoonbeamStakingProcessorRecalcService {
   ) {
     this.init()
   }
-
 
   async init(): Promise<void> {
     const roundRecords = await RoundModel(this.knex)
@@ -25,10 +23,7 @@ export class MoonbeamStakingProcessorRecalcService {
       .limit(50000)
 
     for (const round of roundRecords) {
-      const collatorRecords = await CollatorModel(this.knex)
-        .select()
-        .where({ round_id: round.round_id })
-        .limit(50000)
+      const collatorRecords = await CollatorModel(this.knex).select().where({ round_id: round.round_id }).limit(50000)
 
       for (const collator of collatorRecords) {
         const collatorsTotalRewardsSQL = `
@@ -40,7 +35,6 @@ export class MoonbeamStakingProcessorRecalcService {
         await this.knex.raw(collatorsTotalRewardsSQL)
       }
 
-
       const roundTotalRewardsSQL = `
         update rounds 
         set total_reward=(select sum(total_reward) from collators where round_id=${round.round_id}) 
@@ -48,9 +42,6 @@ export class MoonbeamStakingProcessorRecalcService {
       `
       console.log(roundTotalRewardsSQL)
       await this.knex.raw(roundTotalRewardsSQL)
-
     }
   }
-
-
 }

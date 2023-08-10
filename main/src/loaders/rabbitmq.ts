@@ -11,20 +11,25 @@ export enum QUEUES {
   Staking = 'process_staking',
 }
 
-export type TaskMessage<T> = T extends QUEUES.Blocks ? {
-  entity_id: number
-  collect_uid: string
-} : T extends QUEUES.Balances ? {
-  entity_id: number
-  collect_uid: string
-} : T extends QUEUES.BlocksMetadata ? {
-  entity_id: number
-  collect_uid: string
-} : {
-  entity_id: number
-  collect_uid: string
-}
-
+export type TaskMessage<T> = T extends QUEUES.Blocks
+  ? {
+      entity_id: number
+      collect_uid: string
+    }
+  : T extends QUEUES.Balances
+  ? {
+      entity_id: number
+      collect_uid: string
+    }
+  : T extends QUEUES.BlocksMetadata
+  ? {
+      entity_id: number
+      collect_uid: string
+    }
+  : {
+      entity_id: number
+      collect_uid: string
+    }
 
 export type QueueProcessor<T extends QUEUES> = {
   processTaskMessage: (msg: TaskMessage<T>) => Promise<void>
@@ -36,7 +41,6 @@ export type Rabbit = {
 }
 
 export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
-
   const connection: IAmqpConnectionManager = await AmqpConnectionManager.connect(connectionString)
 
   connection.on('connect', () => {
@@ -79,26 +83,25 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
       await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, message)
     },
     process: async <T extends QUEUES>(queue: T, processor: QueueProcessor<T>) => {
-      const consumer =
-        async (msg: ConsumeMessage | null): Promise<void> => {
-          if (msg) {
-            logger.debug({
-              event: 'RabbitMQ.process',
-              message: msg.content.toString(),
-            })
-            const message = JSON.parse(msg.content.toString()) //as TaskMessage<T>
-            try {
-              await processor.processTaskMessage(message)
-              logger.debug({ event: 'memory', message: Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024)) })
-              channelWrapper.ack(msg)
-            } catch (error: any) {
-              logger.error({ event: 'RabbitMQ.process', error: error.message, message })
+      const consumer = async (msg: ConsumeMessage | null): Promise<void> => {
+        if (msg) {
+          logger.debug({
+            event: 'RabbitMQ.process',
+            message: msg.content.toString(),
+          })
+          const message = JSON.parse(msg.content.toString()) //as TaskMessage<T>
+          try {
+            await processor.processTaskMessage(message)
+            logger.debug({ event: 'memory', message: Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024)) })
+            channelWrapper.ack(msg)
+          } catch (error: any) {
+            logger.error({ event: 'RabbitMQ.process', error: error.message, message })
 
-              //TODO: ?
-              channelWrapper.ack(msg);
-            }
+            //TODO: ?
+            channelWrapper.ack(msg)
           }
         }
+      }
       await channelWrapper.consume(environment.NETWORK + ':' + queue, consumer)
     },
   }

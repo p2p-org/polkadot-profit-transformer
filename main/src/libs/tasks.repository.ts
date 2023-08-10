@@ -4,16 +4,11 @@ import { Knex } from 'knex'
 import { environment } from '@/environment'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 
-
 const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class TasksRepository {
-
-  constructor(
-    @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
-  ) { }
+  constructor(@Inject('logger') private readonly logger: Logger, @Inject('knex') private readonly knex: Knex) {}
 
   async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingTaskModel(this.knex)
@@ -54,8 +49,8 @@ export class TasksRepository {
   async increaseAttempts(entity: ENTITY, entity_id: number): Promise<void> {
     await this.knex.raw(
       `UPDATE processing_tasks ` +
-      `SET attempts = attempts+1 ` + //, status=${PROCESSING_STATUS.PROCESSING}
-      `WHERE entity_id = ${entity_id} AND entity='${entity}' AND network_id = ${network.network_id}`,
+        `SET attempts = attempts+1 ` + //, status=${PROCESSING_STATUS.PROCESSING}
+        `WHERE entity_id = ${entity_id} AND entity='${entity}' AND network_id = ${network.network_id}`,
     )
   }
 
@@ -64,7 +59,6 @@ export class TasksRepository {
     entity_id: number,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<ProcessingTaskModel<ENTITY> | undefined> {
-
     const tasksRecords = await ProcessingTaskModel(this.knex)
       .transacting(trx)
       .forUpdate()
@@ -83,11 +77,7 @@ export class TasksRepository {
     }
   }
 
-  async getUnprocessedTasks(
-    entity: ENTITY,
-    entity_id?: number
-  ): Promise<Array<ProcessingTaskModel<ENTITY>>> {
-
+  async getUnprocessedTasks(entity: ENTITY, entity_id?: number): Promise<Array<ProcessingTaskModel<ENTITY>>> {
     const tasksRecords = ProcessingTaskModel(this.knex)
       .select()
       .where({ entity, ...network, status: PROCESSING_STATUS.NOT_PROCESSED })
@@ -101,10 +91,7 @@ export class TasksRepository {
     return await tasksRecords
   }
 
-  async getUnprocessedTask(
-    entity: ENTITY,
-    entity_id?: number
-  ): Promise<ProcessingTaskModel<ENTITY>> {
+  async getUnprocessedTask(entity: ENTITY, entity_id?: number): Promise<ProcessingTaskModel<ENTITY>> {
     console.log(entity, entity_id)
     const tasksRecord = await ProcessingTaskModel(this.knex)
       .select()

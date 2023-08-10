@@ -4,12 +4,7 @@ import { typesBundlePre900 } from 'moonbeam-types-bundle'
 import { logger } from '@/loaders/logger'
 
 export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> => {
-  const provider = new WsProvider(
-    nodeUrl,
-    2500,
-    {},
-    300 * 1000,
-  )
+  const provider = new WsProvider(nodeUrl, 2500, {}, 300 * 1000)
 
   let typesBundle = {}
   // extra types for moonbeam/moonriver
@@ -27,9 +22,9 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     logger.info('PolkadotAPI error')
   })
 
-  let api = await ApiPromise.create({
+  const api = await ApiPromise.create({
     provider,
-    typesBundle
+    typesBundle,
   })
 
   Promise.all([
@@ -45,7 +40,9 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     //environment.NETWORK_ID = parseInt(properties.toHuman().ss58Format)
     //environment.NETWORK = chain.toLowerCase()
     if (environment.NETWORK.toLowerCase() != chain.toString().toLowerCase()) {
-      logger.error(`Wrong network name specified in the environment: '${environment.NETWORK}'. RPC-node network name is '${chain}'.`)
+      logger.error(
+        `Wrong network name specified in the environment: '${environment.NETWORK}'. RPC-node network name is '${chain}'.`,
+      )
     }
     const network_id = properties.toHuman().ss58Format || properties.toHuman().ss58format || properties.toHuman().SS58Prefix
     if (environment.NETWORK_ID != network_id) {

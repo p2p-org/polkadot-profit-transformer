@@ -15,10 +15,10 @@
     "start:docker": "node --inspect --require ./tsconfig-paths-bootstrap.js ./dist/app.js",
     "dev:main": "npx ts-node -r tsconfig-paths/register src/index.ts",
     "db:intro": "NODE_TLS_REJECT_UNAUTHORIZED=0 env-cmd -f ./.env  schemats generate --config ./src/apps/common/infra/postgresql/schemats.json -o ./schema.ts",
-    "lint": "npx eslint --ext .js,.ts src/main/index.ts",
-    "lint:fix": "npx eslint ./src/apps/main --fix",
+    "lint": "npx eslint --ext .js,.ts src/index.ts",
+    "lint:fix": "npx eslint ./src/index.ts --fix",
     "lint-staged": "lint-staged",
-    "test": "npx jest --maxWorkers=1",
+    "test": "npx jest --maxWorkers=1 --passWithNoTests",
     "migrations:up": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:latest",
     "migrations:list": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:list"
   },

@@ -14,7 +14,6 @@ import { SliMetrics } from '@/loaders/sli_metrics'
 
 @Service()
 export class MoonbeamStakingProcessorService {
-
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
@@ -22,7 +21,7 @@ export class MoonbeamStakingProcessorService {
     @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
     private readonly databaseHelper: MoonbeamStakingProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   async processTaskMessage<T extends QUEUES.Staking>(message: TaskMessage<T>): Promise<void> {
     const { entity_id: roundId, collect_uid } = message
@@ -41,92 +40,89 @@ export class MoonbeamStakingProcessorService {
 
     await this.tasksRepository.increaseAttempts(ENTITY.ROUND, roundId)
 
-    await this.knex.transaction(async (trx: Knex.Transaction) => {
-      // try {
-      const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.ROUND, roundId, trx)
+    await this.knex
+      .transaction(async (trx: Knex.Transaction) => {
+        // try {
+        const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.ROUND, roundId, trx)
 
-      if (!taskRecord) {
-        logger.warn({
+        if (!taskRecord) {
+          logger.warn({
+            event: 'StakingProcessor.processTaskMessage.tx',
+            roundId,
+            error: 'Task record not found. Skip processing.',
+            collect_uid,
+          })
+          return
+        }
+
+        if (taskRecord.collect_uid !== collect_uid) {
+          logger.warn({
+            event: 'StakingProcessor.processTaskMessage.tx',
+            roundId,
+            error:
+              `Possible round ${roundId} processing task duplication. ` +
+              `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
+            collect_uid,
+          })
+          return
+        }
+
+        if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
+          logger.warn({
+            event: 'StakingProcessor.processTaskMessage.tx',
+            roundId,
+            message: `Round ${roundId} has been already processed. Skip processing.`,
+            collect_uid,
+          })
+          return
+        }
+
+        // all is good, start processing round payout
+        logger.info({
           event: 'StakingProcessor.processTaskMessage.tx',
           roundId,
-          error: 'Task record not found. Skip processing.',
-          collect_uid,
-        })
-        return
-      }
-
-      if (taskRecord.collect_uid !== collect_uid) {
-        logger.warn({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          roundId,
-          error: `Possible round ${roundId} processing task duplication. `
-            + `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
-          collect_uid,
-        })
-        return
-      }
-
-      if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-        logger.warn({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          roundId,
-          message: `Round ${roundId} has been already processed. Skip processing.`,
-          collect_uid,
-        })
-        return
-      }
-
-      // all is good, start processing round payout
-      logger.info({
-        event: 'StakingProcessor.processTaskMessage.tx',
-        roundId,
-        message: `Start processing payout for round ${roundId}`,
-        ...metadata,
-        collect_uid,
-      })
-
-      await this.processRoundPayout(
-        trx,
-        taskRecord.data.payout_block_id,
-      )
-
-      await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-      logger.info({
-        event: 'StakingProcessor.processTaskMessage.tx',
-        roundId,
-        message: `Round ${roundId} data created, commit transaction data`,
-        ...metadata,
-        collect_uid,
-      })
-
-      await trx.commit()
-
-      logger.info({
-        event: 'StakingProcessor.processTaskMessage.tx',
-        roundId,
-        message: `Round ${roundId} tx has been committed`,
-        ...metadata,
-        collect_uid,
-      })
-    }).catch((error: Error) => {
-      logger.error({
-        event: 'StakingProcessor.processTaskMessage.tx',
-        roundId,
-        error: error.message,
-        data: {
+          message: `Start processing payout for round ${roundId}`,
           ...metadata,
           collect_uid,
-        },
+        })
+
+        await this.processRoundPayout(trx, taskRecord.data.payout_block_id)
+
+        await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
+
+        logger.info({
+          event: 'StakingProcessor.processTaskMessage.tx',
+          roundId,
+          message: `Round ${roundId} data created, commit transaction data`,
+          ...metadata,
+          collect_uid,
+        })
+
+        await trx.commit()
+
+        logger.info({
+          event: 'StakingProcessor.processTaskMessage.tx',
+          roundId,
+          message: `Round ${roundId} tx has been committed`,
+          ...metadata,
+          collect_uid,
+        })
       })
-      throw error
-    })
+      .catch((error: Error) => {
+        logger.error({
+          event: 'StakingProcessor.processTaskMessage.tx',
+          roundId,
+          error: error.message,
+          data: {
+            ...metadata,
+            collect_uid,
+          },
+        })
+        throw error
+      })
   }
 
-  async processRoundPayout(
-    trx: Knex.Transaction,
-    payoutBlockId: number,
-  ): Promise<void> {
+  async processRoundPayout(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
     logger.info({
       event: 'RoundPayoutProcessor.processRoundPayout',
       message: `Process staking payout for round with payout block id: ${payoutBlockId}`,
@@ -155,7 +151,6 @@ export class MoonbeamStakingProcessorService {
         collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
         runtime: roundPayoutProcessor.specVersion,
       })
-
 
       await this.databaseHelper.saveRound(trx, {
         round_id: parseInt(round.id.toString(10), 10),
@@ -201,19 +196,27 @@ export class MoonbeamStakingProcessorService {
         })
       }
 
-
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${
+          (Date.now() - startProcessingTime) / 1000
+        } seconds.`,
       })
 
-      await this.sliMetrics.add(
-        { entity: 'round', entity_id: round.id.toNumber(), name: 'process_time_ms', value: Date.now() - startProcessingTime })
-      await this.sliMetrics.add(
-        { entity: 'round', entity_id: round.id.toNumber(), name: 'delay_time_ms', value: Date.now() - round.payoutBlockTime.toNumber() })
+      await this.sliMetrics.add({
+        entity: 'round',
+        entity_id: round.id.toNumber(),
+        name: 'process_time_ms',
+        value: Date.now() - startProcessingTime,
+      })
+      await this.sliMetrics.add({
+        entity: 'round',
+        entity_id: round.id.toNumber(),
+        name: 'delay_time_ms',
+        value: Date.now() - round.payoutBlockTime.toNumber(),
+      })
 
       const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
       await this.sliMetrics.add({ entity: 'round', entity_id: round.id.toNumber(), name: 'memory_usage_mb', value: memorySize })
-
     } catch (error: any) {
       console.error(error)
       logger.warn({

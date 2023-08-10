@@ -7,5 +7,4 @@ export default (): void => {
 
   const logger: Logger = Container.get('logger')
   logger.info('✌️ MoonbeamStakingProcessorRecalc module initialized')
-
 }
