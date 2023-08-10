@@ -1,6 +1,6 @@
 import { ConfirmChannel, ConsumeMessage } from 'amqplib'
 import AmqpConnectionManager from 'amqp-connection-manager'
-import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/esm/AmqpConnectionManager'
+//import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/esm/AmqpConnectionManager'
 import { environment } from '@/environment'
 import { logger } from '@/loaders/logger'
 
@@ -13,23 +13,23 @@ export enum QUEUES {
 
 export type TaskMessage<T> = T extends QUEUES.Blocks
   ? {
-      entity_id: number
-      collect_uid: string
-    }
+    entity_id: number
+    collect_uid: string
+  }
   : T extends QUEUES.Balances
   ? {
-      entity_id: number
-      collect_uid: string
-    }
+    entity_id: number
+    collect_uid: string
+  }
   : T extends QUEUES.BlocksMetadata
   ? {
-      entity_id: number
-      collect_uid: string
-    }
+    entity_id: number
+    collect_uid: string
+  }
   : {
-      entity_id: number
-      collect_uid: string
-    }
+    entity_id: number
+    collect_uid: string
+  }
 
 export type QueueProcessor<T extends QUEUES> = {
   processTaskMessage: (msg: TaskMessage<T>) => Promise<void>
@@ -41,7 +41,7 @@ export type Rabbit = {
 }
 
 export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
-  const connection: IAmqpConnectionManager = await AmqpConnectionManager.connect(connectionString)
+  const connection: any = await AmqpConnectionManager.connect(connectionString)
 
   connection.on('connect', () => {
     logger.info({ event: 'RabbitMQ.connection', message: 'Successfully connected' })
