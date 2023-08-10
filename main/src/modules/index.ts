@@ -1,5 +1,5 @@
 import { environment, MODE, NODE_ENV } from '@/environment'
-import BlockMetadataProcessor from './BlockMetadataProcessor'
+//import BlockMetadataProcessor from './BlockMetadataProcessor'
 import BlockProcessor from './BlockProcessor'
 import BlockListener from './BlockListener'
 import MoonbeamStakingProcessor from './MoonbeamStakingProcessor'
@@ -18,7 +18,7 @@ export const ModulesLoader = async (): Promise<void> => {
   if (environment.MODE === MODE.BLOCK_PROCESSOR) {
     BlockProcessor()
     //if (environment.NETWORK === 'kusama') {
-    BlockMetadataProcessor()
+    //BlockMetadataProcessor()
     //}
   }
 
