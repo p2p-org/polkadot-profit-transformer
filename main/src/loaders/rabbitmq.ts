@@ -13,23 +13,23 @@ export enum QUEUES {
 
 export type TaskMessage<T> = T extends QUEUES.Blocks
   ? {
-    entity_id: number
-    collect_uid: string
-  }
+      entity_id: number
+      collect_uid: string
+    }
   : T extends QUEUES.Balances
   ? {
-    entity_id: number
-    collect_uid: string
-  }
+      entity_id: number
+      collect_uid: string
+    }
   : T extends QUEUES.BlocksMetadata
   ? {
-    entity_id: number
-    collect_uid: string
-  }
+      entity_id: number
+      collect_uid: string
+    }
   : {
-    entity_id: number
-    collect_uid: string
-  }
+      entity_id: number
+      collect_uid: string
+    }
 
 export type QueueProcessor<T extends QUEUES> = {
   processTaskMessage: (msg: TaskMessage<T>) => Promise<void>

@@ -14,6 +14,8 @@ import { logger } from '@/loaders/logger'
 import { environment } from '@/environment'
 import { sleep } from '@/utils/sleep'
 import { StakedValue, StakedValueData, RoundValue } from './interfaces'
+import { fstat } from 'fs'
+import BlockMetadataProcessor from '../BlockMetadataProcessor'
 
 export class MoonbeamStakingProcessorRoundPayout {
   api: ApiPromise
@@ -36,6 +38,47 @@ export class MoonbeamStakingProcessorRoundPayout {
     this.delegators = new Set()
 
     this.totalRewardedAmount = new BN(0)
+
+    setInterval(() => {
+      this.api.rpc.chain.getBlockHash(1000000)
+    }, 60 * 1000)
+  }
+
+  async getRoundStake(nowBlockNumber: number): Promise<{ round: RoundValue }> {
+    const originalRoundBlock = new BN(nowBlockNumber)
+    const originalRoundBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(originalRoundBlock)
+    const apiAtOriginal: any = await this.api.at(originalRoundBlockHash)
+    const originalRoundBlockTime: Moment = await apiAtOriginal.query.timestamp.now()
+    const originalRound: any = await apiAtOriginal.query.parachainStaking.round()
+    const originalRoundNumber = originalRound.current
+    const runtime: any = await apiAtOriginal.query.system.lastRuntimeUpgrade()
+    this.specVersion = runtime.unwrap().specVersion.toNumber()
+
+    logger.info({
+      event: `Round Stake ${originalRoundNumber.toString(10)} runtime version is ${this.specVersion}.`,
+    })
+
+    await this.getCollatorsAndDelegators(apiAtOriginal, apiAtOriginal, /*apiAtPriorRewarded, */ originalRoundNumber)
+
+    logger.info({
+      event: 'RoundPayoutProcessor.getRoundStake',
+      message: `Collators count: ${Object.keys(this.stakedValue).length}; Delegators count: ${this.delegators.size}`,
+    })
+
+    // calculate reward amounts
+    const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
+
+    return {
+      round: {
+        id: originalRoundNumber,
+        payoutBlockId: 0,
+        payoutBlockTime: originalRoundBlockTime,
+        startBlockId: originalRoundBlock.toNumber(),
+        startBlockTime: originalRoundBlockTime,
+        totalStaked,
+        totalPoints: new BN(0),
+      },
+    }
   }
 
   async getRewards(nowBlockNumber: number): Promise<{ round: RoundValue }> {
@@ -95,8 +138,13 @@ export class MoonbeamStakingProcessorRoundPayout {
       nowRoundFirstBlock: nowRoundFirstBlock.toNumber(),
     })
 
+    console.log('originalRoundNumber', originalRoundNumber.toNumber())
+    console.log('apiAtOriginalPrior', originalRoundPriorBlock.toNumber())
+    console.log('apiAtPriorRewarded', nowRoundFirstBlock.subn(1).toNumber())
+    //console.log("apiAtOriginalPrior", originalRoundNumber.toNumber());
+    //console.log("apiAtPriorRewarded", originalRoundNumber.toNumber());
     // collect info about staked value from collators and delegators
-    await this.getCollatorsAndDelegators(apiAtOriginalPrior, apiAtPriorRewarded, originalRoundNumber)
+    await this.getCollatorsAndDelegators(apiAtOriginalPrior, apiAtOriginal, /*apiAtPriorRewarded, */ originalRoundNumber)
 
     logger.info({
       event: 'RoundPayoutProcessor.getRewards',
@@ -104,7 +152,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     })
 
     // calculate reward amounts
-    const totalStaked: any = await apiAtPriorRewarded.query.parachainStaking.staked(originalRoundNumber)
+    const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
     const totalPoints: any = await apiAtPriorRewarded.query.parachainStaking.points(originalRoundNumber)
 
     // get the collators to be awarded via `awardedPts` storage
@@ -151,10 +199,11 @@ export class MoonbeamStakingProcessorRoundPayout {
 
   async getCollatorsAndDelegators(
     apiAtOriginalPrior: ApiPromise,
-    apiAtPriorRewarded: ApiPromise,
+    apiAtOriginal: ApiPromise,
+    //apiAtPriorRewarded: ApiPromise,
     roundNumber: number,
   ): Promise<void> {
-    const atStake: any = await apiAtPriorRewarded.query.parachainStaking.atStake.entries(roundNumber)
+    const atStake: any = await apiAtOriginal.query.parachainStaking.atStake.entries(roundNumber)
 
     for (const [
       {
@@ -164,7 +213,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     ] of atStake) {
       const collatorId = accountId.toHex()
       this.collators.add(collatorId)
-      const points: u32 = (await apiAtPriorRewarded.query.parachainStaking.awardedPts(roundNumber, accountId)) as u32
+      const points: u32 = (await apiAtOriginal.query.parachainStaking.awardedPts(roundNumber, accountId)) as u32
 
       const collatorInfo: StakedValueData = {
         id: collatorId,
@@ -218,6 +267,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       this.stakedValue[collatorId] = collatorInfo
     }
 
+    //require('fs').writeFileSync('student-6.json', JSON.stringify(this.stakedValue, null, 2));
     await this.fixZeroDelegatorsStakeQueue(apiAtOriginalPrior)
   }
 
