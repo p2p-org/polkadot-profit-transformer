@@ -178,10 +178,10 @@ export class BlockListenerService {
   }
 
   private async newBlock(blockId: number): Promise<void> {
-    if (this.messagesBeingProcessed || this.isPaused) return;
+    if (this.messagesBeingProcessed || this.isPaused) return
 
     //we need to wait 1 sec for RPC sync (block propagation), beacuse block-processor can use different rpc-connection
-    setTimeout(async ()=>{
+    setTimeout(async () => {
       this.logger.debug({ event: 'BlocksListener.preload newFinalizedBlock', newFinalizedBlockId: blockId })
       const lastBlockIdInProcessingTasks = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
       this.logger.debug({ event: 'BlocksListener.preload', lastBlockIdInProcessingTasks })
