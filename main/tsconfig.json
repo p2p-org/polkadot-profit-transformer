@@ -10,7 +10,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "downlevelIteration": true,
-    "isolatedModules": true,
+    "isolatedModules": false,
     "strict": true,
     "moduleResolution": "node",
     "baseUrl": "./src",
