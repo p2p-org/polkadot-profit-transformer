@@ -18,17 +18,13 @@ export class PolkadotStakingProcessorPolkadotHelper {
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
   ) {}
 
-  async getValidatorsAndNominatorsData(args: {
+  async getValidatorsAndNominatorsStake(args: {
     eraId: number
     eraStartBlockId: number
-    blockHash: TBlockHash
-    blockTime: number
   }): Promise<IGetValidatorsNominatorsResult> {
     return new Promise(async (res, rej) => {
       console.log('getValidatorsAndNominatorsData start')
-      const { eraId, blockHash, blockTime, eraStartBlockId } = args
-      const eraRewardPointsMap: Map<string, number> = await this.getRewardPoints(blockHash, +eraId)
-      console.log({ eraRewardPointsMap })
+      const { eraId, eraStartBlockId } = args
 
       const nominators: NominatorModel[] = []
       const validators: ValidatorModel[] = []
@@ -36,15 +32,90 @@ export class PolkadotStakingProcessorPolkadotHelper {
       const validatorsAccountIdSet: Set<string> = await this.getDistinctValidatorsAccountsByEra(eraStartBlockId)
       // console.log({ validatorsAccountIdSet })
 
+      const eraStartBlockHash = await this.getBlockHashByHeight(eraStartBlockId)
+      const eraStartBlockTime = await this.getBlockTime(eraStartBlockHash)
+
       const processValidator = async (validatorAccountId: string, cb: any): Promise<void> => {
-        this.logger.info(`Era: ${eraId}. Process staking for validator ${validatorAccountId} `)
+        this.logger.info(`Era: ${eraId}. Process stake for validator ${validatorAccountId} `)
         const [{ total, own, others }, { others: othersClipped }, prefs] = await this.getStakersInfo(
-          blockHash,
+          eraStartBlockHash,
           eraId,
           validatorAccountId,
         )
 
-        const sliceNominatorsToChunks = (arr: Vec<IndividualExposure>, chunkSize: number): Array<IndividualExposure[]> => {
+        this.logger.info(`validator ${validatorAccountId} has ${others.length} nominators`)
+
+        for (let i = 0; i < others.length; i++) {
+          const { who, value } = others[i]
+          nominators.push({
+            account_id: who.toString(),
+            value: value.toString(),
+            is_clipped: !!othersClipped.find((e: { who: { toString: () => any } }) => {
+              return e.who.toString() === who.toString()
+            }),
+            era_id: eraId,
+            validator: validatorAccountId,
+            block_time: new Date(eraStartBlockTime),
+          })
+        }
+
+        validators.push({
+          era_id: eraId,
+          account_id: validatorAccountId,
+          total: total.toString(),
+          own: own.toString(),
+          nominators_count: others.length,
+          prefs: prefs.toJSON(),
+          block_time: new Date(eraStartBlockTime),
+        })
+
+        cb()
+      }
+
+      const queue = new Queue(processValidator, { concurrent: 5 })
+
+      for (const validator of Array.from(validatorsAccountIdSet)) {
+        queue.push(validator)
+      }
+
+      queue.on('drain', function () {
+        res({
+          validators,
+          nominators,
+        })
+      })
+
+      queue.on('task_failed', function (taskId: any, err: any, stats: any) {
+        rej()
+      })
+    })
+  }
+
+  async getValidatorsAndNominatorsPayout(args: {
+    eraId: number
+    eraStartBlockId: number
+    payoutBlockHash: TBlockHash
+    payoutBlockTime: number
+  }): Promise<IGetValidatorsNominatorsResult> {
+    return new Promise(async (res, rej) => {
+      console.log('getValidatorsAndNominatorsData start')
+      const { eraId, payoutBlockHash, payoutBlockTime, eraStartBlockId } = args
+      const eraRewardPointsMap: Map<string, number> = await this.getRewardPoints(payoutBlockHash, +eraId)
+
+      const nominatorsResult: NominatorModel[] = []
+      const validatorsResult: ValidatorModel[] = []
+
+      const { validators, nominators } = await this.getValidatorsAndNominatorsStake({
+        eraId,
+        eraStartBlockId,
+      })
+
+      const processValidator = async (validator: ValidatorModel, cb: any): Promise<void> => {
+        this.logger.info(`Era: ${eraId}. Process rewards for validator ${validator.account_id} `)
+
+        const others = nominators.filter((nominator) => nominator.validator === validator.account_id)
+
+        const sliceNominatorsToChunks = (arr: NominatorModel[], chunkSize: number): Array<NominatorModel[]> => {
           const res = []
           for (let i = 0; i < arr.length; i += chunkSize) {
             const chunk = arr.slice(i, i + chunkSize)
@@ -58,76 +129,40 @@ export class PolkadotStakingProcessorPolkadotHelper {
           process.env.NOMINATORS_CUNCURRENCY ? Number(process.env.NOMINATORS_CUNCURRENCY) : 50,
         )
 
-        this.logger.info(`validator ${validatorAccountId} has ${others.length} nominators`)
+        this.logger.info(`validator ${validator.account_id} has ${others.length} nominators`)
 
         for (const chunk of nominatorsChunked) {
           const chunkResult = await Promise.all(
-            chunk.map(async ({ who, value }) => {
-              // console.log({ who, value })
+            chunk.map(async (nominator) => {
               return {
-                account_id: who.toString(),
-                value: value.toString(),
-                is_clipped: !!othersClipped.find((e: { who: { toString: () => any } }) => {
-                  return e.who.toString() === who.toString()
-                }),
-                era_id: eraId,
-                validator: validatorAccountId,
-                ...(await this.getStakingPayee(blockHash, who.toString())),
-                block_time: new Date(blockTime),
+                ...nominator,
+                ...(await this.getStakingPayee(payoutBlockHash, nominator.account_id)),
               }
             }),
           )
 
-          nominators.push(...chunkResult)
+          nominatorsResult.push(...chunkResult)
         }
 
-        validators.push({
-          era_id: eraId,
-          account_id: validatorAccountId,
-          total: total.toString(),
-          own: own.toString(),
-          nominators_count: others.length,
-          reward_points: eraRewardPointsMap.get(validatorAccountId) || 0,
-          ...(await this.getStakingPayee(blockHash, validatorAccountId)),
-          prefs: prefs.toJSON(),
-          block_time: new Date(blockTime),
+        validatorsResult.push({
+          ...validator,
+          reward_points: eraRewardPointsMap.get(validator.account_id) || 0,
+          ...(await this.getStakingPayee(payoutBlockHash, validator.account_id)),
         })
 
         cb()
       }
 
-      // const sliceIntoChunks = (arr: string[], chunkSize: number): Array<string[]> => {
-      //   const res = []
-      //   for (let i = 0; i < arr.length; i += chunkSize) {
-      //     const chunk = arr.slice(i, i + chunkSize)
-      //     res.push(chunk)
-      //   }
-      //   return res
-      // }
-
-      // const allValidatorsChunked = sliceIntoChunks(Array.from(validatorsAccountIdSet), 5)
-
-      // for (const chunk of allValidatorsChunked) {
-      //   await Promise.all(chunk.map(processValidator))
-      // }
-
       const queue = new Queue(processValidator, { concurrent: 5 })
 
-      // const results = []
-
-      // queue.on('task_finish', function (taskId, result, stats) {
-      //   results.push(result)
-      // })
-
-      for (const validator of Array.from(validatorsAccountIdSet)) {
-        // console.log('queues.push', validator)
+      validators.forEach((validator) => {
         queue.push(validator)
-      }
+      })
 
       queue.on('drain', function () {
         res({
-          validators,
-          nominators,
+          validators: validatorsResult,
+          nominators: nominatorsResult,
         })
       })
 
@@ -200,25 +235,41 @@ export class PolkadotStakingProcessorPolkadotHelper {
     }
   }
 
-  async getEraData({ eraId, blockHash }: IBlockEraParams): Promise<Omit<EraModel, 'payout_block_id'>> {
+  async getEraDataStake({
+    eraId,
+    blockHash,
+  }: IBlockEraParams): Promise<Omit<EraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward'>> {
     this.logger.debug({ getEraData: { eraId, blockHash } })
-    const [totalReward, erasRewardPoints, totalStake, sessionStart] = await Promise.all([
-      this.polkadotApi.query.staking.erasValidatorReward.at(blockHash, eraId),
-      this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, eraId),
+    const [totalStake, sessionStart] = await Promise.all([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
       this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
     ])
 
     this.logger.debug({ sessionStart: sessionStart.toHuman() })
 
-    console.log('TOTAL REWARD', totalReward.toHuman())
+    return {
+      era_id: eraId,
+      total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
+      session_start: sessionStart.unwrap().toNumber(),
+    }
+  }
+
+  async getEraDataRewards({
+    eraId,
+    blockHash,
+  }: IBlockEraParams): Promise<Omit<EraModel, 'payout_block_id' | 'total_stake' | 'session_start'>> {
+    this.logger.debug({ getEraData: { eraId, blockHash } })
+    const [totalReward, erasRewardPoints] = await Promise.all([
+      this.polkadotApi.query.staking.erasValidatorReward.at(blockHash, eraId),
+      this.polkadotApi.query.staking.erasRewardPoints.at(blockHash, eraId),
+    ])
+
+    //console.log('TOTAL REWARD', totalReward.toHuman())
 
     return {
       era_id: eraId,
       total_reward: totalReward.toString(),
-      total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
       total_reward_points: +erasRewardPoints.total.toString(),
-      session_start: sessionStart.unwrap().toNumber(),
     }
   }
 

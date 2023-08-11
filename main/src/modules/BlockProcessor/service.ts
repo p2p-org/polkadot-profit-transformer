@@ -30,139 +30,27 @@ export class BlocksProcessorService {
     private readonly tasksRepository: TasksRepository,
   ) {}
 
-  public async processTaskMessage<T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> {
-    const { entity_id: blockId, collect_uid } = message
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+    const { entity_id: blockId, collect_uid } = taskRecord
 
-    const metadata = {
-      block_process_uid: uuidv4(),
-      processing_timestamp: new Date(),
+    //check that block wasn't processed already
+    if (await this.databaseHelper.getBlockById(blockId)) {
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: `Block ${blockId} already present in the database`,
+      })
+
+      return true
     }
-    await this.tasksRepository.increaseAttempts(ENTITY.BLOCK, blockId)
 
-    await this.knex
-      .transaction(async (trx) => {
-        const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
+    const newTasks = await this.processBlock(blockId, trx)
 
-        if (!taskRecord) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'Queue.processTaskMessage',
-            blockId,
-            warning: 'Task record not found. Skip processing',
-            collect_uid,
-          })
-          return
-        }
+    if (newTasks.length) {
+      await this.tasksRepository.batchAddEntities(newTasks, trx)
+    }
 
-        if (taskRecord.attempts > environment.MAX_ATTEMPTS) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'BlockProcessor.processTaskMessage',
-            blockId,
-            warning: `Max attempts on block ${blockId} reached, cancel processing.`,
-            collect_uid,
-          })
-          return
-        }
-
-        if (taskRecord.collect_uid !== collect_uid) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'BlockProcessor.processTaskMessage',
-            blockId,
-            warning:
-              `Possible block ${blockId} processing task duplication. ` +
-              `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
-            collect_uid,
-          })
-          return
-        }
-
-        if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'BlockProcessor.processTaskMessage',
-            blockId,
-            warning: `Block  ${blockId} has been already processed. Skip processing.`,
-            collect_uid,
-          })
-          return
-        }
-
-        //check that block wasn't processed already
-        if (await this.databaseHelper.getBlockById(blockId)) {
-          this.logger.info({
-            event: 'BlockProcessor.processTaskMessage',
-            blockId,
-            message: `Block ${blockId} already present in the database`,
-          })
-
-          await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-          await trx.commit()
-          return
-        }
-
-        // everything is ok, start processing
-        this.logger.info({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          message: `Start processing block ${blockId}`,
-          ...metadata,
-          collect_uid,
-        })
-
-        const newTasks = await this.processBlock(blockId, trx)
-
-        if (newTasks.length) {
-          await this.tasksRepository.batchAddEntities(newTasks, trx)
-        }
-
-        await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-        await trx.commit()
-
-        this.logger.info({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          message: `Block ${blockId} has been processed and committed`,
-          ...metadata,
-          collect_uid,
-          newTasks,
-        })
-
-        processedBlockGauge.set(blockId)
-        if (!newTasks.length) return
-
-        this.logger.info({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          message: 'newProcessingTasks found, send to rabbit',
-          ...metadata,
-          collect_uid,
-        })
-
-        await this.sendProcessingTasksToRabbit(newTasks)
-
-        this.logger.info({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          message: `block ${blockId} processing done`,
-          ...metadata,
-          collect_uid,
-        })
-      })
-      .catch((error: Error) => {
-        this.logger.error({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          error: error.message,
-          data: {
-            ...metadata,
-            collect_uid,
-          },
-        })
-        throw error
-      })
+    return true
   }
 
   private async sendProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {

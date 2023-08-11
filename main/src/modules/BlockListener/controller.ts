@@ -62,7 +62,7 @@ export class BlockListenerController {
     })
 
     this.expressApp.get('/restart-era/:eraId', (req, res) => {
-      this.listnerService.restartUnprocessedTask(ENTITY.ROUND, Number(req.params.eraId))
+      this.listnerService.restartUnprocessedTask(ENTITY.ERA, Number(req.params.eraId))
       res.send('restarted unprocessed era')
     })
 

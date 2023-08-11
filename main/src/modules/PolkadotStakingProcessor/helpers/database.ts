@@ -6,6 +6,10 @@ import { EraModel } from '@/models/era.model'
 import { ValidatorModel } from '@/models/validator.model'
 import { NominatorModel } from '@/models/nominator.model'
 
+import { EraStakeModel } from '@/models/era_stake.model'
+import { ValidatorStakeModel } from '@/models/validator_stake.model'
+import { NominatorStakeModel } from '@/models/nominator_stake.model'
+
 const network = { network_id: environment.NETWORK_ID }
 
 @Service()
@@ -26,6 +30,24 @@ export class PolkadotStakingProcessorDatabaseHelper {
 
   async saveEra(trx: Knex.Transaction<any, any[]>, era: EraModel): Promise<void> {
     await EraModel(this.knex)
+      .transacting(trx)
+      .insert({ ...era, ...network, row_time: new Date() })
+  }
+
+  async saveValidatorsStake(trx: Knex.Transaction<any, any[]>, validator: ValidatorStakeModel): Promise<void> {
+    await ValidatorStakeModel(this.knex)
+      .transacting(trx)
+      .insert({ ...validator, ...network, row_time: new Date() })
+  }
+
+  async saveNominatorsStake(trx: Knex.Transaction<any, any[]>, nominator: NominatorStakeModel): Promise<void> {
+    await NominatorStakeModel(this.knex)
+      .transacting(trx)
+      .insert({ ...nominator, ...network, row_time: new Date() })
+  }
+
+  async saveEraStake(trx: Knex.Transaction<any, any[]>, era: EraStakeModel): Promise<void> {
+    await EraStakeModel(this.knex)
       .transacting(trx)
       .insert({ ...era, ...network, row_time: new Date() })
   }

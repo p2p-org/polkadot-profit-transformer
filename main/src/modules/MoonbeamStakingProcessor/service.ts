@@ -5,13 +5,13 @@ import { ApiPromise } from '@polkadot/api'
 //import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
-import { ENTITY, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { TasksRepository } from '@/libs/tasks.repository'
 import { MoonbeamStakingProcessorRoundPayout } from './round-payout'
 import { MoonbeamStakingProcessorDatabaseHelper } from './helpers/database'
 import { Logger } from 'pino'
 import { SliMetrics } from '@/loaders/sli_metrics'
 import { Init } from '@polkadot/api/base/Init'
+import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 
 @Service()
 export class MoonbeamStakingProcessorService {
@@ -23,124 +23,49 @@ export class MoonbeamStakingProcessorService {
     private readonly databaseHelper: MoonbeamStakingProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
   ) {
-    this.nit()
+    //this.init()
   }
-  async nit() {
+  /*
+  async init() {
     await this.knex.transaction(async (trx: Knex.Transaction) => {
       //await this.processRoundPayout(null, 4060200)
       await this.processRoundStake(trx, 4060200)
       console.log('DONE')
     })
   }
+  */
 
-  async processTaskMessage<T extends QUEUES.Staking>(message: TaskMessage<T>): Promise<void> {
-    const { entity_id: roundId, collect_uid } = message
-
-    logger.info({
-      event: 'ParachainStakingProcessor.processTaskMessage',
-      roundId,
-      message: 'New process round task received',
-      collect_uid,
-    })
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+    const { entity_id: roundId, collect_uid } = taskRecord
 
     const metadata = {
       block_process_uid: v4(),
       processing_timestamp: new Date(),
     }
 
-    await this.tasksRepository.increaseAttempts(ENTITY.ROUND, roundId)
+    // all is good, start processing new round stake
+    logger.info({
+      event: 'StakingProcessor.processTaskMessage.tx',
+      roundId,
+      message: `Start processing round stake ${roundId + 2}`,
+      ...metadata,
+      collect_uid,
+    })
 
-    await this.knex
-      .transaction(async (trx: Knex.Transaction) => {
-        // try {
-        const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.ROUND, roundId, trx)
+    await this.processRoundStake(trx, taskRecord.data.payout_block_id)
 
-        if (!taskRecord) {
-          logger.warn({
-            event: 'StakingProcessor.processTaskMessage.tx',
-            roundId,
-            error: 'Task record not found. Skip processing.',
-            collect_uid,
-          })
-          return
-        }
+    // start processing old round rewards payout
+    logger.info({
+      event: 'StakingProcessor.processTaskMessage.tx',
+      roundId,
+      message: `Start processing payout for round ${roundId}`,
+      ...metadata,
+      collect_uid,
+    })
 
-        if (taskRecord.collect_uid !== collect_uid) {
-          logger.warn({
-            event: 'StakingProcessor.processTaskMessage.tx',
-            roundId,
-            error:
-              `Possible round ${roundId} processing task duplication. ` +
-              `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
-            collect_uid,
-          })
-          return
-        }
+    await this.processRoundPayout(trx, taskRecord.data.payout_block_id)
 
-        if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-          logger.warn({
-            event: 'StakingProcessor.processTaskMessage.tx',
-            roundId,
-            message: `Round ${roundId} has been already processed. Skip processing.`,
-            collect_uid,
-          })
-          return
-        }
-
-        // all is good, start processing new round stake
-        logger.info({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          roundId,
-          message: `Start processing round stake ${roundId + 2}`,
-          ...metadata,
-          collect_uid,
-        })
-
-        await this.processRoundStake(trx, taskRecord.data.payout_block_id)
-
-        // start processing old round rewards payout
-        logger.info({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          roundId,
-          message: `Start processing payout for round ${roundId}`,
-          ...metadata,
-          collect_uid,
-        })
-
-        await this.processRoundPayout(trx, taskRecord.data.payout_block_id)
-
-        await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-        logger.info({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          roundId,
-          message: `Round ${roundId} data created, commit transaction data`,
-          ...metadata,
-          collect_uid,
-        })
-
-        await trx.commit()
-
-        logger.info({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          roundId,
-          message: `Round ${roundId} tx has been committed`,
-          ...metadata,
-          collect_uid,
-        })
-      })
-      .catch((error: Error) => {
-        logger.error({
-          event: 'StakingProcessor.processTaskMessage.tx',
-          roundId,
-          error: error.message,
-          data: {
-            ...metadata,
-            collect_uid,
-          },
-        })
-        throw error
-      })
+    return true
   }
 
   async processRoundStake(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {

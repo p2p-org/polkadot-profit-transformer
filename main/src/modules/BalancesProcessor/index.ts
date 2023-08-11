@@ -3,6 +3,7 @@ import { BalancesProcessorService } from './processor'
 //import { BalancesListenerService } from './listner'
 import { QUEUES, Rabbit } from '@/loaders/rabbitmq'
 import { Logger } from 'pino'
+import { ENTITY } from '@/models/processing_task.model'
 //import { decodeAccountBalanceValue, AccountBalance } from './helpers/crypt'
 //console.log(decodeAccountBalanceValue("01020000000000000000f94a7d020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"));
 
@@ -10,7 +11,7 @@ export default (): void => {
   const serviceInstance = Container.get(BalancesProcessorService)
 
   const rabbitMQ: Rabbit = Container.get('rabbitMQ')
-  rabbitMQ.process(QUEUES.Balances, serviceInstance)
+  rabbitMQ.process(QUEUES.Balances, ENTITY.BLOCK_BALANCE, serviceInstance)
 
   //  const listenerInstance = Container.get(BalancesListenerService)
   // listenerInstance.preload()

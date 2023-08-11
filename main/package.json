@@ -18,6 +18,8 @@
     "lint": "npx eslint --ext .js,.ts src/index.ts",
     "lint:fix": "npx eslint ./src/index --fix",
     "lint-staged": "lint-staged",
+    "prettier": "npx prettier --check src",
+    "prettier:fix": "npx prettier --write src",
     "test": "npx jest --maxWorkers=1 --config jest.config.ts",
     "migrations:up": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:latest",
     "migrations:list": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:list"

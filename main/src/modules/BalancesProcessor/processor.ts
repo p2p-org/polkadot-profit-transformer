@@ -21,98 +21,12 @@ export class BalancesProcessorService {
     private readonly tasksRepository: TasksRepository,
   ) {}
 
-  public async processTaskMessage<T extends QUEUES.Balances>(message: TaskMessage<T>): Promise<void> {
-    const { entity_id: blockId, collect_uid } = message
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+    const { entity_id: blockId, collect_uid } = taskRecord
 
-    await this.tasksRepository.increaseAttempts(ENTITY.BLOCK_BALANCE, blockId)
+    await this.processBlock(blockId, trx)
 
-    await this.knex
-      .transaction(async (trx) => {
-        const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.BLOCK_BALANCE, blockId, trx)
-
-        if (!taskRecord) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'BalanceProcessor.processTaskMessage',
-            blockId,
-            warning: 'Task record not found. Skip processing',
-            collect_uid,
-          })
-          return
-        }
-
-        if (taskRecord.attempts > environment.MAX_ATTEMPTS) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'BalanceProcessor.processTaskMessage',
-            blockId,
-            warning: `Max attempts on block ${blockId} reached, cancel processing.`,
-            collect_uid,
-          })
-          return
-        }
-
-        if (taskRecord.collect_uid !== collect_uid) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'BalanceProcessor.processTaskMessage',
-            blockId,
-            warning:
-              `Possible block ${blockId} processing task duplication. ` +
-              `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
-            collect_uid,
-          })
-          return
-        }
-
-        if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-          await trx.rollback()
-          this.logger.warn({
-            event: 'BalanceProcessor.processTaskMessage',
-            blockId,
-            warning: `Block  ${blockId} has been already processed. Skip processing.`,
-            collect_uid,
-          })
-          return
-        }
-
-        // all is good, start processing
-        this.logger.info({
-          event: 'BalanceProcessor.processTaskMessage',
-          blockId,
-          message: `Start processing block ${blockId}`,
-          collect_uid,
-        })
-
-        //console.log('Start block processing', Date.now())
-        const newStakingProcessingTasks = await this.processBlock(blockId, trx)
-        //console.log('End block processing', Date.now())
-
-        await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-        //console.log('Set task record as processed', Date.now())
-        await trx.commit()
-        //console.log('Record commiter', Date.now())
-
-        this.logger.info({
-          event: 'BalanceProcessor.processTaskMessage',
-          blockId,
-          message: `Block ${blockId} has been processed and committed`,
-          collect_uid,
-          newStakingProcessingTasks,
-        })
-      })
-      .catch((error: Error) => {
-        this.logger.error({
-          event: 'BalanceProcessor.processTaskMessage',
-          blockId,
-          error: error.message,
-          data: {
-            collect_uid,
-          },
-        })
-        throw error
-      })
+    return true
   }
 
   async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<void> {

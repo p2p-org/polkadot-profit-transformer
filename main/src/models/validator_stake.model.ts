@@ -1,6 +1,6 @@
 import { Knex } from 'knex'
 
-export type ValidatorModel = {
+export type ValidatorStakeModel = {
   era_id: number
   account_id: string
   total: string
@@ -14,4 +14,4 @@ export type ValidatorModel = {
   row_time?: Date
 }
 
-export const ValidatorModel = (knex: Knex) => knex<ValidatorModel>('validators')
+export const ValidatorStakeModel = (knex: Knex) => knex<ValidatorStakeModel>('validators_stake')

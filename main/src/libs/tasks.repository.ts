@@ -46,27 +46,52 @@ export class TasksRepository {
     return true
   }
 
-  async increaseAttempts(entity: ENTITY, entity_id: number): Promise<void> {
+  async increaseAttempts(entity: ENTITY, entity_id: number, collect_uid: string): Promise<void> {
     await this.knex.raw(
       `UPDATE processing_tasks ` +
         `SET attempts = attempts+1 ` + //, status=${PROCESSING_STATUS.PROCESSING}
-        `WHERE entity_id = ${entity_id} AND entity='${entity}' AND network_id = ${network.network_id}`,
+        `WHERE entity_id = ${entity_id} AND entity='${entity}' AND collect_uid='${collect_uid}' AND network_id = ${network.network_id}`,
     )
   }
 
   async readTaskAndLockRow(
     entity: ENTITY,
     entity_id: number,
+    collect_uid: string,
     trx: Knex.Transaction<any, any[]>,
   ): Promise<ProcessingTaskModel<ENTITY> | undefined> {
     const tasksRecords = await ProcessingTaskModel(this.knex)
       .transacting(trx)
       .forUpdate()
       .select()
-      .where({ entity, entity_id, ...network, status: PROCESSING_STATUS.NOT_PROCESSED })
+      .where({ entity, entity_id, ...network /*, status: PROCESSING_STATUS.NOT_PROCESSED*/ })
       .orderBy('row_id', 'desc')
 
-    if (tasksRecords && tasksRecords.length >= 1) {
+    if (tasksRecords && tasksRecords.length > 1) {
+      this.logger.warn({
+        event: 'RabbitMQ.readTaskAndLockRow',
+        entity,
+        entity_id,
+        collect_uid,
+        error: `Possible ${entity} with id: ${entity_id} processing task duplication. ` + `Found: ${tasksRecords.length} records`,
+      })
+      return
+    }
+
+    if (tasksRecords[0].collect_uid !== collect_uid) {
+      this.logger.warn({
+        event: 'RabbitMQ.readTaskAndLockRow',
+        entity,
+        entity_id,
+        collect_uid,
+        error:
+          `Problem with ${entity} with id: ${entity_id}. ` +
+          `Expected collect_uid: ${collect_uid}, found: ${tasksRecords[0].collect_uid}`,
+      })
+      return
+    }
+    return tasksRecords[0]
+    /*
       for (let i = 1; i < tasksRecords.length; i++) {
         await ProcessingTaskModel(this.knex)
           .transacting(trx)
@@ -75,6 +100,7 @@ export class TasksRepository {
       }
       return tasksRecords[0]
     }
+    */
   }
 
   async getUnprocessedTasks(entity: ENTITY, entity_id?: number): Promise<Array<ProcessingTaskModel<ENTITY>>> {
@@ -100,7 +126,7 @@ export class TasksRepository {
     return tasksRecord && tasksRecord[0]
   }
 
-  async setTaskRecordAsProcessed(record: ProcessingTaskModel<ENTITY>, trx: Knex.Transaction<any, any[]>): Promise<void> {
+  async setTaskRecordAsProcessed(trx: Knex.Transaction<any, any[]>, record: ProcessingTaskModel<ENTITY>): Promise<void> {
     await ProcessingTaskModel(this.knex)
       .transacting(trx)
       .where({ row_id: record.row_id, ...network })
