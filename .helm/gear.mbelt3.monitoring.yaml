@@ -3,7 +3,7 @@ environment: mbelt3-prod
 replicas: 1
 chain: gear
 role: monitoring
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: e2ce2117d4191984fe8655f6f93f66a2e8da04c2}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: a347879cc6142c019e5ea3c360b4377bf19d055e}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
