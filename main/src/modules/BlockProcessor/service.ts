@@ -28,7 +28,7 @@ export class BlocksProcessorService {
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
     const { entity_id: blockId, collect_uid } = taskRecord
@@ -53,8 +53,12 @@ export class BlocksProcessorService {
     const newTasks = await this.processBlock(blockId, trx)
 
     if (newTasks.length) {
-      await this.tasksRepository.batchAddEntities(newTasks)
-      await this.sendProcessingTasksToRabbit(newTasks)
+      await this.knex.transaction(async (trx2: Knex.Transaction) => {
+        await this.tasksRepository.batchAddEntities(newTasks, trx2)
+        await trx2.commit()
+        await this.sendProcessingTasksToRabbit(newTasks)
+      })
+
     }
 
     return true
