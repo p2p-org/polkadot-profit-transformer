@@ -54,7 +54,7 @@ export class BlocksProcessorService {
     const newTasks = await this.processBlock(blockId, trx)
 
     if (newTasks.length) {
-      console.log("LEGTH not emoty")
+      console.log("LEGTH not emoty.  " + newTasks.length)
       await this.tasksRepository.batchAddEntities(newTasks, trx)
     }
     console.log("OK")
@@ -179,11 +179,11 @@ export class BlocksProcessorService {
     }
     newTasks.push(newBalancesProcessingTask)
 
-    console.log("!!!EVENTS!!!", processedEvents);
-
     for (const event of processedEvents) {
+      console.log("EVENT")
       // polkadot, kusama
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
+        console.log("STAKING ERA!!! - 1 ");
         const newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
           entity: ENTITY.ERA,
           entity_id: parseInt(event.event.data[0].toString()),
@@ -195,14 +195,15 @@ export class BlocksProcessorService {
             payout_block_id: blockId,
           },
         }
+        console.log("STAKING ERA!!! - 2 ");
         newTasks.push(newStakingProcessingTask)
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
           blockId,
           message: 'detected new era',
-          newStakingProcessingTask,
         })
+        console.log("STAKING ERA!!! - 3 ");
       }
 
       // moonbeam, moonriver
