@@ -20,13 +20,13 @@ export type TaskMessage<T> = {
   collect_uid: string
 }
 
-export type QueueProcessor<T extends QUEUES> = {
+export type QueueProcessor = {
   processTaskMessage: (trx: Knex.Transaction<any, any[]>, task: ProcessingTaskModel<ENTITY>) => Promise<boolean>
 }
 
 export type Rabbit = {
   send: <T extends QUEUES>(queue: T, message: TaskMessage<T>) => Promise<void>
-  process: <T extends QUEUES>(queue: T, entity: ENTITY, processor: QueueProcessor<T>) => Promise<void>
+  process: (queue: QUEUES, entity: ENTITY, processor: QueueProcessor) => Promise<void>
 }
 
 export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
@@ -72,7 +72,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
   const preProcessTaskMessage = async <T extends QUEUES>(
     entity: ENTITY,
     message: TaskMessage<T>,
-    processor: QueueProcessor<T>,
+    processor: QueueProcessor,
   ): Promise<void> => {
     const { entity_id, collect_uid } = message
 
@@ -174,9 +174,9 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
       logger.debug({ event: 'RabbitMQ.send!', message, buffer: Buffer.from(JSON.stringify(message)) })
       await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, message)
 
-      console.log(222);
+      console.log(222)
     },
-    process: async <T extends QUEUES>(queue: T, entity: ENTITY, processor: QueueProcessor<T>) => {
+    process: async (queue: QUEUES, entity: ENTITY, processor: QueueProcessor) => {
       const consumer = async (msg: ConsumeMessage | null): Promise<void> => {
         if (msg) {
           logger.debug({

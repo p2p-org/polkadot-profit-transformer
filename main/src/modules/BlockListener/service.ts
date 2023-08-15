@@ -24,7 +24,7 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
@@ -204,7 +204,7 @@ export class BlockListenerService {
     } else {
       this.logger.error({
         event: 'BlockListenerService.ingestOneBlockTask',
-        error: 'Blocks seems has been processed already'
+        error: 'Blocks seems has been processed already',
       })
     }
   }
