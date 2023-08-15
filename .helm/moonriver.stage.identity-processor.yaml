@@ -5,7 +5,7 @@ chain: moonriver
 role: identity-processor
 limits: {cpu: 350m, memory: 200Mi}
 requests: {cpu: 250m, memory: 200Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 6edd4e7c13e14b9388a15fc25e1aa1128b60a222}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: a58e3bfea3772963c236558e378d7f004f99e2b6}
 port: 3000
 metrics:
   enabled: true
