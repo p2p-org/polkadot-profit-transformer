@@ -33,7 +33,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
   const connection: any = await AmqpConnectionManager.connect(connectionString)
 
   connection.on('connect', () => {
-    logger.info({ msg: '✌️ RabbitMQ connected' })
+    logger.info('✌️ RabbitMQ connected')
   })
   connection.on('close', (error: Error) => {
     logger.error({ event: 'RabbitMQ.connection', message: 'Connection closed', error })

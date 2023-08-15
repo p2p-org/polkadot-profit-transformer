@@ -44,6 +44,12 @@ export class BlocksProcessorService {
       return true
     }
 
+    this.logger.info({
+      event: 'BlockProcessor.processTaskMessage',
+      blockId,
+      message: `Start processing block ${blockId}`,
+    })
+
     const newTasks = await this.processBlock(blockId, trx)
 
     if (newTasks.length) {
