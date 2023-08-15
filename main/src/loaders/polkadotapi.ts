@@ -14,14 +14,14 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
   }
 
   provider.on('connected', () => {
-    logger.info('PolkadotAPI connected')
+    logger.info('✌️ PolkadotAPI connected')
   })
   provider.on('disconnected', () => {
     logger.error('PolkadotAPI error: disconnected')
     process.exit(1)
   })
-  provider.on('error', () => {
-    logger.error('PolkadotAPI error')
+  provider.on('error', (error) => {
+    logger.error('PolkadotAPI error: ' + error.message)
     process.exit(2)
   })
 

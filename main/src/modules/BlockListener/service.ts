@@ -24,7 +24,7 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
@@ -191,17 +191,22 @@ export class BlockListenerService {
   }
 
   private async ingestOneBlockTask(task: ProcessingTaskModel<ENTITY.BLOCK>): Promise<void> {
-    await this.tasksRepository.addProcessingTask(task)
+    if (await this.tasksRepository.addProcessingTask(task)) {
+      await this.sendTaskToToRabbit(ENTITY.BLOCK, {
+        entity_id: task.entity_id,
+        collect_uid: task.collect_uid,
+      })
 
-    await this.sendTaskToToRabbit(ENTITY.BLOCK, {
-      entity_id: task.entity_id,
-      collect_uid: task.collect_uid,
-    })
-
-    this.logger.debug({
-      event: 'blocks preloader ingestOneBlockTask',
-      task: task,
-    })
+      this.logger.debug({
+        event: 'BlockListenerService.ingestOneBlockTask',
+        task: task,
+      })
+    } else {
+      this.logger.error({
+        event: 'BlockListenerService.ingestOneBlockTask',
+        error: 'Blocks seems has been processed already'
+      })
+    }
   }
 
   private async ingestTasksChunk(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {

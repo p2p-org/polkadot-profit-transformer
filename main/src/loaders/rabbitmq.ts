@@ -33,7 +33,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
   const connection: any = await AmqpConnectionManager.connect(connectionString)
 
   connection.on('connect', () => {
-    logger.info({ event: 'RabbitMQ.connection', message: 'Successfully connected' })
+    logger.info({ msg: '✌️ RabbitMQ connected' })
   })
   connection.on('close', (error: Error) => {
     logger.error({ event: 'RabbitMQ.connection', message: 'Connection closed', error })
@@ -171,8 +171,10 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
 
   return {
     send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
-      logger.debug({ event: 'RabbitMQ.send', message, buffer: Buffer.from(JSON.stringify(message)) })
+      logger.debug({ event: 'RabbitMQ.send!', message, buffer: Buffer.from(JSON.stringify(message)) })
       await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, message)
+
+      console.log(222);
     },
     process: async <T extends QUEUES>(queue: T, entity: ENTITY, processor: QueueProcessor<T>) => {
       const consumer = async (msg: ConsumeMessage | null): Promise<void> => {
