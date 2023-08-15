@@ -31,7 +31,6 @@ export class BlocksProcessorService {
   ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
-    console.log('we are here')
     const { entity_id: blockId, collect_uid } = taskRecord
 
     //check that block wasn't processed already
@@ -54,10 +53,9 @@ export class BlocksProcessorService {
     const newTasks = await this.processBlock(blockId, trx)
 
     if (newTasks.length) {
-      console.log("LEGTH not emoty.  " + newTasks.length)
       await this.tasksRepository.batchAddEntities(newTasks, trx)
+      await this.sendProcessingTasksToRabbit(newTasks)
     }
-    console.log("OK")
 
     return true
   }
@@ -92,7 +90,6 @@ export class BlocksProcessorService {
   }
 
   private async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> {
-    console.log("PROCESS BLOCK")
     const newTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
 
@@ -183,7 +180,6 @@ export class BlocksProcessorService {
       console.log("EVENT")
       // polkadot, kusama
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
-        console.log("STAKING ERA!!! - 1 ");
         const newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
           entity: ENTITY.ERA,
           entity_id: parseInt(event.event.data[0].toString()),
@@ -195,7 +191,6 @@ export class BlocksProcessorService {
             payout_block_id: blockId,
           },
         }
-        console.log("STAKING ERA!!! - 2 ");
         newTasks.push(newStakingProcessingTask)
 
         this.logger.debug({
