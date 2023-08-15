@@ -28,7 +28,7 @@ export class BlocksProcessorService {
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
     console.log('we are here')
@@ -54,8 +54,10 @@ export class BlocksProcessorService {
     const newTasks = await this.processBlock(blockId, trx)
 
     if (newTasks.length) {
+      console.log("LEGTH not emoty")
       await this.tasksRepository.batchAddEntities(newTasks, trx)
     }
+    console.log("OK")
 
     return true
   }
@@ -90,6 +92,7 @@ export class BlocksProcessorService {
   }
 
   private async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> {
+    console.log("PROCESS BLOCK")
     const newTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
 
@@ -175,6 +178,8 @@ export class BlocksProcessorService {
       data: {},
     }
     newTasks.push(newBalancesProcessingTask)
+
+    console.log("!!!EVENTS!!!", processedEvents);
 
     for (const event of processedEvents) {
       // polkadot, kusama
