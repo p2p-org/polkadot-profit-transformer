@@ -70,6 +70,7 @@ export class TasksRepository {
       .select()
       .where({ entity, entity_id, ...network /*, status: PROCESSING_STATUS.NOT_PROCESSED*/ })
       .orderBy('row_id', 'desc')
+      .limit(100)
 
     if (tasksRecords && tasksRecords.length > 1) {
       this.logger.warn({
