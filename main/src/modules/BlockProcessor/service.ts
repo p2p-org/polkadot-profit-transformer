@@ -53,7 +53,7 @@ export class BlocksProcessorService {
     const newTasks = await this.processBlock(blockId, trx)
 
     if (newTasks.length) {
-      await this.tasksRepository.batchAddEntities(newTasks, trx)
+      await this.tasksRepository.batchAddEntities(newTasks)
       await this.sendProcessingTasksToRabbit(newTasks)
     }
 
