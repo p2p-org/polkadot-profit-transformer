@@ -32,9 +32,9 @@ export class PolkadotStakingProcessorService {
     await this.processEraStake(metadata, eraId + 1, taskRecord.data.payout_block_id, collect_uid, trx)
     console.log('VALIDATOR RESULT')
 
-    const eraReprocessingTask = await this.processEraPayout(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
+    await this.processEraPayout(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
 
-    return !eraReprocessingTask
+    return true
   }
 
   async processEraStake(
@@ -115,7 +115,7 @@ export class PolkadotStakingProcessorService {
         reprocessingTask,
       })
 
-      return reprocessingTask
+      return
     }
 
     // logger.info({ eraStartBlockId })
