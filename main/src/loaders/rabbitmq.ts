@@ -30,7 +30,7 @@ export type Rabbit = {
 }
 
 export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
-  const connection: any = await AmqpConnectionManager.connect(connectionString)
+  const connection: any = await AmqpConnectionManager.connect(connectionString, { heartbeatIntervalInSeconds: 180, reconnectTimeInSeconds: 5 })
 
   connection.on('connect', () => {
     logger.info('✌️ RabbitMQ connected')
