@@ -29,7 +29,7 @@ export class MoonbeamStakingProcessorService {
   async init() {
     await this.knex.transaction(async (trx: Knex.Transaction) => {
       //await this.processRoundPayout(null, 4060200)
-      await this.processRoundStake(trx, 4060200)
+      await this.processStakeRound(trx, 4060200)
       console.log('DONE')
     })
   }
@@ -52,7 +52,7 @@ export class MoonbeamStakingProcessorService {
       collect_uid,
     })
 
-    await this.processRoundStake(trx, taskRecord.data.payout_block_id)
+    await this.processStakeRound(trx, taskRecord.data.payout_block_id)
 
     // start processing old round rewards payout
     logger.info({
@@ -63,14 +63,14 @@ export class MoonbeamStakingProcessorService {
       collect_uid,
     })
 
-    await this.processRoundPayout(trx, taskRecord.data.payout_block_id)
+    await this.processReardsRound(trx, taskRecord.data.payout_block_id)
 
     return true
   }
 
-  async processRoundStake(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
+  async processStakeRound(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
     logger.info({
-      event: 'RoundPayoutProcessor.getRoundStake',
+      event: 'RoundPayoutProcessor.getStakeRound',
       message: `Process staking payout for round with payout block id: ${payoutBlockId}`,
     })
 
@@ -79,7 +79,7 @@ export class MoonbeamStakingProcessorService {
     const roundPayoutProcessor = new MoonbeamStakingProcessorRoundPayout(this.polkadotApi)
 
     try {
-      const { round } = await roundPayoutProcessor.getRoundStake(payoutBlockId)
+      const { round } = await roundPayoutProcessor.getStakeRound(payoutBlockId)
 
       // console.log(JSON.stringify(this.stakedValue, null, 2));
 
@@ -87,8 +87,6 @@ export class MoonbeamStakingProcessorService {
         event: 'RoundPayoutProcessor.processRoundPayout',
         message: 'Round processed',
         round_id: parseInt(round.id.toString(10), 10),
-        payout_block_id: round.payoutBlockId,
-        payout_block_time: new Date(parseInt(round.payoutBlockTime.toString(10), 10)),
         start_block_id: round.startBlockId,
         start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
         total_stake: round.totalStaked.toString(),
@@ -96,15 +94,11 @@ export class MoonbeamStakingProcessorService {
         runtime: roundPayoutProcessor.specVersion,
       })
 
-      await this.databaseHelper.saveRoundStake(trx, {
+      await this.databaseHelper.saveStakeRound(trx, {
         round_id: parseInt(round.id.toString(10), 10),
-        payout_block_id: round.payoutBlockId,
-        payout_block_time: new Date(parseInt(round.payoutBlockTime.toString(10), 10)),
         start_block_id: round.startBlockId,
         start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
-        total_reward: '0',
         total_stake: round.totalStaked.toString(),
-        total_reward_points: 0,
         collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
         runtime: roundPayoutProcessor.specVersion,
       })
@@ -113,28 +107,20 @@ export class MoonbeamStakingProcessorService {
         let collator_stake = BigInt(0)
         for (const delegator of Object.values(collator.delegators) as any) {
           collator_stake += delegator.amount.toBigInt()
-          await this.databaseHelper.saveDelegatorsStake(trx, {
+          await this.databaseHelper.saveStakeDelegators(trx, {
             round_id: parseInt(round.id.toString(10), 10),
             account_id: delegator.id,
             collator_id: collator.id,
             amount: delegator.amount.toString(10),
-            final_amount: delegator.final_amount.toString(10),
-            reward: '0',
-            payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
-            payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
           })
         }
 
-        await this.databaseHelper.saveCollatorsStake(trx, {
+        await this.databaseHelper.saveStakeCollators(trx, {
           round_id: parseInt(round.id.toString(10), 10),
           account_id: collator.id,
           total_stake: collator.bond.toBigInt() + collator_stake,
-          final_stake: collator.total.toBigInt(),
           own_stake: collator.bond.toBigInt(),
           delegators_count: Object.keys(collator.delegators).length,
-          total_reward_points: 0,
-          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
-          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
         })
       }
 
@@ -174,7 +160,7 @@ export class MoonbeamStakingProcessorService {
     }
   }
 
-  async processRoundPayout(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
+  async processReardsRound(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
     logger.info({
       event: 'RoundPayoutProcessor.processRoundPayout',
       message: `Process staking payout for round with payout block id: ${payoutBlockId}`,
@@ -185,7 +171,7 @@ export class MoonbeamStakingProcessorService {
     const roundPayoutProcessor = new MoonbeamStakingProcessorRoundPayout(this.polkadotApi)
 
     try {
-      const { round } = await roundPayoutProcessor.getRewards(payoutBlockId)
+      const { round } = await roundPayoutProcessor.getRewardsRound(payoutBlockId)
 
       // console.log(JSON.stringify(this.stakedValue, null, 2));
 
@@ -239,6 +225,44 @@ export class MoonbeamStakingProcessorService {
           total_stake: collator.bond.toBigInt() + collator_stake,
           final_stake: collator.total.toBigInt(),
           own_stake: collator.bond.toBigInt(),
+          delegators_count: Object.keys(collator.delegators).length,
+          total_reward_points: parseInt(collator.points.toString(10), 10),
+          total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toString(10) : '0',
+          collator_reward: collator.rewardCollator && collator.rewardCollator ? collator.rewardCollator.toString(10) : '0',
+          payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
+          payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
+        })
+      }
+
+      //rewards only
+      await this.databaseHelper.saveRewardsRound(trx, {
+        round_id: parseInt(round.id.toString(10), 10),
+        payout_block_id: round.payoutBlockId,
+        payout_block_time: new Date(parseInt(round.payoutBlockTime.toString(10), 10)),
+        total_reward: roundPayoutProcessor.totalRewardedAmount.toString(10),
+        total_reward_points: parseInt(round.totalPoints.toString(), 10),
+        collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
+        runtime: roundPayoutProcessor.specVersion,
+      })
+
+      for (const collator of Object.values(roundPayoutProcessor.stakedValue) as any) {
+        let collator_stake = BigInt(0)
+        for (const delegator of Object.values(collator.delegators) as any) {
+          collator_stake += delegator.amount.toBigInt()
+          await this.databaseHelper.saveRewardsDelegators(trx, {
+            round_id: parseInt(round.id.toString(10), 10),
+            account_id: delegator.id,
+            collator_id: collator.id,
+            reward: delegator.reward.toString(10),
+            payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
+            payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
+          })
+        }
+
+        await this.databaseHelper.saveRewardsCollators(trx, {
+          round_id: parseInt(round.id.toString(10), 10),
+          account_id: collator.id,
+          final_stake: collator.total.toBigInt(),
           delegators_count: Object.keys(collator.delegators).length,
           total_reward_points: parseInt(collator.points.toString(10), 10),
           total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toString(10) : '0',

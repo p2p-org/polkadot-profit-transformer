@@ -6,9 +6,13 @@ import { EraModel } from '@/models/era.model'
 import { ValidatorModel } from '@/models/validator.model'
 import { NominatorModel } from '@/models/nominator.model'
 
-import { EraStakeModel } from '@/models/era_stake.model'
-import { ValidatorStakeModel } from '@/models/validator_stake.model'
-import { NominatorStakeModel } from '@/models/nominator_stake.model'
+import { StakeEraModel } from '@/models/stake_era.model'
+import { StakeValidatorModel } from '@/models/stake_validator.model'
+import { StakeNominatorModel } from '@/models/stake_nominator.model'
+
+import { RewardEraModel } from '@/models/reward_era.model'
+import { RewardValidatorModel } from '@/models/reward_validator.model'
+import { RewardNominatorModel } from '@/models/reward_nominator.model'
 
 const network = { network_id: environment.NETWORK_ID }
 
@@ -34,20 +38,38 @@ export class PolkadotStakingProcessorDatabaseHelper {
       .insert({ ...era, ...network, row_time: new Date() })
   }
 
-  async saveValidatorsStake(trx: Knex.Transaction<any, any[]>, validator: ValidatorStakeModel): Promise<void> {
-    await ValidatorStakeModel(this.knex)
+  async saveStakeValidators(trx: Knex.Transaction<any, any[]>, validator: StakeValidatorModel): Promise<void> {
+    await StakeValidatorModel(this.knex)
       .transacting(trx)
       .insert({ ...validator, ...network, row_time: new Date() })
   }
 
-  async saveNominatorsStake(trx: Knex.Transaction<any, any[]>, nominator: NominatorStakeModel): Promise<void> {
-    await NominatorStakeModel(this.knex)
+  async saveStakeNominators(trx: Knex.Transaction<any, any[]>, nominator: StakeNominatorModel): Promise<void> {
+    await StakeNominatorModel(this.knex)
       .transacting(trx)
       .insert({ ...nominator, ...network, row_time: new Date() })
   }
 
-  async saveEraStake(trx: Knex.Transaction<any, any[]>, era: EraStakeModel): Promise<void> {
-    await EraStakeModel(this.knex)
+  async saveStakeEra(trx: Knex.Transaction<any, any[]>, era: StakeEraModel): Promise<void> {
+    await StakeEraModel(this.knex)
+      .transacting(trx)
+      .insert({ ...era, ...network, row_time: new Date() })
+  }
+
+  async saveRewardValidators(trx: Knex.Transaction<any, any[]>, validator: RewardValidatorModel): Promise<void> {
+    await RewardValidatorModel(this.knex)
+      .transacting(trx)
+      .insert({ ...validator, ...network, row_time: new Date() })
+  }
+
+  async saveRewardNominators(trx: Knex.Transaction<any, any[]>, nominator: RewardNominatorModel): Promise<void> {
+    await RewardNominatorModel(this.knex)
+      .transacting(trx)
+      .insert({ ...nominator, ...network, row_time: new Date() })
+  }
+
+  async saveRewardEra(trx: Knex.Transaction<any, any[]>, era: RewardEraModel): Promise<void> {
+    await RewardEraModel(this.knex)
       .transacting(trx)
       .insert({ ...era, ...network, row_time: new Date() })
   }

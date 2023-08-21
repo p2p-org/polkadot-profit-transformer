@@ -131,7 +131,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
             entity,
             entity_id,
             collect_uid,
-            error: `Processing failed. Rollback tx`,
+            error: `Processing failed (processTaskMessage returned false). Rollback tx`,
           })
 
           await trx.rollback()

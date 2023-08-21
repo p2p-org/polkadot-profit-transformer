@@ -44,7 +44,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     }, 60 * 1000)
   }
 
-  async getRoundStake(nowBlockNumber: number): Promise<{ round: RoundValue }> {
+  async getStakeRound(nowBlockNumber: number): Promise<{ round: RoundValue }> {
     const originalRoundBlock = new BN(nowBlockNumber)
     const originalRoundBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(originalRoundBlock)
     const apiAtOriginal: any = await this.api.at(originalRoundBlockHash)
@@ -61,7 +61,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     await this.getCollatorsAndDelegators(apiAtOriginal, apiAtOriginal, /*apiAtPriorRewarded, */ originalRoundNumber)
 
     logger.info({
-      event: 'RoundPayoutProcessor.getRoundStake',
+      event: 'RoundPayoutProcessor.getStakeRound',
       message: `Collators count: ${Object.keys(this.stakedValue).length}; Delegators count: ${this.delegators.size}`,
     })
 
@@ -81,7 +81,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     }
   }
 
-  async getRewards(nowBlockNumber: number): Promise<{ round: RoundValue }> {
+  async getRewardsRound(nowBlockNumber: number): Promise<{ round: RoundValue }> {
     const latestBlock: SignedBlock = (await this.api.rpc.chain.getBlock()) as SignedBlock
     const latestBlockNumber = latestBlock.block.header.number.toNumber()
     const nowBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(nowBlockNumber)
