@@ -1,17 +1,14 @@
 import { Knex } from 'knex'
 
-export type RoundStakeModel = {
+export type RewardRoundModel = {
   round_id: number
   payout_block_id: number
   payout_block_time?: Date
-  start_block_id: number
-  start_block_time?: Date
   total_reward: string
-  total_stake: string
   total_reward_points: number
   collators_count: number
   runtime: number
   row_time?: Date
 }
 
-export const RoundStakeModel = (knex: Knex) => knex<RoundStakeModel>('rounds_stake')
+export const RewardRoundModel = (knex: Knex) => knex<RewardRoundModel>('rewards_rounds')

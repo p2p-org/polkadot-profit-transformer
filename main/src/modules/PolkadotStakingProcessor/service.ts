@@ -28,16 +28,14 @@ export class PolkadotStakingProcessorService {
       processing_timestamp: new Date(),
     }
 
-    console.log('VALIDATORS GET')
-    await this.processEraStake(metadata, eraId + 1, taskRecord.data.payout_block_id, collect_uid, trx)
-    console.log('VALIDATOR RESULT')
+    await this.processStakeEra(metadata, eraId + 1, taskRecord.data.payout_block_id, collect_uid, trx)
 
-    await this.processEraPayout(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
+    await this.processRewardsEra(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
 
     return true
   }
 
-  async processEraStake(
+  async processStakeEra(
     metadata: any,
     eraId: number,
     payout_block_id: number,
@@ -57,14 +55,14 @@ export class PolkadotStakingProcessorService {
         eraStartBlockId: payout_block_id,
       })
 
-      await this.databaseHelper.saveEraStake(trx, { ...eraData, total_reward: '0', total_reward_points: 0, payout_block_id: 0 })
+      await this.databaseHelper.saveStakeEra(trx, { ...eraData })
 
       for (const validator of validators) {
-        await this.databaseHelper.saveValidatorsStake(trx, validator)
+        await this.databaseHelper.saveStakeValidators(trx, validator)
       }
 
       for (const nominator of nominators) {
-        await this.databaseHelper.saveNominatorsStake(trx, nominator)
+        await this.databaseHelper.saveStakeNominators(trx, nominator)
       }
 
       this.logger.info({
@@ -87,7 +85,7 @@ export class PolkadotStakingProcessorService {
     }
   }
 
-  async processEraPayout(
+  async processRewardsEra(
     metadata: any,
     eraId: number,
     payout_block_id: number,
@@ -95,7 +93,7 @@ export class PolkadotStakingProcessorService {
     trx: Knex.Transaction<any, any[]>,
   ): Promise<ProcessingTaskModel<ENTITY.ERA> | undefined> {
     const startProcessingTime = Date.now()
-    this.logger.info({ event: `Process staking payout for era: ${eraId}`, metadata, eraId })
+    this.logger.info({ event: `Process rewards for era: ${eraId}`, metadata, eraId })
 
     const eraStartBlockId = await this.databaseHelper.findEraStartBlockId(trx, eraId)
 
@@ -152,6 +150,17 @@ export class PolkadotStakingProcessorService {
 
       for (const nominator of nominators) {
         await this.databaseHelper.saveNominators(trx, nominator)
+      }
+
+      //rewards only
+      await this.databaseHelper.saveRewardEra(trx, { ...eraData })
+
+      for (const validator of validators) {
+        await this.databaseHelper.saveRewardValidators(trx, validator)
+      }
+
+      for (const nominator of nominators) {
+        await this.databaseHelper.saveRewardNominators(trx, nominator)
       }
 
       this.logger.info({

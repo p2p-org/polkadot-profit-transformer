@@ -16,7 +16,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) {}
+  ) { }
 
   async getValidatorsAndNominatorsStake(args: {
     eraId: number
@@ -55,7 +55,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
             }),
             era_id: eraId,
             validator: validatorAccountId,
-            block_time: new Date(eraStartBlockTime),
+            //block_time: new Date(eraStartBlockTime),
           })
         }
 
@@ -66,7 +66,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
           own: own.toString(),
           nominators_count: others.length,
           prefs: prefs.toJSON(),
-          block_time: new Date(eraStartBlockTime),
+          //block_time: new Date(eraStartBlockTime),
         })
 
         cb()

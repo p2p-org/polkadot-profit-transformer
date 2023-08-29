@@ -1,11 +1,9 @@
 import { Knex } from 'knex'
 
-export type CollatorStakeModel = {
+export type RewardCollatorModel = {
   round_id: number
   account_id: string
-  total_stake: bigint
   final_stake: bigint
-  own_stake: bigint
   delegators_count: number
   total_reward_points: number
   total_reward?: bigint
@@ -15,4 +13,4 @@ export type CollatorStakeModel = {
   row_time?: Date
 }
 
-export const CollatorStakeModel = (knex: Knex) => knex<CollatorStakeModel>('collators_stake')
+export const RewardCollatorModel = (knex: Knex) => knex<RewardCollatorModel>('rewards_collators')
