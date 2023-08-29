@@ -29,7 +29,6 @@ export class MoonbeamStakingProcessorDatabaseHelper {
   }
 
   async saveRound(trx: Knex.Transaction<any, any[]>, round: RoundModel): Promise<void> {
-    console.log({ ...round, ...network, row_time: new Date() })
     await RoundModel(this.knex)
       .transacting(trx)
       .insert({ ...round, ...network, row_time: new Date() })
@@ -47,7 +46,6 @@ export class MoonbeamStakingProcessorDatabaseHelper {
   }
 
   async saveStakeRound(trx: Knex.Transaction<any, any[]>, round: StakeRoundModel): Promise<void> {
-    console.log({ ...round, ...network, row_time: new Date() })
     await StakeRoundModel(this.knex)
       .transacting(trx)
       .insert({ ...round, ...network, row_time: new Date() })
@@ -65,7 +63,6 @@ export class MoonbeamStakingProcessorDatabaseHelper {
   }
 
   async saveRewardsRound(trx: Knex.Transaction<any, any[]>, round: RewardRoundModel): Promise<void> {
-    console.log({ ...round, ...network, row_time: new Date() })
     await RewardRoundModel(this.knex)
       .transacting(trx)
       .insert({ ...round, ...network, row_time: new Date() })

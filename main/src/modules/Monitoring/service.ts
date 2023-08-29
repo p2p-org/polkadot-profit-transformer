@@ -81,7 +81,6 @@ export class MonitoringService {
       try {
         if (environment.RESTART_BLOCKS_URI) {
           const res = await needle('get', environment.RESTART_BLOCKS_URI)
-          console.log(res)
         }
       } catch (error: any) {
         this.logger.error({

@@ -99,9 +99,7 @@ export class BlockListenerService {
   public async restartUnprocessedBlocksMetadata(startBlockId: number, endBlockId: number): Promise<void> {
     let lastBlockId = startBlockId
     while (lastBlockId < endBlockId) {
-      console.log(1)
       const records = await this.databaseHelper.getUnprocessedBlocksMetadata(lastBlockId)
-      console.log(records.length)
       if (!records || !records.length) {
         return
       }
@@ -238,7 +236,6 @@ export class BlockListenerService {
         from: tasks[0].entity_id,
         to: tasks[tasks.length - 1].entity_id,
       })
-      //console.log('ingestTasksChunk ingested')
     } catch (error: any) {
       this.logger.error({
         event: 'BlocksListener.ingestTasksChunk',

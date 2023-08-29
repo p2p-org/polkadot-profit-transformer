@@ -110,7 +110,7 @@ export class IdentityDatabaseHelper {
         newDisplay = hex2str(record.display)
       }
       if (record.display !== newDisplay && newDisplay !== '') {
-        console.log(record.display + ':' + newDisplay)
+        //console.log(record.display + ':' + newDisplay)
         await IdentityModel(this.knex).update({ display: newDisplay }).where({ row_id: record.row_id })
       }
     }

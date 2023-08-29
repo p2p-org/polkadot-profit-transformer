@@ -28,7 +28,7 @@ export class BlocksProcessorService {
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
     const { entity_id: blockId, collect_uid } = taskRecord
@@ -180,7 +180,6 @@ export class BlocksProcessorService {
     newTasks.push(newBalancesProcessingTask)
 
     for (const event of processedEvents) {
-      console.log('EVENT')
       // polkadot, kusama
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
         const newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
@@ -201,7 +200,6 @@ export class BlocksProcessorService {
           blockId,
           message: 'detected new era',
         })
-        console.log('STAKING ERA!!! - 3 ')
       }
 
       // moonbeam, moonriver

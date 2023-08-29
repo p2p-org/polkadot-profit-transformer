@@ -138,11 +138,10 @@ export class MoonbeamStakingProcessorRoundPayout {
       nowRoundFirstBlock: nowRoundFirstBlock.toNumber(),
     })
 
-    console.log('originalRoundNumber', originalRoundNumber.toNumber())
-    console.log('apiAtOriginalPrior', originalRoundPriorBlock.toNumber())
-    console.log('apiAtPriorRewarded', nowRoundFirstBlock.subn(1).toNumber())
-    //console.log("apiAtOriginalPrior", originalRoundNumber.toNumber());
-    //console.log("apiAtPriorRewarded", originalRoundNumber.toNumber());
+    //console.log('originalRoundNumber', originalRoundNumber.toNumber())
+    //console.log('apiAtOriginalPrior', originalRoundPriorBlock.toNumber())
+    //console.log('apiAtPriorRewarded', nowRoundFirstBlock.subn(1).toNumber())
+    
     // collect info about staked value from collators and delegators
     await this.getCollatorsAndDelegators(apiAtOriginalPrior, apiAtOriginal, /*apiAtPriorRewarded, */ originalRoundNumber)
 
@@ -395,7 +394,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     Object.keys(rewards).forEach((accountId) => {
       rewards[accountId].forEach((reward) => {
         if (this.collators.has(accountId)) {
-          console.log('COLLATOR', this.specVersion, accountId, reward.amount.toString(10))
+          //console.log('COLLATOR', this.specVersion, accountId, reward.amount.toString(10))
           // collator is always paid first so this is guaranteed to execute first
           collatorInfo = this.stakedValue[accountId]
 

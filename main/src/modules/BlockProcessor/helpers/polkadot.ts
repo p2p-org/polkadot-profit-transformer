@@ -42,7 +42,7 @@ export class BlockProcessorPolkadotHelper {
 
       return [signedBlock as SignedBlock, extHeader as HeaderExtended, blockTime, events, metadata, totalIssuance]
     } catch (error: any) {
-      console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)
+      console.error('error on polkadot.repository.getInfoToProcessBlock', error.message)
       throw error
     }
   }
