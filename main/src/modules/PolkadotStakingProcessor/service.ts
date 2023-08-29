@@ -18,7 +18,7 @@ export class PolkadotStakingProcessorService {
 
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
-  ) { }
+  ) {}
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
     const { entity_id: eraId, collect_uid } = taskRecord

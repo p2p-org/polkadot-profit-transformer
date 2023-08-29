@@ -16,7 +16,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  ) {}
 
   async getValidatorsAndNominatorsStake(args: {
     eraId: number
