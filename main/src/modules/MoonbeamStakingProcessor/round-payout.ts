@@ -141,7 +141,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     //console.log('originalRoundNumber', originalRoundNumber.toNumber())
     //console.log('apiAtOriginalPrior', originalRoundPriorBlock.toNumber())
     //console.log('apiAtPriorRewarded', nowRoundFirstBlock.subn(1).toNumber())
-    
+
     // collect info about staked value from collators and delegators
     await this.getCollatorsAndDelegators(apiAtOriginalPrior, apiAtOriginal, /*apiAtPriorRewarded, */ originalRoundNumber)
 

@@ -123,7 +123,6 @@ export class TasksRepository {
   }
 
   async getUnprocessedTask(entity: ENTITY, entity_id?: number): Promise<ProcessingTaskModel<ENTITY>> {
-    console.log(entity, entity_id)
     const tasksRecord = await ProcessingTaskModel(this.knex)
       .select()
       .where({ entity, ...network, entity_id, status: PROCESSING_STATUS.NOT_PROCESSED })
