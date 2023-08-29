@@ -5,7 +5,7 @@ chain: moonriver
 role: staking-processor
 limits: {cpu: 450m, memory: 1000Mi}
 requests: {cpu: 350m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 0727c0b033042804d538522b32c3c266d072ca31}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: d68a02d6bf05ea51d41e863009961dcf4ddd2cb8}
 port: 3000
 metrics:
   enabled: true

@@ -3,7 +3,7 @@ environment: stage
 replicas: 1
 chain: moonriver
 role: preloader
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 0727c0b033042804d538522b32c3c266d072ca31}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: d68a02d6bf05ea51d41e863009961dcf4ddd2cb8}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
