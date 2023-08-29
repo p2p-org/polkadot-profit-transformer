@@ -18,7 +18,7 @@ export class PolkadotStakingProcessorService {
 
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
-  ) {}
+  ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
     const { entity_id: eraId, collect_uid } = taskRecord
@@ -45,7 +45,7 @@ export class PolkadotStakingProcessorService {
     trx: Knex.Transaction<any, any[]>,
   ): Promise<void> {
     const startProcessingTime = Date.now()
-    this.logger.info({ event: `Process staking data for era: ${eraId}`, metadata, eraId })
+    this.logger.info({ event: `Process staking data for next era: ${eraId}`, metadata, eraId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
 
