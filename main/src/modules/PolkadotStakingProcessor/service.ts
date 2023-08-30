@@ -55,7 +55,7 @@ export class PolkadotStakingProcessorService {
         eraStartBlockId: payout_block_id,
       })
 
-      await this.databaseHelper.saveStakeEra(trx, { ...eraData })
+      await this.databaseHelper.saveStakeEra(trx, { ...eraData, start_block_id: payout_block_id })
 
       for (const validator of validators) {
         await this.databaseHelper.saveStakeValidators(trx, validator)
