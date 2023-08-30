@@ -4,6 +4,7 @@ export type StakeEraModel = {
   era_id: number
   session_start: number
   start_block_id: number
+  start_block_time?: Date
   total_stake: string
   row_time?: Date
 }

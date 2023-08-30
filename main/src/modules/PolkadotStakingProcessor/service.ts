@@ -46,6 +46,7 @@ export class PolkadotStakingProcessorService {
     this.logger.info({ event: `Process staking data for next era: ${eraId}`, metadata, eraId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
+    const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
 
     try {
       const eraData = await this.polkadotHelper.getEraDataStake({ blockHash: payoutBlockHash, eraId })
@@ -55,7 +56,11 @@ export class PolkadotStakingProcessorService {
         eraStartBlockId: payout_block_id,
       })
 
-      await this.databaseHelper.saveStakeEra(trx, { ...eraData, start_block_id: payout_block_id })
+      await this.databaseHelper.saveStakeEra(trx, {
+        ...eraData,
+        start_block_id: payout_block_id,
+        start_block_time: new Date(payoutBlockTime),
+      })
 
       for (const validator of validators) {
         await this.databaseHelper.saveStakeValidators(trx, validator)
