@@ -3,7 +3,7 @@ environment: stage
 chain: moonbeam
 role: preloader
 replicas: 0
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: e5f9576e0f2b6774dccfb190367f992424a45aa5}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: d4f8f29de1105d39c1095137a578ccbc5fc491f9}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
