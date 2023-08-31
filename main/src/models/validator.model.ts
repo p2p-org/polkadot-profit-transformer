@@ -6,11 +6,11 @@ export type ValidatorModel = {
   total: string
   own: string
   nominators_count: number
-  reward_points: number
+  reward_points?: number
   reward_dest?: string
   reward_account_id?: string
   prefs: any
-  block_time: Date
+  //block_time: Date
   row_time?: Date
 }
 

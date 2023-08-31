@@ -7,10 +7,8 @@ import { ENTITY } from '@/models/processing_task.model'
 import { IdentityDatabaseHelper } from './helpers/database'
 import { IdentityProcessorService } from './processor'
 
-
 @Service()
 export class IdentityListnerService {
-
   gracefulShutdownFlag = false
   messagesBeingProcessed = false
   isPaused = false
@@ -21,7 +19,7 @@ export class IdentityListnerService {
     private readonly processor: IdentityProcessorService,
     private readonly databaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'IdentityListener.preload' })
@@ -30,7 +28,7 @@ export class IdentityListnerService {
     this.logger.info({
       event: 'IdentityListener.preload',
       lastProcessedEventId,
-      lastProcessedExtrinsicId
+      lastProcessedExtrinsicId,
     })
 
     //TODO: remove from this module
@@ -48,7 +46,8 @@ export class IdentityListnerService {
       event: 'IdentityListener.restartUnprocessedEvents',
     })
     let lastRowId = startRowId
-    while (true) {//lastRowId < endRowId) {
+    while (true) {
+      //lastRowId < endRowId) {
       const events = await this.databaseHelper.getUnprocessedEvents(lastRowId)
       if (!events || !events.length) {
         break
@@ -63,7 +62,7 @@ export class IdentityListnerService {
 
       this.logger.info({
         event: 'IdentityListner.restartUnprocessedEvents',
-        message: `Last row id: ${lastRowId}`
+        message: `Last row id: ${lastRowId}`,
       })
 
       //tansaction here?
@@ -74,20 +73,20 @@ export class IdentityListnerService {
 
     this.logger.info({
       event: 'IdentityListner.restartUnprocessedEvents',
-      message: `Set timeout`
+      message: `Set timeout`,
     })
     setTimeout(() => {
       this.restartUnprocessedEvents(lastRowId)
     }, 30 * 1000)
   }
 
-
   public async restartUnprocessedExtrinsics(startRowId: number): Promise<void> {
     this.logger.debug({
       event: 'IdentityListener.restartUnprocessedExtrinsics',
     })
     let lastRowId = startRowId
-    while (true) {//lastRowId < endRowId) {
+    while (true) {
+      //lastRowId < endRowId) {
       const extrinsics = await this.databaseHelper.getUnprocessedExtrinsics(lastRowId)
       if (!extrinsics || !extrinsics.length) {
         break
@@ -102,7 +101,7 @@ export class IdentityListnerService {
 
       this.logger.info({
         event: 'IdentityListner.restartUnprocessedExtrinsics',
-        message: `Last row id: ${lastRowId}`
+        message: `Last row id: ${lastRowId}`,
       })
 
       //TODO. part of extrinsics could be updated.
@@ -114,11 +113,10 @@ export class IdentityListnerService {
 
     this.logger.info({
       event: 'IdentityListner.restartUnprocessedExtrinsics',
-      message: `Set timeout`
+      message: `Set timeout`,
     })
     setTimeout(() => {
       this.restartUnprocessedExtrinsics(lastRowId)
     }, 30 * 1000)
   }
-
 }

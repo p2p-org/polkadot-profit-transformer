@@ -13,17 +13,11 @@ import { encodeAccountIdToBlake2 } from '@/utils/crypt'
 const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class GearSmartcontractsDatabaseHelper extends DatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-    @Inject('logger') private readonly logger: Logger,
-  ) {
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {
     super(knex)
   }
 
-  public async getUnprocessedEvents(
-    row_id?: number
-  ): Promise<Array<EventModel>> {
+  public async getUnprocessedEvents(row_id?: number): Promise<Array<EventModel>> {
     const records = EventModel(this.knex)
       .select()
       .where('section', 'gear')
@@ -37,10 +31,7 @@ export class GearSmartcontractsDatabaseHelper extends DatabaseHelper {
     return await records
   }
 
-  public async getExtrinsicEvents(
-    extrinsic: ExtrinsicModel,
-    method?: Array<string>
-  ): Promise<Array<EventModel>> {
+  public async getExtrinsicEvents(extrinsic: ExtrinsicModel, method?: Array<string>): Promise<Array<EventModel>> {
     const records = EventModel(this.knex)
       .select()
       //.whereIn('event_id', extrinsic.ref_event_ids)
@@ -55,9 +46,7 @@ export class GearSmartcontractsDatabaseHelper extends DatabaseHelper {
     return await records
   }
 
-  public async getUnprocessedExtrinsics(
-    row_id?: number
-  ): Promise<Array<ExtrinsicModel>> {
+  public async getUnprocessedExtrinsics(row_id?: number): Promise<Array<ExtrinsicModel>> {
     const records = ExtrinsicModel(this.knex)
       .select()
       .where('section', 'gear')
@@ -94,7 +83,6 @@ export class GearSmartcontractsDatabaseHelper extends DatabaseHelper {
         .merge()
 
       await this.saveAccount({ account_id: String(data.account_id), created_at_block_id: data.block_id })
-
     } catch (err) {
       this.logger.error({ err }, `Failed to save gear smart contract message`)
       throw err
@@ -106,9 +94,7 @@ export class GearSmartcontractsDatabaseHelper extends DatabaseHelper {
     data.blake2_hash = encodeAccountIdToBlake2(data.account_id)
 
     try {
-      await AccountModel(this.knex)
-        .insert({ ...data, ...network, row_time: new Date() })
-    } catch (err) {
-    }
+      await AccountModel(this.knex).insert({ ...data, ...network, row_time: new Date() })
+    } catch (err) {}
   }
 }

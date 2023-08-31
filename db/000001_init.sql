@@ -6,7 +6,6 @@ CREATE TABLE blocks (
     "state_root" VARCHAR(66),
     "extrinsics_root" VARCHAR(66),
     "parent_hash" VARCHAR(66),
-    "author" VARCHAR(66),
     "digest" JSONB,
     "metadata" JSONB,
     "block_time" TIMESTAMP,
@@ -148,6 +147,7 @@ CREATE TABLE collators (
     "account_id" VARCHAR(150),
     "active" BOOL,
     "total_stake" NUMERIC(35),
+    "final_stake" NUMERIC(35),
     "own_stake" NUMERIC(35),
     "delegators_count" INT,
     "total_reward_points" INT,
@@ -282,6 +282,18 @@ CREATE TABLE sli_metrics (
 );
 
 
+CREATE TABLE total_issuance (
+    "network_id" INT,
+    "block_id" BIGINT,
+    "total_issuance" NUMERIC(40),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+CREATE UNIQUE INDEX total_issuance_network_id_idx ON public.total_issuance (network_id,block_id);
+
+
+
 
 CREATE INDEX identity_parent_idx ON public.identity ("parent_account_id", "network_id");
 
@@ -302,3 +314,163 @@ CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
 --new. need to produce evrywhere
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
+
+DROP TABLE stake_eras;
+CREATE TABLE stake_eras (
+    "network_id" INT,
+    "era_id" INT,
+    "start_block_id" INT,
+    "start_block_time" TIMESTAMP,
+    "session_start" INT,
+    "total_stake" BIGINT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE stake_validators (
+    "network_id" INT,
+    "era_id" INT,
+    "account_id" VARCHAR(150),
+    "active" BOOL,
+    "total" BIGINT,
+    "own" BIGINT,
+    "nominators_count" INT,
+    "prefs" JSONB,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE stake_nominators (
+    "network_id" INT,
+    "era_id" INT,
+    "account_id" VARCHAR(150),
+    "validator" VARCHAR (150),
+    "is_clipped" BOOL,
+    "value" BIGINT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE rewards_eras (
+    "network_id" INT,
+    "era_id" INT,
+    "payout_block_id" INT,
+    "total_reward" BIGINT,
+    "total_reward_points" INT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE rewards_validators (
+    "network_id" INT,
+    "era_id" INT,
+    "account_id" VARCHAR(150),
+    "active" BOOL,
+    "nominators_count" INT,
+    "reward_points" INT,
+    "reward_dest" VARCHAR (50),
+    "reward_account_id" VARCHAR (150),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE rewards_nominators (
+    "network_id" INT,
+    "era_id" INT,
+    "account_id" VARCHAR(150),
+    "validator" VARCHAR (150),
+    "is_clipped" BOOL,
+    "reward_dest" VARCHAR (50),
+    "reward_account_id" VARCHAR (150),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+
+
+CREATE TABLE stake_rounds (
+    "network_id" INT,
+    "round_id" INT,
+    "total_stake" NUMERIC(35),
+    "collators_count" INT,
+    "start_block_id" INT,
+    "start_block_time" TIMESTAMP,
+    "runtime" INT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE stake_collators (
+    "network_id" INT,
+    "round_id" INT,
+    "account_id" VARCHAR(150),
+    "active" BOOL,
+    "total_stake" NUMERIC(35),
+    "final_stake" NUMERIC(35),
+    "own_stake" NUMERIC(35),
+    "delegators_count" INT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE stake_delegators (
+    "network_id" INT,
+    "round_id" INT,
+    "account_id" VARCHAR(150),
+    "collator_id" VARCHAR (150),
+    "amount" NUMERIC(35),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE rewards_rounds (
+    "network_id" INT,
+    "round_id" INT,
+    "total_reward_points" INT,
+    "total_reward" NUMERIC(35),
+    "payout_block_id" INT,
+    "payout_block_time" TIMESTAMP,
+    "runtime" INT,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE rewards_collators (
+    "network_id" INT,
+    "round_id" INT,
+    "account_id" VARCHAR(150),
+    "active" BOOL,
+    "total_reward_points" INT,
+    "total_reward" NUMERIC(35),
+    "collator_reward" NUMERIC(35),
+    "payout_block_id" INT,
+    "payout_block_time" TIMESTAMP,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+
+CREATE TABLE rewards_delegators (
+    "network_id" INT,
+    "round_id" INT,
+    "account_id" VARCHAR(150),
+    "collator_id" VARCHAR (150),
+    "final_amount" NUMERIC(35),
+    "reward" NUMERIC(35),
+    "payout_block_id" INT,
+    "payout_block_time" TIMESTAMP,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id")
+);
+

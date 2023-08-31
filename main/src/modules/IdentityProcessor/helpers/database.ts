@@ -13,11 +13,7 @@ import { encodeAccountIdToBlake2 } from '@/utils/crypt'
 const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class IdentityDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-    @Inject('logger') private readonly logger: Logger,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
 
   public async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingStateModel(this.knex)
@@ -43,9 +39,7 @@ export class IdentityDatabaseHelper {
       .merge()
   }
 
-  public async getUnprocessedEvents(
-    row_id?: number
-  ): Promise<Array<EventModel>> {
+  public async getUnprocessedEvents(row_id?: number): Promise<Array<EventModel>> {
     const records = EventModel(this.knex)
       .select()
       .where('section', 'system')
@@ -60,10 +54,7 @@ export class IdentityDatabaseHelper {
     return await records
   }
 
-  public async fixUnprocessedBlake2Accounts(
-    row_id?: number
-  ): Promise<void> {
-
+  public async fixUnprocessedBlake2Accounts(row_id?: number): Promise<void> {
     while (true) {
       const records = AccountModel(this.knex)
         .select()
@@ -85,7 +76,7 @@ export class IdentityDatabaseHelper {
           event: 'IdentityDatabaseHelper.fixUnprocessedBlake2Accounts',
           message: 'Encode blake2 account',
           account_id: account.account_id,
-          row_id: account.row_id
+          row_id: account.row_id,
         })
 
         await AccountModel(this.knex)
@@ -100,7 +91,6 @@ export class IdentityDatabaseHelper {
     })
   }
 
-
   public async fixHexDisplay(): Promise<void> {
     const hex2str = (hex: string): string => {
       let str = ''
@@ -110,10 +100,7 @@ export class IdentityDatabaseHelper {
       return str.replace(/[^a-zA-Z0-9_\-\. ]/g, '').trim()
     }
 
-    const records = await IdentityModel(this.knex)
-      .select(['row_id', 'display'])
-      .orderBy('row_id', 'asc')
-      .limit(50000)
+    const records = await IdentityModel(this.knex).select(['row_id', 'display']).orderBy('row_id', 'asc').limit(50000)
 
     for (const record of records) {
       let newDisplay = ''
@@ -123,10 +110,8 @@ export class IdentityDatabaseHelper {
         newDisplay = hex2str(record.display)
       }
       if (record.display !== newDisplay && newDisplay !== '') {
-        console.log(record.display + ':' + newDisplay)
-        await IdentityModel(this.knex)
-          .update({ display: newDisplay })
-          .where({ row_id: record.row_id })
+        //console.log(record.display + ':' + newDisplay)
+        await IdentityModel(this.knex).update({ display: newDisplay }).where({ row_id: record.row_id })
       }
     }
   }
@@ -145,14 +130,20 @@ export class IdentityDatabaseHelper {
     }
   }
 
-  public async getUnprocessedExtrinsics(
-    row_id?: number
-  ): Promise<Array<ExtrinsicModel>> {
+  public async getUnprocessedExtrinsics(row_id?: number): Promise<Array<ExtrinsicModel>> {
     const records = ExtrinsicModel(this.knex)
       .select()
       .where('section', 'identity')
       .whereIn('method', [
-        'clearIdentity', 'killIdentity', 'setFields', 'setIdentity', 'addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'
+        'clearIdentity',
+        'killIdentity',
+        'setFields',
+        'setIdentity',
+        'addSub',
+        'quitSub',
+        'removeSub',
+        'renameSub',
+        'setSubs',
       ])
       .orderBy('row_id', 'asc')
       .limit(environment.BATCH_INSERT_CHUNK_SIZE)
@@ -194,7 +185,7 @@ export class IdentityDatabaseHelper {
           web: updatedIdentity.web,
           riot: updatedIdentity.riot,
           email: updatedIdentity.email,
-          twitter: updatedIdentity.twitter
+          twitter: updatedIdentity.twitter,
         }
         await this.saveIdentity(childIdentity, true, deep + 1)
       }
@@ -205,8 +196,9 @@ export class IdentityDatabaseHelper {
   }
 
   public async findIdentityByAccountId(
-    accountId: string, parentAccountId: string | null = null,
-    deep = 0
+    accountId: string,
+    parentAccountId: string | null = null,
+    deep = 0,
   ): Promise<IdentityModel | undefined> {
     if (deep > 10) return
     const result = await IdentityModel(this.knex)
@@ -215,7 +207,8 @@ export class IdentityDatabaseHelper {
 
     if (!result && parentAccountId !== null && parentAccountId !== '0') {
       return await this.findIdentityByAccountId(parentAccountId, null, deep + 1)
-    } if (!result) {
+    }
+    if (!result) {
       return undefined
     } else if (result.parent_account_id && result.parent_account_id !== accountId) {
       return await this.findIdentityByAccountId(result.parent_account_id, null, deep + 1)
@@ -223,5 +216,4 @@ export class IdentityDatabaseHelper {
     }
     return result
   }
-
 }

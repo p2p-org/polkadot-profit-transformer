@@ -13,7 +13,6 @@ import { servicesVersion } from 'typescript'
 
 @Service()
 export class GearSmartcontractsListnerService {
-
   gracefulShutdownFlag = false
   messagesBeingProcessed = false
   isPaused = false
@@ -24,7 +23,7 @@ export class GearSmartcontractsListnerService {
     private readonly processor: GearSmartcontractsProcessorService,
     private readonly databaseHelper: GearSmartcontractsDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'GearSmartcontractsListener.preload' })
@@ -33,12 +32,11 @@ export class GearSmartcontractsListnerService {
     this.logger.info({
       event: 'GearSmartcontractsListener.preload',
       lastProcessedEventId,
-      lastProcessedExtrinsicId
+      lastProcessedExtrinsicId,
     })
 
     //await this.restartUnprocessedEvents(lastProcessedEventId)
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
-
   }
 
   public async restartUnprocessedEvents(startRowId: number): Promise<void> {
@@ -47,7 +45,8 @@ export class GearSmartcontractsListnerService {
     })
 
     let lastRowId = startRowId
-    while (true) {//lastRowId < endRowId) {
+    while (true) {
+      //lastRowId < endRowId) {
       const events = await this.databaseHelper.getUnprocessedEvents(lastRowId)
       if (!events || !events.length) {
         break
@@ -62,12 +61,11 @@ export class GearSmartcontractsListnerService {
 
       this.logger.info({
         event: 'GearSmartcontractsListner.restartUnprocessedEvents',
-        message: `Last row id: ${lastRowId}`
+        message: `Last row id: ${lastRowId}`,
       })
 
       //tansaction here?
       //await this.databaseHelper.updateLastTaskEntityId({ entity: ENTITY.IDENTITY_EVENT, entity_id: lastRowId })
-
 
       await sleep(1000)
     }
@@ -77,13 +75,13 @@ export class GearSmartcontractsListnerService {
     }, 30 * 1000)
   }
 
-
   public async restartUnprocessedExtrinsics(startRowId: number): Promise<void> {
     this.logger.debug({
       event: 'GearSmartcontractsListener.restartUnprocessedExtrinsics',
     })
     let lastRowId = startRowId
-    while (true) {//lastRowId < endRowId) {
+    while (true) {
+      //lastRowId < endRowId) {
       const extrinsics = await this.databaseHelper.getUnprocessedExtrinsics(lastRowId)
       if (!extrinsics || !extrinsics.length) {
         break
@@ -95,10 +93,10 @@ export class GearSmartcontractsListnerService {
 
         lastRowId = extrinsic.row_id || 0
       }
-      process.exit();
+      process.exit()
       this.logger.info({
         event: 'GearSmartcontractsListner.restartUnprocessedExtrinsics',
-        message: `Last row id: ${lastRowId}`
+        message: `Last row id: ${lastRowId}`,
       })
 
       //TODO. part of extrinsics could be already updated.
@@ -112,5 +110,4 @@ export class GearSmartcontractsListnerService {
       this.restartUnprocessedExtrinsics(lastRowId)
     }, 30 * 1000)
   }
-
 }

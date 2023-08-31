@@ -6,14 +6,19 @@ import { EraModel } from '@/models/era.model'
 import { ValidatorModel } from '@/models/validator.model'
 import { NominatorModel } from '@/models/nominator.model'
 
+import { StakeEraModel } from '@/models/stake_era.model'
+import { StakeValidatorModel } from '@/models/stake_validator.model'
+import { StakeNominatorModel } from '@/models/stake_nominator.model'
+
+import { RewardEraModel } from '@/models/reward_era.model'
+import { RewardValidatorModel } from '@/models/reward_validator.model'
+import { RewardNominatorModel } from '@/models/reward_nominator.model'
+
 const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class PolkadotStakingProcessorDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex) {}
 
   async saveValidators(trx: Knex.Transaction<any, any[]>, validator: ValidatorModel): Promise<void> {
     await ValidatorModel(this.knex)
@@ -29,6 +34,42 @@ export class PolkadotStakingProcessorDatabaseHelper {
 
   async saveEra(trx: Knex.Transaction<any, any[]>, era: EraModel): Promise<void> {
     await EraModel(this.knex)
+      .transacting(trx)
+      .insert({ ...era, ...network, row_time: new Date() })
+  }
+
+  async saveStakeValidators(trx: Knex.Transaction<any, any[]>, validator: StakeValidatorModel): Promise<void> {
+    await StakeValidatorModel(this.knex)
+      .transacting(trx)
+      .insert({ ...validator, ...network, row_time: new Date() })
+  }
+
+  async saveStakeNominators(trx: Knex.Transaction<any, any[]>, nominator: StakeNominatorModel): Promise<void> {
+    await StakeNominatorModel(this.knex)
+      .transacting(trx)
+      .insert({ ...nominator, ...network, row_time: new Date() })
+  }
+
+  async saveStakeEra(trx: Knex.Transaction<any, any[]>, era: StakeEraModel): Promise<void> {
+    await StakeEraModel(this.knex)
+      .transacting(trx)
+      .insert({ ...era, ...network, row_time: new Date() })
+  }
+
+  async saveRewardValidators(trx: Knex.Transaction<any, any[]>, validator: RewardValidatorModel): Promise<void> {
+    await RewardValidatorModel(this.knex)
+      .transacting(trx)
+      .insert({ ...validator, ...network, row_time: new Date() })
+  }
+
+  async saveRewardNominators(trx: Knex.Transaction<any, any[]>, nominator: RewardNominatorModel): Promise<void> {
+    await RewardNominatorModel(this.knex)
+      .transacting(trx)
+      .insert({ ...nominator, ...network, row_time: new Date() })
+  }
+
+  async saveRewardEra(trx: Knex.Transaction<any, any[]>, era: RewardEraModel): Promise<void> {
+    await RewardEraModel(this.knex)
       .transacting(trx)
       .insert({ ...era, ...network, row_time: new Date() })
   }
@@ -50,11 +91,9 @@ export class PolkadotStakingProcessorDatabaseHelper {
       so we should move current era processing task to the end 
       of the rabbit queue
       */
-    const record = await EraModel(this.knex)
-      .where({ era_id: eraId - 1 })
-      .first()
+    const record = await StakeEraModel(this.knex).where({ era_id: eraId }).first()
 
     // if prev era record doesn't exist, return undefined
-    return record?.payout_block_id
+    return record?.start_block_id
   }
 }

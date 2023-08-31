@@ -1,10 +1,5 @@
 version: '3'
 
-networks:
-  default:
-    external:
-      name: streamer_network
-
 services:
   mbelt_db:
     container_name: mbelt_postgres
@@ -109,20 +104,20 @@ services:
     volumes:
       - ./main:/usr/src/app
 
-  mbelt_gear_smartcontracts_processor:
-    container_name: mbelt_gear_smartcontracts_processor
-    build:
-      context: ./main
-      dockerfile: Dockerfile.dev
-    restart: always
-    ports:
-      - 3006:3000
-    depends_on:
-      - mbelt_db
-    environment:
-      MODE: GEAR_SMARTCONTRACTS_PROCESSOR
-    volumes:
-      - ./main:/usr/src/app
+#  mbelt_gear_smartcontracts_processor:
+#    container_name: mbelt_gear_smartcontracts_processor
+#    build:
+#      context: ./main
+#      dockerfile: Dockerfile.dev
+#    restart: always
+#    ports:
+#      - 3006:3000
+#    depends_on:
+#      - mbelt_db
+#    environment:
+#      MODE: GEAR_SMARTCONTRACTS_PROCESSOR
+#    volumes:
+#      - ./main:/usr/src/app
 
   mbelt_monitoring:
     container_name: mbelt_monitoring

@@ -1,7 +1,6 @@
 import { Compact, GenericExtrinsic, Vec } from '@polkadot/types'
 import { BlockNumber, EventRecord } from '@polkadot/types/interfaces'
 
-
 export type ExtrinsicsProcessorInput = {
   // eraId: number | null
   // epochId: number | null

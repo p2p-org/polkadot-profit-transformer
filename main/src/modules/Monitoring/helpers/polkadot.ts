@@ -4,9 +4,7 @@ import '@polkadot/api-augment'
 
 @Service()
 export class MonitoringPolkadotHelper {
-  constructor(
-    @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  constructor(@Inject('polkadotApi') private readonly polkadotApi: ApiPromise) {}
 
   public async getFinBlockNumber(): Promise<number> {
     const lastFinHeader = await this.polkadotApi.rpc.chain.getFinalizedHead()
@@ -15,4 +13,3 @@ export class MonitoringPolkadotHelper {
     return lastFinBlock.block.header.number.toNumber()
   }
 }
-
