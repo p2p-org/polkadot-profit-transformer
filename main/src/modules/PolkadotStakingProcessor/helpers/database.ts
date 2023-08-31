@@ -93,10 +93,11 @@ export class PolkadotStakingProcessorDatabaseHelper {
       */
     console.log('pre1')
     const record = await StakeEraModel(this.knex)
-      .where({ era_id: eraId - 1 })
+      .where({ era_id: eraId })
       .first()
     console.log('we are searching ', { era_id: eraId })
     console.log('pre1')
+    console.log(record)
 
     console.log('pre2')
 
