@@ -166,11 +166,26 @@ export class PolkadotStakingProcessorService {
       })
 
       for (const validator of validators) {
-        await this.databaseHelper.saveRewardValidators(trx, validator)
+        await this.databaseHelper.saveRewardValidators(trx, {
+          era_id: validator.era_id,
+          account_id: validator.account_id,
+          nominators_count: validator.nominators_count,
+          reward_points: validator.reward_points,
+          reward_dest: validator.reward_dest,
+          reward_account_id: validator.reward_account_id,
+          prefs: validator.prefs,
+        })
       }
 
       for (const nominator of nominators) {
-        await this.databaseHelper.saveRewardNominators(trx, nominator)
+        await this.databaseHelper.saveRewardNominators(trx, {
+          era_id: nominator.era_id,
+          account_id: nominator.account_id,
+          validator: nominator.validator,
+          is_clipped: nominator.is_clipped,
+          reward_dest: nominator.reward_dest,
+          reward_account_id: nominator.reward_account_id,
+        })
       }
 
       this.logger.info({
