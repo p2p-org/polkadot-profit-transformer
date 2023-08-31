@@ -158,7 +158,12 @@ export class PolkadotStakingProcessorService {
       }
 
       //rewards only
-      await this.databaseHelper.saveRewardEra(trx, { ...eraData })
+      await this.databaseHelper.saveRewardEra(trx, {
+        era_id: eraData.era_id,
+        payout_block_id: payout_block_id,
+        total_reward: eraData.total_reward,
+        total_reward_points: eraData.total_reward_points,
+      })
 
       for (const validator of validators) {
         await this.databaseHelper.saveRewardValidators(trx, validator)
