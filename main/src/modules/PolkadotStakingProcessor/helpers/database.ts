@@ -91,13 +91,7 @@ export class PolkadotStakingProcessorDatabaseHelper {
       so we should move current era processing task to the end 
       of the rabbit queue
       */
-    console.log('pre1')
     const record = await StakeEraModel(this.knex).where({ era_id: eraId }).first()
-    console.log('we are searching ', { era_id: eraId })
-    console.log('pre1')
-    console.log(record)
-
-    console.log('pre2')
 
     // if prev era record doesn't exist, return undefined
     return record?.start_block_id
