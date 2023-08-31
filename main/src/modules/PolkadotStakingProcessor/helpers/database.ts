@@ -18,7 +18,7 @@ const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class PolkadotStakingProcessorDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex) {}
+  constructor(@Inject('knex') private readonly knex: Knex) { }
 
   async saveValidators(trx: Knex.Transaction<any, any[]>, validator: ValidatorModel): Promise<void> {
     await ValidatorModel(this.knex)
@@ -95,7 +95,7 @@ export class PolkadotStakingProcessorDatabaseHelper {
     const record = await StakeEraModel(this.knex)
       .where({ era_id: eraId - 1 })
       .first()
-    console.log('we are searching ', { era_id: eraId - 1 })
+    console.log('we are searching ', { era_id: eraId })
     console.log('pre1')
 
     console.log('pre2')
