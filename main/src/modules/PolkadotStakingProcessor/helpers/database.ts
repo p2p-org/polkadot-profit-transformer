@@ -18,7 +18,7 @@ const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class PolkadotStakingProcessorDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex) { }
+  constructor(@Inject('knex') private readonly knex: Knex) {}
 
   async saveValidators(trx: Knex.Transaction<any, any[]>, validator: ValidatorModel): Promise<void> {
     await ValidatorModel(this.knex)
@@ -91,7 +91,14 @@ export class PolkadotStakingProcessorDatabaseHelper {
       so we should move current era processing task to the end 
       of the rabbit queue
       */
-    const record = await StakeEraModel(this.knex).where({ era_id: eraId - 1 }).first()
+    console.log('pre1')
+    const record = await StakeEraModel(this.knex)
+      .where({ era_id: eraId - 1 })
+      .first()
+    console.log('we are searching ', { era_id: eraId - 1 })
+    console.log('pre1')
+
+    console.log('pre2')
 
     // if prev era record doesn't exist, return undefined
     return record?.start_block_id

@@ -315,10 +315,12 @@ CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
 
-
+DROP TABLE stake_eras;
 CREATE TABLE stake_eras (
     "network_id" INT,
     "era_id" INT,
+    "start_block_id" INT,
+    "start_block_time" TIMESTAMP,
     "session_start" INT,
     "total_stake" BIGINT,
     "row_id" SERIAL,
