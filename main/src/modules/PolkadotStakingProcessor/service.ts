@@ -18,7 +18,7 @@ export class PolkadotStakingProcessorService {
 
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
-  ) {}
+  ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
     const { entity_id: eraId, collect_uid } = taskRecord
@@ -172,8 +172,8 @@ export class PolkadotStakingProcessorService {
           nominators_count: validator.nominators_count,
           reward_points: validator.reward_points,
           reward_dest: validator.reward_dest,
-          reward_account_id: validator.reward_account_id,
-          prefs: validator.prefs,
+          reward_account_id: validator.reward_account_id
+          //prefs: validator.prefs,
         })
       }
 
