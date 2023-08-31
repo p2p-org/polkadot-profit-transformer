@@ -5,7 +5,7 @@ chain: moonbeam
 role: block-processor
 limits: {cpu: 450m, memory: 1000Mi}
 requests: {cpu: 450m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: d4f8f29de1105d39c1095137a578ccbc5fc491f9}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: a0e0df62bad86c70aa950c1fc0c30834322b5a27}
 port: 3000
 metrics:
   enabled: true
