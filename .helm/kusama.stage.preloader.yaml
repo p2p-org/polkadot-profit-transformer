@@ -3,7 +3,7 @@ environment: stage
 chain: kusama
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 0a8025acbbbc8163d9285bca13b865a958b3f631}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 1e236e8fc2e0db04a80e0e1e4cf27f626627ad36}
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 port: 3000
