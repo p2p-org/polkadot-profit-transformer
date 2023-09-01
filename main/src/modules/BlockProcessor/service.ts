@@ -52,6 +52,8 @@ export class BlocksProcessorService {
 
     const newTasks = await this.processBlock(blockId, trx)
 
+    await trx.commit()
+
     if (newTasks.length) {
       await this.knex.transaction(async (trx2: Knex.Transaction) => {
         await this.tasksRepository.batchAddEntities(newTasks, trx2)
