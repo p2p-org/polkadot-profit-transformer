@@ -124,12 +124,11 @@ export class PolkadotStakingProcessorService {
     // logger.info({ eraStartBlockId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
+    const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
 
     // logger.info({ blockHash })
 
     try {
-      const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
-
       const eraData = {
         ...(await this.polkadotHelper.getEraDataStake({ blockHash: payoutBlockHash, eraId })),
         ...(await this.polkadotHelper.getEraDataRewards({ blockHash: payoutBlockHash, eraId })),
@@ -150,11 +149,11 @@ export class PolkadotStakingProcessorService {
       await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
 
       for (const validator of validators) {
-        await this.databaseHelper.saveValidators(trx, validator)
+        await this.databaseHelper.saveValidators(trx, { ...validator, block_time: new Date(payoutBlockTime) })
       }
 
       for (const nominator of nominators) {
-        await this.databaseHelper.saveNominators(trx, nominator)
+        await this.databaseHelper.saveNominators(trx, { ...nominator, block_time: new Date(payoutBlockTime) })
       }
 
       //rewards only
@@ -189,7 +188,7 @@ export class PolkadotStakingProcessorService {
       }
 
       this.logger.info({
-        event: `Era ${eraId.toString()} staking processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
+        event: `Era ${eraId.toString()} rewards processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
         metadata,
         eraId,
       })
@@ -206,7 +205,7 @@ export class PolkadotStakingProcessorService {
       await this.sliMetrics.add({ entity: 'era', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
     } catch (error: any) {
       this.logger.warn({
-        event: `error in processing era staking: ${error.message}`,
+        event: `error in processing era rewards: ${error.message}`,
       })
       throw error
     }
