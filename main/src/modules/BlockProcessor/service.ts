@@ -57,6 +57,12 @@ export class BlocksProcessorService {
 
     const callback = async () => {
       if (newTasks.length) {
+        this.logger.info({
+          event: 'BlockProcessor.processTaskMessage',
+          blockId,
+          message: `Call back called for block with ID: ${blockId}`,
+        })
+
         await this.knex.transaction(async (trx2: Knex.Transaction) => {
           await this.tasksRepository.batchAddEntities(newTasks, trx2)
           await trx2.commit()
@@ -64,6 +70,12 @@ export class BlocksProcessorService {
         })
       }
     }
+
+    this.logger.info({
+      event: 'BlockProcessor.processTaskMessage',
+      blockId,
+      message: `Block processing done ${blockId}`,
+    })
 
     return { status: true, callback }
   }
