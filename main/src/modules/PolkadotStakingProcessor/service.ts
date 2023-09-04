@@ -20,7 +20,7 @@ export class PolkadotStakingProcessorService {
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
   ) {}
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: eraId, collect_uid } = taskRecord
 
     const metadata = {
@@ -32,7 +32,7 @@ export class PolkadotStakingProcessorService {
 
     await this.processRewardsEra(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
 
-    return true
+    return { status: true }
   }
 
   async processStakeEra(

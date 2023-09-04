@@ -21,7 +21,10 @@ export type TaskMessage<T> = {
 }
 
 export type QueueProcessor = {
-  processTaskMessage: (trx: Knex.Transaction<any, any[]>, task: ProcessingTaskModel<ENTITY>) => Promise<boolean>
+  processTaskMessage: (
+    trx: Knex.Transaction<any, any[]>,
+    task: ProcessingTaskModel<ENTITY>,
+  ) => Promise<{ status: boolean; callback?: any }>
 }
 
 export type Rabbit = {
@@ -125,7 +128,8 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
           collect_uid,
         })
 
-        if (!(await processor.processTaskMessage(trx, taskRecord))) {
+        const { status, callback } = await processor.processTaskMessage(trx, taskRecord)
+        if (!status) {
           logger.error({
             event: `StakingProcessor.preProcessTaskMessage`,
             entity,
@@ -151,6 +155,10 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
         })
 
         await trx.commit()
+
+        if (callback && typeof callback === 'function') {
+          callback()
+        }
 
         logger.info({
           event: `RabbitMQ.preProcessTaskMessage`,
