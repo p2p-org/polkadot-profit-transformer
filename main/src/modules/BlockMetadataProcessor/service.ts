@@ -18,10 +18,10 @@ export class BlockMetadataProcessorService {
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
   ) {}
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     await this.processBlock(taskRecord.entity_id, trx)
 
-    return true
+    return { status: true }
   }
 
   private async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<void> {

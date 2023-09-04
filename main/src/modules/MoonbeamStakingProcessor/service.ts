@@ -35,7 +35,7 @@ export class MoonbeamStakingProcessorService {
   }
   */
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: roundId, collect_uid } = taskRecord
 
     const metadata = {
@@ -65,7 +65,7 @@ export class MoonbeamStakingProcessorService {
 
     await this.processReardsRound(trx, taskRecord.data.payout_block_id)
 
-    return true
+    return { status: true }
   }
 
   async processStakeRound(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {

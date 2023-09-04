@@ -21,12 +21,12 @@ export class BalancesProcessorService {
     private readonly tasksRepository: TasksRepository,
   ) {}
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: blockId, collect_uid } = taskRecord
 
     await this.processBlock(blockId, trx)
 
-    return true
+    return { status: true }
   }
 
   async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<void> {
