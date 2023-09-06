@@ -181,11 +181,7 @@ export class BlockListenerService {
     this.logger.info({ event: 'BlocksListener.preload newFinalizedBlock', newFinalizedBlockId: blockId })
     const lastBlockIdInProcessingTasks = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
     this.logger.info({ event: 'BlocksListener.preload', lastBlockIdInProcessingTasks })
-
-    //we need to wait 1 sec for RPC sync (block propagation), beacuse block-processor can use different rpc-connection
-    setTimeout(async () => {
-      await this.ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
-    }, 1000)
+    await this.ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
   }
 
   private async ingestOneBlockTask(task: ProcessingTaskModel<ENTITY.BLOCK>): Promise<void> {
@@ -224,9 +220,13 @@ export class BlockListenerService {
               entity_id: block.entity_id,
               collect_uid: block.collect_uid,
             }
-            // logger.info({ event: 'send data to rabbit', data })
-            await this.sendTaskToToRabbit(ENTITY.BLOCK, data)
-            // logger.info({ event: ' data sent to rabbit', data })
+            this.logger.info({ event: 'send data to rabbit', data })
+
+            //we need to wait 1 sec for RPC sync (block propagation), beacuse block-processor can use different rpc-connection
+            setTimeout(async () => {
+              await this.sendTaskToToRabbit(ENTITY.BLOCK, data)
+            }, 1000)
+            this.logger.info({ event: ' data sent to rabbit', data })
           }
         })
 
