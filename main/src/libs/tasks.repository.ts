@@ -72,16 +72,29 @@ export class TasksRepository {
       .orderBy('row_id', 'desc')
       .limit(100)
 
-    if (tasksRecords && tasksRecords.length > 1) {
+    if (!tasksRecords || !tasksRecords.length) {
       this.logger.warn({
         event: 'RabbitMQ.readTaskAndLockRow',
         entity,
         entity_id,
         collect_uid,
-        error: `Possible ${entity} with id: ${entity_id} processing task duplication. ` + `Found: ${tasksRecords.length} records`,
+        error: `Task for ${entity} with id: ${entity_id} not found`,
       })
       return
     }
+
+    /*
+  if (tasksRecords && tasksRecords.length > 1) {
+    this.logger.warn({
+      event: 'RabbitMQ.readTaskAndLockRow',
+      entity,
+      entity_id,
+      collect_uid,
+      error: `Possible ${entity} with id: ${entity_id} processing task duplication. ` + `Found: ${tasksRecords.length} records`,
+    })
+    return
+  }
+  */
 
     if (tasksRecords[0].collect_uid !== collect_uid) {
       this.logger.warn({
