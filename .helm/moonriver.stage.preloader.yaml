@@ -1,6 +1,6 @@
 ---
 environment: stage
-replicas: 1
+replicas: 0
 chain: moonriver
 role: preloader
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: e58d2e62a22f36a9ac52eae705f9c5d79ebf855a}
