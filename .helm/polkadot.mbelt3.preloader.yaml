@@ -4,8 +4,8 @@ chain: polkadot
 role: preloader
 replicas: 1
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: e58d2e62a22f36a9ac52eae705f9c5d79ebf855a}
-limits: {cpu: 450m, memory: 200Mi}
-requests: {cpu: 400m, memory: 200Mi}
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
 port: 3000
 metrics:
   enabled: true
