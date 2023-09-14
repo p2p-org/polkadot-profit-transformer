@@ -14,7 +14,7 @@ import { BalancesModel } from '@/models/balances.model'
 const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class IdentityDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) { }
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
 
   public async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingStateModel(this.knex)
@@ -102,6 +102,10 @@ export class IdentityDatabaseHelper {
       })
       .whereNull('a.account_id')
 
+    this.logger.info({
+      event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
+      message: 'Records count: ' + accounts.length,
+    })
     //const accounts = await records
     //if (!accounts || !accounts.length) {
     //  break
@@ -122,9 +126,9 @@ export class IdentityDatabaseHelper {
         message: `Fix account: ${account.signer}, blake2_hash: ${blake2_hash}`,
       })
 
-      await AccountModel(this.knex).update({ blake2_hash }).where({ account_id: account.signer })
+      await AccountModel(this.knex).update({ blake2_hash }).whereNull('blake2_hash').andWhere({ account_id: account.signer })
 
-      await BalancesModel(this.knex).update({ account_id: account.signer }).where({ blake2_hash })
+      await BalancesModel(this.knex).update({ account_id: account.signer }).whereNull('account_id').andWhere({ blake2_hash })
     }
     //}
 
