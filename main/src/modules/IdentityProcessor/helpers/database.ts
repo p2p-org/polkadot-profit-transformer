@@ -9,6 +9,7 @@ import { environment } from '@/environment'
 import { IdentityModel } from '@/models/identities.model'
 import { AccountModel } from '@/models/accounts.model'
 import { encodeAccountIdToBlake2 } from '@/utils/crypt'
+import { BalancesModel } from '@/models/balances.model'
 
 const network = { network_id: environment.NETWORK_ID }
 @Service()
@@ -87,6 +88,48 @@ export class IdentityDatabaseHelper {
 
     this.logger.info({
       event: 'IdentityDatabaseHelper.fixUnprocessedBlake2Accounts',
+      message: 'All accounts have been encoded',
+    })
+  }
+
+  public async fixUnprocessedBlake2AccountsExtrinsics(): Promise<void> {
+    //while (true) {
+    const accounts = await this.knex('extrinsics as e')
+      .select('a.row_id')
+      .distinct('e.signer')
+      .leftJoin('accounts as a', function () {
+        this.on('e.signer', '=', 'a.account_id').andOn('e.network_id', '=', 'a.network_id')
+      })
+      .whereNull('a.account_id')
+
+    //const accounts = await records
+    //if (!accounts || !accounts.length) {
+    //  break
+    //}
+
+    for (const account of accounts) {
+      this.logger.info({
+        event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
+        message: 'Encode blake2 account',
+        account_id: account.signer,
+        row_id: account.row_id,
+      })
+
+      const blake2_hash = encodeAccountIdToBlake2(account.signer)
+
+      this.logger.info({
+        event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
+        message: `Fix account: ${account.signer}, blake2_hash: ${blake2_hash}`,
+      })
+
+      await AccountModel(this.knex).update({ blake2_hash }).where({ row_id: account.row_id })
+
+      await BalancesModel(this.knex).update({ account_id: account.signer }).where({ blake2_hash })
+    }
+    //}
+
+    this.logger.info({
+      event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
       message: 'All accounts have been encoded',
     })
   }
