@@ -14,7 +14,7 @@ import { BalancesModel } from '@/models/balances.model'
 const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class IdentityDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) { }
 
   public async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingStateModel(this.knex)
@@ -122,7 +122,7 @@ export class IdentityDatabaseHelper {
         message: `Fix account: ${account.signer}, blake2_hash: ${blake2_hash}`,
       })
 
-      await AccountModel(this.knex).update({ blake2_hash }).where({ row_id: account.row_id })
+      await AccountModel(this.knex).update({ blake2_hash }).where({ account_id: account.signer })
 
       await BalancesModel(this.knex).update({ account_id: account.signer }).where({ blake2_hash })
     }
