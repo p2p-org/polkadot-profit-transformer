@@ -6,7 +6,7 @@ export type RewardRoundModel = {
   payout_block_time?: Date
   total_reward: string
   total_reward_points: number
-  collators_count: number
+  //collators_count: number
   runtime: number
   row_time?: Date
 }

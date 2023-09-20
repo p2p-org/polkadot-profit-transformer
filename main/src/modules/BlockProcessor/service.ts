@@ -30,7 +30,10 @@ export class BlocksProcessorService {
     private readonly tasksRepository: TasksRepository,
   ) {}
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(
+    trx: Knex.Transaction,
+    taskRecord: ProcessingTaskModel<ENTITY>,
+  ): Promise<{ status: boolean; callback?: any }> {
     const { entity_id: blockId, collect_uid } = taskRecord
 
     //check that block wasn't processed already
@@ -41,7 +44,7 @@ export class BlocksProcessorService {
         message: `Block ${blockId} already present in the database`,
       })
 
-      return true
+      return { status: true }
     }
 
     this.logger.info({
@@ -52,15 +55,29 @@ export class BlocksProcessorService {
 
     const newTasks = await this.processBlock(blockId, trx)
 
-    if (newTasks.length) {
-      await this.knex.transaction(async (trx2: Knex.Transaction) => {
-        await this.tasksRepository.batchAddEntities(newTasks, trx2)
-        await trx2.commit()
-        await this.sendProcessingTasksToRabbit(newTasks)
-      })
+    const callback = async () => {
+      if (newTasks.length) {
+        this.logger.info({
+          event: 'BlockProcessor.processTaskMessage',
+          blockId,
+          message: `Call back called for block with ID: ${blockId}`,
+        })
+
+        await this.knex.transaction(async (trx2: Knex.Transaction) => {
+          await this.tasksRepository.batchAddEntities(newTasks, trx2)
+          await trx2.commit()
+          await this.sendProcessingTasksToRabbit(newTasks)
+        })
+      }
     }
 
-    return true
+    this.logger.info({
+      event: 'BlockProcessor.processTaskMessage',
+      blockId,
+      message: `Block processing done ${blockId}`,
+    })
+
+    return { status: true, callback }
   }
 
   private async sendProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
@@ -180,7 +197,6 @@ export class BlocksProcessorService {
     newTasks.push(newBalancesProcessingTask)
 
     for (const event of processedEvents) {
-      console.log('EVENT')
       // polkadot, kusama
       if (event.section === 'staking' && (event.method === 'EraPayout' || event.method === 'EraPaid')) {
         const newStakingProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
@@ -201,7 +217,6 @@ export class BlocksProcessorService {
           blockId,
           message: 'detected new era',
         })
-        console.log('STAKING ERA!!! - 3 ')
       }
 
       // moonbeam, moonriver

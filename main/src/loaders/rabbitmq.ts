@@ -21,7 +21,10 @@ export type TaskMessage<T> = {
 }
 
 export type QueueProcessor = {
-  processTaskMessage: (trx: Knex.Transaction<any, any[]>, task: ProcessingTaskModel<ENTITY>) => Promise<boolean>
+  processTaskMessage: (
+    trx: Knex.Transaction<any, any[]>,
+    task: ProcessingTaskModel<ENTITY>,
+  ) => Promise<{ status: boolean; callback?: any }>
 }
 
 export type Rabbit = {
@@ -125,7 +128,8 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
           collect_uid,
         })
 
-        if (!(await processor.processTaskMessage(trx, taskRecord))) {
+        const { status, callback } = await processor.processTaskMessage(trx, taskRecord)
+        if (!status) {
           logger.error({
             event: `StakingProcessor.preProcessTaskMessage`,
             entity,
@@ -152,6 +156,10 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
 
         await trx.commit()
 
+        if (callback && typeof callback === 'function') {
+          callback()
+        }
+
         logger.info({
           event: `RabbitMQ.preProcessTaskMessage`,
           message: `${entity} with id ${entity_id} tx has been committed`,
@@ -176,8 +184,6 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
     send: async <T extends QUEUES>(queue: T, message: TaskMessage<T>) => {
       logger.debug({ event: 'RabbitMQ.send!', message, buffer: Buffer.from(JSON.stringify(message)) })
       await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, message)
-
-      console.log(222)
     },
     process: async (queue: QUEUES, entity: ENTITY, processor: QueueProcessor) => {
       const consumer = async (msg: ConsumeMessage | null): Promise<void> => {

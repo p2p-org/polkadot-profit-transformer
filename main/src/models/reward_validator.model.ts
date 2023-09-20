@@ -7,7 +7,7 @@ export type RewardValidatorModel = {
   reward_points?: number
   reward_dest?: string
   reward_account_id?: string
-  prefs: any
+  //prefs: any
   row_time?: Date
 }
 

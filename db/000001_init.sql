@@ -315,10 +315,12 @@ CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
 
-
+DROP TABLE stake_eras;
 CREATE TABLE stake_eras (
     "network_id" INT,
     "era_id" INT,
+    "start_block_id" INT,
+    "start_block_time" TIMESTAMP,
     "session_start" INT,
     "total_stake" BIGINT,
     "row_id" SERIAL,
@@ -411,7 +413,6 @@ CREATE TABLE stake_collators (
     "account_id" VARCHAR(150),
     "active" BOOL,
     "total_stake" NUMERIC(35),
-    "final_stake" NUMERIC(35),
     "own_stake" NUMERIC(35),
     "delegators_count" INT,
     "row_id" SERIAL,
@@ -448,6 +449,7 @@ CREATE TABLE rewards_collators (
     "round_id" INT,
     "account_id" VARCHAR(150),
     "active" BOOL,
+    "final_stake" NUMERIC(35),
     "total_reward_points" INT,
     "total_reward" NUMERIC(35),
     "collator_reward" NUMERIC(35),

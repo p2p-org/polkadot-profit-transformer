@@ -1,6 +1,6 @@
 import { Inject, Service } from 'typedi'
-import { Knex } from 'knex'
 import { TasksRepository } from '@/libs/tasks.repository'
+import { Knex } from 'knex'
 import { Logger } from 'pino'
 import { BlockModel } from '@/models/block.model'
 import { decodeAccountBalanceValue, AccountBalance } from './helpers/crypt'
@@ -15,18 +15,17 @@ import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/process
 export class BalancesProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
     private readonly databaseHelper: BalancesDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
   ) {}
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: blockId, collect_uid } = taskRecord
 
     await this.processBlock(blockId, trx)
 
-    return true
+    return { status: true }
   }
 
   async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<void> {

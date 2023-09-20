@@ -13,14 +13,13 @@ import { SliMetrics } from '@/loaders/sli_metrics'
 export class PolkadotStakingProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
     @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
 
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
-  ) { }
+  ) {}
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: eraId, collect_uid } = taskRecord
 
     const metadata = {
@@ -32,7 +31,7 @@ export class PolkadotStakingProcessorService {
 
     await this.processRewardsEra(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
 
-    return true
+    return { status: true }
   }
 
   async processStakeEra(
@@ -46,6 +45,7 @@ export class PolkadotStakingProcessorService {
     this.logger.info({ event: `Process staking data for next era: ${eraId}`, metadata, eraId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
+    const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
 
     try {
       const eraData = await this.polkadotHelper.getEraDataStake({ blockHash: payoutBlockHash, eraId })
@@ -55,7 +55,11 @@ export class PolkadotStakingProcessorService {
         eraStartBlockId: payout_block_id,
       })
 
-      await this.databaseHelper.saveStakeEra(trx, { ...eraData })
+      await this.databaseHelper.saveStakeEra(trx, {
+        ...eraData,
+        start_block_id: payout_block_id,
+        start_block_time: new Date(payoutBlockTime),
+      })
 
       for (const validator of validators) {
         await this.databaseHelper.saveStakeValidators(trx, validator)
@@ -119,12 +123,11 @@ export class PolkadotStakingProcessorService {
     // logger.info({ eraStartBlockId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
+    const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
 
     // logger.info({ blockHash })
 
     try {
-      const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
-
       const eraData = {
         ...(await this.polkadotHelper.getEraDataStake({ blockHash: payoutBlockHash, eraId })),
         ...(await this.polkadotHelper.getEraDataRewards({ blockHash: payoutBlockHash, eraId })),
@@ -145,26 +148,46 @@ export class PolkadotStakingProcessorService {
       await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
 
       for (const validator of validators) {
-        await this.databaseHelper.saveValidators(trx, validator)
+        await this.databaseHelper.saveValidators(trx, { ...validator, block_time: new Date(payoutBlockTime) })
       }
 
       for (const nominator of nominators) {
-        await this.databaseHelper.saveNominators(trx, nominator)
+        await this.databaseHelper.saveNominators(trx, { ...nominator, block_time: new Date(payoutBlockTime) })
       }
 
       //rewards only
-      await this.databaseHelper.saveRewardEra(trx, { ...eraData })
+      await this.databaseHelper.saveRewardEra(trx, {
+        era_id: eraData.era_id,
+        payout_block_id: payout_block_id,
+        total_reward: eraData.total_reward,
+        total_reward_points: eraData.total_reward_points,
+      })
 
       for (const validator of validators) {
-        await this.databaseHelper.saveRewardValidators(trx, validator)
+        await this.databaseHelper.saveRewardValidators(trx, {
+          era_id: validator.era_id,
+          account_id: validator.account_id,
+          nominators_count: validator.nominators_count,
+          reward_points: validator.reward_points,
+          reward_dest: validator.reward_dest,
+          reward_account_id: validator.reward_account_id,
+          //prefs: validator.prefs,
+        })
       }
 
       for (const nominator of nominators) {
-        await this.databaseHelper.saveRewardNominators(trx, nominator)
+        await this.databaseHelper.saveRewardNominators(trx, {
+          era_id: nominator.era_id,
+          account_id: nominator.account_id,
+          validator: nominator.validator,
+          is_clipped: nominator.is_clipped,
+          reward_dest: nominator.reward_dest,
+          reward_account_id: nominator.reward_account_id,
+        })
       }
 
       this.logger.info({
-        event: `Era ${eraId.toString()} staking processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
+        event: `Era ${eraId.toString()} rewards processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
         metadata,
         eraId,
       })
@@ -181,7 +204,7 @@ export class PolkadotStakingProcessorService {
       await this.sliMetrics.add({ entity: 'era', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
     } catch (error: any) {
       this.logger.warn({
-        event: `error in processing era staking: ${error.message}`,
+        event: `error in processing era rewards: ${error.message}`,
       })
       throw error
     }

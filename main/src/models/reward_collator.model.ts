@@ -4,7 +4,7 @@ export type RewardCollatorModel = {
   round_id: number
   account_id: string
   final_stake: bigint
-  delegators_count: number
+  // delegators_count: number
   total_reward_points: number
   total_reward?: bigint
   collator_reward?: bigint

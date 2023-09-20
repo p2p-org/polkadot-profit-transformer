@@ -2,10 +2,29 @@ import { Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { BlockModel } from '@/models/block.model'
 import { environment } from '@/environment'
+import { Logger } from 'pino'
 
 @Service()
 export class MonitoringDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex) {}
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
+
+  async roateOldRecords(): Promise<void> {
+    const tableNames = await this.knex.raw("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+    tableNames.rows
+      .map((row: any) => row.table_name)
+      .forEach(async (tableName: string) => {
+        if (tableName !== 'processing_state' && tableName !== 'networks') {
+          await this.knex.raw(`DELETE FROM ${tableName} WHERE row_time < NOW() - INTERVAL '1 month'; `)
+          this.logger.info({
+            event: 'MonitoringDatabaseHelper.roateOldRecords',
+            message: `Delete old records for table ${tableName}`,
+            sql: `DELETE FROM ${tableName} WHERE row_time < NOW() - INTERVAL '1 month'; `,
+          })
+        }
+      })
+
+    console.log(tableNames)
+  }
 
   async getLastBlock(): Promise<BlockModel> {
     const sql = `
@@ -24,7 +43,7 @@ export class MonitoringDatabaseHelper {
       FROM blocks
       WHERE network_id=${environment.NETWORK_ID}
       GROUP BY block_id
-      HAVING COUNT(*) > 1
+      HAVING COUNT(*) > 1c
       LIMIT 10`
     const dublicatesBlocks = await this.knex.raw(sql)
     return dublicatesBlocks.rows

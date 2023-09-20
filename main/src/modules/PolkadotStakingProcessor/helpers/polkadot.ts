@@ -16,21 +16,19 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  ) {}
 
   async getValidatorsAndNominatorsStake(args: {
     eraId: number
     eraStartBlockId: number
   }): Promise<IGetValidatorsNominatorsResult> {
     return new Promise(async (res, rej) => {
-      console.log('getValidatorsAndNominatorsData start')
       const { eraId, eraStartBlockId } = args
 
       const nominators: NominatorModel[] = []
       const validators: ValidatorModel[] = []
 
       const validatorsAccountIdSet: Set<string> = await this.getDistinctValidatorsAccountsByEra(eraStartBlockId)
-      // console.log({ validatorsAccountIdSet })
 
       const eraStartBlockHash = await this.getBlockHashByHeight(eraStartBlockId)
       const eraStartBlockTime = await this.getBlockTime(eraStartBlockHash)
@@ -98,7 +96,6 @@ export class PolkadotStakingProcessorPolkadotHelper {
     payoutBlockTime: number
   }): Promise<IGetValidatorsNominatorsResult> {
     return new Promise(async (res, rej) => {
-      console.log('getValidatorsAndNominatorsData start')
       const { eraId, payoutBlockHash, payoutBlockTime, eraStartBlockId } = args
       const eraRewardPointsMap: Map<string, number> = await this.getRewardPoints(payoutBlockHash, +eraId)
 

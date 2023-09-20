@@ -1,8 +1,10 @@
 import { environment } from '@/environment'
+import { Container, Inject, Service } from 'typedi'
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api'
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
 import { logger } from '@/loaders/logger'
 import process from 'node:process'
+import { SliMetrics } from '@/loaders/sli_metrics'
 
 export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> => {
   const provider = new WsProvider(nodeUrl, 2500, {}, 300 * 1000)
@@ -13,8 +15,23 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     typesBundle = typesBundlePre900
   }
 
+  const sliMetrics: SliMetrics = Container.get('sliMetrics')
+  const startGatheringRpcMetrics = () => {
+    setInterval(async () => {
+      const startProcessingTime = Date.now()
+      const lastHeader = await api.rpc.chain.getHeader()
+      await sliMetrics.add({
+        entity: 'rpc',
+        entity_id: parseInt(lastHeader.number.toString()),
+        name: 'rpc_response_time_ms',
+        value: Date.now() - startProcessingTime,
+      })
+    }, 30 * 1000)
+  }
+
   provider.on('connected', () => {
     logger.info('✌️ PolkadotAPI connected')
+    startGatheringRpcMetrics()
   })
   provider.on('disconnected', () => {
     logger.error('PolkadotAPI error: disconnected')

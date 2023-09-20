@@ -35,7 +35,7 @@ export class MoonbeamStakingProcessorService {
   }
   */
 
-  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<boolean> {
+  async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: roundId, collect_uid } = taskRecord
 
     const metadata = {
@@ -65,7 +65,7 @@ export class MoonbeamStakingProcessorService {
 
     await this.processReardsRound(trx, taskRecord.data.payout_block_id)
 
-    return true
+    return { status: true }
   }
 
   async processStakeRound(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
@@ -241,7 +241,7 @@ export class MoonbeamStakingProcessorService {
         payout_block_time: new Date(parseInt(round.payoutBlockTime.toString(10), 10)),
         total_reward: roundPayoutProcessor.totalRewardedAmount.toString(10),
         total_reward_points: parseInt(round.totalPoints.toString(), 10),
-        collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
+        //collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
         runtime: roundPayoutProcessor.specVersion,
       })
 
@@ -263,7 +263,7 @@ export class MoonbeamStakingProcessorService {
           round_id: parseInt(round.id.toString(10), 10),
           account_id: collator.id,
           final_stake: collator.total.toBigInt(),
-          delegators_count: Object.keys(collator.delegators).length,
+          //delegators_count: Object.keys(collator.delegators).length,
           total_reward_points: parseInt(collator.points.toString(10), 10),
           total_reward: collator.rewardTotal && collator.rewardTotal ? collator.rewardTotal.toString(10) : '0',
           collator_reward: collator.rewardCollator && collator.rewardCollator ? collator.rewardCollator.toString(10) : '0',

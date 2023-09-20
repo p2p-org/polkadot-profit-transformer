@@ -9,6 +9,7 @@ import { environment } from '@/environment'
 import { IdentityModel } from '@/models/identities.model'
 import { AccountModel } from '@/models/accounts.model'
 import { encodeAccountIdToBlake2 } from '@/utils/crypt'
+import { BalancesModel } from '@/models/balances.model'
 
 const network = { network_id: environment.NETWORK_ID }
 @Service()
@@ -91,6 +92,52 @@ export class IdentityDatabaseHelper {
     })
   }
 
+  public async fixUnprocessedBlake2AccountsExtrinsics(): Promise<void> {
+    //while (true) {
+    const accounts = await this.knex('extrinsics as e')
+      .select('a.row_id')
+      .distinct('e.signer')
+      .leftJoin('accounts as a', function () {
+        this.on('e.signer', '=', 'a.account_id').andOn('e.network_id', '=', 'a.network_id')
+      })
+      .whereNull('a.account_id')
+
+    this.logger.info({
+      event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
+      message: 'Records count: ' + accounts.length,
+    })
+    //const accounts = await records
+    //if (!accounts || !accounts.length) {
+    //  break
+    //}
+
+    for (const account of accounts) {
+      this.logger.info({
+        event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
+        message: 'Encode blake2 account',
+        account_id: account.signer,
+        row_id: account.row_id,
+      })
+
+      const blake2_hash = encodeAccountIdToBlake2(account.signer)
+
+      this.logger.info({
+        event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
+        message: `Fix account: ${account.signer}, blake2_hash: ${blake2_hash}`,
+      })
+
+      await AccountModel(this.knex).update({ blake2_hash }).whereNull('blake2_hash').andWhere({ account_id: account.signer })
+
+      await BalancesModel(this.knex).update({ account_id: account.signer }).whereNull('account_id').andWhere({ blake2_hash })
+    }
+    //}
+
+    this.logger.info({
+      event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
+      message: 'All accounts have been encoded',
+    })
+  }
+
   public async fixHexDisplay(): Promise<void> {
     const hex2str = (hex: string): string => {
       let str = ''
@@ -110,7 +157,7 @@ export class IdentityDatabaseHelper {
         newDisplay = hex2str(record.display)
       }
       if (record.display !== newDisplay && newDisplay !== '') {
-        console.log(record.display + ':' + newDisplay)
+        //console.log(record.display + ':' + newDisplay)
         await IdentityModel(this.knex).update({ display: newDisplay }).where({ row_id: record.row_id })
       }
     }
