@@ -8,6 +8,7 @@ import { Logger } from 'pino'
 export class MonitoringDatabaseHelper {
   constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
 
+  /*
   async roateOldRecords(): Promise<void> {
     const tableNames = await this.knex.raw("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
     tableNames.rows
@@ -24,6 +25,11 @@ export class MonitoringDatabaseHelper {
       })
 
     console.log(tableNames)
+  }
+  */
+
+  async removeOldExtrinsicsBody(): Promise<void> {
+    await this.knex.raw("UPDATE extrinsics SET extrinsic = NULL WHERE row_time < NOW() - INTERVAL '1 month'")
   }
 
   async getLastBlock(): Promise<BlockModel> {
@@ -43,7 +49,7 @@ export class MonitoringDatabaseHelper {
       FROM blocks
       WHERE network_id=${environment.NETWORK_ID}
       GROUP BY block_id
-      HAVING COUNT(*) > 1c
+      HAVING COUNT(*) > 1
       LIMIT 10`
     const dublicatesBlocks = await this.knex.raw(sql)
     return dublicatesBlocks.rows

@@ -40,6 +40,11 @@ export class MonitoringService {
     })
     cron.schedule('0 0 * * *', async () => {
       //this.rotateOldRecords()
+      //this.rotateOldExtrinsics()
+    })
+
+    cron.schedule('0 0 * * *', async () => {
+      this.rotateOldExtrinsics()
     })
 
     this.sliMetrics.add({ entity: 'system', name: `restart_${environment.MODE}`, row_time: new Date() })
@@ -54,6 +59,7 @@ export class MonitoringService {
     */
   }
 
+  /*
   public async rotateOldRecords(): Promise<void> {
     this.logger.info({
       event: 'MonitoringService.rotateOldRecords',
@@ -61,6 +67,24 @@ export class MonitoringService {
     })
     try {
       await this.databaseHelper.roateOldRecords()
+    } catch (error: any) {
+      this.logger.error({
+        event: 'MonitoringService.rotateOldRecords',
+        error: error.message,
+        message: 'Problems with records rotation',
+      })
+    }
+  }
+  */
+
+  public async rotateOldExtrinsics(): Promise<void> {
+    this.logger.info({
+      event: 'MonitoringService.rotateOldExtrinsics',
+      message: `Rotate old extrinsics`,
+    })
+
+    try {
+      await this.databaseHelper.removeOldExtrinsicsBody()
     } catch (error: any) {
       this.logger.error({
         event: 'MonitoringService.checkMissingRounds',
