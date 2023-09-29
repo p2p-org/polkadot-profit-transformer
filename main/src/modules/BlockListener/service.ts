@@ -24,7 +24,7 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
@@ -185,6 +185,8 @@ export class BlockListenerService {
   }
 
   private async ingestOneBlockTask(task: ProcessingTaskModel<ENTITY.BLOCK>): Promise<void> {
+    this.logger.info({ event: 'BlocksListener.ingestOneBlockTask', task })
+
     if (await this.tasksRepository.addProcessingTask(task)) {
       await this.sendTaskToToRabbit(ENTITY.BLOCK, {
         entity_id: task.entity_id,
