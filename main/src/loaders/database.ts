@@ -3,6 +3,28 @@ import { environment } from '@/environment'
 import { logger } from '@/loaders/logger'
 
 export const KnexPG = async (connectionString: string): Promise<Knex> => {
+  const connection: any = {
+    connectionString
+  }
+
+  if (environment.PG_SSL_ENABLED) {
+    connection.ssl = {
+      mode: 'require',
+    }
+  }
+
+  if (environment.PG_SSL_ENABLED && environment.PG_SSL_KEY) {
+    connection.ssl.key = fs.readFileSync(environment.PG_SSL_KEY)
+  }
+
+  if (environment.PG_SSL_ENABLED && environment.PG_SSL_CERT) {
+    connection.ssl.cert = fs.readFileSync(environment.PG_SSL_CERT)
+  }
+
+  if (environment.PG_SSL_ENABLED && environment.PG_SSL_CA) {
+    connection.ssl.ca = fs.readFileSync(environment.PG_SSL_CA)
+  }
+
   const pgsql = knex({
     client: 'pg',
     debug: environment.LOG_LEVEL === 'debug',
