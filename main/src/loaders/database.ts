@@ -8,7 +8,7 @@ export const KnexPG = async (connectionString: string): Promise<Knex> => {
     debug: environment.LOG_LEVEL === 'debug',
     connection: {
       connectionString: connectionString,
-      ssl: environment.NODE_ENV !== 'development' && !connectionString.match(/mbelt_postgres:5432/),
+      ssl: environment.PG_SSL_ENABLED || Boolean(connectionString.match(/ssl=true/)),
     },
     searchPath: ['knex', 'public'],
     pool: {
