@@ -1,6 +1,6 @@
 import { Inject, Service } from 'typedi'
-import { Knex } from 'knex'
 import { TasksRepository } from '@/libs/tasks.repository'
+import { Knex } from 'knex'
 import { Logger } from 'pino'
 import { BlockModel } from '@/models/block.model'
 import { decodeAccountBalanceValue, AccountBalance } from './helpers/crypt'
@@ -15,7 +15,6 @@ import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/process
 export class BalancesProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
     private readonly databaseHelper: BalancesDatabaseHelper,
     private readonly tasksRepository: TasksRepository,

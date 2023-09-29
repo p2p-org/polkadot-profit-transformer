@@ -1,5 +1,4 @@
 import { Inject, Service } from 'typedi'
-import { Knex } from 'knex'
 import { Logger } from 'pino'
 import { EventModel } from '@/models/event.model'
 import { IdentityModel } from '@/models/identities.model'
@@ -14,11 +13,7 @@ export enum JudgementStatus {
 
 @Service()
 export class IdentityProcessorService {
-  constructor(
-    @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
-    private readonly databaseHelper: IdentityDatabaseHelper,
-  ) {}
+  constructor(@Inject('logger') private readonly logger: Logger, private readonly databaseHelper: IdentityDatabaseHelper) {}
 
   public async processEvent(event: EventModel): Promise<void> {
     this.logger.info({

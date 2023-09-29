@@ -185,6 +185,8 @@ export class BlockListenerService {
   }
 
   private async ingestOneBlockTask(task: ProcessingTaskModel<ENTITY.BLOCK>): Promise<void> {
+    this.logger.info({ event: 'BlocksListener.ingestOneBlockTask', task })
+
     if (await this.tasksRepository.addProcessingTask(task)) {
       await this.sendTaskToToRabbit(ENTITY.BLOCK, {
         entity_id: task.entity_id,
@@ -207,12 +209,12 @@ export class BlockListenerService {
     try {
       await this.knex
         .transaction(async (trx: Knex.Transaction) => {
-          await this.tasksRepository.batchAddEntities(tasks, trx)
           const updatedLastInsertRecord: ProcessingStateModel<ENTITY> = {
             entity: ENTITY.BLOCK,
             entity_id: tasks.at(-1)!.entity_id,
           }
           await this.databaseHelper.updateLastTaskEntityId(updatedLastInsertRecord, trx)
+          await this.tasksRepository.batchAddEntities(tasks, trx)
         })
         .then(async () => {
           for (const block of tasks) {
@@ -278,7 +280,6 @@ export class BlockListenerService {
 
     if (tasks.length) {
       await this.ingestTasksChunk(tasks)
-      await sleep(500)
     }
 
     this.messagesBeingProcessed = false

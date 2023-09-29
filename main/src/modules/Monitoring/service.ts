@@ -1,5 +1,4 @@
 import { Inject, Service } from 'typedi'
-import { Knex } from 'knex'
 import { TasksRepository } from '@/libs/tasks.repository'
 import { MonitoringPolkadotHelper } from './helpers/polkadot'
 import { MonitoringDatabaseHelper } from './helpers/database'
@@ -14,7 +13,6 @@ import needle from 'needle'
 export class MonitoringService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
     @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
     private readonly polkadotHelper: MonitoringPolkadotHelper,
     private readonly databaseHelper: MonitoringDatabaseHelper,
@@ -40,6 +38,14 @@ export class MonitoringService {
     cron.schedule('45 0 * * *', async () => {
       this.checkDublicatesBlocks()
     })
+    cron.schedule('0 0 * * *', async () => {
+      //this.rotateOldRecords()
+      //this.rotateOldExtrinsics()
+    })
+
+    cron.schedule('0 0 * * *', async () => {
+      this.rotateOldExtrinsics()
+    })
 
     this.sliMetrics.add({ entity: 'system', name: `restart_${environment.MODE}`, row_time: new Date() })
     this.slackHelper.sendMessage(`Restart Last DB blockId: ${environment.MODE}: ${new Date()}`)
@@ -51,6 +57,41 @@ export class MonitoringService {
       console.log(res)
     }
     */
+  }
+
+  /*
+  public async rotateOldRecords(): Promise<void> {
+    this.logger.info({
+      event: 'MonitoringService.rotateOldRecords',
+      message: `Rotate old records`,
+    })
+    try {
+      await this.databaseHelper.roateOldRecords()
+    } catch (error: any) {
+      this.logger.error({
+        event: 'MonitoringService.rotateOldRecords',
+        error: error.message,
+        message: 'Problems with records rotation',
+      })
+    }
+  }
+  */
+
+  public async rotateOldExtrinsics(): Promise<void> {
+    this.logger.info({
+      event: 'MonitoringService.rotateOldExtrinsics',
+      message: `Rotate old extrinsics`,
+    })
+
+    try {
+      await this.databaseHelper.removeOldExtrinsicsBody()
+    } catch (error: any) {
+      this.logger.error({
+        event: 'MonitoringService.checkMissingRounds',
+        error: error.message,
+        message: 'Problems with records rotation',
+      })
+    }
   }
 
   public async checkBlocksSync(): Promise<void> {
@@ -103,6 +144,13 @@ export class MonitoringService {
 
   public async checkMissingRounds(): Promise<void> {
     const lastDBBlock = await this.databaseHelper.getLastBlock()
+    if (!lastDBBlock.metadata) {
+      this.logger.error({
+        event: 'MonitoringService.checkMissingRounds',
+        message: `lastDBBlock.metadata is undefined`,
+      })
+      return
+    }
     if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
       const missedRounds = await this.databaseHelper.getMissedRounds(lastDBBlock.metadata.round_id)
       if (missedRounds && missedRounds.length) {

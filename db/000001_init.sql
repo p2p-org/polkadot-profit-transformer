@@ -295,7 +295,7 @@ CREATE UNIQUE INDEX total_issuance_network_id_idx ON public.total_issuance (netw
 
 
 
-CREATE INDEX identity_parent_idx ON public.identity ("parent_account_id", "network_id");
+CREATE INDEX identity_parent_idx ON public.identities ("parent_account_id", "network_id");
 
 
 create index events_block_id_idx on events (block_id);

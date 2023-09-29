@@ -14,6 +14,7 @@ export type BalancesModel = {
   feeFrozen: bigint
   row_id?: number
   row_time?: Date
+  is_modified?: number
 }
 
 export const BalancesModel = (knex: Knex) => knex<BalancesModel>('balances')

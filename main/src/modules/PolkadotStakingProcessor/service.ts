@@ -13,7 +13,6 @@ import { SliMetrics } from '@/loaders/sli_metrics'
 export class PolkadotStakingProcessorService {
   constructor(
     @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
     @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
 
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,

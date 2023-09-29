@@ -36,6 +36,7 @@ export class IdentityListnerService {
 
     //await this.databaseHelper.fixUnprocessedBlake2Accounts()
     //await this.databaseHelper.fixHexDisplay()
+    await this.databaseHelper.fixUnprocessedBlake2AccountsExtrinsics()
 
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
     await this.restartUnprocessedEvents(lastProcessedEventId)
