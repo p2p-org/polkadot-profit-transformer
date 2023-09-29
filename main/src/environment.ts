@@ -23,6 +23,10 @@ export type Environment = {
   SLACK_WEBHOOK?: string
   PG_CONNECTION_STRING: string
   PG_SSL_ENABLED?: boolean
+  PG_SSL_MODE?: string
+  PG_SSL_CA_PATH?: string
+  PG_SSL_KEY_PATH?: string
+  PG_SSL_CERT_PATH?: string
   LOG_LEVEL: string
   SUBSTRATE_URI: string
   RESTART_BLOCKS_URI?: string
@@ -61,6 +65,10 @@ const preEnv = cleanEnv(process.env, {
   MODE: str({ choices: Object.values(MODE) }),
   BATCH_INSERT_CHUNK_SIZE: num({ default: 1000 }),
   MAX_ATTEMPTS: num({ default: 5 }),
+  PG_SSL_CA_PATH: str({ default: '' }),
+  PG_SSL_KEY_PATH: str({ default: '' }),
+  PG_SSL_CERT_PATH: str({ default: '' }),
+  PG_SSL_MODE: str({ default: 'require' }),
 })
 
 const parseModeEnum = (env: typeof preEnv) => {

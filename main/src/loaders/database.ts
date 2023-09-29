@@ -1,36 +1,34 @@
+import fs from 'fs'
 import knex, { Knex } from 'knex'
 import { environment } from '@/environment'
 import { logger } from '@/loaders/logger'
 
 export const KnexPG = async (connectionString: string): Promise<Knex> => {
-  const connection: any = {
-    connectionString
-  }
+  let ssl_options: any = {}
 
   if (environment.PG_SSL_ENABLED) {
-    connection.ssl = {
-      mode: 'require',
-    }
+    ssl_options.mode = environment.PG_SSL_MODE
+    ssl_options.rejectUnauthorized = false
   }
 
-  if (environment.PG_SSL_ENABLED && environment.PG_SSL_KEY) {
-    connection.ssl.key = fs.readFileSync(environment.PG_SSL_KEY)
+  if (environment.PG_SSL_CA_PATH) {
+    ssl_options.ca = fs.readFileSync(environment.PG_SSL_CA_PATH)
   }
 
-  if (environment.PG_SSL_ENABLED && environment.PG_SSL_CERT) {
-    connection.ssl.cert = fs.readFileSync(environment.PG_SSL_CERT)
+  if (environment.PG_SSL_KEY_PATH) {
+    ssl_options.key = fs.readFileSync(environment.PG_SSL_KEY_PATH)
   }
 
-  if (environment.PG_SSL_ENABLED && environment.PG_SSL_CA) {
-    connection.ssl.ca = fs.readFileSync(environment.PG_SSL_CA)
+  if (environment.PG_SSL_CERT_PATH) {
+    ssl_options.cert = fs.readFileSync(environment.PG_SSL_CERT_PATH)
   }
 
   const pgsql = knex({
     client: 'pg',
     debug: environment.LOG_LEVEL === 'debug',
     connection: {
-      connectionString: connectionString,
-      ssl: environment.PG_SSL_ENABLED || Boolean(connectionString.match(/ssl=true/)),
+      connectionString: environment.PG_CONNECTION_STRING,
+      ssl: ssl_options ? ssl_options : {}
     },
     searchPath: ['knex', 'public'],
     pool: {
