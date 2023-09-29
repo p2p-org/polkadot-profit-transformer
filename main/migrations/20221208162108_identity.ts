@@ -17,7 +17,7 @@ export async function up(knex: Knex): Promise<void> {
     "created_at_block_id" BIGINT,
     "killed_at_block_id" BIGINT,
     "row_id" SERIAL,
-    "row_time" TIMESTAMP
+    "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id"),
     UNIQUE ("account_id", "network_id")
   )`);
@@ -28,4 +28,3 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
 }
-
