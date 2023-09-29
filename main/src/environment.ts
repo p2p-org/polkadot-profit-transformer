@@ -21,7 +21,12 @@ export enum MODE {
 
 export type Environment = {
   SLACK_WEBHOOK?: string
-  PG_CONNECTION_STRING: string
+  PG_CONNECTION_STRING?: string
+  PG_HOST?: string
+  PG_PORT?: number
+  PG_USER?: string
+  PG_PASSWORD?: string
+  PG_DATABASE?: string
   PG_SSL_ENABLED?: boolean
   PG_SSL_MODE?: string
   PG_SSL_CA_PATH?: string
@@ -47,7 +52,7 @@ export type Environment = {
 
 const preEnv = cleanEnv(process.env, {
   SLACK_WEBHOOK: url({ default: '' }),
-  PG_CONNECTION_STRING: url(),
+  PG_CONNECTION_STRING: url({ default: '' }),
   PG_SSL_ENABLED: bool({ default: true }),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
@@ -69,6 +74,11 @@ const preEnv = cleanEnv(process.env, {
   PG_SSL_KEY_PATH: str({ default: '' }),
   PG_SSL_CERT_PATH: str({ default: '' }),
   PG_SSL_MODE: str({ default: 'require' }),
+  PG_HOST: str({ default: '127.0.0.1' }),
+  PG_PORT: num({ default: 5432 }),
+  PG_USER: str({ default: 'postgres' }),
+  PG_PASSWORD: str({ default: 'postgres' }),
+  PG_DATABASE: str({ default: 'postgres' }),
 })
 
 const parseModeEnum = (env: typeof preEnv) => {
