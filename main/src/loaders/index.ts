@@ -19,7 +19,7 @@ export default async (): Promise<void> => {
   Container.set('logger', logger)
   logger.info('✌️ Logger loaded')
 
-  const knex = await KnexPG(environment.PG_CONNECTION_STRING)
+  const knex = await KnexPG(environment)
   Container.set('knex', knex)
   logger.info('✌️ Database loaded')
 
