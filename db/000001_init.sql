@@ -6,6 +6,7 @@ CREATE TABLE blocks (
     "state_root" VARCHAR(66),
     "extrinsics_root" VARCHAR(66),
     "parent_hash" VARCHAR(66),
+    "author" VARCHAR(66),
     "digest" JSONB,
     "metadata" JSONB,
     "block_time" TIMESTAMP,
