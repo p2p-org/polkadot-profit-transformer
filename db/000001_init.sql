@@ -274,9 +274,9 @@ CREATE TABLE gear_smartcontracts_messages (
 CREATE TABLE sli_metrics (
     "network_id" INT,
     "entity" VARCHAR(66),
-    "entity_id" INT,
-    "name" VARCHAR(20),
-    "value" INT,
+    "entity_id" BIGINT,
+    "name" VARCHAR(40),
+    "value" BIGINT,
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
@@ -475,3 +475,7 @@ CREATE TABLE rewards_delegators (
     PRIMARY KEY ("row_id")
 );
 
+INSERT INTO networks VALUES(0, 'polkadot', 10);
+INSERT INTO networks VALUES(2, 'Kusama', 12);
+INSERT INTO networks VALUES(1284, 'Moonbeam', 18);
+INSERT INTO networks VALUES(1285, 'Moonriver', 18);
