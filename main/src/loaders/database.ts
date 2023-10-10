@@ -44,8 +44,11 @@ function configureConnectionOptions(connection: Knex.PgConnectionConfig, environ
 
   const ssl_options: SSLOptions = {}
   if (environment.PG_SSL_ENABLED) {
+    logger.info(' Database SSL enabled')
     configureSSLOptions(ssl_options, environment)
     connection.ssl = ssl_options
+  } else {
+    logger.info(' Database SSL disabled')
   }
 }
 
