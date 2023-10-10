@@ -126,9 +126,15 @@ export class IdentityDatabaseHelper {
         message: `Fix account: ${account.signer}, blake2_hash: ${blake2_hash}`,
       })
 
-      await AccountModel(this.knex).update({ blake2_hash }).whereNull('blake2_hash').andWhere({ account_id: account.signer })
+      await AccountModel(this.knex)
+        .update({ blake2_hash, is_modified: 1 })
+        .whereNull('blake2_hash')
+        .andWhere({ account_id: account.signer })
 
-      await BalancesModel(this.knex).update({ account_id: account.signer }).whereNull('account_id').andWhere({ blake2_hash })
+      await BalancesModel(this.knex)
+        .update({ account_id: account.signer, is_modified: 1 })
+        .whereNull('account_id')
+        .andWhere({ blake2_hash })
     }
     //}
 
