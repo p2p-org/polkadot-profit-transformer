@@ -17,6 +17,7 @@ export class BlockListenerService {
   gracefulShutdownFlag = false
   messagesBeingProcessed = false
   isPaused = false
+  lastBlockId = 0
 
   constructor(
     @Inject('logger') private readonly logger: Logger,
@@ -24,17 +25,20 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
-    const lastBlockIdInProcessingTasks = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
-    this.logger.info({ event: 'BlocksListener.preload', lastBlockIdInProcessingTasks })
+
+    if (!this.lastBlockId) {
+      this.lastBlockId = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
+    }
+    this.logger.info({ event: 'BlocksListener.preload', lastBlockId: this.lastBlockId })
 
     const lastFinalizedBlockId = await this.polkadotHelper.getFinBlockNumber()
     this.logger.info({ event: 'BlocksListener.preload', lastFinalizedBlockId })
 
-    await this.ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: lastFinalizedBlockId })
+    await this.ingestPreloadTasks({ fromBlock: this.lastBlockId + 1, toBlock: lastFinalizedBlockId })
     this.logger.info({ event: 'BlocksListener.preload ingested' })
 
     this.logger.info('preload done, go listening to the new blocks')
@@ -96,6 +100,7 @@ export class BlockListenerService {
       }
     }
   }
+
   public async restartUnprocessedBlocksMetadata(startBlockId: number, endBlockId: number): Promise<void> {
     let lastBlockId = startBlockId
     while (lastBlockId < endBlockId) {
@@ -179,9 +184,12 @@ export class BlockListenerService {
     if (this.messagesBeingProcessed || this.isPaused) return
 
     this.logger.info({ event: 'BlocksListener.preload newFinalizedBlock', newFinalizedBlockId: blockId })
-    const lastBlockIdInProcessingTasks = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
-    this.logger.info({ event: 'BlocksListener.preload', lastBlockIdInProcessingTasks })
-    await this.ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
+    if (!this.lastBlockId) {
+      this.lastBlockId = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
+    }
+
+    this.logger.info({ event: 'BlocksListener.preload', lastBlockId: this.lastBlockId })
+    await this.ingestPreloadTasks({ fromBlock: this.lastBlockId + 1, toBlock: blockId })
   }
 
   private async ingestOneBlockTask(task: ProcessingTaskModel<ENTITY.BLOCK>): Promise<void> {
@@ -213,6 +221,7 @@ export class BlockListenerService {
             entity: ENTITY.BLOCK,
             entity_id: tasks.at(-1)!.entity_id,
           }
+          this.lastBlockId = updatedLastInsertRecord.entity_id
           await this.databaseHelper.updateLastTaskEntityId(updatedLastInsertRecord, trx)
           await this.tasksRepository.batchAddEntities(tasks, trx)
         })

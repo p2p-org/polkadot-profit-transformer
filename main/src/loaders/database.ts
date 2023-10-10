@@ -4,31 +4,31 @@ import { Environment, environment } from '@/environment'
 import { logger } from '@/loaders/logger'
 
 interface SSLOptions {
-  mode?: string;
-  rejectUnauthorized?: boolean;
-  ca?: Buffer;
-  key?: Buffer;
-  cert?: Buffer;
+  mode?: string
+  rejectUnauthorized?: boolean
+  ca?: Buffer
+  key?: Buffer
+  cert?: Buffer
 }
 
 function readFileIfSetAndExists(filePath?: string): Buffer | undefined {
   if (filePath && fs.existsSync(filePath)) {
-      return fs.readFileSync(filePath);
+    return fs.readFileSync(filePath)
   } else {
-      if (filePath) {
-          logger.error(`File does not exists ${filePath}`);
-      }
-      return undefined;
+    if (filePath) {
+      logger.error(`File does not exists ${filePath}`)
+    }
+    return undefined
   }
 }
 
 function configureSSLOptions(options: SSLOptions, environment: Environment): void {
-  options.mode = environment.PG_SSL_MODE;
-  options.rejectUnauthorized = false;
+  options.mode = environment.PG_SSL_MODE
+  options.rejectUnauthorized = false
 
-  options.ca = readFileIfSetAndExists(environment.PG_SSL_CA_PATH);
-  options.key = readFileIfSetAndExists(environment.PG_SSL_KEY_PATH);
-  options.cert = readFileIfSetAndExists(environment.PG_SSL_CERT_PATH);
+  options.ca = readFileIfSetAndExists(environment.PG_SSL_CA_PATH)
+  options.key = readFileIfSetAndExists(environment.PG_SSL_KEY_PATH)
+  options.cert = readFileIfSetAndExists(environment.PG_SSL_CERT_PATH)
 }
 
 function configureConnectionOptions(connection: Knex.PgConnectionConfig, environment: Environment): void {
@@ -42,15 +42,15 @@ function configureConnectionOptions(connection: Knex.PgConnectionConfig, environ
     connection.database = environment.PG_DATABASE
   }
 
-  const ssl_options: SSLOptions = {};
+  const ssl_options: SSLOptions = {}
   if (environment.PG_SSL_ENABLED) {
-    configureSSLOptions(ssl_options, environment);
+    configureSSLOptions(ssl_options, environment)
     connection.ssl = ssl_options
   }
 }
 
 export const KnexPG = async (environment: Environment): Promise<Knex> => {
-  const connection: Knex.PgConnectionConfig = {};
+  const connection: Knex.PgConnectionConfig = {}
 
   configureConnectionOptions(connection, environment)
 
