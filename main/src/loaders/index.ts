@@ -4,6 +4,7 @@ import { Container } from 'typedi'
 import { environment } from '@/environment'
 
 import { KnexPG } from '@/loaders/database'
+//import { BigQueryConnector } from '@/loaders/bigquery'
 import { RabbitMQ } from '@/loaders/rabbitmq'
 import { logger } from '@/loaders/logger'
 import { PolkadotApi } from '@/loaders/polkadotapi'
@@ -22,6 +23,15 @@ export default async (): Promise<void> => {
   const knex = await KnexPG(environment.PG_CONNECTION_STRING)
   Container.set('knex', knex)
   logger.info('✌️ Database loaded')
+
+  /*
+  const bigQuery = new BigQueryConnector()
+  if (environment.GOOGLE_BIGQUERY_DATASET) {
+    bigQuery.init(environment.GOOGLE_BIGQUERY_DATASET)
+    logger.info('✌️ Big Query initialized')
+  }
+  Container.set('bigQuery', bigQuery)
+  */
 
   const rabbitMQ = await RabbitMQ(environment.RABBITMQ!)
   Container.set('rabbitMQ', rabbitMQ)
