@@ -7,6 +7,7 @@ export const encodeXxhashAsHex = (data: string): string => {
 }
 
 export const encodeAccountIdToBlake2 = (accountId: string): string => {
+  if (!accountId.length) return ''
   const uint8 = u8aConcat(blake2AsU8a(decodeAddress(accountId), 128), u8aToU8a(decodeAddress(accountId)))
   return Buffer.from(uint8).toString('hex')
 }

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS blocks (
     "state_root" VARCHAR(66),
     "extrinsics_root" VARCHAR(66),
     "parent_hash" VARCHAR(66),
+    "author" VARCHAR(66),
     "digest" JSONB,
     "metadata" JSONB,
     "block_time" TIMESTAMP,
@@ -273,9 +274,9 @@ CREATE TABLE IF NOT EXISTS gear_smartcontracts_messages (
 CREATE TABLE IF NOT EXISTS sli_metrics (
     "network_id" INT,
     "entity" VARCHAR(66),
-    "entity_id" INT,
-    "name" VARCHAR(20),
-    "value" INT,
+    "entity_id" BIGINT,
+    "name" VARCHAR(40),
+    "value" BIGINT,
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
@@ -451,6 +452,7 @@ CREATE TABLE IF NOT EXISTS rewards_delegators (
     PRIMARY KEY ("row_id")
 );
 
+
 CREATE INDEX identity_parent_idx ON public.identities ("parent_account_id", "network_id");
 
 create index events_block_id_idx on events (block_id);
@@ -470,3 +472,7 @@ CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
 
+INSERT INTO networks VALUES(0, 'polkadot', 10);
+INSERT INTO networks VALUES(2, 'Kusama', 12);
+INSERT INTO networks VALUES(1284, 'Moonbeam', 18);
+INSERT INTO networks VALUES(1285, 'Moonriver', 18);

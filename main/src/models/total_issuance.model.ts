@@ -7,4 +7,5 @@ export type TotalIssuance = {
   row_id?: number
 }
 
-export const TotalIssuance = (knex: Knex) => knex<TotalIssuance>('total_issuance')
+export const totalIssuanceTableName = 'total_issuance'
+export const TotalIssuance = (knex: Knex) => knex<TotalIssuance>(totalIssuanceTableName)
