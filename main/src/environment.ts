@@ -22,6 +22,7 @@ export enum MODE {
 export type Environment = {
   SLACK_WEBHOOK?: string
   PG_CONNECTION_STRING: string
+  GOOGLE_BIGQUERY_DATASET?: string
   LOG_LEVEL: string
   SUBSTRATE_URI: string
   RESTART_BLOCKS_URI?: string
@@ -43,6 +44,7 @@ export type Environment = {
 const preEnv = cleanEnv(process.env, {
   SLACK_WEBHOOK: url({ default: '' }),
   PG_CONNECTION_STRING: url(),
+  GOOGLE_BIGQUERY_DATASET: str({ default: '' }),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
   RESTART_BLOCKS_URI: str({ default: '' }),
