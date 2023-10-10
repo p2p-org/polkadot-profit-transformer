@@ -11,4 +11,5 @@ export type EventModel = {
   row_time?: Date
 }
 
-export const EventModel = (knex: Knex) => knex<EventModel>('events')
+export const eventsTableName = 'events'
+export const EventModel = (knex: Knex) => knex<EventModel>(eventsTableName)

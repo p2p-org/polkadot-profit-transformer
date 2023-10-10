@@ -23,4 +23,5 @@ export type ExtrinsicModel = {
   row_time?: Date
 }
 
-export const ExtrinsicModel = (knex: Knex) => knex<ExtrinsicModel>('extrinsics')
+export const extrinsicsTableName = 'extrinsics'
+export const ExtrinsicModel = (knex: Knex) => knex<ExtrinsicModel>(extrinsicsTableName)
