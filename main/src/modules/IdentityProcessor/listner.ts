@@ -36,7 +36,12 @@ export class IdentityListnerService {
 
     //await this.databaseHelper.fixUnprocessedBlake2Accounts()
     //await this.databaseHelper.fixHexDisplay()
-    await this.databaseHelper.fixUnprocessedBlake2AccountsExtrinsics()
+
+    try {
+      await this.databaseHelper.fixUnprocessedBlake2AccountsExtrinsics()
+    } catch (error: any) {
+      console.error('error on IdentityListnerService.preload', error.message)
+    }
 
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
     await this.restartUnprocessedEvents(lastProcessedEventId)
