@@ -28,3 +28,9 @@ ingress:
     cluster_issuer: cloudflare-prod
     secret: mbelt3-moonriver-staking-processor-polka-p2p-world
     ssl_redirect: true
+
+tolerations:
+- key: cloud.google.com/gke-spot
+  operator: Equal
+  value: "true"
+  effect: NoSchedule
