@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: moonbeam
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b3652186c721a4dc21ff0afe28c1696ffc450863}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: aa1c09f87f2977d3d7f37b63495f823c34a7e388}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
@@ -26,9 +26,8 @@ ingress:
     cluster_issuer: cloudflare-prod
     secret: mbelt3-moonbeam-preloader-polka-p2p-world
     ssl_redirect: true
-
 tolerations:
-- key: cloud.google.com/gke-spot
-  operator: Equal
-  value: "true"
-  effect: NoSchedule
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
