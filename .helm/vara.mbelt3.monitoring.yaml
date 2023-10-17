@@ -1,8 +1,8 @@
 ---
 environment: mbelt3-prod
-chain: gear
-role: preloader
 replicas: 0
+chain: vara
+role: monitoring
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: aa1c09f87f2977d3d7f37b63495f823c34a7e388}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
@@ -11,21 +11,15 @@ metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/mbelt3_gear"
+  secret: "secret/mbelt/mbelt3_vara"
 env:
-  substrate_uri: ws://gear-dev-ssd-node.gear.svc.cluster.local:9945
+  substrate_uri: wss://rpc.vara-network.io/
   log_level: info
   network_id: 137
-  mode: LISTENER
-  network: gear
+  mode: MONITORING
+  network: vara
 ingress:
-  enabled: true
-  class: nginx-external
-  host: mbelt3-gear-preloader.polka.p2p.world
-  tls:
-    cluster_issuer: cloudflare-prod
-    secret: mbelt3-gear-preloader-polka-p2p-world
-    ssl_redirect: true
+  enabled: false
 tolerations:
   - key: cloud.google.com/gke-spot
     operator: Equal
