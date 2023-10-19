@@ -19,7 +19,7 @@ export class IdentityListnerService {
     private readonly processor: IdentityProcessorService,
     private readonly databaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'IdentityListener.preload' })
@@ -37,11 +37,13 @@ export class IdentityListnerService {
     //await this.databaseHelper.fixUnprocessedBlake2Accounts()
     //await this.databaseHelper.fixHexDisplay()
 
+    /*
     try {
       await this.databaseHelper.fixUnprocessedBlake2AccountsExtrinsics()
     } catch (error: any) {
       console.error('error on IdentityListnerService.preload', error.message)
     }
+    */
 
     await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
     await this.restartUnprocessedEvents(lastProcessedEventId)
