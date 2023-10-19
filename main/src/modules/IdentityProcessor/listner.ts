@@ -19,7 +19,7 @@ export class IdentityListnerService {
     private readonly processor: IdentityProcessorService,
     private readonly databaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'IdentityListener.preload' })
@@ -81,7 +81,7 @@ export class IdentityListnerService {
 
     this.logger.info({
       event: 'IdentityListner.restartUnprocessedEvents',
-      message: `Set timeout`,
+      message: 'Set timeout',
     })
     setTimeout(() => {
       this.restartUnprocessedEvents(lastRowId)
