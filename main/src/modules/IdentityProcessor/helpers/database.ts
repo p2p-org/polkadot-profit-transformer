@@ -100,17 +100,16 @@ export class IdentityDatabaseHelper {
     console.log('fillAccountsByExtrinsics', 'DONE')
   }
 
-  public async fixMissedBlake2HashAccounts(row_id?: number): Promise<void> {
+  public async fixMissedBlake2HashAccounts(): Promise<void> {
+    let offset = 0
+
     while (true) {
       const records = AccountModel(this.knex)
         .select()
         .whereNull('blake2_hash')
         .orderBy('row_id', 'asc')
+        .offset(offset)
         .limit(environment.BATCH_INSERT_CHUNK_SIZE)
-
-      if (row_id) {
-        records.andWhere('row_id', '>', row_id)
-      }
 
       const accounts = await records
       if (!accounts || !accounts.length) {
@@ -129,6 +128,8 @@ export class IdentityDatabaseHelper {
           .update({ blake2_hash: encodeAccountIdToBlake2(account.account_id) })
           .where({ row_id: account.row_id })
       }
+
+      offset += environment.BATCH_INSERT_CHUNK_SIZE
     }
 
     this.logger.info({
@@ -138,14 +139,32 @@ export class IdentityDatabaseHelper {
   }
 
   public async fixMissedAccountsIdsForBalances(): Promise<void> {
-    const balancesToUpdate = await this.knex('balances').whereNull('account_id').whereNotNull('blake2_hash')
+    let offset = 0
 
-    for (const balance of balancesToUpdate) {
-      const account = await this.getAccountByBlake2Hash(balance.blake2_hash)
-      if (account) {
-        await this.knex('balances').where({ row_id: balance.row_id }).update({ account_id: account.account_id })
+    while (true) {
+      const balanceChunk = await this.knex('balances')
+        .whereNull('account_id')
+        .whereNotNull('blake2_hash')
+        .offset(offset)
+        .limit(environment.BATCH_INSERT_CHUNK_SIZE)
+
+      if (!balanceChunk || !balanceChunk.length) {
+        break
       }
+
+      for (const balance of balanceChunk) {
+        const account = await this.getAccountByBlake2Hash(balance.blake2_hash)
+        if (account) {
+          await this.knex('balances').where({ row_id: balance.row_id }).update({ account_id: account.account_id })
+        }
+      }
+
+      offset += environment.BATCH_INSERT_CHUNK_SIZE
     }
+    this.logger.info({
+      event: 'IdentityDatabaseHelper.fixMissedAccountsIdsForBalances',
+      message: 'All accounts for balances was found',
+    })
   }
 
   public async getAccountByBlake2Hash(blake2Hash: string): Promise<AccountModel> {

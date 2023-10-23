@@ -5,7 +5,7 @@ chain: kusama
 role: monitoring
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b6dead37c7316a3dba5f4691e2c7038b57c08790}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 97a8bd68f14ec277be6a7fa85f361b149c7825f3}
 port: 3000
 metrics:
   enabled: true
@@ -16,6 +16,7 @@ env:
   substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
   restart_blocks_uri: http://mbelt-mbelt3-prod-kusama-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
   restart_eras_uri: http://mbelt-mbelt3-prod-kusama-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-eras
+  restart_balances_uri: http://mbelt-mbelt3-prod-kusama-preloader.mbelt3.svc.cluster.local:80/restart-balances
   log_level: info
   network_id: 2
   mode: MONITORING

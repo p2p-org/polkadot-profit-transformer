@@ -38,6 +38,7 @@ export class MonitoringService {
     cron.schedule('45 0 * * *', async () => {
       this.checkDublicatesBlocks()
     })
+
     cron.schedule('0 0 * * *', async () => {
       //this.rotateOldRecords()
       //this.rotateOldExtrinsics()
@@ -202,6 +203,18 @@ export class MonitoringService {
       this.slackHelper.sendMessage(`Detected not processed tasks: ${JSON.stringify(missedTasks)}`)
 
       await this.sliMetrics.add({ entity: 'queue', name: 'not_processed_count', value: missedTasks.length })
+
+      try {
+        if (environment.RESTART_BLOCKS_URI) await needle('get', environment.RESTART_BLOCKS_URI)
+        if (environment.RESTART_ROUNDS_URI) await needle('get', environment.RESTART_ROUNDS_URI)
+        if (environment.RESTART_ERAS_URI) await needle('get', environment.RESTART_ERAS_URI)
+        if (environment.RESTART_BALANCES_URI) await needle('get', environment.RESTART_BALANCES_URI)
+      } catch (error: any) {
+        this.logger.error({
+          event: 'MonitoringService.checkProcessingTasks',
+          error: error.message,
+        })
+      }
     }
   }
 }
