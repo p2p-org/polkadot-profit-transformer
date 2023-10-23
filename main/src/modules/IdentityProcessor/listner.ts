@@ -31,22 +31,19 @@ export class IdentityListnerService {
       lastProcessedExtrinsicId,
     })
 
-    //TODO: remove from this module
-    //we need to add signers of all extrinsics.
-
-    //await this.databaseHelper.fixUnprocessedBlake2Accounts()
-    //await this.databaseHelper.fixHexDisplay()
-
-    /*
     try {
-      await this.databaseHelper.fixUnprocessedBlake2AccountsExtrinsics()
+      this.logger.info({ event: 'IdentityListener.fillAccountsByExtrinsics START' })
+      this.logger.info({ event: 'IdentityListener.fixMissedBlake2HashAccounts START' })
+      this.logger.info({ event: 'IdentityListener.fixMissedAccountsIdsForBalances START' })
+      await this.databaseHelper.fillAccountsByExtrinsics()
+      await this.databaseHelper.fixMissedBlake2HashAccounts()
+      await this.databaseHelper.fixMissedAccountsIdsForBalances()
     } catch (error: any) {
       console.error('error on IdentityListnerService.preload', error.message)
     }
-    */
 
-    await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
-    await this.restartUnprocessedEvents(lastProcessedEventId)
+    //    await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
+    //    await this.restartUnprocessedEvents(lastProcessedEventId)
   }
 
   public async restartUnprocessedEvents(startRowId: number): Promise<void> {
