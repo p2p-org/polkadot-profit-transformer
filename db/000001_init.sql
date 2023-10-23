@@ -476,3 +476,11 @@ INSERT INTO networks VALUES(0, 'polkadot', 10);
 INSERT INTO networks VALUES(2, 'Kusama', 12);
 INSERT INTO networks VALUES(1284, 'Moonbeam', 18);
 INSERT INTO networks VALUES(1285, 'Moonriver', 18);
+
+
+CREATE INDEX idx_signer ON extrinsics("signer");
+CREATE INDEX idx_signer_block ON extrinsics ("signer", "block_id");
+CREATE INDEX processing_tasks_entity_status_idx ON public.processing_tasks (entity, status);
+
+
+

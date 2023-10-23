@@ -35,6 +35,7 @@ export type Environment = {
   GOOGLE_BIGQUERY_DATASET?: string
   LOG_LEVEL: string
   SUBSTRATE_URI: string
+  RESTART_BALANCES_URI?: string
   RESTART_BLOCKS_URI?: string
   RESTART_ROUNDS_URI?: string
   RESTART_ERAS_URI?: string
@@ -58,6 +59,7 @@ const preEnv = cleanEnv(process.env, {
   GOOGLE_BIGQUERY_DATASET: str({ default: '' }),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
+  RESTART_BALANCES_URI: str({ default: '' }),
   RESTART_BLOCKS_URI: str({ default: '' }),
   RESTART_ROUNDS_URI: str({ default: '' }),
   RESTART_ERAS_URI: str({ default: '' }),
