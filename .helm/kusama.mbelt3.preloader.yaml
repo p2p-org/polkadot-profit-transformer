@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: kusama
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: ff470539ad244e888346c9ca2678487f3f25f31f}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b6dead37c7316a3dba5f4691e2c7038b57c08790}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
@@ -26,3 +26,8 @@ ingress:
     cluster_issuer: cloudflare-prod
     secret: mbelt3-kusama-preloader-polka-p2p-world
     ssl_redirect: true
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

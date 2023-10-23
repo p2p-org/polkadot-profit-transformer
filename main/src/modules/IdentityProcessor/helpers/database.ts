@@ -55,7 +55,52 @@ export class IdentityDatabaseHelper {
     return await records
   }
 
-  public async fixUnprocessedBlake2Accounts(row_id?: number): Promise<void> {
+  public async fillAccountsByExtrinsics(): Promise<void> {
+    console.log('fillAccountsByExtrinsics', 'START')
+
+    let offset = 0
+    let done = false
+
+    while (!done) {
+      console.log(`fillAccountsByExtrinsics. Processing batch ${environment.BATCH_INSERT_CHUNK_SIZE} : offset : ${offset}`)
+      const query = `
+        WITH RankedSigners AS (
+          SELECT
+              "signer",
+              "block_id",
+              ROW_NUMBER() OVER (PARTITION BY "signer" ORDER BY "block_id") AS rn
+          FROM
+              extrinsics
+        )
+        SELECT "signer", "block_id"
+        FROM RankedSigners
+        WHERE rn = 1
+        LIMIT ${environment.BATCH_INSERT_CHUNK_SIZE}
+        OFFSET ${offset}
+      `
+
+      const data = await this.knex.raw(query)
+
+      if (data.rows.length === 0) {
+        done = true
+      } else {
+        for (const row of data.rows) {
+          console.log({
+            account_id: String(row.signer),
+            created_at_block_id: row.block_id,
+          })
+          await this.saveAccount({
+            account_id: String(row.signer),
+            created_at_block_id: row.block_id,
+          })
+        }
+        offset += environment.BATCH_INSERT_CHUNK_SIZE
+      }
+    }
+    console.log('fillAccountsByExtrinsics', 'DONE')
+  }
+
+  public async fixMissedBlake2HashAccounts(row_id?: number): Promise<void> {
     while (true) {
       const records = AccountModel(this.knex)
         .select()
@@ -92,56 +137,19 @@ export class IdentityDatabaseHelper {
     })
   }
 
-  public async fixUnprocessedBlake2AccountsExtrinsics(): Promise<void> {
-    //while (true) {
-    const accounts = await this.knex('extrinsics as e')
-      .select('a.row_id')
-      .distinct('e.signer')
-      .leftJoin('accounts as a', function () {
-        this.on('e.signer', '=', 'a.account_id').andOn('e.network_id', '=', 'a.network_id')
-      })
-      .whereNull('a.account_id')
+  public async fixMissedAccountsIdsForBalances(): Promise<void> {
+    const balancesToUpdate = await this.knex('balances').whereNull('account_id').whereNotNull('blake2_hash')
 
-    this.logger.info({
-      event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
-      message: 'Records count: ' + accounts.length,
-    })
-    //const accounts = await records
-    //if (!accounts || !accounts.length) {
-    //  break
-    //}
-
-    for (const account of accounts) {
-      this.logger.info({
-        event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
-        message: 'Encode blake2 account',
-        account_id: account.signer,
-        row_id: account.row_id,
-      })
-
-      const blake2_hash = encodeAccountIdToBlake2(account.signer)
-
-      this.logger.info({
-        event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
-        message: `Fix account: ${account.signer}, blake2_hash: ${blake2_hash}`,
-      })
-
-      await AccountModel(this.knex)
-        .update({ blake2_hash, is_modified: 1 })
-        .whereNull('blake2_hash')
-        .andWhere({ account_id: account.signer })
-
-      await BalancesModel(this.knex)
-        .update({ account_id: account.signer, is_modified: 1 })
-        .whereNull('account_id')
-        .andWhere({ blake2_hash })
+    for (const balance of balancesToUpdate) {
+      const account = await this.getAccountByBlake2Hash(balance.blake2_hash)
+      if (account) {
+        await this.knex('balances').where({ row_id: balance.row_id }).update({ account_id: account.account_id })
+      }
     }
-    //}
+  }
 
-    this.logger.info({
-      event: 'IdentityDatabaseHelper.fixUnprocessedBlake2AccountsExtrinsics',
-      message: 'All accounts have been encoded',
-    })
+  public async getAccountByBlake2Hash(blake2Hash: string): Promise<AccountModel> {
+    return this.knex('accounts').where({ blake2_hash: blake2Hash }).first()
   }
 
   public async fixHexDisplay(): Promise<void> {
@@ -170,16 +178,15 @@ export class IdentityDatabaseHelper {
   }
 
   public async saveAccount(data: AccountModel): Promise<void> {
-    data.blake2_hash = encodeAccountIdToBlake2(data.account_id)
-
     try {
+      data.blake2_hash = encodeAccountIdToBlake2(data.account_id)
+
       await AccountModel(this.knex)
         .insert({ ...data, ...network, row_time: new Date() })
         .onConflict(['account_id', 'network_id'])
         .merge()
     } catch (err) {
-      this.logger.error({ err }, `Failed to save identity enrichment `)
-      throw err
+      this.logger.error({ err }, 'Failed to save identity enrichment')
     }
   }
 

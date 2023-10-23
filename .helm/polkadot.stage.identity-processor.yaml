@@ -5,7 +5,7 @@ chain: polkadot
 role: identity-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: ff470539ad244e888346c9ca2678487f3f25f31f}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b6dead37c7316a3dba5f4691e2c7038b57c08790}
 port: 3000
 metrics:
   enabled: true
@@ -28,3 +28,8 @@ ingress:
     cluster_issuer: cloudflare-prod
     secret: mbelt-stage-identity-processor-polka-p2p-world
     ssl_redirect: true
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

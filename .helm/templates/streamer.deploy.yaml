@@ -38,6 +38,10 @@ spec:
           {{"{{-"}} end {{"}}"}}
     spec:
       serviceAccountName: {{ template "app.fullname" $ }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
       containers:
       - name: streamer
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}

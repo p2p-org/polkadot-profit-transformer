@@ -31,15 +31,19 @@ export class IdentityListnerService {
       lastProcessedExtrinsicId,
     })
 
-    //TODO: remove from this module
-    //we need to add signers of all extrinsics.
+    try {
+      this.logger.info({ event: 'IdentityListener.fillAccountsByExtrinsics START' })
+      this.logger.info({ event: 'IdentityListener.fixMissedBlake2HashAccounts START' })
+      this.logger.info({ event: 'IdentityListener.fixMissedAccountsIdsForBalances START' })
+      await this.databaseHelper.fillAccountsByExtrinsics()
+      await this.databaseHelper.fixMissedBlake2HashAccounts()
+      await this.databaseHelper.fixMissedAccountsIdsForBalances()
+    } catch (error: any) {
+      console.error('error on IdentityListnerService.preload', error.message)
+    }
 
-    //await this.databaseHelper.fixUnprocessedBlake2Accounts()
-    //await this.databaseHelper.fixHexDisplay()
-    await this.databaseHelper.fixUnprocessedBlake2AccountsExtrinsics()
-
-    await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
-    await this.restartUnprocessedEvents(lastProcessedEventId)
+    //    await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
+    //    await this.restartUnprocessedEvents(lastProcessedEventId)
   }
 
   public async restartUnprocessedEvents(startRowId: number): Promise<void> {
@@ -74,7 +78,7 @@ export class IdentityListnerService {
 
     this.logger.info({
       event: 'IdentityListner.restartUnprocessedEvents',
-      message: `Set timeout`,
+      message: 'Set timeout',
     })
     setTimeout(() => {
       this.restartUnprocessedEvents(lastRowId)

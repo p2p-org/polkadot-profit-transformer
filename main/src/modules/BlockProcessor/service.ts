@@ -17,6 +17,7 @@ import { BlockNumber, EventRecord, Call } from '@polkadot/types/interfaces'
 import { AnyTuple } from '@polkadot/types/types'
 import { ExtrinsicsProcessorInput } from './interfaces'
 import { SliMetrics } from '@/loaders/sli_metrics'
+import { IdentityDatabaseHelper } from '../IdentityProcessor/helpers/database'
 
 @Service()
 export class BlocksProcessorService {
@@ -27,6 +28,7 @@ export class BlocksProcessorService {
 
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
+    private readonly identityDatabaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
   ) {}
 
@@ -153,10 +155,12 @@ export class BlocksProcessorService {
     // save extrinsics events and block to main tables
     for (const extrinsic of extractedExtrinsics) {
       await this.databaseHelper.saveExtrinsics(trx, extrinsic)
+
+      // add this signer to the accounts table
+      //await this.identityDatabaseHelper.saveAccount({ account_id: String(extrinsic.signer), created_at_block_id: extrinsic.block_id })
     }
 
     // console.log(blockId + ': extrinsics saved')
-
     for (const event of processedEvents) {
       await this.databaseHelper.saveEvent(trx, event)
     }
