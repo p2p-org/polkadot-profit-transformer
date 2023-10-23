@@ -75,12 +75,13 @@ jobs:
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.identity-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.monitoring.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.monitoring.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/gear.mbelt3.gear-smartcontracts-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.balances-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.block-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.gear-smartcontracts-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.identity-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.monitoring.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.preloader.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.staking-processor.yaml
 
       - name: Commit image changes
         uses: stefanzweifel/git-auto-commit-action@v4

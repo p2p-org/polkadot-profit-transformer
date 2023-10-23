@@ -1,7 +1,7 @@
 ---
 environment: mbelt3-prod
-replicas: 1
-chain: gear
+replicas: 0
+chain: vara
 role: identity-processor
 limits: {cpu: 250m, memory: 200Mi}
 requests: {cpu: 150m, memory: 200Mi}
@@ -11,22 +11,22 @@ metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/mbelt3_gear"
+  secret: "secret/mbelt/mbelt3_vara"
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: ws://gear-dev-ssd-node.gear.svc.cluster.local:9945
+  substrate_uri: wss://rpc.vara-network.io/
   log_level: info
   network_id: 137
   mode: IDENTITY_PROCESSOR
-  network: gear
+  network: vara
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt3-gear-identity-processor.polka.p2p.world
+  host: mbelt3-vara-identity-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt3-gear-identity-processor-polka-p2p-world
+    secret: mbelt3-vara-identity-processor-polka-p2p-world
     ssl_redirect: true
 tolerations:
   - key: cloud.google.com/gke-spot
