@@ -16,6 +16,7 @@ env:
   substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
   restart_blocks_uri: http://mbelt-mbelt3-prod-polkadot-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
   restart_eras_uri: http://mbelt-mbelt3-prod-polkadot-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-eras
+  restart_balances_uri: http://mbelt-mbelt3-prod-polkadot-preloader.mbelt3.svc.cluster.local:80/restart-balances
   log_level: info
   network_id: 0
   mode: MONITORING
