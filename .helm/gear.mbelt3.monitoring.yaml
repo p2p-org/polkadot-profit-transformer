@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 0
+replicas: 1
 chain: gear
 role: monitoring
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 1238d558141114f710f90d9e5fa1725f15222e2b}
