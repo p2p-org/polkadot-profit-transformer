@@ -157,7 +157,10 @@ export class BlocksProcessorService {
       await this.databaseHelper.saveExtrinsics(trx, extrinsic)
 
       // add this signer to the accounts table
-      //await this.identityDatabaseHelper.saveAccount({ account_id: String(extrinsic.signer), created_at_block_id: extrinsic.block_id })
+      await this.identityDatabaseHelper.saveAccount({
+        account_id: String(extrinsic.signer),
+        created_at_block_id: extrinsic.block_id,
+      })
     }
 
     // console.log(blockId + ': extrinsics saved')
