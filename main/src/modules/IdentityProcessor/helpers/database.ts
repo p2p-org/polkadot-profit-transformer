@@ -142,6 +142,7 @@ export class IdentityDatabaseHelper {
     let offset = 0
 
     while (true) {
+      console.log(`fixMissedAccountsIdsForBalances. Processing batch ${environment.BATCH_INSERT_CHUNK_SIZE} : offset : ${offset}`)
       const balanceChunk = await this.knex('balances')
         .whereNull('account_id')
         .whereNotNull('blake2_hash')
@@ -168,7 +169,9 @@ export class IdentityDatabaseHelper {
   }
 
   public async getAccountByBlake2Hash(blake2Hash: string): Promise<AccountModel> {
-    return this.knex('accounts').where({ blake2_hash: blake2Hash }).first()
+    return this.knex('accounts')
+      .where({ blake2_hash: blake2Hash, ...network })
+      .first()
   }
 
   public async fixHexDisplay(): Promise<void> {
