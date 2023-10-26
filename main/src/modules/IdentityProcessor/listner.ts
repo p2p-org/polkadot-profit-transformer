@@ -31,17 +31,19 @@ export class IdentityListnerService {
       lastProcessedExtrinsicId,
     })
 
+    /*
     try {
       //this.logger.info({ event: 'IdentityListener.fillAccountsByExtrinsics START' })
       //await this.databaseHelper.fillAccountsByExtrinsics()
       //this.logger.info({ event: 'IdentityListener.fixMissedBlake2HashAccounts START' })
       //await this.databaseHelper.fixMissedBlake2HashAccounts()
-      this.logger.info({ event: 'IdentityListener.fixMissedAccountsIdsForBalances START' })
-      await this.databaseHelper.fixMissedAccountsIdsForBalances()
-      this.logger.info({ event: 'IdentityListener.fixMissedAccountsIdsForBalances DONE' })
+      //this.logger.info({ event: 'IdentityListener.fixMissedAccountsIdsForBalances START' })
+      //await this.databaseHelper.fixMissedAccountsIdsForBalances()
+      //this.logger.info({ event: 'IdentityListener.fixMissedAccountsIdsForBalances DONE' })
     } catch (error: any) {
       console.error('error on IdentityListnerService.preload', error.message)
     }
+    */
 
     //    await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
     //    await this.restartUnprocessedEvents(lastProcessedEventId)

@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS nominators (
     PRIMARY KEY ("row_id")
 );
 
-CREATE TYPE processing_status AS ENUM ('not_processed', 'processed', 'cancelled');
+CREATE TYPE processing_status AS ENUM ('not_processed', 'processing', 'processed', 'cancelled');
 
 CREATE TABLE IF NOT EXISTS processing_tasks (
     "network_id" INT,
