@@ -59,7 +59,7 @@ export class BlockProcessorPolkadotHelper {
       metadata.runtime = runtime.unwrap().specVersion.toNumber()
     } catch {}
 
-    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
+    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'vara') {
       try {
         const currentEra: any = await historicalApi.query.staking.currentEra()
         if (currentEra) {
