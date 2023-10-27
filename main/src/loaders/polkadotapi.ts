@@ -56,7 +56,6 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     api.rpc.system.properties(),
   ]).then((result) => {
     const [chain, nodeName, nodeVersion, chainType, name, properties] = result
-    logger.info(`✌️ Connected to ${nodeUrl}. Chain ${chain} using ${nodeName} v${nodeVersion}`)
     //environment.NETWORK_ID = parseInt(properties.toHuman().ss58Format)
     //environment.NETWORK = chain.toLowerCase()
     if (environment.NETWORK.toLowerCase() != chain.toString().toLowerCase()) {
@@ -65,6 +64,7 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
       )
     }
     const network_id = properties.toHuman().ss58Format || properties.toHuman().ss58format || properties.toHuman().SS58Prefix
+    logger.info(`✌️ Connected to ${nodeUrl}. Chain ${chain} using ${nodeName} v${nodeVersion}. Network id: ${network_id}`)
     if (environment.NETWORK_ID != network_id) {
       logger.error(`Wrong network id specified in the environment: ${environment.NETWORK_ID}. 
         RPC-node network id is ${network_id}.`)

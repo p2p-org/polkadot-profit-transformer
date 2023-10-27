@@ -156,11 +156,22 @@ export class BlocksProcessorService {
     for (const extrinsic of extractedExtrinsics) {
       await this.databaseHelper.saveExtrinsics(trx, extrinsic)
 
-      // add this signer to the accounts table
-      await this.identityDatabaseHelper.saveAccount({
-        account_id: String(extrinsic.signer),
-        created_at_block_id: extrinsic.block_id,
-      })
+      if (extrinsic.signer) {
+        this.logger.debug({
+          event: 'BlockProcessor.onNewBlock',
+          blockId,
+          message: 'Trying to add new account_id to accounts table',
+          data: {
+            account_id: String(extrinsic.signer),
+            created_at_block_id: extrinsic.block_id,
+          },
+        })
+        // add this signer to the accounts table
+        await this.identityDatabaseHelper.saveAccount({
+          account_id: String(extrinsic.signer),
+          created_at_block_id: extrinsic.block_id,
+        })
+      }
     }
 
     // console.log(blockId + ': extrinsics saved')
