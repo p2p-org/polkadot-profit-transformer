@@ -5,7 +5,7 @@ chain: vara
 role: block-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b19fe24d469c7a12fe0f813d71fc9e28279b3f45}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: a177d44e40e345bb2a6275ee9d95e138436c15fe}
 port: 3000
 metrics:
   enabled: true
