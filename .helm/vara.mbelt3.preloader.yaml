@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_vara"
 env:
-  substrate_uri: wss://rpc.vara-network.io/
+  substrate_uri: wss://archive-rpc.vara-network.io/
   log_level: info
   network_id: 137
   mode: LISTENER
