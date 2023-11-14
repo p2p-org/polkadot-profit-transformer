@@ -3,8 +3,8 @@ environment: mbelt3-prod
 replicas: 1
 chain: kusama
 role: block-processor
-limits: {cpu: 350m, memory: 10000Mi}
-requests: {cpu: 250m, memory: 10000Mi}
+limits: {cpu: 350m, memory: 1000Mi}
+requests: {cpu: 250m, memory: 1000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b2176994b48abad7ea7b01b0794c1b8b1172780c}
 port: 3000
 metrics:
@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
 additional_args:
-  - "--max_old_space_size=1000"
+  - "--max_old_space_size=8192"
 env:
   substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
   log_level: info
