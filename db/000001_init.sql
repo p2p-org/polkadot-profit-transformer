@@ -300,7 +300,7 @@ CREATE TABLE IF NOT EXISTS stake_eras (
     "start_block_id" INT,
     "start_block_time" TIMESTAMP,
     "session_start" INT,
-    "total_stake" BIGINT,
+    "total_stake"  numeric(35),
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
@@ -311,8 +311,8 @@ CREATE TABLE IF NOT EXISTS stake_validators (
     "era_id" INT,
     "account_id" VARCHAR(150),
     "active" BOOL,
-    "total" BIGINT,
-    "own" BIGINT,
+    "total" numeric(35),
+    "own" numeric(35),
     "nominators_count" INT,
     "prefs" JSONB,
     "row_id" SERIAL,
@@ -326,7 +326,7 @@ CREATE TABLE IF NOT EXISTS stake_nominators (
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
     "is_clipped" BOOL,
-    "value" BIGINT,
+    "value" numeric(35),
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
     PRIMARY KEY ("row_id")
@@ -482,5 +482,4 @@ CREATE INDEX idx_signer ON extrinsics("signer");
 CREATE INDEX idx_signer_block ON extrinsics ("signer", "block_id");
 CREATE INDEX processing_tasks_entity_status_idx ON public.processing_tasks (entity, status);
 
-
-
+CREATE INDEX extrinsics_row_time_idx ON public.extrinsics (row_time);

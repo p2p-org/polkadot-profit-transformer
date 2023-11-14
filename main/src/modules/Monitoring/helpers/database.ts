@@ -29,7 +29,9 @@ export class MonitoringDatabaseHelper {
   */
 
   async removeOldExtrinsicsBody(): Promise<void> {
-    await this.knex.raw("UPDATE extrinsics SET extrinsic = NULL WHERE row_time < NOW() - INTERVAL '1 month'")
+    await this.knex.raw(
+      "UPDATE extrinsics SET extrinsic = NULL WHERE row_time < NOW() - INTERVAL '1 month' AND row_time >  NOW() - INTERVAL '1 month' - INTERVAL '1 day'",
+    )
   }
 
   async getLastBlock(): Promise<BlockModel> {
