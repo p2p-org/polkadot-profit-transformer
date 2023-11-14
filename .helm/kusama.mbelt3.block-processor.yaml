@@ -3,8 +3,8 @@ environment: mbelt3-prod
 replicas: 1
 chain: kusama
 role: block-processor
-limits: {cpu: 350m, memory: 1000Mi}
-requests: {cpu: 250m, memory: 1000Mi}
+limits: {cpu: 350m, memory: 10000Mi}
+requests: {cpu: 250m, memory: 10000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b2176994b48abad7ea7b01b0794c1b8b1172780c}
 port: 3000
 metrics:
