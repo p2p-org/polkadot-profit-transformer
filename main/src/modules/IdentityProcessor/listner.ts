@@ -19,7 +19,7 @@ export class IdentityListnerService {
     private readonly processor: IdentityProcessorService,
     private readonly databaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'IdentityListener.preload' })
@@ -45,8 +45,8 @@ export class IdentityListnerService {
     }
     */
 
-    //    await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
-    //    await this.restartUnprocessedEvents(lastProcessedEventId)
+    await this.restartUnprocessedExtrinsics(lastProcessedExtrinsicId)
+    await this.restartUnprocessedEvents(lastProcessedEventId)
   }
 
   public async restartUnprocessedEvents(startRowId: number): Promise<void> {
