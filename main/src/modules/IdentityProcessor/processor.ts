@@ -13,7 +13,7 @@ export enum JudgementStatus {
 
 @Service()
 export class IdentityProcessorService {
-  constructor(@Inject('logger') private readonly logger: Logger, private readonly databaseHelper: IdentityDatabaseHelper) {}
+  constructor(@Inject('logger') private readonly logger: Logger, private readonly databaseHelper: IdentityDatabaseHelper) { }
 
   public async processEvent(event: EventModel): Promise<void> {
     this.logger.info({
@@ -123,6 +123,15 @@ export class IdentityProcessorService {
       return
     }
 
+    if (!extrinsic.extrinsic || !extrinsic.extrinsic.args) {
+      this.logger.error({
+        event: 'IdentityProcessor.updateAccountIdentity',
+        message: 'IdentityProcessor extrinsic args is empty',
+        extrinsic,
+      })
+      return;
+    }
+
     const identityRaw = extrinsic.extrinsic.args
 
     const formatHexString = (name: string): string => {
@@ -163,13 +172,13 @@ export class IdentityProcessorService {
       updated_at_block_id: extrinsic.block_id,
     }
 
-    ;['display', 'legal', 'web', 'riot', 'email', 'twitter'].forEach((item) => {
-      const value = formatHexString(getValueOfField(identityRaw, item))
-      if (value.trim() !== '') {
-        //@ts-ignore
-        identity[item] = value
-      }
-    })
+      ;['display', 'legal', 'web', 'riot', 'email', 'twitter'].forEach((item) => {
+        const value = formatHexString(getValueOfField(identityRaw, item))
+        if (value.trim() !== '') {
+          //@ts-ignore
+          identity[item] = value
+        }
+      })
 
     return await this.databaseHelper.saveIdentity(identity)
   }
