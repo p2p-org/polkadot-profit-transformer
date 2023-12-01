@@ -19,7 +19,7 @@ export class IdentityListnerService {
     private readonly processor: IdentityProcessorService,
     private readonly databaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'IdentityListener.preload' })
