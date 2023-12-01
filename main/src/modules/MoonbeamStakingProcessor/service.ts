@@ -63,7 +63,7 @@ export class MoonbeamStakingProcessorService {
       collect_uid,
     })
 
-    await this.processReardsRound(trx, taskRecord.data.payout_block_id)
+    await this.processRewardsRound(trx, taskRecord.data.payout_block_id)
 
     return { status: true }
   }
@@ -160,7 +160,7 @@ export class MoonbeamStakingProcessorService {
     }
   }
 
-  async processReardsRound(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
+  async processRewardsRound(trx: Knex.Transaction, payoutBlockId: number): Promise<void> {
     logger.info({
       event: 'RoundPayoutProcessor.processRoundPayout',
       message: `Process staking payout for round with payout block id: ${payoutBlockId}`,
