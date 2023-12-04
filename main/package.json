@@ -42,6 +42,7 @@
     "moonbeam-types-bundle": "^2.0.10",
     "needle": "^3.2.0",
     "node-cron": "^3.0.2",
+    "nodemon": "^3.0.2",
     "pg": "^8.7.3",
     "pino": "^8.1.0",
     "pino-pretty": "^8.1.0",

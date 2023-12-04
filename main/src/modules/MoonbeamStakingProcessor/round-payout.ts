@@ -206,10 +206,12 @@ export class MoonbeamStakingProcessorRoundPayout {
 
     for (const [
       {
-        args: [, accountId],
+        args: [_, accountId],
       },
-      { bond, total, delegations, nominators },
+      value,
     ] of atStake) {
+      const { bond, total, delegations, nominators } = this.specVersion < 2600 ? value : value.unwrap()
+
       const collatorId = accountId.toHex()
       this.collators.add(collatorId)
       const points: u32 = (await apiAtOriginal.query.parachainStaking.awardedPts(roundNumber, accountId)) as u32

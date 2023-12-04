@@ -81,7 +81,7 @@ export class MoonbeamStakingProcessorService {
     try {
       const { round } = await roundPayoutProcessor.getStakeRound(payoutBlockId)
 
-      // console.log(JSON.stringify(this.stakedValue, null, 2));
+      //console.log(JSON.stringify(roundPayoutProcessor.stakedValue, null, 2));
 
       logger.info({
         event: 'RoundPayoutProcessor.processRoundPayout',
