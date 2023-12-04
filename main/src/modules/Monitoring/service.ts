@@ -1,5 +1,4 @@
 import { Inject, Service } from 'typedi'
-import { Knex } from 'knex'
 import { TasksRepository } from '@/libs/tasks.repository'
 import { MonitoringPolkadotHelper } from './helpers/polkadot'
 import { MonitoringDatabaseHelper } from './helpers/database'
@@ -12,10 +11,8 @@ import needle from 'needle'
 
 @Service()
 export class MonitoringService {
-
   constructor(
     @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
     @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
     private readonly polkadotHelper: MonitoringPolkadotHelper,
     private readonly databaseHelper: MonitoringDatabaseHelper,
@@ -42,6 +39,15 @@ export class MonitoringService {
       this.checkDublicatesBlocks()
     })
 
+    cron.schedule('0 0 * * *', async () => {
+      //this.rotateOldRecords()
+      //this.rotateOldExtrinsics()
+    })
+
+    cron.schedule('0 0 * * *', async () => {
+      this.rotateOldExtrinsics()
+    })
+
     this.sliMetrics.add({ entity: 'system', name: `restart_${environment.MODE}`, row_time: new Date() })
     this.slackHelper.sendMessage(`Restart Last DB blockId: ${environment.MODE}: ${new Date()}`)
 
@@ -54,11 +60,48 @@ export class MonitoringService {
     */
   }
 
+  /*
+  public async rotateOldRecords(): Promise<void> {
+    this.logger.info({
+      event: 'MonitoringService.rotateOldRecords',
+      message: `Rotate old records`,
+    })
+    try {
+      await this.databaseHelper.roateOldRecords()
+    } catch (error: any) {
+      this.logger.error({
+        event: 'MonitoringService.rotateOldRecords',
+        error: error.message,
+        message: 'Problems with records rotation',
+      })
+    }
+  }
+  */
+
+  public async rotateOldExtrinsics(): Promise<void> {
+    this.logger.info({
+      event: 'MonitoringService.rotateOldExtrinsics',
+      message: `Rotate old extrinsics`,
+    })
+
+    try {
+      await this.databaseHelper.removeOldExtrinsicsBody()
+    } catch (error: any) {
+      this.logger.error({
+        event: 'MonitoringService.checkMissingRounds',
+        error: error.message,
+        message: 'Problems with records rotation',
+      })
+    }
+  }
+
   public async checkBlocksSync(): Promise<void> {
     const lastDBBlock = await this.databaseHelper.getLastBlock()
     const lastNodeBlockId = await this.polkadotHelper.getFinBlockNumber()
     if (lastDBBlock.block_id < lastNodeBlockId - 10) {
-      this.slackHelper.sendMessage(`Sync problem. Last RPC-node blockId: ${lastNodeBlockId}. Last DB blockId: ${lastDBBlock.block_id}`)
+      this.slackHelper.sendMessage(
+        `Sync problem. Last RPC-node blockId: ${lastNodeBlockId}. Last DB blockId: ${lastDBBlock.block_id}`,
+      )
 
       await this.sliMetrics.add({ entity: 'block', name: 'rpc_sync_diff_count', value: lastNodeBlockId - lastDBBlock.block_id })
     }
@@ -74,19 +117,18 @@ export class MonitoringService {
 
       this.logger.info({
         event: 'MonitoringService.checkMissingBlocks',
-        message: `Need to restart blocks. ENV url is ${environment.RESTART_BLOCKS_URI}`
+        message: `Need to restart blocks. ENV url is ${environment.RESTART_BLOCKS_URI}`,
       })
 
       try {
         if (environment.RESTART_BLOCKS_URI) {
           const res = await needle('get', environment.RESTART_BLOCKS_URI)
-          console.log(res)
         }
       } catch (error: any) {
         this.logger.error({
           event: 'MonitoringService.checkMissingBlocks',
           error: error.message,
-          missedBlocks
+          missedBlocks,
         })
       }
     }
@@ -103,6 +145,13 @@ export class MonitoringService {
 
   public async checkMissingRounds(): Promise<void> {
     const lastDBBlock = await this.databaseHelper.getLastBlock()
+    if (!lastDBBlock.metadata) {
+      this.logger.error({
+        event: 'MonitoringService.checkMissingRounds',
+        message: `lastDBBlock.metadata is undefined`,
+      })
+      return
+    }
     if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
       const missedRounds = await this.databaseHelper.getMissedRounds(lastDBBlock.metadata.round_id)
       if (missedRounds && missedRounds.length) {
@@ -111,17 +160,16 @@ export class MonitoringService {
 
         this.logger.info({
           event: 'MonitoringService.checkMissingRounds',
-          message: `Need to restart rounds. ENV url is ${environment.RESTART_ROUNDS_URI}`
+          message: `Need to restart rounds. ENV url is ${environment.RESTART_ROUNDS_URI}`,
         })
 
         try {
-          if (environment.RESTART_ROUNDS_URI)
-            await needle('get', environment.RESTART_ROUNDS_URI)
+          if (environment.RESTART_ROUNDS_URI) await needle('get', environment.RESTART_ROUNDS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
             error: error.message,
-            missedRounds
+            missedRounds,
           })
         }
       }
@@ -133,30 +181,50 @@ export class MonitoringService {
 
         this.logger.info({
           event: 'MonitoringService.checkMissingRounds',
-          message: `Need to restart eras. ENV url is ${environment.RESTART_ERAS_URI}`
+          message: `Need to restart eras. ENV url is ${environment.RESTART_ERAS_URI}`,
         })
 
         try {
-          if (environment.RESTART_ERAS_URI)
-            await needle('get', environment.RESTART_ERAS_URI)
+          if (environment.RESTART_ERAS_URI) await needle('get', environment.RESTART_ERAS_URI)
         } catch (error: any) {
           this.logger.error({
             event: 'MonitoringService.checkMissingRounds',
             error: error.message,
-            missedEras
+            missedEras,
           })
         }
       }
     }
-
   }
 
   public async checkProcessingTasks(): Promise<void> {
     const missedTasks = await this.databaseHelper.getMissedProcessingTasks()
     if (missedTasks && missedTasks.length) {
+      this.logger.info({
+        event: 'MonitoringService.checkProcessingTasks',
+        message: 'Detected not processed tasks',
+        missedTasks,
+      })
       this.slackHelper.sendMessage(`Detected not processed tasks: ${JSON.stringify(missedTasks)}`)
 
       await this.sliMetrics.add({ entity: 'queue', name: 'not_processed_count', value: missedTasks.length })
+
+      console.log('environment.RESTART_BLOCKS_URI', environment.RESTART_BLOCKS_URI)
+      console.log('environment.RESTART_ROUNDS_URI', environment.RESTART_ROUNDS_URI)
+      console.log('environment.RESTART_ERAS_URI', environment.RESTART_ERAS_URI)
+      console.log('environment.RESTART_BALANCES_URI', environment.RESTART_BALANCES_URI)
+
+      try {
+        if (environment.RESTART_BLOCKS_URI) await needle('get', environment.RESTART_BLOCKS_URI)
+        if (environment.RESTART_ROUNDS_URI) await needle('get', environment.RESTART_ROUNDS_URI)
+        if (environment.RESTART_ERAS_URI) await needle('get', environment.RESTART_ERAS_URI)
+        if (environment.RESTART_BALANCES_URI) await needle('get', environment.RESTART_BALANCES_URI)
+      } catch (error: any) {
+        this.logger.error({
+          event: 'MonitoringService.checkProcessingTasks',
+          error: error.message,
+        })
+      }
     }
   }
 }

@@ -3,9 +3,9 @@ environment: mbelt3-prod
 chain: moonriver
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 454edcefc2107342e7521496f950f32aadf7abd0}
-limits: {cpu: 450m, memory: 200Mi}
-requests: {cpu: 400m, memory: 200Mi}
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4ac9f3c46dc0b60f27b92e0710134d705db82b72}
 port: 3000
 metrics:
   enabled: true
@@ -26,3 +26,8 @@ ingress:
     cluster_issuer: cloudflare-prod
     secret: mbelt3-moonriver-preloader-polka-p2p-world
     ssl_redirect: true
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

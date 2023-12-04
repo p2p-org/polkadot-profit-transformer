@@ -1,0 +1,49 @@
+name: Build and test mbelt
+
+on:
+  push:
+    branches: ['mbelt3/stage']
+
+jobs:
+  lint:
+    name: Lint with prettier, eslint and tslint
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: ./main
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install modules
+        working-directory: ${{env.working-directory}}
+        run: yarn
+
+      - name: Run Prettier
+        working-directory: ${{env.working-directory}}
+        run: yarn prettier --check src
+
+      - name: Run ESLint
+        working-directory: ${{env.working-directory}}
+        run: yarn lint
+
+      - name: Run tsc
+        working-directory: ${{env.working-directory}}
+        run: yarn tsc          
+
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: ./main
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install modules
+        working-directory: ${{env.working-directory}}
+        run: yarn
+
+      - name: Run Unit Tests
+        working-directory: ${{env.working-directory}}
+        run: yarn test
+

@@ -17,10 +17,10 @@ import { BlockNumber, EventRecord, Call } from '@polkadot/types/interfaces'
 import { AnyTuple } from '@polkadot/types/types'
 import { ExtrinsicsProcessorInput } from './interfaces'
 import { SliMetrics } from '@/loaders/sli_metrics'
+import { IdentityDatabaseHelper } from '../IdentityProcessor/helpers/database'
 
 @Service()
 export class BlocksProcessorService {
-
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('knex') private readonly knex: Knex,
@@ -28,140 +28,58 @@ export class BlocksProcessorService {
 
     private readonly polkadotHelper: BlockProcessorPolkadotHelper,
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
+    private readonly identityDatabaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {
-  }
+  ) {}
 
-  public async processTaskMessage<T extends QUEUES.Blocks>(message: TaskMessage<T>): Promise<void> {
-    const { entity_id: blockId, collect_uid } = message
+  async processTaskMessage(
+    trx: Knex.Transaction,
+    taskRecord: ProcessingTaskModel<ENTITY>,
+  ): Promise<{ status: boolean; callback?: any }> {
+    const { entity_id: blockId, collect_uid } = taskRecord
 
-    const metadata = {
-      block_process_uid: uuidv4(),
-      processing_timestamp: new Date(),
+    //check that block wasn't processed already
+    if (await this.databaseHelper.getBlockById(blockId)) {
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: `Block ${blockId} already present in the database`,
+      })
+
+      return { status: true }
     }
-    await this.tasksRepository.increaseAttempts(ENTITY.BLOCK, blockId)
 
-    await this.knex.transaction(async (trx) => {
-      const taskRecord = await this.tasksRepository.readTaskAndLockRow(ENTITY.BLOCK, blockId, trx)
+    this.logger.info({
+      event: 'BlockProcessor.processTaskMessage',
+      blockId,
+      message: `Start processing block ${blockId}`,
+    })
 
-      if (!taskRecord) {
-        await trx.rollback()
-        this.logger.warn({
-          event: 'Queue.processTaskMessage',
-          blockId,
-          warning: 'Task record not found. Skip processing',
-          collect_uid,
-        })
-        return
-      }
+    const newTasks = await this.processBlock(blockId, trx)
 
-      if (taskRecord.attempts > environment.MAX_ATTEMPTS) {
-        await trx.rollback()
-        this.logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          warning: `Max attempts on block ${blockId} reached, cancel processing.`,
-          collect_uid,
-        })
-        return
-      }
-
-      if (taskRecord.collect_uid !== collect_uid) {
-        await trx.rollback()
-        this.logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          warning: `Possible block ${blockId} processing task duplication. `
-            + `Expected ${collect_uid}, found ${taskRecord.collect_uid}. Skip processing.`,
-          collect_uid,
-        })
-        return
-      }
-
-      if (taskRecord.status !== PROCESSING_STATUS.NOT_PROCESSED) {
-        await trx.rollback()
-        this.logger.warn({
-          event: 'BlockProcessor.processTaskMessage',
-          blockId,
-          warning: `Block  ${blockId} has been already processed. Skip processing.`,
-          collect_uid,
-        })
-        return
-      }
-
-      //check that block wasn't processed already
-      if (await this.databaseHelper.getBlockById(blockId)) {
+    const callback = async () => {
+      if (newTasks.length) {
         this.logger.info({
           event: 'BlockProcessor.processTaskMessage',
           blockId,
-          message: `Block ${blockId} already present in the database`,
+          message: `Call back called for block with ID: ${blockId}`,
         })
 
-        await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-        await trx.commit()
-        return
+        await this.knex.transaction(async (trx2: Knex.Transaction) => {
+          await this.tasksRepository.batchAddEntities(newTasks, trx2)
+          await trx2.commit()
+          await this.sendProcessingTasksToRabbit(newTasks)
+        })
       }
+    }
 
-      // everything is ok, start processing
-      this.logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: `Start processing block ${blockId}`,
-        ...metadata,
-        collect_uid,
-      })
-
-      const newTasks = await this.processBlock(blockId, trx)
-
-      if (newTasks.length) {
-        await this.tasksRepository.batchAddEntities(newTasks, trx)
-      }
-
-      await this.tasksRepository.setTaskRecordAsProcessed(taskRecord, trx)
-
-      await trx.commit()
-
-      this.logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: `Block ${blockId} has been processed and committed`,
-        ...metadata,
-        collect_uid,
-        newTasks,
-      })
-
-      processedBlockGauge.set(blockId)
-      if (!newTasks.length) return
-
-      this.logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: 'newProcessingTasks found, send to rabbit',
-        ...metadata,
-        collect_uid,
-      })
-
-      await this.sendProcessingTasksToRabbit(newTasks)
-
-      this.logger.info({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        message: `block ${blockId} processing done`,
-        ...metadata,
-        collect_uid,
-      })
-    }).catch((error: Error) => {
-      this.logger.error({
-        event: 'BlockProcessor.processTaskMessage',
-        blockId,
-        error: error.message,
-        data: {
-          ...metadata,
-          collect_uid,
-        },
-      })
-      throw error
+    this.logger.info({
+      event: 'BlockProcessor.processTaskMessage',
+      blockId,
+      message: `Block processing done ${blockId}`,
     })
+
+    return { status: true, callback }
   }
 
   private async sendProcessingTasksToRabbit(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
@@ -193,18 +111,16 @@ export class BlocksProcessorService {
     }
   }
 
-
-  private async processBlock(
-    blockId: number,
-    trx: Knex.Transaction<any, any[]>,
-  ): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> {
+  private async processBlock(blockId: number, trx: Knex.Transaction<any, any[]>): Promise<ProcessingTaskModel<ENTITY.BLOCK>[]> {
     const newTasks: ProcessingTaskModel<ENTITY.BLOCK>[] = []
     const blockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
 
     // logger.info('BlockProcessor: start processing block with id: ' + blockId)
     const startProcessingTime = Date.now()
 
-    const [signedBlock, extHeader, blockTime, events, metadata, totalIssuance] = await this.polkadotHelper.getInfoToProcessBlock(blockHash)
+    const [signedBlock, extHeader, blockTime, events, metadata, totalIssuance] = await this.polkadotHelper.getInfoToProcessBlock(
+      blockHash,
+    )
 
     const extrinsicsData: ExtrinsicsProcessorInput = {
       // eraId: activeEra,
@@ -239,10 +155,26 @@ export class BlocksProcessorService {
     // save extrinsics events and block to main tables
     for (const extrinsic of extractedExtrinsics) {
       await this.databaseHelper.saveExtrinsics(trx, extrinsic)
+
+      if (extrinsic.signer) {
+        this.logger.debug({
+          event: 'BlockProcessor.onNewBlock',
+          blockId,
+          message: 'Trying to add new account_id to accounts table',
+          data: {
+            account_id: String(extrinsic.signer),
+            created_at_block_id: extrinsic.block_id,
+          },
+        })
+        // add this signer to the accounts table
+        await this.identityDatabaseHelper.saveAccount({
+          account_id: String(extrinsic.signer),
+          created_at_block_id: extrinsic.block_id,
+        })
+      }
     }
 
     // console.log(blockId + ': extrinsics saved')
-
     for (const event of processedEvents) {
       await this.databaseHelper.saveEvent(trx, event)
     }
@@ -253,10 +185,18 @@ export class BlocksProcessorService {
 
     await this.databaseHelper.saveTotalIssuance(trx, block.block_id, totalIssuance.toString(10))
 
-    await this.sliMetrics.add(
-      { entity: 'block', entity_id: blockId, name: 'process_time_ms', value: Date.now() - startProcessingTime })
-    await this.sliMetrics.add(
-      { entity: 'block', entity_id: blockId, name: 'delay_time_ms', value: Date.now() - blockTime.toNumber() })
+    await this.sliMetrics.add({
+      entity: 'block',
+      entity_id: blockId,
+      name: 'process_time_ms',
+      value: Date.now() - startProcessingTime,
+    })
+    await this.sliMetrics.add({
+      entity: 'block',
+      entity_id: blockId,
+      name: 'delay_time_ms',
+      value: Date.now() - blockTime.toNumber(),
+    })
 
     const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
     await this.sliMetrics.add({ entity: 'block', entity_id: blockId, name: 'memory_usage_mb', value: memorySize })
@@ -294,7 +234,6 @@ export class BlocksProcessorService {
           event: 'BlockProcessor.onNewBlock',
           blockId,
           message: 'detected new era',
-          newStakingProcessingTask,
         })
       }
 
@@ -323,7 +262,7 @@ export class BlocksProcessorService {
     }
 
     return newTasks
-  };
+  }
 
   private processEvents(blockId: number, events: Vec<EventRecord>) {
     const processEvent = (acc: EventModel[], record: EventRecord, eventIndex: number): Array<EventModel> => {
@@ -342,7 +281,6 @@ export class BlocksProcessorService {
     }
     return events.reduce(processEvent, [])
   }
-
 
   private async processExtrinsics(input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> {
     const { /* eraId, sessionId, */ blockNumber, events, extrinsics } = input
@@ -366,7 +304,14 @@ export class BlocksProcessorService {
           const extractedExtrinsics = this.polkadotHelper.recursiveExtrinsicDecoder({ call: initialCall, indexes: [], index })
 
           const extrinsicModels = extractedExtrinsics.map(({ call, indexes, index }) =>
-            this.createExtrinsicModelFromCall(blockNumber, call, isSuccess, extrinsic, [...indexes, index].join('-'), referencedEventsIds),
+            this.createExtrinsicModelFromCall(
+              blockNumber,
+              call,
+              isSuccess,
+              extrinsic,
+              [...indexes, index].join('-'),
+              referencedEventsIds,
+            ),
           )
           return extrinsicModels
         } else {
@@ -398,7 +343,6 @@ export class BlocksProcessorService {
     index: string,
     referencedEventsIds: string[],
   ): ExtrinsicModel {
-
     const extrinsicModel: ExtrinsicModel = {
       extrinsic_id: `${blockNumber}-${index}`,
       success: isSuccess,

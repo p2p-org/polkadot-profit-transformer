@@ -3,7 +3,7 @@ environment: mbelt3-prod
 replicas: 1
 chain: polkadot
 role: monitoring
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 454edcefc2107342e7521496f950f32aadf7abd0}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4ac9f3c46dc0b60f27b92e0710134d705db82b72}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
@@ -16,9 +16,15 @@ env:
   substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
   restart_blocks_uri: http://mbelt-mbelt3-prod-polkadot-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
   restart_eras_uri: http://mbelt-mbelt3-prod-polkadot-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-eras
+  restart_balances_uri: http://mbelt-mbelt3-prod-polkadot-preloader.mbelt3.svc.cluster.local:80/restart-balances
   log_level: info
   network_id: 0
   mode: MONITORING
   network: polkadot
 ingress:
   enabled: false
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

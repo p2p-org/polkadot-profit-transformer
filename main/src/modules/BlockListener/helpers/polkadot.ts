@@ -5,9 +5,7 @@ import { Header } from '@polkadot/types/interfaces'
 
 @Service()
 export class BlockListenerPolkadotHelper {
-  constructor(
-    @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  constructor(@Inject('polkadotApi') private readonly polkadotApi: ApiPromise) {}
 
   public async subscribeFinalizedHeads(cb: (header: Header) => Promise<void>): Promise<void> {
     await this.polkadotApi.rpc.chain.subscribeFinalizedHeads(cb)
@@ -20,4 +18,3 @@ export class BlockListenerPolkadotHelper {
     return lastFinBlock.block.header.number.toNumber()
   }
 }
-

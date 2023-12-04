@@ -2,13 +2,7 @@ import { Inject, Service } from 'typedi'
 import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
 import { Vec } from '@polkadot/types'
-import {
-  BlockHash,
-  EventRecord,
-  Moment,
-  SignedBlock,
-  Call
-} from '@polkadot/types/interfaces'
+import { BlockHash, EventRecord, Moment, SignedBlock, Call } from '@polkadot/types/interfaces'
 import { HeaderExtended } from '@polkadot/api-derive/types'
 import { BlockMetadata } from '@/models/block.model'
 import { environment } from '@/environment'
@@ -21,9 +15,7 @@ type callEntry = {
 
 @Service()
 export class BlockProcessorPolkadotHelper {
-  constructor(
-    @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  constructor(@Inject('polkadotApi') private readonly polkadotApi: ApiPromise) {}
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
     return this.polkadotApi.rpc.chain.getBlockHash(height)
@@ -31,14 +23,15 @@ export class BlockProcessorPolkadotHelper {
 
   async getInfoToProcessBlock(
     blockHash: BlockHash,
-  ): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata, any]> {
+  ): Promise<[SignedBlock, HeaderExtended | undefined, any, any, BlockMetadata, any]> {
+    //): Promise<[SignedBlock, HeaderExtended | undefined, Moment, Vec<EventRecord>, BlockMetadata, any]> {
     try {
       const historicalApi = await this.polkadotApi.at(blockHash)
 
       const [blockTime, events, totalIssuance] = await historicalApi.queryMulti([
         [historicalApi.query.timestamp.now],
         [historicalApi.query.system.events, blockHash],
-        [historicalApi.query.balances.totalIssuance]
+        [historicalApi.query.balances.totalIssuance],
       ])
 
       const [metadata, signedBlock, extHeader] = await Promise.all([
@@ -47,16 +40,9 @@ export class BlockProcessorPolkadotHelper {
         this.polkadotApi.derive.chain.getHeader(blockHash),
       ])
 
-      return [
-        signedBlock as SignedBlock,
-        extHeader as HeaderExtended,
-        blockTime,
-        events,
-        metadata,
-        totalIssuance
-      ]
+      return [signedBlock as SignedBlock, extHeader as HeaderExtended, blockTime, events, metadata, totalIssuance]
     } catch (error: any) {
-      console.log('error on polkadot.repository.getInfoToProcessBlock', error.message)
+      console.error('error on polkadot.repository.getInfoToProcessBlock', error.message)
       throw error
     }
   }
@@ -71,15 +57,15 @@ export class BlockProcessorPolkadotHelper {
     try {
       const runtime: any = await historicalApi.query.system.lastRuntimeUpgrade()
       metadata.runtime = runtime.unwrap().specVersion.toNumber()
-    } catch { }
+    } catch {}
 
-    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
+    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'vara') {
       try {
         const currentEra: any = await historicalApi.query.staking.currentEra()
         if (currentEra) {
           metadata.era_id = parseInt(currentEra.toString(10), 10) as number
         }
-      } catch (e) { }
+      } catch (e) {}
 
       try {
         if (historicalApi.query.staking.activeEra) {
@@ -91,28 +77,26 @@ export class BlockProcessorPolkadotHelper {
             }
           }
         }
-      } catch (e) { }
+      } catch (e) {}
 
       try {
         const sessionId: any = await historicalApi.query.session.currentIndex()
         if (sessionId) {
           metadata.session_id = parseInt(sessionId.toString(10), 10) as number
         }
-      } catch (e) { }
-    } else { //parachains
+      } catch (e) {}
+    } else {
+      //parachains
       try {
         const round: any = await historicalApi.query.parachainStaking.round()
         metadata.round_id = parseInt(round.current.toString(10), 10) as number
-      } catch (e) { }
+      } catch (e) {}
     }
 
     return metadata
   }
 
-  async isExtrinsicEventsSuccess(
-    index: number,
-    blockEvents: Vec<EventRecord>,
-  ): Promise<boolean> {
+  async isExtrinsicEventsSuccess(index: number, blockEvents: Vec<EventRecord>): Promise<boolean> {
     const extrinsicIndex = index
 
     const events = blockEvents.filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(extrinsicIndex))
@@ -135,7 +119,6 @@ export class BlockProcessorPolkadotHelper {
     const result = await this.polkadotApi.events.system.ExtrinsicSuccess.is(event.event)
     return result
   }
-
 
   recursiveExtrinsicDecoder(entry: callEntry): callEntry[] {
     const currentIndexes = [...entry.indexes, entry.index]
@@ -165,6 +148,4 @@ export class BlockProcessorPolkadotHelper {
 
     return [entry]
   }
-
 }
-

@@ -22,4 +22,5 @@ export type BlockModel = {
   row_id?: number
 }
 
-export const BlockModel = (knex: Knex) => knex<BlockModel>('blocks')
+export const blocksTableName = 'blocks'
+export const BlockModel = (knex: Knex) => knex<BlockModel>(blocksTableName)

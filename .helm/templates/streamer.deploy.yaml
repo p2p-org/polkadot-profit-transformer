@@ -38,6 +38,10 @@ spec:
           {{"{{-"}} end {{"}}"}}
     spec:
       serviceAccountName: {{ template "app.fullname" $ }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
       containers:
       - name: streamer
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -60,9 +64,10 @@ spec:
         {{- with .Values.env }}
         env:
 
-        - { name: RESTART_BLOCKS_URI, value: {{ quote .restart_blocks_uri }} }
-        - { name: RESTART_ERAS_URI,   value: {{ quote .restart_eras_uri }} }
-        - { name: RESTART_ROUNDS_URI, value: {{ quote .restart_rounds_uri }} }
+        - { name: RESTART_BLOCKS_URI,   value: {{ quote .restart_blocks_uri }} }
+        - { name: RESTART_ERAS_URI,     value: {{ quote .restart_eras_uri }} }
+        - { name: RESTART_ROUNDS_URI,   value: {{ quote .restart_rounds_uri }} }
+        - { name: RESTART_BALANCES_URI, value: {{ quote .restart_balances_uri }} }
         - { name: SUBSTRATE_URI, value: {{ quote .substrate_uri }} }
         - { name: LOG_LEVEL,     value: {{ quote .log_level }} }
         - { name: NETWORK_ID,    value: {{ quote .network_id }} }

@@ -1,11 +1,11 @@
 ---
 environment: stage
-replicas: 1
+replicas: 0
 chain: moonriver
 role: balances-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 454edcefc2107342e7521496f950f32aadf7abd0}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4ac9f3c46dc0b60f27b92e0710134d705db82b72}
 port: 3000
 metrics:
   enabled: true
@@ -28,3 +28,8 @@ ingress:
     cluster_issuer: cloudflare-prod
     secret: mbelt-stage-moonriver-balances-processor-polka-p2p-world
     ssl_redirect: true
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

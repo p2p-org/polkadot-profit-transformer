@@ -5,7 +5,7 @@ chain: moonbeam
 role: monitoring
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 454edcefc2107342e7521496f950f32aadf7abd0}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4ac9f3c46dc0b60f27b92e0710134d705db82b72}
 port: 3000
 metrics:
   enabled: true
@@ -16,9 +16,15 @@ env:
   substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
   restart_blocks_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
   restart_rounds_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
+  restart_balances_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-balances
   log_level: info
   network_id: 1284
   mode: MONITORING
   network: moonbeam
 ingress:
   enabled: false
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

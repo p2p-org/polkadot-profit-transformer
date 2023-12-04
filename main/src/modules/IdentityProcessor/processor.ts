@@ -1,5 +1,4 @@
 import { Inject, Service } from 'typedi'
-import { Knex } from 'knex'
 import { Logger } from 'pino'
 import { EventModel } from '@/models/event.model'
 import { IdentityModel } from '@/models/identities.model'
@@ -14,19 +13,12 @@ export enum JudgementStatus {
 
 @Service()
 export class IdentityProcessorService {
-
-  constructor(
-    @Inject('logger') private readonly logger: Logger,
-    @Inject('knex') private readonly knex: Knex,
-    private readonly databaseHelper: IdentityDatabaseHelper,
-  ) {
-
-  }
+  constructor(@Inject('logger') private readonly logger: Logger, private readonly databaseHelper: IdentityDatabaseHelper) {}
 
   public async processEvent(event: EventModel): Promise<void> {
     this.logger.info({
       event: 'IdentityProcessor.processEvent',
-      data: event
+      data: event,
     })
 
     switch (event.method) {
@@ -53,7 +45,7 @@ export class IdentityProcessorService {
       default:
         this.logger.error({
           event: 'IdentityProcessor.processEvent',
-          message: `failed to process undefined entry with event type "${event.event}"`
+          message: `failed to process undefined entry with event type "${event.event}"`,
         })
         break
     }
@@ -81,11 +73,10 @@ export class IdentityProcessorService {
     })
   }
 
-
   public async processExtrinsic(extrinsic: ExtrinsicModel): Promise<void> {
     this.logger.info({
       event: 'IdentityProcessor.processExtrinsic',
-      data: extrinsic
+      data: extrinsic,
     })
 
     switch (extrinsic.method) {
@@ -113,7 +104,7 @@ export class IdentityProcessorService {
       default:
         this.logger.error({
           event: 'IdentityProcessor.processExtrinsic',
-          message: `failed to process undefined entry with extrnisic type "${extrinsic.method}"`
+          message: `failed to process undefined entry with extrnisic type "${extrinsic.method}"`,
         })
     }
   }
@@ -127,6 +118,15 @@ export class IdentityProcessorService {
       this.logger.error({
         event: 'IdentityProcessor.updateAccountIdentity',
         message: 'IdentityProcessor no account_id found for extrinsic',
+        extrinsic,
+      })
+      return
+    }
+
+    if (!extrinsic.extrinsic || !extrinsic.extrinsic.args) {
+      this.logger.error({
+        event: 'IdentityProcessor.updateAccountIdentity',
+        message: 'IdentityProcessor extrinsic args is empty',
         extrinsic,
       })
       return
@@ -154,19 +154,25 @@ export class IdentityProcessorService {
     const getValueOfField = (identityRaw: any, field: string): string => {
       if (identityRaw.info && identityRaw.info[field]) {
         const value = identityRaw.info[field]
-        if (typeof (value) === 'string' && value === 'None') { return '' }
-        if (typeof (value) === 'object' && value.raw) { return formatHexString(value.raw) }
-        if (typeof (value) === 'object' && value.Raw) { return formatHexString(value.Raw) }
+        if (typeof value === 'string' && value === 'None') {
+          return ''
+        }
+        if (typeof value === 'object' && value.raw) {
+          return formatHexString(value.raw)
+        }
+        if (typeof value === 'object' && value.Raw) {
+          return formatHexString(value.Raw)
+        }
       }
       return ''
     }
 
     const identity: IdentityModel = {
       account_id,
-      updated_at_block_id: extrinsic.block_id
-    };
+      updated_at_block_id: extrinsic.block_id,
+    }
 
-    ['display', 'legal', 'web', 'riot', 'email', 'twitter'].forEach(item => {
+    ;['display', 'legal', 'web', 'riot', 'email', 'twitter'].forEach((item) => {
       const value = formatHexString(getValueOfField(identityRaw, item))
       if (value.trim() !== '') {
         //@ts-ignore
@@ -188,7 +194,7 @@ export class IdentityProcessorService {
     return this.databaseHelper.saveIdentity({
       account_id,
       parent_account_id,
-      updated_at_block_id: extrinsic.block_id
+      updated_at_block_id: extrinsic.block_id,
     })
   }
 
@@ -202,7 +208,7 @@ export class IdentityProcessorService {
         this.databaseHelper.saveIdentity({
           account_id: account_id.toString(),
           parent_account_id,
-          updated_at_block_id: extrinsic.block_id
+          updated_at_block_id: extrinsic.block_id,
         }),
       ),
     )
@@ -217,7 +223,7 @@ export class IdentityProcessorService {
     return this.databaseHelper.saveIdentity({
       account_id,
       parent_account_id: null,
-      updated_at_block_id: extrinsic.block_id
+      updated_at_block_id: extrinsic.block_id,
     })
   }
 
@@ -231,10 +237,9 @@ export class IdentityProcessorService {
     return this.databaseHelper.saveIdentity({
       account_id,
       parent_account_id: null,
-      updated_at_block_id: extrinsic.block_id
+      updated_at_block_id: extrinsic.block_id,
     })
   }
-
 
   private getSubAccount(extrinsic: ExtrinsicModel): string | null {
     if (extrinsic.extrinsic?.args?.length) {
@@ -255,5 +260,3 @@ export class IdentityProcessorService {
     }
   }
 }
-
-

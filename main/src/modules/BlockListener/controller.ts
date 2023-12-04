@@ -10,7 +10,7 @@ export class BlockListenerController {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('expressApp') private readonly expressApp: express.Application,
-    private listnerService: BlockListenerService
+    private listnerService: BlockListenerService,
   ) {
     this.init()
   }
@@ -41,7 +41,6 @@ export class BlockListenerController {
       return res.json({ result: 'ok' })
     })
 
-
     this.expressApp.get('/restart-unprocessed-eras', (req, res) => {
       this.listnerService.restartUnprocessedTasks(ENTITY.ERA)
       res.send('restarted unprocessed eras')
@@ -57,14 +56,13 @@ export class BlockListenerController {
       res.send('restarted unprocessed blocks metadata')
     })
 
-
     this.expressApp.get('/restart-unprocessed-blocks-metadata', (req, res) => {
       this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK_METADATA)
       res.send('restarted unprocessed block metadata tasks')
     })
 
     this.expressApp.get('/restart-era/:eraId', (req, res) => {
-      this.listnerService.restartUnprocessedTask(ENTITY.ROUND, Number(req.params.eraId))
+      this.listnerService.restartUnprocessedTask(ENTITY.ERA, Number(req.params.eraId))
       res.send('restarted unprocessed era')
     })
 
@@ -72,7 +70,6 @@ export class BlockListenerController {
       this.listnerService.restartUnprocessedTask(ENTITY.ROUND, Number(req.params.roundId))
       res.send('restarted unprocessed round')
     })
-
 
     this.expressApp.get('/restart-balances', (req, res) => {
       this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK_BALANCE)

@@ -9,11 +9,8 @@ const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class DatabaseHelper {
-
-  private _knex: Knex;
-  constructor(
-    knex: Knex,
-  ) {
+  private _knex: Knex
+  constructor(knex: Knex) {
     this._knex = knex
   }
 
@@ -34,5 +31,4 @@ export class DatabaseHelper {
       .onConflict(['entity', 'network_id'])
       .merge()
   }
-
 }

@@ -9,15 +9,12 @@ import { environment } from '@/environment'
 import { IdentityModel } from '@/models/identities.model'
 import { AccountModel } from '@/models/accounts.model'
 import { encodeAccountIdToBlake2 } from '@/utils/crypt'
+import { BalancesModel } from '@/models/balances.model'
 
 const network = { network_id: environment.NETWORK_ID }
 @Service()
 export class IdentityDatabaseHelper {
-
-  constructor(
-    @Inject('knex') private readonly knex: Knex,
-    @Inject('logger') private readonly logger: Logger,
-  ) { }
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
 
   public async findLastEntityId(entity: ENTITY): Promise<number> {
     const lastEntity = await ProcessingStateModel(this.knex)
@@ -43,9 +40,7 @@ export class IdentityDatabaseHelper {
       .merge()
   }
 
-  public async getUnprocessedEvents(
-    row_id?: number
-  ): Promise<Array<EventModel>> {
+  public async getUnprocessedEvents(row_id?: number): Promise<Array<EventModel>> {
     const records = EventModel(this.knex)
       .select()
       .where('section', 'system')
@@ -60,20 +55,61 @@ export class IdentityDatabaseHelper {
     return await records
   }
 
-  public async fixUnprocessedBlake2Accounts(
-    row_id?: number
-  ): Promise<void> {
+  public async fillAccountsByExtrinsics(): Promise<void> {
+    console.log('fillAccountsByExtrinsics', 'START')
+
+    let offset = 0
+    let done = false
+
+    while (!done) {
+      console.log(`fillAccountsByExtrinsics. Processing batch ${environment.BATCH_INSERT_CHUNK_SIZE} : offset : ${offset}`)
+      const query = `
+        WITH RankedSigners AS (
+          SELECT
+              "signer",
+              "block_id",
+              ROW_NUMBER() OVER (PARTITION BY "signer" ORDER BY "block_id") AS rn
+          FROM
+              extrinsics
+        )
+        SELECT "signer", "block_id"
+        FROM RankedSigners
+        WHERE rn = 1
+        LIMIT ${environment.BATCH_INSERT_CHUNK_SIZE}
+        OFFSET ${offset}
+      `
+
+      const data = await this.knex.raw(query)
+
+      if (data.rows.length === 0) {
+        done = true
+      } else {
+        for (const row of data.rows) {
+          console.log({
+            account_id: String(row.signer),
+            created_at_block_id: row.block_id,
+          })
+          await this.saveAccount({
+            account_id: String(row.signer),
+            created_at_block_id: row.block_id,
+          })
+        }
+        offset += environment.BATCH_INSERT_CHUNK_SIZE
+      }
+    }
+    console.log('fillAccountsByExtrinsics', 'DONE')
+  }
+
+  public async fixMissedBlake2HashAccounts(): Promise<void> {
+    let offset = 0
 
     while (true) {
       const records = AccountModel(this.knex)
         .select()
         .whereNull('blake2_hash')
         .orderBy('row_id', 'asc')
+        .offset(offset)
         .limit(environment.BATCH_INSERT_CHUNK_SIZE)
-
-      if (row_id) {
-        records.andWhere('row_id', '>', row_id)
-      }
 
       const accounts = await records
       if (!accounts || !accounts.length) {
@@ -85,13 +121,15 @@ export class IdentityDatabaseHelper {
           event: 'IdentityDatabaseHelper.fixUnprocessedBlake2Accounts',
           message: 'Encode blake2 account',
           account_id: account.account_id,
-          row_id: account.row_id
+          row_id: account.row_id,
         })
 
         await AccountModel(this.knex)
           .update({ blake2_hash: encodeAccountIdToBlake2(account.account_id) })
           .where({ row_id: account.row_id })
       }
+
+      offset += environment.BATCH_INSERT_CHUNK_SIZE
     }
 
     this.logger.info({
@@ -100,6 +138,41 @@ export class IdentityDatabaseHelper {
     })
   }
 
+  public async fixMissedAccountsIdsForBalances(): Promise<void> {
+    let offset = 0
+
+    while (true) {
+      console.log(`fixMissedAccountsIdsForBalances. Processing batch ${environment.BATCH_INSERT_CHUNK_SIZE} : offset : ${offset}`)
+      const balanceChunk = await this.knex('balances')
+        .whereNull('account_id')
+        .whereNotNull('blake2_hash')
+        .offset(offset)
+        .limit(environment.BATCH_INSERT_CHUNK_SIZE)
+
+      if (!balanceChunk || !balanceChunk.length) {
+        break
+      }
+
+      for (const balance of balanceChunk) {
+        const account = await this.getAccountByBlake2Hash(balance.blake2_hash)
+        if (account) {
+          await this.knex('balances').where({ row_id: balance.row_id }).update({ account_id: account.account_id })
+        }
+      }
+
+      offset += environment.BATCH_INSERT_CHUNK_SIZE
+    }
+    this.logger.info({
+      event: 'IdentityDatabaseHelper.fixMissedAccountsIdsForBalances',
+      message: 'All accounts for balances was found',
+    })
+  }
+
+  public async getAccountByBlake2Hash(blake2Hash: string): Promise<AccountModel> {
+    return this.knex('accounts')
+      .where({ blake2_hash: blake2Hash, ...network })
+      .first()
+  }
 
   public async fixHexDisplay(): Promise<void> {
     const hex2str = (hex: string): string => {
@@ -110,10 +183,7 @@ export class IdentityDatabaseHelper {
       return str.replace(/[^a-zA-Z0-9_\-\. ]/g, '').trim()
     }
 
-    const records = await IdentityModel(this.knex)
-      .select(['row_id', 'display'])
-      .orderBy('row_id', 'asc')
-      .limit(50000)
+    const records = await IdentityModel(this.knex).select(['row_id', 'display']).orderBy('row_id', 'asc').limit(50000)
 
     for (const record of records) {
       let newDisplay = ''
@@ -123,36 +193,39 @@ export class IdentityDatabaseHelper {
         newDisplay = hex2str(record.display)
       }
       if (record.display !== newDisplay && newDisplay !== '') {
-        console.log(record.display + ':' + newDisplay)
-        await IdentityModel(this.knex)
-          .update({ display: newDisplay })
-          .where({ row_id: record.row_id })
+        //console.log(record.display + ':' + newDisplay)
+        await IdentityModel(this.knex).update({ display: newDisplay }).where({ row_id: record.row_id })
       }
     }
   }
 
   public async saveAccount(data: AccountModel): Promise<void> {
-    data.blake2_hash = encodeAccountIdToBlake2(data.account_id)
-
     try {
+      data.blake2_hash = encodeAccountIdToBlake2(data.account_id)
+
       await AccountModel(this.knex)
         .insert({ ...data, ...network, row_time: new Date() })
         .onConflict(['account_id', 'network_id'])
         .merge()
     } catch (err) {
-      this.logger.error({ err }, `Failed to save identity enrichment `)
-      throw err
+      this.logger.error({ err }, 'Failed to save identity enrichment')
     }
   }
 
-  public async getUnprocessedExtrinsics(
-    row_id?: number
-  ): Promise<Array<ExtrinsicModel>> {
+  public async getUnprocessedExtrinsics(row_id?: number): Promise<Array<ExtrinsicModel>> {
     const records = ExtrinsicModel(this.knex)
       .select()
       .where('section', 'identity')
       .whereIn('method', [
-        'clearIdentity', 'killIdentity', 'setFields', 'setIdentity', 'addSub', 'quitSub', 'removeSub', 'renameSub', 'setSubs'
+        'clearIdentity',
+        'killIdentity',
+        'setFields',
+        'setIdentity',
+        'addSub',
+        'quitSub',
+        'removeSub',
+        'renameSub',
+        'setSubs',
       ])
       .orderBy('row_id', 'asc')
       .limit(environment.BATCH_INSERT_CHUNK_SIZE)
@@ -194,7 +267,7 @@ export class IdentityDatabaseHelper {
           web: updatedIdentity.web,
           riot: updatedIdentity.riot,
           email: updatedIdentity.email,
-          twitter: updatedIdentity.twitter
+          twitter: updatedIdentity.twitter,
         }
         await this.saveIdentity(childIdentity, true, deep + 1)
       }
@@ -205,8 +278,9 @@ export class IdentityDatabaseHelper {
   }
 
   public async findIdentityByAccountId(
-    accountId: string, parentAccountId: string | null = null,
-    deep = 0
+    accountId: string,
+    parentAccountId: string | null = null,
+    deep = 0,
   ): Promise<IdentityModel | undefined> {
     if (deep > 10) return
     const result = await IdentityModel(this.knex)
@@ -215,7 +289,8 @@ export class IdentityDatabaseHelper {
 
     if (!result && parentAccountId !== null && parentAccountId !== '0') {
       return await this.findIdentityByAccountId(parentAccountId, null, deep + 1)
-    } if (!result) {
+    }
+    if (!result) {
       return undefined
     } else if (result.parent_account_id && result.parent_account_id !== accountId) {
       return await this.findIdentityByAccountId(result.parent_account_id, null, deep + 1)
@@ -223,5 +298,4 @@ export class IdentityDatabaseHelper {
     }
     return result
   }
-
 }

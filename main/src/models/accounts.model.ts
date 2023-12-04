@@ -9,6 +9,7 @@ export type AccountModel = {
   registrar_index?: number
   row_id?: number
   row_time?: Date
+  is_modified?: number
 }
 
 export const AccountModel = (knex: Knex) => knex<AccountModel>('accounts')

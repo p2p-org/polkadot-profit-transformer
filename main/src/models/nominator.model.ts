@@ -8,7 +8,7 @@ export type NominatorModel = {
   value: string
   reward_dest?: string
   reward_account_id?: string
-  block_time: Date
+  block_time?: Date
   row_time?: Date
 }
 

@@ -4,7 +4,7 @@ export type BalancesModel = {
   block_id: number
   account_id?: string
   blake2_hash: string
-  nonce: number;
+  nonce: number
   consumers: number
   providers: number
   sufficients: number
@@ -14,6 +14,7 @@ export type BalancesModel = {
   feeFrozen: bigint
   row_id?: number
   row_time?: Date
+  is_modified?: number
 }
 
 export const BalancesModel = (knex: Knex) => knex<BalancesModel>('balances')

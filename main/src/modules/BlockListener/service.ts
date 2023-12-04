@@ -14,10 +14,10 @@ import { environment } from '@/environment'
 
 @Service()
 export class BlockListenerService {
-
   gracefulShutdownFlag = false
   messagesBeingProcessed = false
   isPaused = false
+  lastBlockId = 0
 
   constructor(
     @Inject('logger') private readonly logger: Logger,
@@ -25,17 +25,20 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
-    const lastBlockIdInProcessingTasks = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
-    this.logger.info({ event: 'BlocksListener.preload', lastBlockIdInProcessingTasks })
+
+    if (!this.lastBlockId) {
+      this.lastBlockId = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
+    }
+    this.logger.info({ event: 'BlocksListener.preload', lastBlockId: this.lastBlockId })
 
     const lastFinalizedBlockId = await this.polkadotHelper.getFinBlockNumber()
     this.logger.info({ event: 'BlocksListener.preload', lastFinalizedBlockId })
 
-    await this.ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: lastFinalizedBlockId })
+    await this.ingestPreloadTasks({ fromBlock: this.lastBlockId + 1, toBlock: lastFinalizedBlockId })
     this.logger.info({ event: 'BlocksListener.preload ingested' })
 
     this.logger.info('preload done, go listening to the new blocks')
@@ -61,7 +64,6 @@ export class BlockListenerService {
   public async restartUnprocessedTasks(entity: ENTITY): Promise<void> {
     let lastEntityId = 0
     while (true) {
-
       const records = await this.tasksRepository.getUnprocessedTasks(entity, lastEntityId)
       if (!records || !records.length) {
         return
@@ -75,13 +77,12 @@ export class BlockListenerService {
       this.logger.info({
         event: 'BlocksListener.restartUnprocessedTasks',
         message: `Preloaded ${environment.BATCH_INSERT_CHUNK_SIZE} tasks to 
-                rabbit queue for processing ${entity}. Last entity id: ${lastEntityId}`
+                rabbit queue for processing ${entity}. Last entity id: ${lastEntityId}`,
       })
 
       await sleep(5000)
     }
   }
-
 
   public async processMetadata(startBlockId: number, endBlockId: number): Promise<void> {
     for (let blockId = startBlockId; blockId <= endBlockId; blockId++) {
@@ -96,16 +97,14 @@ export class BlockListenerService {
       }
       if (await this.tasksRepository.addProcessingTask(task)) {
         await this.sendTaskToToRabbit(ENTITY.BLOCK_METADATA, task)
-      };
+      }
     }
   }
+
   public async restartUnprocessedBlocksMetadata(startBlockId: number, endBlockId: number): Promise<void> {
     let lastBlockId = startBlockId
     while (lastBlockId < endBlockId) {
-
-      console.log(1);
       const records = await this.databaseHelper.getUnprocessedBlocksMetadata(lastBlockId)
-      console.log(records.length);
       if (!records || !records.length) {
         return
       }
@@ -131,7 +130,7 @@ export class BlockListenerService {
       this.logger.info({
         event: 'BlocksListener.restartUnprocessedTasks',
         message: `Preloaded ${environment.BATCH_INSERT_CHUNK_SIZE} tasks to 
-                rabbit queue for processing ${ENTITY.BLOCK_METADATA}. Last block id: ${lastBlockId}. End block id: ${endBlockId}`
+                rabbit queue for processing ${ENTITY.BLOCK_METADATA}. Last block id: ${lastBlockId}. End block id: ${endBlockId}`,
       })
 
       await sleep(100)
@@ -151,7 +150,7 @@ export class BlockListenerService {
       }
       if (await this.tasksRepository.addProcessingTask(task)) {
         await this.sendTaskToToRabbit(ENTITY.BLOCK_BALANCE, task)
-      };
+      }
     }
   }
 
@@ -160,7 +159,7 @@ export class BlockListenerService {
     if (!record) {
       this.logger.error({
         event: 'BlocksListener.restartUnprocessedTask',
-        message: `${entity} with id ${entityId} not found`
+        message: `${entity} with id ${entityId} not found`,
       })
       return
     }
@@ -168,7 +167,7 @@ export class BlockListenerService {
 
     this.logger.info({
       event: 'BlocksListener.restartUnprocessedTask',
-      message: `Send task to rabbit for processing ${entity}. Entity id: ${entityId}`
+      message: `Send task to rabbit for processing ${entity}. Entity id: ${entityId}`,
     })
   }
 
@@ -183,37 +182,48 @@ export class BlockListenerService {
 
   private async newBlock(blockId: number): Promise<void> {
     if (this.messagesBeingProcessed || this.isPaused) return
-    this.logger.debug({ event: 'BlocksListener.preload newFinalizedBlock', newFinalizedBlockId: blockId })
-    const lastBlockIdInProcessingTasks = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
-    this.logger.debug({ event: 'BlocksListener.preload', lastBlockIdInProcessingTasks })
 
-    await this.ingestPreloadTasks({ fromBlock: lastBlockIdInProcessingTasks + 1, toBlock: blockId })
+    this.logger.info({ event: 'BlocksListener.preload newFinalizedBlock', newFinalizedBlockId: blockId })
+    if (!this.lastBlockId) {
+      this.lastBlockId = await this.databaseHelper.findLastEntityId(ENTITY.BLOCK)
+    }
+
+    this.logger.info({ event: 'BlocksListener.preload', lastBlockId: this.lastBlockId })
+    await this.ingestPreloadTasks({ fromBlock: this.lastBlockId + 1, toBlock: blockId })
   }
 
   private async ingestOneBlockTask(task: ProcessingTaskModel<ENTITY.BLOCK>): Promise<void> {
-    await this.tasksRepository.addProcessingTask(task)
+    this.logger.info({ event: 'BlocksListener.ingestOneBlockTask', task })
 
-    await this.sendTaskToToRabbit(ENTITY.BLOCK, {
-      entity_id: task.entity_id,
-      collect_uid: task.collect_uid,
-    })
+    if (await this.tasksRepository.addProcessingTask(task)) {
+      await this.sendTaskToToRabbit(ENTITY.BLOCK, {
+        entity_id: task.entity_id,
+        collect_uid: task.collect_uid,
+      })
 
-    this.logger.debug({
-      event: 'blocks preloader ingestOneBlockTask',
-      task: task,
-    })
+      this.logger.debug({
+        event: 'BlockListenerService.ingestOneBlockTask',
+        task: task,
+      })
+    } else {
+      this.logger.error({
+        event: 'BlockListenerService.ingestOneBlockTask',
+        error: 'Blocks seems has been processed already',
+      })
+    }
   }
 
   private async ingestTasksChunk(tasks: ProcessingTaskModel<ENTITY.BLOCK>[]): Promise<void> {
     try {
       await this.knex
         .transaction(async (trx: Knex.Transaction) => {
-          await this.tasksRepository.batchAddEntities(tasks, trx)
           const updatedLastInsertRecord: ProcessingStateModel<ENTITY> = {
             entity: ENTITY.BLOCK,
             entity_id: tasks.at(-1)!.entity_id,
           }
+          this.lastBlockId = updatedLastInsertRecord.entity_id
           await this.databaseHelper.updateLastTaskEntityId(updatedLastInsertRecord, trx)
+          await this.tasksRepository.batchAddEntities(tasks, trx)
         })
         .then(async () => {
           for (const block of tasks) {
@@ -221,9 +231,13 @@ export class BlockListenerService {
               entity_id: block.entity_id,
               collect_uid: block.collect_uid,
             }
-            // logger.info({ event: 'send data to rabbit', data })
-            await this.sendTaskToToRabbit(ENTITY.BLOCK, data)
-            // logger.info({ event: ' data sent to rabbit', data })
+            this.logger.info({ event: 'send data to rabbit', data })
+
+            //we need to wait 1 sec for RPC sync (block propagation), beacuse block-processor can use different rpc-connection
+            setTimeout(async () => {
+              await this.sendTaskToToRabbit(ENTITY.BLOCK, data)
+            }, 1000)
+            this.logger.info({ event: ' data sent to rabbit', data })
           }
         })
 
@@ -233,7 +247,6 @@ export class BlockListenerService {
         from: tasks[0].entity_id,
         to: tasks[tasks.length - 1].entity_id,
       })
-      //console.log('ingestTasksChunk ingested')
     } catch (error: any) {
       this.logger.error({
         event: 'BlocksListener.ingestTasksChunk',
@@ -276,12 +289,10 @@ export class BlockListenerService {
 
     if (tasks.length) {
       await this.ingestTasksChunk(tasks)
-      await sleep(500)
     }
 
     this.messagesBeingProcessed = false
   }
-
 
   private createTask(id: number): ProcessingTaskModel<ENTITY.BLOCK> {
     const task: ProcessingTaskModel<ENTITY.BLOCK> = {
@@ -296,7 +307,7 @@ export class BlockListenerService {
     return task
   }
 
-  private async sendTaskToToRabbit(entity: ENTITY, record: { collect_uid: string, entity_id: number }): Promise<void> {
+  private async sendTaskToToRabbit(entity: ENTITY, record: { collect_uid: string; entity_id: number }): Promise<void> {
     const rabbitMQ: Rabbit = Container.get('rabbitMQ')
     if (entity === ENTITY.ERA) {
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
@@ -325,6 +336,4 @@ export class BlockListenerService {
       })
     }
   }
-
-
 }
