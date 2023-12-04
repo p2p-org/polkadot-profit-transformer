@@ -81,7 +81,7 @@ export class MoonbeamStakingProcessorService {
     try {
       const { round } = await roundPayoutProcessor.getStakeRound(payoutBlockId)
 
-      // console.log(JSON.stringify(this.stakedValue, null, 2));
+      //console.log(JSON.stringify(roundPayoutProcessor.stakedValue, null, 2));
 
       logger.info({
         event: 'RoundPayoutProcessor.processRoundPayout',
@@ -125,9 +125,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
@@ -273,9 +272,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
