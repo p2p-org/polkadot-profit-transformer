@@ -209,10 +209,10 @@ export class MonitoringService {
 
       await this.sliMetrics.add({ entity: 'queue', name: 'not_processed_count', value: missedTasks.length })
 
-      console.log("environment.RESTART_BLOCKS_URI", environment.RESTART_BLOCKS_URI)
-      console.log("environment.RESTART_ROUNDS_URI", environment.RESTART_ROUNDS_URI)
-      console.log("environment.RESTART_ERAS_URI", environment.RESTART_ERAS_URI)
-      console.log("environment.RESTART_BALANCES_URI", environment.RESTART_BALANCES_URI)
+      console.log('environment.RESTART_BLOCKS_URI', environment.RESTART_BLOCKS_URI)
+      console.log('environment.RESTART_ROUNDS_URI', environment.RESTART_ROUNDS_URI)
+      console.log('environment.RESTART_ERAS_URI', environment.RESTART_ERAS_URI)
+      console.log('environment.RESTART_BALANCES_URI', environment.RESTART_BALANCES_URI)
 
       try {
         if (environment.RESTART_BLOCKS_URI) await needle('get', environment.RESTART_BLOCKS_URI)

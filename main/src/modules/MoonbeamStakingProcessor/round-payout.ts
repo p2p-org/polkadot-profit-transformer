@@ -210,7 +210,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       },
       value,
     ] of atStake) {
-      const { bond, total, delegations, nominators } = this.specVersion < 2600 ? value : value.unwrap();
+      const { bond, total, delegations, nominators } = this.specVersion < 2600 ? value : value.unwrap()
 
       const collatorId = accountId.toHex()
       this.collators.add(collatorId)
