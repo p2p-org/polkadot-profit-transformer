@@ -13,6 +13,13 @@ import { SliMetrics } from '@/loaders/sli_metrics'
 import { Init } from '@polkadot/api/base/Init'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 
+/**
+ * Please check this repo
+ * https://github.com/PureStake/moonbeam.git
+ * 
+ * and test scripts like:
+ * test/suites/smoke/test-staking-round-cleanup.ts
+ */
 @Service()
 export class MoonbeamStakingProcessorService {
   constructor(
@@ -125,9 +132,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
@@ -273,9 +279,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
