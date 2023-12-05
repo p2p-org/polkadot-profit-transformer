@@ -73,7 +73,7 @@ const preEnv = cleanEnv(process.env, {
   NETWORK_ID: num(),
   MODE: str({ choices: Object.values(MODE) }),
   BATCH_INSERT_CHUNK_SIZE: num({ default: 1000 }),
-  MAX_ATTEMPTS: num({ default: 200 }),
+  MAX_ATTEMPTS: num({ default: 100 }),
   PG_SSL_CA_PATH: str({ default: '' }),
   PG_SSL_KEY_PATH: str({ default: '' }),
   PG_SSL_CERT_PATH: str({ default: '' }),
