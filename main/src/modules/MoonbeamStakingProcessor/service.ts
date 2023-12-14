@@ -132,9 +132,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
@@ -260,6 +259,7 @@ export class MoonbeamStakingProcessorService {
             round_id: parseInt(round.id.toString(10), 10),
             account_id: delegator.id,
             collator_id: collator.id,
+            final_amount: delegator.final_amount.toString(10),
             reward: delegator.reward.toString(10),
             payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
             payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
@@ -280,9 +280,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
