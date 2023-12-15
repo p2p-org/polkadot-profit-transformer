@@ -266,4 +266,3 @@ Due to the custom metadata we created the `moonbeam` brahcn in the repo with cha
 In general you can spin up a new process of streamer with changed `SUBSTRATE_URI` in .env
 
 Streamer will see if this network exists in in the `networks` table, if not - new network record will be created, and new data will be stored in the DB with the new `network_id` value.
-
