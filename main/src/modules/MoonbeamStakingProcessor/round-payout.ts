@@ -216,7 +216,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       value,
     ] of atStake) {
       //console.log("VALUE", value)
-      const { bond, total, delegations, nominators } = specVersion < 2600 ? value : value.unwrap()
+      const { bond, total, delegations, nominators } = specVersion >= 2600 && environment.NETWORK !== 'manta' ? value.unwrap : value
       console.log('BOND', bond)
       console.log('total', total)
       console.log('delegations', delegations.length)
@@ -369,7 +369,7 @@ export class MoonbeamStakingProcessorRoundPayout {
         })
       }
 
-      if (specVersion >= 2000) {
+      if (specVersion >= 2000 && environment.NETWORK !== 'manta') {
         // Now orbiters have their own event. To replicate previous behavior,
         // we take the collator associated and mark rewards as if they were
         // to the collator

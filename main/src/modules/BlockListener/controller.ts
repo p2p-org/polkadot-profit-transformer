@@ -35,6 +35,7 @@ export class BlockListenerController {
       this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK)
       res.send('restarted unprocessed')
     })
+
     this.expressApp.get('/process-block/:blockId', async (req, res) => {
       if (isNaN(Number(req.params.blockId))) return res.json({ error: 'blockId must be a number' })
       await this.listnerService.preloadOneBlock(Number(req.params.blockId))
