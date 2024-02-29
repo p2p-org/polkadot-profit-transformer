@@ -6,7 +6,7 @@ import { Logger } from 'pino'
 
 @Service()
 export class MonitoringDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) { }
 
   async removeOldExtrinsicsBody(): Promise<void> {
     const sql = `

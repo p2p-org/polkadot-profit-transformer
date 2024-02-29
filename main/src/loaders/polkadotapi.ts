@@ -11,7 +11,7 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
 
   let typesBundle = {}
   // extra types for moonbeam/moonriver
-  if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
+  if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
     typesBundle = typesBundlePre900
   }
 

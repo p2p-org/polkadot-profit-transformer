@@ -152,7 +152,7 @@ export class MonitoringService {
       })
       return
     }
-    if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
+    if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
       const missedRounds = await this.databaseHelper.getMissedRounds(lastDBBlock.metadata.round_id)
       if (missedRounds && missedRounds.length) {
         this.slackHelper.sendMessage(`Detected missed rounds: ${JSON.stringify(missedRounds)}`)
