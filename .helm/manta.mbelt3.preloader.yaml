@@ -1,0 +1,33 @@
+---
+environment: mbelt3-prod
+chain: manta
+role: preloader
+replicas: 1
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b19fe24d469c7a12fe0f813d71fc9e28279b3f45}
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_manta"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.manta.svc.cluster.local:9934
+  log_level: info
+  network_id: 77
+  mode: LISTENER
+  network: manta
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt3-manta-preloader.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt3-manta-preloader-polka-p2p-world
+    ssl_redirect: true
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

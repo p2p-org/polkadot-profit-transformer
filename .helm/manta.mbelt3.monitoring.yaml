@@ -1,0 +1,30 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: manta
+role: monitoring
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b19fe24d469c7a12fe0f813d71fc9e28279b3f45}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_manta"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.manta.svc.cluster.local:9934
+  restart_blocks_uri: http://mbelt-mbelt3-prod-manta-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
+  restart_rounds_uri: http://mbelt-mbelt3-prod-manta-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
+  restart_balances_uri: http://mbelt-mbelt3-prod-manta-preloader.mbelt3.svc.cluster.local:80/restart-balances
+  log_level: info
+  network_id: 77
+  mode: MONITORING
+  network: manta
+ingress:
+  enabled: false
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
