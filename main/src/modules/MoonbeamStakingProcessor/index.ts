@@ -11,5 +11,5 @@ export default (): void => {
   rabbitMQ.process(QUEUES.Staking, ENTITY.ROUND, serviceInstance)
 
   const logger: Logger = Container.get('logger')
-  logger.info('✌️ MoonbeamStakingProcessor module initialized')
+  logger.info('✌️ MoonbeamStakingProcessor module initialized!')
 }
