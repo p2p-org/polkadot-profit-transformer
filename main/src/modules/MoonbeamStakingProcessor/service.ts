@@ -132,8 +132,9 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
-          } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${
+          (Date.now() - startProcessingTime) / 1000
+        } seconds.`,
       })
 
       await this.sliMetrics.add({
@@ -280,8 +281,9 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
-          } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${
+          (Date.now() - startProcessingTime) / 1000
+        } seconds.`,
       })
 
       await this.sliMetrics.add({

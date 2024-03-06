@@ -5,7 +5,7 @@ role: preloader
 replicas: 1
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 224d4c09a41954a5248f694a40b6cda660472283}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 9db0b312bd10798a6a2484ee206a1db1fff21c1a}
 port: 3000
 metrics:
   enabled: true

@@ -46,11 +46,11 @@ jobs:
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.staking-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.identity-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.balances-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/manta.stage.block-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/manta.stage.preloader.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/manta.stage.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/manta.stage.identity-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/manta.stage.balances-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.block-processor.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.preloader.yaml
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.staking-processor.yaml
