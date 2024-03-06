@@ -11,6 +11,9 @@ import BalancesProcessor from './BalancesProcessor'
 import Monitoring from './Monitoring'
 
 export const ModulesLoader = async (): Promise<void> => {
+  console.log("Mode: ", environment.MODE);
+  console.log("Network: ", environment.NETWORK);
+
   if (environment.MODE === MODE.LISTENER) {
     BlockListener()
   }
