@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: vara
 role: preloader
 replicas: 1
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: bcf0c0a62652d1c357f5ab5d3450448c0a13112b}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 224d4c09a41954a5248f694a40b6cda660472283}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
