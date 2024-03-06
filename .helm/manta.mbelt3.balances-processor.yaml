@@ -1,32 +1,32 @@
 ---
 environment: mbelt3-prod
-replicas: 10
-chain: vara
-role: block-processor
+replicas: 1
+chain: manta
+role: balances-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 1429e28a858961dcc0f4cf6a95120e63bc3492aa}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b19fe24d469c7a12fe0f813d71fc9e28279b3f45}
 port: 3000
 metrics:
   enabled: true
 vault:
   role: "mbelt"
-  secret: "secret/mbelt/mbelt3_vara"
+  secret: "secret/mbelt/mbelt3_manta"
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: wss://archive-rpc.vara-network.io/
+  substrate_uri: ws://substrate-ws-proxy-prod.manta.svc.cluster.local:9934
   log_level: info
-  network_id: 137
-  mode: BLOCK_PROCESSOR
-  network: vara
+  network_id: 77
+  mode: BALANCES_PROCESSOR
+  network: manta
 ingress:
   enabled: true
   class: nginx-external
-  host: mbelt3-vara-block-processor.polka.p2p.world
+  host: mbelt3-manta-balances-processor.polka.p2p.world
   tls:
     cluster_issuer: cloudflare-prod
-    secret: mbelt3-vara-block-processor-polka-p2p-world
+    secret: mbelt3-manta-balances-processor-polka-p2p-world
     ssl_redirect: true
 tolerations:
   - key: cloud.google.com/gke-spot

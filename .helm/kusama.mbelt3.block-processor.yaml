@@ -13,7 +13,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
 additional_args:
-  - "--max_old_space_size=1000"
+  - "--max_old_space_size=8192"
 env:
   substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
   log_level: info

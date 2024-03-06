@@ -1,6 +1,5 @@
 import { ConfirmChannel, ConsumeMessage } from 'amqplib'
 import AmqpConnectionManager from 'amqp-connection-manager'
-//import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/esm/AmqpConnectionManager'
 import { environment } from '@/environment'
 import { logger } from '@/loaders/logger'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'

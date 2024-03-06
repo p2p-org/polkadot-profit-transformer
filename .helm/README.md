@@ -74,4 +74,12 @@ helm diff upgrade --install mbelt-stage-moonriver-preloader .helm -f .helm/moonr
 helm diff upgrade --install mbelt-stage-moonriver-block-processor .helm -f .helm/moonriver.stage.block-processor.yaml -n mbelt-stage
 ### Staking processor
 helm diff upgrade --install mbelt-stage-moonriver-staking-processor .helm -f .helm/moonriver.stage.staking-processor.yaml -n mbelt-stage
+
+# Manta
+helm diff upgrade --install mbelt3-manta-balances-processor .helm -f .helm/manta.mbelt3.balances-processor.yaml -n mbelt3
+helm diff upgrade --install mbelt3-manta-block-processor .helm -f .helm/manta.mbelt3.block-processor.yaml -n mbelt3
+helm diff upgrade --install mbelt3-manta-identity-processor .helm -f .helm/manta.mbelt3.identity-processor.yaml -n mbelt3
+helm diff upgrade --install mbelt3-manta-monitoring .helm -f .helm/manta.mbelt3.monitoring.yaml -n mbelt3
+helm diff upgrade --install mbelt3-manta-preloader .helm -f .helm/manta.mbelt3.preloader.yaml -n mbelt3
+helm diff upgrade --install mbelt3-manta-staking-processor .helm -f .helm/manta.mbelt3.staking-processor.yaml -n mbelt3
 ```

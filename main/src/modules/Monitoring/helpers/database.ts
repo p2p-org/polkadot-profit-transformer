@@ -8,30 +8,15 @@ import { Logger } from 'pino'
 export class MonitoringDatabaseHelper {
   constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) { }
 
-  /*
-  async roateOldRecords(): Promise<void> {
-    const tableNames = await this.knex.raw("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
-    tableNames.rows
-      .map((row: any) => row.table_name)
-      .forEach(async (tableName: string) => {
-        if (tableName !== 'processing_state' && tableName !== 'networks') {
-          await this.knex.raw(`DELETE FROM ${tableName} WHERE row_time < NOW() - INTERVAL '1 month'; `)
-          this.logger.info({
-            event: 'MonitoringDatabaseHelper.roateOldRecords',
-            message: `Delete old records for table ${tableName}`,
-            sql: `DELETE FROM ${tableName} WHERE row_time < NOW() - INTERVAL '1 month'; `,
-          })
-        }
-      })
-
-    console.log(tableNames)
-  }
-  */
-
   async removeOldExtrinsicsBody(): Promise<void> {
-    await this.knex.raw(
-      "UPDATE extrinsics SET extrinsic = NULL WHERE row_time < NOW() - INTERVAL '1 month' AND row_time >  NOW() - INTERVAL '1 month' - INTERVAL '1 day'",
-    )
+    const sql = `
+      UPDATE extrinsics 
+      SET extrinsic = NULL 
+      WHERE
+        network_id=${environment.NETWORK_ID}
+        AND row_time < NOW() - INTERVAL '1 month'
+        AND row_time >  NOW() - INTERVAL '1 month' - INTERVAL '1 day'`
+    await this.knex.raw(sql)
   }
 
   async getLastBlock(): Promise<BlockModel> {
@@ -47,9 +32,14 @@ export class MonitoringDatabaseHelper {
 
   async getDublicatesBlocks(): Promise<Array<any>> {
     const sql = `
-      SELECT block_id, count(block_id) as count_id
-      FROM blocks
-      WHERE network_id=${environment.NETWORK_ID}
+      SELECT block_id, COUNT(block_id) as count_id
+      FROM (
+          SELECT block_id
+          FROM blocks
+          WHERE network_id=${environment.NETWORK_ID}
+          ORDER BY block_id DESC
+          LIMIT 10000
+      ) AS latest_blocks
       GROUP BY block_id
       HAVING COUNT(*) > 1
       LIMIT 10`
@@ -95,9 +85,11 @@ export class MonitoringDatabaseHelper {
     const missedTasksSQL = `
       SELECT entity, entity_id 
       FROM processing_tasks pt 
-      WHERE status='not_processed' 
+      WHERE 
+        network_id=${environment.NETWORK_ID}
+        AND status='not_processed' 
         AND finish_timestamp is null 
-        AND start_timestamp < NOW() - INTERVAL '1 HOUR'
+        AND start_timestamp < NOW() - INTERVAL '1 DAY'
       LIMIT 10`
     const missedTasksRows = await this.knex.raw(missedTasksSQL)
     return missedTasksRows.rows
