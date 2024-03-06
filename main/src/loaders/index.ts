@@ -50,5 +50,5 @@ export default async (): Promise<void> => {
   logger.info('✌️ Express loaded')
 
   ModulesLoader()
-  logger.info('✌️ Modules loaded')
+  logger.info('✌️ Modules loaded!')
 }
