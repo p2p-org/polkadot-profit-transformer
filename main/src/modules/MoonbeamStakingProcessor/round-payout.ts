@@ -215,7 +215,8 @@ export class MoonbeamStakingProcessorRoundPayout {
       },
       value,
     ] of atStake) {
-      //console.log("VALUE", value)
+      console.log("VALUE", value)
+      console.log("specVersion", specVersion)
       const { bond, total, delegations, nominators } =
         specVersion >= 2600 && environment.NETWORK !== 'manta' ? value.unwrap : value
       console.log('BOND', bond)
