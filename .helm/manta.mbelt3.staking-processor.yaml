@@ -2,7 +2,7 @@
 environment: mbelt3-prod
 chain: manta
 role: staking-processor
-replicas: 1
+replicas: 10
 limits: {cpu: 450m, memory: 1000Mi}
 requests: {cpu: 350m, memory: 1000Mi}
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: c81e4c6c6900184890a520a3f077182271c2ab36}
