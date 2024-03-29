@@ -5,7 +5,7 @@ chain: manta
 role: identity-processor
 limits: {cpu: 250m, memory: 200Mi}
 requests: {cpu: 150m, memory: 200Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: c81e4c6c6900184890a520a3f077182271c2ab36}
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b6fa5896502a6d09ce7dcd97222b421316f1b8f0}
 port: 3000
 metrics:
   enabled: true
