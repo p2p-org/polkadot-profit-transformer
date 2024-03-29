@@ -158,7 +158,7 @@ export class MoonbeamStakingProcessorRoundPayout {
 
     // get the collators to be awarded via `awardedPts` storage
     const awardedCollators = (await apiAtPriorRewarded.query.parachainStaking.awardedPts.keys(originalRoundNumber)).map(
-      (awarded: any) => awarded.args[1].toHex(),
+      (awarded: any) => this.getAccountFormatted(awarded.args[1]),
     )
     const awardedCollatorCount = awardedCollators.length
 
@@ -228,7 +228,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       console.log('delegations', delegations.length)
       //console.log("nominators", nominators.length)
 
-      const collatorId = accountId.toHex()
+      const collatorId = this.getAccountFormatted(accountId)
       this.collators.add(collatorId)
       const points: u32 = (await apiAtOriginal.query.parachainStaking.awardedPts(roundNumber, accountId)) as u32
 
@@ -249,16 +249,16 @@ export class MoonbeamStakingProcessorRoundPayout {
 
         if (topDelegations) {
           for (const d of topDelegations) {
-            topDelegationsSet.add(d.owner.toHex())
+            topDelegationsSet.add(this.getAccountFormatted(d.owner))
           }
         }
       }
       if (delegations) {
         for (const { owner, amount } of delegations) {
-          if (apiAtOriginalPrior.query.parachainStaking.topDelegations && !topDelegationsSet.has(owner.toHex())) {
+          if (apiAtOriginalPrior.query.parachainStaking.topDelegations && !topDelegationsSet.has(this.getAccountFormatted(owner))) {
             continue
           }
-          const id = owner.toHex()
+          const id = this.getAccountFormatted(owner)
           this.delegators.add(id)
           collatorInfo.delegators[id] = {
             id,
@@ -270,7 +270,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       }
       if (nominators) {
         for (const { owner, amount } of nominators) {
-          const id = owner.toHex()
+          const id = this.getAccountFormatted(owner)
           this.delegators.add(id)
           collatorInfo.delegators[id] = {
             id,
@@ -302,7 +302,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       const processDelegators = async (delegatorId: string, cb: any): Promise<void> => {
         const zeroDelegator: any = await apiAtOriginalPrior.query.parachainStaking.delegatorState(delegatorId)
         zeroDelegator.unwrap().delegations.forEach((delegation: any) => {
-          const collatorId = delegation.owner.toHex()
+          const collatorId = this.getAccountFormatted(delegation.owner)
           if (this.stakedValue[collatorId] && this.stakedValue[collatorId].delegators[delegatorId]) {
             this.stakedValue[collatorId].delegators[delegatorId].amount = delegation.amount
           }
@@ -329,6 +329,14 @@ export class MoonbeamStakingProcessorRoundPayout {
     })
   }
 
+  getAccountFormatted(account: any): string {
+    if (environment.NETWORK === 'manta') {
+      return account.toString();
+    } else {
+      return account.toHex();
+    }
+  }
+
   async getRewardedFromEventsAtBlock(rewardedBlockNumber: BN): Promise<void> {
     const nowRoundRewardBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(rewardedBlockNumber)
     const apiAtBlock = await this.api.at(nowRoundRewardBlockHash)
@@ -351,13 +359,13 @@ export class MoonbeamStakingProcessorRoundPayout {
         continue
       }
 
-      if (!rewards[event.data[0].toHex()]) {
-        rewards[event.data[0].toHex()] = []
+      if (!rewards[this.getAccountFormatted(event.data[0])]) {
+        rewards[this.getAccountFormatted(event.data[0])] = []
       }
 
       if (phase.isInitialization && apiAtBlock.events.parachainStaking.Rewarded.is(event)) {
-        rewards[event.data[0].toHex()].push({
-          account: event.data[0].toHex(),
+        rewards[this.getAccountFormatted(event.data[0])].push({
+          account: this.getAccountFormatted(event.data[0]),
           amount: event.data[1] as u128,
         })
       }
@@ -368,9 +376,9 @@ export class MoonbeamStakingProcessorRoundPayout {
         apiAtBlock.events.parachainStaking.DelegatorDueReward &&
         apiAtBlock.events.parachainStaking.DelegatorDueReward.is(event)
       ) {
-        rewards[event.data[0].toHex()].push({
-          account: event.data[0].toHex(),
-          collator_id: event.data[1].toHex(),
+        rewards[this.getAccountFormatted(event.data[0])].push({
+          account: this.getAccountFormatted(event.data[0]),
+          collator_id: this.getAccountFormatted(event.data[1]),
           amount: event.data[2] as u128,
         })
       }
