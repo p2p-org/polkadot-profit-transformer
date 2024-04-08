@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 7
 chain: manta
 role: block-processor
 limits: {cpu: 450m, memory: 1000Mi}
