@@ -132,9 +132,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
@@ -197,6 +196,7 @@ export class MoonbeamStakingProcessorService {
         runtime: roundPayoutProcessor.specVersion,
       })
 
+      /*
       await this.databaseHelper.saveRound(trx, {
         round_id: parseInt(round.id.toString(10), 10),
         payout_block_id: round.payoutBlockId,
@@ -240,6 +240,7 @@ export class MoonbeamStakingProcessorService {
           payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
         })
       }
+      */
 
       //rewards only
       await this.databaseHelper.saveRewardsRound(trx, {
@@ -281,9 +282,8 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${
-          (Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
+          } seconds.`,
       })
 
       await this.sliMetrics.add({
