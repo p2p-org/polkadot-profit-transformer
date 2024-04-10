@@ -4,7 +4,7 @@ additional_args: []
 
 streamers:
   - name: polkadot
-    image: { repository: eu.gcr.io/substrate-infra/mbelt2_streamer, tag: v1.0.0 }
+    image: { repository: europe-docker.pkg.dev/substrate-infra/images/mbelt2_streamer, tag: v1.0.0 }
     limits: { cpu: 700m, memory: 2Gi }
     requests: { cpu: 500m, memory: 2Gi }
     port: 3000
