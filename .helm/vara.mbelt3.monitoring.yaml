@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 0
+replicas: 1
 chain: vara
 role: monitoring
 image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: b6fa5896502a6d09ce7dcd97222b421316f1b8f0}
@@ -13,7 +13,10 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_vara"
 env:
-  substrate_uri: wss://archive-rpc.vara-network.io/
+  substrate_uri: wss://archive-rpc.vara-network.io/  
+  restart_blocks_uri: http://mbelt-mbelt3-prod-vara-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
+  restart_rounds_uri: http://mbelt-mbelt3-prod-vara-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
+  restart_balances_uri: http://mbelt-mbelt3-prod-vara-preloader.mbelt3.svc.cluster.local:80/restart-balances
   log_level: info
   network_id: 137
   mode: MONITORING
