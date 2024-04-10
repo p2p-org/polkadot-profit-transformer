@@ -201,12 +201,12 @@ export class BlocksProcessorService {
     const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
     await this.sliMetrics.add({ entity: 'block', entity_id: blockId, name: 'memory_usage_mb', value: memorySize })
 
-
-    if (environment.NETWORK === 'polkadot' || 
-        environment.NETWORK === 'kusama' ||
-        environment.NETWORK === 'moonbeam' || 
-        environment.NETWORK === 'moonriver' ) 
-    {
+    if (
+      environment.NETWORK === 'polkadot' ||
+      environment.NETWORK === 'kusama' ||
+      environment.NETWORK === 'moonbeam' ||
+      environment.NETWORK === 'moonriver'
+    ) {
       const newBalancesProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
         entity: ENTITY.BLOCK_BALANCE,
         entity_id: blockId,

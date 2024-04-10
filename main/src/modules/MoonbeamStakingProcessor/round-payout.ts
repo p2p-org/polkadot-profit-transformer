@@ -220,7 +220,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       } catch (e) {
         //console.log("VALUE", value)
       }
-      console.log("specVersion", specVersion)
+      console.log('specVersion', specVersion)
       const { bond, total, delegations, nominators } =
         specVersion >= 2600 && environment.NETWORK !== 'manta' ? value.unwrap() : value
       console.log('BOND', bond)
@@ -255,7 +255,10 @@ export class MoonbeamStakingProcessorRoundPayout {
       }
       if (delegations) {
         for (const { owner, amount } of delegations) {
-          if (apiAtOriginalPrior.query.parachainStaking.topDelegations && !topDelegationsSet.has(this.getAccountFormatted(owner))) {
+          if (
+            apiAtOriginalPrior.query.parachainStaking.topDelegations &&
+            !topDelegationsSet.has(this.getAccountFormatted(owner))
+          ) {
             continue
           }
           const id = this.getAccountFormatted(owner)
@@ -331,9 +334,9 @@ export class MoonbeamStakingProcessorRoundPayout {
 
   getAccountFormatted(account: any): string {
     if (environment.NETWORK === 'manta') {
-      return account.toString();
+      return account.toString()
     } else {
-      return account.toHex();
+      return account.toHex()
     }
   }
 
