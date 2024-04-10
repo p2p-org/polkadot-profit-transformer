@@ -5,7 +5,7 @@ role: gear-smartcontracts-processor
 replicas: 0
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: b6fa5896502a6d09ce7dcd97222b421316f1b8f0}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: b594e0cb580a8773eea8dd340ae23d5ea386bf9a}
 port: 3000
 metrics:
   enabled: true
