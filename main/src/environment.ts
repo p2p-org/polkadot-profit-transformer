@@ -21,6 +21,7 @@ export enum MODE {
 
 export type Environment = {
   SLACK_WEBHOOK?: string
+  OPSGENIE_KEY?: string
   PG_CONNECTION_STRING?: string
   PG_HOST?: string
   PG_PORT?: number
@@ -54,6 +55,7 @@ export type Environment = {
 
 const preEnv = cleanEnv(process.env, {
   SLACK_WEBHOOK: url({ default: '' }),
+  OPSGENIE_KEY: str(),
   PG_CONNECTION_STRING: url({ default: '' }),
   PG_SSL_ENABLED: bool({ default: true }),
   GOOGLE_BIGQUERY_DATASET: str({ default: '' }),
