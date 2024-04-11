@@ -2,7 +2,6 @@ import { Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { environment } from '@/environment'
 
-import { EraModel } from '@/models/era.model'
 import { ValidatorModel } from '@/models/validator.model'
 import { NominatorModel } from '@/models/nominator.model'
 
@@ -18,7 +17,7 @@ const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class PolkadotStakingProcessorDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex) {}
+  constructor(@Inject('knex') private readonly knex: Knex) { }
 
   async saveValidators(trx: Knex.Transaction<any, any[]>, validator: ValidatorModel): Promise<void> {
     await ValidatorModel(this.knex)
@@ -30,12 +29,6 @@ export class PolkadotStakingProcessorDatabaseHelper {
     await NominatorModel(this.knex)
       .transacting(trx)
       .insert({ ...nominator, ...network, row_time: new Date() })
-  }
-
-  async saveEra(trx: Knex.Transaction<any, any[]>, era: EraModel): Promise<void> {
-    await EraModel(this.knex)
-      .transacting(trx)
-      .insert({ ...era, ...network, row_time: new Date() })
   }
 
   async saveStakeValidators(trx: Knex.Transaction<any, any[]>, validator: StakeValidatorModel): Promise<void> {

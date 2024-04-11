@@ -55,7 +55,7 @@ export type Environment = {
 
 const preEnv = cleanEnv(process.env, {
   SLACK_WEBHOOK: url({ default: '' }),
-  OPSGENIE_KEY: str(),
+  OPSGENIE_KEY: str({ default: '' }),
   PG_CONNECTION_STRING: url({ default: '' }),
   PG_SSL_ENABLED: bool({ default: true }),
   GOOGLE_BIGQUERY_DATASET: str({ default: '' }),
