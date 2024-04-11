@@ -3,7 +3,8 @@ import { Logger } from 'pino'
 import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
 import { BlockHash, Exposure, ValidatorPrefs } from '@polkadot/types/interfaces'
-import { EraModel } from '@/models/era.model'
+import { StakeEraModel } from '@/models/stake_era.model'
+import { RewardEraModel } from '@/models/reward_era.model'
 import { IBlockEraParams, IGetValidatorsNominatorsResult, TBlockHash } from '../interfaces'
 import { NominatorModel } from '@/models/nominator.model'
 import { ValidatorModel } from '@/models/validator.model'
@@ -16,7 +17,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) {}
+  ) { }
 
   async getValidatorsAndNominatorsStake(args: {
     eraId: number
@@ -235,7 +236,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   async getEraDataStake({
     eraId,
     blockHash,
-  }: IBlockEraParams): Promise<Omit<EraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward'>> {
+  }: IBlockEraParams): Promise<Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>> {
     this.logger.debug({ getEraData: { eraId, blockHash } })
     const [totalStake, sessionStart] = await Promise.all([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
@@ -254,7 +255,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   async getEraDataRewards({
     eraId,
     blockHash,
-  }: IBlockEraParams): Promise<Omit<EraModel, 'payout_block_id' | 'total_stake' | 'session_start'>> {
+  }: IBlockEraParams): Promise<Omit<RewardEraModel, 'payout_block_id' | 'total_stake' | 'session_start'>> {
     this.logger.debug({ getEraData: { eraId, blockHash } })
     const [totalReward, erasRewardPoints] = await Promise.all([
       this.polkadotApi.query.staking.erasValidatorReward.at(blockHash, eraId),

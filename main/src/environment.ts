@@ -55,7 +55,7 @@ export type Environment = {
 
 const preEnv = cleanEnv(process.env, {
   SLACK_WEBHOOK: url({ default: '' }),
-  OPSGENIE_KEY: str(),
+  OPSGENIE_KEY: str({ default: '' }),
   PG_CONNECTION_STRING: url({ default: '' }),
   PG_SSL_ENABLED: bool({ default: true }),
   GOOGLE_BIGQUERY_DATASET: str({ default: '' }),
@@ -89,7 +89,6 @@ const preEnv = cleanEnv(process.env, {
 
 const parseModeEnum = (env: typeof preEnv) => {
   const mode: MODE = env.MODE
-  //env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
   const nodeEnv: NODE_ENV = env.NODE_ENV === 'development' ? NODE_ENV.DEVELOPMENT : NODE_ENV.PRODUCTION
   return { ...env, MODE: mode, NODE_ENV: nodeEnv }
 }

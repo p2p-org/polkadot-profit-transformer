@@ -6,7 +6,7 @@ import { Logger } from 'pino'
 
 @Service()
 export class MonitoringDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) { }
 
   async removeOldExtrinsicsBody(): Promise<void> {
     const sql = `
@@ -61,7 +61,7 @@ export class MonitoringDatabaseHelper {
     if (!lastRoundId) return []
     const missedRoundsSQL = `
       SELECT generate_series(3, ${lastRoundId - 3}) as missing_round except 
-      SELECT round_id FROM rounds WHERE network_id=${environment.NETWORK_ID}
+      SELECT round_id FROM rewards_eras WHERE network_id=${environment.NETWORK_ID}
       ORDER BY missing_round
       LIMIT 10`
     const missedRoundsRows = await this.knex.raw(missedRoundsSQL)
@@ -74,7 +74,7 @@ export class MonitoringDatabaseHelper {
     const missedErasSQL = `
       SELECT generate_series(${startEra}, ${lastEraId - 2}) as missing_era 
       EXCEPT
-        SELECT era_id FROM eras WHERE network_id=${environment.NETWORK_ID} 
+        SELECT era_id FROM rewards_eras WHERE network_id=${environment.NETWORK_ID} 
       ORDER BY missing_era
       LIMIT 10`
     const missedErasRows = await this.knex.raw(missedErasSQL)

@@ -3,7 +3,7 @@ environment: mbelt3-prod
 replicas: 1
 chain: vara
 role: monitoring
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: b594e0cb580a8773eea8dd340ae23d5ea386bf9a}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 345554aca97aa8ec2b40f22103e00ca8aa01bbfa}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000

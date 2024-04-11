@@ -4,7 +4,6 @@ import { v4 } from 'uuid'
 import { QUEUES } from '@/loaders/rabbitmq'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { Logger } from 'pino'
-import { EraModel } from '@/models/era.model'
 import { PolkadotStakingProcessorDatabaseHelper } from './helpers/database'
 import { PolkadotStakingProcessorPolkadotHelper } from './helpers/polkadot'
 import { SliMetrics } from '@/loaders/sli_metrics'
@@ -17,7 +16,7 @@ export class PolkadotStakingProcessorService {
 
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
-  ) {}
+  ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: eraId, collect_uid } = taskRecord
@@ -145,7 +144,7 @@ export class PolkadotStakingProcessorService {
         payoutBlockTime,
       })
 
-      await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
+      //await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
 
       for (const validator of validators) {
         await this.databaseHelper.saveValidators(trx, { ...validator, block_time: new Date(payoutBlockTime) })
