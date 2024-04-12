@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: vara
 role: preloader
 replicas: 1
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 594e1191aedfa761a7b4023f76ffe306fc563f1e}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 345554aca97aa8ec2b40f22103e00ca8aa01bbfa}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
