@@ -4,7 +4,7 @@ export type StakeRoundModel = {
   round_id: number
   start_block_id: number
   start_block_time?: Date
-  total_stake: string
+  total_stake: bigint
   collators_count: number
   runtime: number
   row_time?: Date

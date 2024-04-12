@@ -67,7 +67,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     })
 
     // calculate reward amounts
-    const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
+    //const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
 
     return {
       round: {
@@ -76,7 +76,7 @@ export class MoonbeamStakingProcessorRoundPayout {
         payoutBlockTime: originalRoundBlockTime,
         startBlockId: originalRoundBlock.toNumber(),
         startBlockTime: originalRoundBlockTime,
-        totalStaked,
+        //totalStaked,
         totalPoints: new BN(0),
       },
     }
@@ -153,7 +153,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     })
 
     // calculate reward amounts
-    const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
+    //const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
     const totalPoints: any = await apiAtPriorRewarded.query.parachainStaking.points(originalRoundNumber)
 
     // get the collators to be awarded via `awardedPts` storage
@@ -193,7 +193,7 @@ export class MoonbeamStakingProcessorRoundPayout {
         startBlockId: originalRoundBlock.toNumber(),
         startBlockTime: originalRoundBlockTime,
         totalPoints,
-        totalStaked,
+        //totalStaked,
       },
     }
   }

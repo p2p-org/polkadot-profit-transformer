@@ -58,6 +58,7 @@ export class MonitoringSlackHelper {
   }
 
   private clearOldTimestamps(): void {
+    if (!this.callTimestamps.length) return
     const currentTime = Date.now()
     this.callTimestamps = this.callTimestamps.filter((timestamp) => currentTime - timestamp <= 30 * 60 * 1000)
   }
