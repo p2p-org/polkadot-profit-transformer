@@ -17,7 +17,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  ) {}
 
   async getValidatorsAndNominatorsStake(args: {
     eraId: number
@@ -236,7 +236,9 @@ export class PolkadotStakingProcessorPolkadotHelper {
   async getEraDataStake({
     eraId,
     blockHash,
-  }: IBlockEraParams): Promise<Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>> {
+  }: IBlockEraParams): Promise<
+    Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>
+  > {
     this.logger.debug({ getEraData: { eraId, blockHash } })
     const [totalStake, sessionStart] = await Promise.all([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
