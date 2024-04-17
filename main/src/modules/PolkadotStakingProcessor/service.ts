@@ -16,7 +16,7 @@ export class PolkadotStakingProcessorService {
 
     private readonly polkadotHelper: PolkadotStakingProcessorPolkadotHelper,
     private readonly databaseHelper: PolkadotStakingProcessorDatabaseHelper,
-  ) {}
+  ) { }
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: eraId, collect_uid } = taskRecord
@@ -145,7 +145,7 @@ export class PolkadotStakingProcessorService {
       })
 
       //await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
-
+      /*
       for (const validator of validators) {
         await this.databaseHelper.saveValidators(trx, { ...validator, block_time: new Date(payoutBlockTime) })
       }
@@ -153,6 +153,7 @@ export class PolkadotStakingProcessorService {
       for (const nominator of nominators) {
         await this.databaseHelper.saveNominators(trx, { ...nominator, block_time: new Date(payoutBlockTime) })
       }
+      */
 
       //rewards only
       await this.databaseHelper.saveRewardEra(trx, {

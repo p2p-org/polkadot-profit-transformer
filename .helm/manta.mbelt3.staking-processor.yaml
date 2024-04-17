@@ -5,7 +5,7 @@ role: staking-processor
 replicas: 1
 limits: {cpu: 450m, memory: 1000Mi}
 requests: {cpu: 350m, memory: 1000Mi}
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: ebec17124672222379d543a58315f5a62e459bfa}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 5daf68afa2443cd2dc5eacb54bc2eac8d005fd91}
 port: 3000
 metrics:
   enabled: true
