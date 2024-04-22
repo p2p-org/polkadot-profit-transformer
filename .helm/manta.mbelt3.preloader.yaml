@@ -3,7 +3,7 @@ environment: mbelt3-prod
 chain: manta
 role: preloader
 replicas: 1
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: ebec17124672222379d543a58315f5a62e459bfa}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 5daf68afa2443cd2dc5eacb54bc2eac8d005fd91}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
 port: 3000
