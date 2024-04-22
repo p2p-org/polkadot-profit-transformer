@@ -350,7 +350,7 @@ CREATE TABLE IF NOT EXISTS rewards_validators (
     "active" BOOL,
     "nominators_count" INT,
     "reward_points" INT,
-    "reward_dest" VARCHAR (50),
+    "reward_dest" VARCHAR (150),
     "reward_account_id" VARCHAR (150),
     "row_id" SERIAL,
     "row_time" TIMESTAMP,

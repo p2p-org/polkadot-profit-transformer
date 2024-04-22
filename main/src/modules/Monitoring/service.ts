@@ -11,6 +11,7 @@ import needle from 'needle'
 
 @Service()
 export class MonitoringService {
+  private latestRunime: number | undefined = 0
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
@@ -28,6 +29,9 @@ export class MonitoringService {
     })
     cron.schedule('*/5 * * * *', async () => {
       this.checkBlocksSync()
+    })
+    cron.schedule('*/5 * * * *', async () => {
+      this.checkRuntime()
     })
     cron.schedule('0 * * * *', async () => {
       this.checkMissingRounds()
@@ -93,6 +97,23 @@ export class MonitoringService {
         message: 'Problems with records rotation',
       })
     }
+  }
+
+  public async checkRuntime(): Promise<void> {
+    const lastDBBlock = await this.databaseHelper.getLastBlock()
+    const currentRuntime = lastDBBlock?.metadata?.runtime
+
+    this.logger.info({
+      event: 'MonitoringService.checkRuntime',
+      message: `Runtime has been changed. Previous Runtime ${this.latestRunime}. Current runtime ${currentRuntime}`,
+    })
+
+    if (this.latestRunime !== 0 && this.latestRunime !== currentRuntime) {
+      this.slackHelper.sendMessage(
+        `Runtime has been changed. Previous Runtime ${this.latestRunime}. Current runtime ${currentRuntime}`,
+      )
+    }
+    this.latestRunime = currentRuntime
   }
 
   public async checkBlocksSync(): Promise<void> {
