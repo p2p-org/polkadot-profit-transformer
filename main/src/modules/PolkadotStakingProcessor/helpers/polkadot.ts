@@ -2,7 +2,7 @@ import { Inject, Service } from 'typedi'
 import { Logger } from 'pino'
 import { ApiPromise } from '@polkadot/api'
 import '@polkadot/api-augment'
-import { BlockHash, Exposure, ValidatorPrefs } from '@polkadot/types/interfaces'
+import { BlockHash, Exposure, ValidatorPrefs, RewardDestination } from '@polkadot/types/interfaces'
 import { StakeEraModel } from '@/models/stake_era.model'
 import { RewardEraModel } from '@/models/reward_era.model'
 import { IBlockEraParams, IGetValidatorsNominatorsResult, TBlockHash } from '../interfaces'
@@ -197,11 +197,50 @@ export class PolkadotStakingProcessorPolkadotHelper {
     blockHash: TBlockHash,
     eraId: number,
     validatorAccountId: string,
+  ): Promise<[any, Exposure, ValidatorPrefs]> {
+    const apiAtBlock = await this.polkadotApi.at(blockHash)
+    const runtime: any = await apiAtBlock.query.system.lastRuntimeUpgrade()
+    if (runtime.unwrap().specVersion.toNumber() >= 1002000) {
+      return this.getStakersInfoNew(apiAtBlock, eraId, validatorAccountId)
+    } else {
+      return this.getStakersInfoOld(apiAtBlock, eraId, validatorAccountId)
+    }
+  }
+
+  async getStakersInfoNew(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, Exposure, ValidatorPrefs]> {
+    const [_overview, stakingClipped, prefs] = await Promise.all([
+      apiAtBlock.query.staking.erasStakersOverview(eraId, validatorAccountId),
+      apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
+      apiAtBlock.query.staking.erasValidatorPrefs(eraId, validatorAccountId),
+    ])
+
+    const overview: any = _overview.toJSON()
+    const others: any = []
+    for (let page = 0; page <= overview?.pageCount; page++) {
+      const _staking: any = await apiAtBlock.query.staking.erasStakersPaged(eraId, validatorAccountId, page)
+      const staking = _staking.toJSON()
+      if (staking && staking.others && staking.others.length) {
+        staking.others.forEach((item: any) => {
+          others.push({
+            who: item.who,
+            value: BigInt(item.value),
+          })
+        })
+      }
+    }
+
+    return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, stakingClipped, prefs]
+  }
+
+  async getStakersInfoOld(
+    apiAtBlock: any,
+    eraId: number,
+    validatorAccountId: string,
   ): Promise<[Exposure, Exposure, ValidatorPrefs]> {
     const [staking, stakingClipped, prefs] = await Promise.all([
-      this.polkadotApi.query.staking.erasStakers.at(blockHash, eraId, validatorAccountId),
-      this.polkadotApi.query.staking.erasStakersClipped.at(blockHash, eraId, validatorAccountId),
-      this.polkadotApi.query.staking.erasValidatorPrefs.at(blockHash, eraId, validatorAccountId),
+      apiAtBlock.query.staking.erasStakers(eraId, validatorAccountId),
+      apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
+      apiAtBlock.query.staking.erasValidatorPrefs(eraId, validatorAccountId),
     ])
 
     return [staking, stakingClipped, prefs]
@@ -214,7 +253,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     reward_dest?: string
     reward_account_id?: string
   }> {
-    const payee = await this.polkadotApi.query.staking.payee.at(blockHash, accountId)
+    const payee: RewardDestination = await this.polkadotApi.query.staking.payee.at(blockHash, accountId)
     let reward_dest
     let reward_account_id
     if (payee) {
