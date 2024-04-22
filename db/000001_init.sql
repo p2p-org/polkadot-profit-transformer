@@ -363,7 +363,7 @@ CREATE TABLE IF NOT EXISTS rewards_nominators (
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
     "is_clipped" BOOL,
-    "reward_dest" VARCHAR (50),
+    "reward_dest" VARCHAR (150),
     "reward_account_id" VARCHAR (150),
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
