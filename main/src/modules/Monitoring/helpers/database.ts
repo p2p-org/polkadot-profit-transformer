@@ -89,6 +89,7 @@ export class MonitoringDatabaseHelper {
         network_id=${environment.NETWORK_ID}
         AND status='not_processed' 
         AND finish_timestamp is null 
+        AMD attempts < 10
         AND start_timestamp < NOW() - INTERVAL '1 DAY'
       LIMIT 10`
     const missedTasksRows = await this.knex.raw(missedTasksSQL)

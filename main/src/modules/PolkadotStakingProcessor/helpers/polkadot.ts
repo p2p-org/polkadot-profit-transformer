@@ -49,9 +49,11 @@ export class PolkadotStakingProcessorPolkadotHelper {
           nominators.push({
             account_id: who.toString(),
             value: value.toString(),
-            is_clipped: !!othersClipped.find((e: { who: { toString: () => any } }) => {
-              return e.who.toString() === who.toString()
-            }),
+            is_clipped:
+              othersClipped === null ||
+              !!othersClipped.find((e: { who: { toString: () => any } }) => {
+                return e.who.toString() === who.toString()
+              }),
             era_id: eraId,
             validator: validatorAccountId,
             //block_time: new Date(eraStartBlockTime),
@@ -207,10 +209,10 @@ export class PolkadotStakingProcessorPolkadotHelper {
     }
   }
 
-  async getStakersInfoNew(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, Exposure, ValidatorPrefs]> {
-    const [_overview, stakingClipped, prefs] = await Promise.all([
+  async getStakersInfoNew(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, any, ValidatorPrefs]> {
+    const [_overview, prefs] = await Promise.all([
       apiAtBlock.query.staking.erasStakersOverview(eraId, validatorAccountId),
-      apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
+      //apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
       apiAtBlock.query.staking.erasValidatorPrefs(eraId, validatorAccountId),
     ])
 
@@ -218,6 +220,9 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const others: any = []
     for (let page = 0; page <= overview?.pageCount; page++) {
       const _staking: any = await apiAtBlock.query.staking.erasStakersPaged(eraId, validatorAccountId, page)
+      //const _rewards: any = await apiAtBlock.query.staking.claimedRewards(eraId, validatorAccountId)
+      //console.log(_rewards.toJSON());
+
       const staking = _staking.toJSON()
       if (staking && staking.others && staking.others.length) {
         staking.others.forEach((item: any) => {
@@ -229,7 +234,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
       }
     }
 
-    return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, stakingClipped, prefs]
+    return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
   }
 
   async getStakersInfoOld(

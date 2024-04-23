@@ -221,8 +221,8 @@ CREATE TABLE IF NOT EXISTS balances (
 
 CREATE TABLE IF NOT EXISTS identities (
     "network_id" INT,
-    "account_id" varchar(50),
-    "parent_account_id" varchar(50),
+    "account_id" varchar(150),
+    "parent_account_id" varchar(150),
     "display" varchar(256),
     "legal" varchar(256),
     "web" varchar(256),
