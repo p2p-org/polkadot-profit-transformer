@@ -2,7 +2,7 @@
 environment: mbelt3-prod
 chain: kusama
 role: staking-processor
-replicas: 0
+replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
 image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 8cc708048005c445440511cb4db834ee9d227005}
