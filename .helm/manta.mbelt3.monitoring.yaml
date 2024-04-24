@@ -5,7 +5,7 @@ chain: manta
 role: monitoring
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: f2e67c8db9f9979fdeead3e84dbca5486ff985b8}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 57b6bade4b81f11d75aadc9ff8bf96e91fa7137f}
 port: 3000
 metrics:
   enabled: true
