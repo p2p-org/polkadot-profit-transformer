@@ -6,7 +6,7 @@ import { Logger } from 'pino'
 
 @Service()
 export class MonitoringDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) {}
+  constructor(@Inject('knex') private readonly knex: Knex, @Inject('logger') private readonly logger: Logger) { }
 
   async removeOldExtrinsicsBody(): Promise<void> {
     const sql = `
@@ -89,7 +89,7 @@ export class MonitoringDatabaseHelper {
         network_id=${environment.NETWORK_ID}
         AND status='not_processed' 
         AND finish_timestamp is null 
-        AMD attempts < 10
+        AND attempts < 10
         AND start_timestamp < NOW() - INTERVAL '1 DAY'
       LIMIT 10`
     const missedTasksRows = await this.knex.raw(missedTasksSQL)
