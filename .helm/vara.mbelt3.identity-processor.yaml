@@ -15,7 +15,7 @@ vault:
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: wss://archive-rpc.vara-network.io/
+  substrate_uri: wss://gear-rpc.polka.p2p.world/
   log_level: info
   network_id: 137
   mode: IDENTITY_PROCESSOR
