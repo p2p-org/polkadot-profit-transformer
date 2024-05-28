@@ -5,10 +5,7 @@ role: preloader
 replicas: 1
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 9db0b312bd10798a6a2484ee206a1db1fff21c1a}
-port: 3000
-metrics:
-  enabled: true
+
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonriver"
@@ -20,14 +17,6 @@ env:
   network: moonriver
 ingress:
   enabled: true
-  class: nginx-external
   host: mbelt3-moonriver-preloader.polka.p2p.world
   tls:
-    cluster_issuer: cloudflare-prod
     secret: mbelt3-moonriver-preloader-polka-p2p-world
-    ssl_redirect: true
-tolerations:
-  - key: cloud.google.com/gke-spot
-    operator: Equal
-    value: "true"
-    effect: NoSchedule

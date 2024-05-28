@@ -1,0 +1,23 @@
+---
+environment: staging
+chain: moonbeam
+role: balances-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_moonbeam"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+  log_level: info
+  network_id: 1284
+  mode: BALANCES_PROCESSOR
+  network: moonbeam
+ingress:
+  enabled: true
+  host: moonbeam-balances.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

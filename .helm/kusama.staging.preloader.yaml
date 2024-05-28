@@ -1,0 +1,20 @@
+---
+environment: staging
+chain: kusama
+role: preloader
+limits: {cpu: 450m, memory: 200Mi}
+requests: {cpu: 400m, memory: 200Mi}
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_kusama"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
+  log_level: info
+  network_id: 2
+  mode: LISTENER
+  network: kusama
+ingress:
+  enabled: true
+  host: kusama-preloader.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world
