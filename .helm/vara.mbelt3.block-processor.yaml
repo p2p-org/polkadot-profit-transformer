@@ -5,7 +5,7 @@ chain: vara
 role: block-processor
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 91e5001732a6273530c7e1553151161bcf1dc223}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: d0bd9d325fdc2ec0dfa5d807f0fd328613523a71}
 port: 3000
 metrics:
   enabled: true
