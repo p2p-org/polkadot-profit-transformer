@@ -5,7 +5,7 @@ role: staking-processor
 replicas: 1
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: f2e67c8db9f9979fdeead3e84dbca5486ff985b8}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 91e5001732a6273530c7e1553151161bcf1dc223}
 port: 3000
 metrics:
   enabled: true
@@ -15,7 +15,7 @@ vault:
 additional_args:
   - "--max_old_space_size=4096"
 env:
-  substrate_uri: wss://archive-rpc.vara-network.io/
+  substrate_uri: wss://gear-rpc.polka.p2p.world/
   log_level: info
   network_id: 137
   mode: STAKING_PROCESSOR
