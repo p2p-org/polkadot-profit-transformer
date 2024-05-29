@@ -42,44 +42,44 @@ helm diff upgrade --install mbelt3-moonriver-monitoring .helm -f .helm/moonriver
 ```
 
 ```
-# Stage
+# staging
 ## Polkadot
 ### Preloader
-helm diff upgrade --install mbelt-stage-polkadot-preloader .helm -f .helm/polkadot.stage.preloader.yaml -n mbelt-stage
+helm diff upgrade --install polkadot-preloader .helm -f .helm/polkadot.staging.preloader.yaml -n mbelt-staging
 ### Block processor
-helm diff upgrade --install mbelt-stage-polkadot-block-processor .helm -f .helm/polkadot.stage.block-processor.yaml -n mbelt-stage
+helm diff upgrade --install polkadot-block-processor .helm -f .helm/polkadot.staging.block-processor.yaml -n mbelt-staging
 ### Staking processor
-helm diff upgrade --install mbelt-stage-polkadot-staking-processor .helm -f .helm/polkadot.stage.staking-processor.yaml -n mbelt-stage
+helm diff upgrade --install polkadot-staking-processor .helm -f .helm/polkadot.staging.staking-processor.yaml -n mbelt-staging
 
 ## Kusama
 ### Preloader
-helm diff upgrade --install mbelt-stage-kusama-preloader .helm -f .helm/kusama.stage.preloader.yaml -n mbelt-stage
+helm diff upgrade --install kusama-preloader .helm -f .helm/kusama.staging.preloader.yaml -n mbelt-staging
 ### Block processor
-helm diff upgrade --install mbelt-stage-kusama-block-processor .helm -f .helm/kusama.stage.block-processor.yaml -n mbelt-stage
+helm diff upgrade --install kusama-block-processor .helm -f .helm/kusama.staging.block-processor.yaml -n mbelt-staging
 ### Staking processor
-helm diff upgrade --install mbelt-stage-kusama-staking-processor .helm -f .helm/kusama.stage.staking-processor.yaml -n mbelt-stage
+helm diff upgrade --install kusama-staking-processor .helm -f .helm/kusama.staging.staking-processor.yaml -n mbelt-staging
 
 ## Moonbeam
 ### Preloader
-helm diff upgrade --install mbelt-stage-moonbeam-preloader .helm -f .helm/moonbeam.stage.preloader.yaml -n mbelt-stage
+helm diff upgrade --install moonbeam-preloader .helm -f .helm/moonbeam.staging.preloader.yaml -n mbelt-staging
 ### Block processor
-helm diff upgrade --install mbelt-stage-moonbeam-block-processor .helm -f .helm/moonbeam.stage.block-processor.yaml -n mbelt-stage
+helm diff upgrade --install moonbeam-block-processor .helm -f .helm/moonbeam.staging.block-processor.yaml -n mbelt-staging
 ### Staking processor
-helm diff upgrade --install mbelt-stage-moonbeam-staking-processor .helm -f .helm/moonbeam.stage.staking-processor.yaml -n mbelt-stage
+helm diff upgrade --install moonbeam-staking-processor .helm -f .helm/moonbeam.staging.staking-processor.yaml -n mbelt-staging
 
 ## Moonriver
 ### Preloader
-helm diff upgrade --install mbelt-stage-moonriver-preloader .helm -f .helm/moonriver.stage.preloader.yaml -n mbelt-stage
+helm diff upgrade --install moonriver-preloader .helm -f .helm/moonriver.staging.preloader.yaml -n mbelt-staging
 ### Block processor
-helm diff upgrade --install mbelt-stage-moonriver-block-processor .helm -f .helm/moonriver.stage.block-processor.yaml -n mbelt-stage
+helm diff upgrade --install moonriver-block-processor .helm -f .helm/moonriver.staging.block-processor.yaml -n mbelt-staging
 ### Staking processor
-helm diff upgrade --install mbelt-stage-moonriver-staking-processor .helm -f .helm/moonriver.stage.staking-processor.yaml -n mbelt-stage
+helm diff upgrade --install moonriver-staking-processor .helm -f .helm/moonriver.staging.staking-processor.yaml -n mbelt-staging
 
 # Manta
-helm diff upgrade --install mbelt3-manta-balances-processor .helm -f .helm/manta.mbelt3.balances-processor.yaml -n mbelt3
-helm diff upgrade --install mbelt3-manta-block-processor .helm -f .helm/manta.mbelt3.block-processor.yaml -n mbelt3
-helm diff upgrade --install mbelt3-manta-identity-processor .helm -f .helm/manta.mbelt3.identity-processor.yaml -n mbelt3
-helm diff upgrade --install mbelt3-manta-monitoring .helm -f .helm/manta.mbelt3.monitoring.yaml -n mbelt3
-helm diff upgrade --install mbelt3-manta-preloader .helm -f .helm/manta.mbelt3.preloader.yaml -n mbelt3
-helm diff upgrade --install mbelt3-manta-staking-processor .helm -f .helm/manta.mbelt3.staking-processor.yaml -n mbelt3
+helm diff upgrade --install manta-balances-processor .helm -f .helm/manta.mbelt3.balances-processor.yaml -n mbelt3
+helm diff upgrade --install manta-block-processor .helm -f .helm/manta.mbelt3.block-processor.yaml -n mbelt3
+helm diff upgrade --install manta-identity-processor .helm -f .helm/manta.mbelt3.identity-processor.yaml -n mbelt3
+helm diff upgrade --install manta-monitoring .helm -f .helm/manta.mbelt3.monitoring.yaml -n mbelt3
+helm diff upgrade --install manta-preloader .helm -f .helm/manta.mbelt3.preloader.yaml -n mbelt3
+helm diff upgrade --install manta-staking-processor .helm -f .helm/manta.mbelt3.staking-processor.yaml -n mbelt3
 ```

@@ -1,0 +1,23 @@
+---
+environment: staging
+chain: polkadot
+role: staking-processor
+limits: {cpu: 450m, memory: 4096Mi}
+requests: {cpu: 350m, memory: 4096Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_polkadot"
+additional_args:
+  - "--max_old_space_size=4096"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 0
+  mode: STAKING_PROCESSOR
+  network: polkadot
+ingress:
+  enabled: true
+  host: polkadot-staking.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world
