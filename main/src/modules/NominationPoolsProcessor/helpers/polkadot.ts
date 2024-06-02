@@ -18,7 +18,7 @@ export class NominationPoolsProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) {}
+  ) { }
 
   async getNominationPools({ eraId, blockHash }: IBlockEraParams): Promise<Pools> {
     this.logger.info({ event: `Get pools data for era: ${eraId}`, eraId })
@@ -141,14 +141,6 @@ export class NominationPoolsProcessorPolkadotHelper {
       str += String.fromCharCode(parseInt(hex.substr(n, 2), 16))
     }
     return str
-  }
-
-  hexToInt(hex: string): number {
-    if (hex.startsWith('0x')) {
-      hex = hex.slice(2)
-    }
-
-    return parseBigInt(hex, 16)
   }
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
