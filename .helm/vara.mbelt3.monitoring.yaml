@@ -3,17 +3,14 @@ environment: mbelt3-prod
 replicas: 1
 chain: vara
 role: monitoring
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 8e1af924100bbb0f0877875d8a079e36f2827610}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-port: 3000
-metrics:
-  enabled: true
+
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_vara"
 env:
-  substrate_uri: wss://archive-rpc.vara-network.io/
+  substrate_uri: ws://substrate-ws-proxy-prod.gear.svc.cluster.local:9944
   restart_blocks_uri: http://mbelt-mbelt3-prod-vara-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
   restart_rounds_uri: http://mbelt-mbelt3-prod-vara-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
   restart_balances_uri: http://mbelt-mbelt3-prod-vara-preloader.mbelt3.svc.cluster.local:80/restart-balances
@@ -23,8 +20,4 @@ env:
   network: vara
 ingress:
   enabled: false
-tolerations:
-  - key: cloud.google.com/gke-spot
-    operator: Equal
-    value: "true"
-    effect: NoSchedule
+

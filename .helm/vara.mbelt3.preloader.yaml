@@ -3,31 +3,20 @@ environment: mbelt3-prod
 chain: vara
 role: preloader
 replicas: 1
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 8e1af924100bbb0f0877875d8a079e36f2827610}
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
-port: 3000
-metrics:
-  enabled: true
+
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_vara"
 env:
-  substrate_uri: wss://archive-rpc.vara-network.io/
+  substrate_uri: ws://substrate-ws-proxy-prod.gear.svc.cluster.local:9944
   log_level: info
   network_id: 137
   mode: LISTENER
   network: vara
 ingress:
   enabled: true
-  class: nginx-external
   host: mbelt3-vara-preloader.polka.p2p.world
   tls:
-    cluster_issuer: cloudflare-prod
     secret: mbelt3-vara-preloader-polka-p2p-world
-    ssl_redirect: true
-tolerations:
-  - key: cloud.google.com/gke-spot
-    operator: Equal
-    value: "true"
-    effect: NoSchedule

@@ -1,0 +1,23 @@
+---
+environment: staging
+chain: kusama
+role: staking-processor
+limits: {cpu: 450m, memory: 4096Mi}
+requests: {cpu: 350m, memory: 4096Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_kusama"
+additional_args:
+  - "--max_old_space_size=4096"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
+  log_level: info
+  network_id: 2
+  mode: STAKING_PROCESSOR
+  network: kusama
+ingress:
+  enabled: true
+  host: kusama-staking.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

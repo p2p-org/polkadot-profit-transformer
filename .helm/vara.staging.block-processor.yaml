@@ -1,0 +1,24 @@
+---
+environment: staging
+chain: vara
+role: block-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_vara"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.gear.svc.cluster.local:9944
+  log_level: info
+  network_id: 137
+  mode: BLOCK_PROCESSOR
+  network: vara
+ingress:
+  enabled: true
+  host: vara-block.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world
+

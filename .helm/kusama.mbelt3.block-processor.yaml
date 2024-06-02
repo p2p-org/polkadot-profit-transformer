@@ -5,10 +5,6 @@ chain: kusama
 role: block-processor
 limits: {cpu: 350m, memory: 1000Mi}
 requests: {cpu: 250m, memory: 1000Mi}
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 8e1af924100bbb0f0877875d8a079e36f2827610}
-port: 3000
-metrics:
-  enabled: true
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
@@ -22,14 +18,6 @@ env:
   network: kusama
 ingress:
   enabled: true
-  class: nginx-external
   host: mbelt3-kusama-block-processor.polka.p2p.world
   tls:
-    cluster_issuer: cloudflare-prod
     secret: mbelt3-kusama-block-processor-polka-p2p-world
-    ssl_redirect: true
-tolerations:
-  - key: cloud.google.com/gke-spot
-    operator: Equal
-    value: "true"
-    effect: NoSchedule

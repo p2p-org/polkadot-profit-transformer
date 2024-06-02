@@ -1,0 +1,21 @@
+---
+environment: staging
+chain: polkadot
+role: preloader
+
+limits: {cpu: 450m, memory: 200Mi}
+requests: {cpu: 400m, memory: 200Mi}
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_polkadot"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 0
+  mode: LISTENER
+  network: polkadot
+ingress:
+  enabled: true
+  host: polkadot-preloader.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world
