@@ -13,32 +13,27 @@ import { Vec } from '@polkadot/types'
 import Queue from 'better-queue'
 import { u8aConcat, stringToU8a, bnToU8a, BN } from '@polkadot/util'
 
-
 @Service()
 export class NominationPoolsProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  ) {}
 
-  async getNominationPools({
-    eraId,
-    blockHash,
-  }: IBlockEraParams): Promise<Pools> {
+  async getNominationPools({ eraId, blockHash }: IBlockEraParams): Promise<Pools> {
     this.logger.info({ event: `Get pools data for era: ${eraId}`, eraId })
     const apiAtBlock: any = await this.polkadotApi.at(blockHash)
 
     const members = await this.getPoolMembers(apiAtBlock)
-    let pools: Pools = {};
-    const poolsEntries = await apiAtBlock.query.nominationPools.bondedPools.entries();
+    let pools: Pools = {}
+    const poolsEntries = await apiAtBlock.query.nominationPools.bondedPools.entries()
     for (let key in poolsEntries) {
-      const poolId = poolsEntries[key][0].toHuman()[0];
+      const poolId = poolsEntries[key][0].toHuman()[0]
       pools[poolId] = await this.getPoolData(apiAtBlock, poolId, members, poolsEntries[key][1].toJSON())
     }
     this.logger.info({ event: `Count of collected pools: ${Object.keys(pools).length}` })
-    return pools;
+    return pools
   }
-
 
   async getPoolData(api: ApiPromise, poolId: number, members: any, bondedPool: any): Promise<PoolData | undefined> {
     this.logger.info({ event: `Get pool with id: ${poolId}`, poolId })
@@ -51,7 +46,7 @@ export class NominationPoolsProcessorPolkadotHelper {
     try {
       var pool: any = { id: poolId, ...bondedPool }
 
-      pool.name = await this.getPoolName(api, poolId);
+      pool.name = await this.getPoolName(api, poolId)
 
       pool.rewardPools = await api.query.nominationPools.rewardPools(poolId)
       pool.rewardPools = pool.rewardPools.toJSON()
@@ -59,65 +54,79 @@ export class NominationPoolsProcessorPolkadotHelper {
       const membersBond = await api.query.nominationPools.poolMembers(pool.roles.root)
       if (membersBond) {
         pool.membersBond = membersBond.toJSON()
-      };
-      pool.members = members[poolId];
+      }
+      pool.members = members[poolId]
 
       pool.subPoolStorage = await api.query.nominationPools.subPoolsStorage(poolId)
       pool.subPoolStorage = pool.subPoolStorage.toJSON()
 
-      if (pool?.points && typeof (pool?.points) === 'string' && pool?.points?.match(/^0x/i)) {
-        pool.points = BigInt(pool.points);
+      if (pool?.points && typeof pool?.points === 'string' && pool?.points?.match(/^0x/i)) {
+        pool.points = BigInt(pool.points)
       }
 
-      pool.roles.rewardAccount = this.getPoolRewardsAccount(api, poolId);
-      return pool;
+      pool.roles.rewardAccount = this.getPoolRewardsAccount(api, poolId)
+      return pool
     } catch (e) {
       console.error(e)
     }
-    return;
+    return
   }
 
   async getPoolMembers(api: ApiPromise): Promise<PoolMembers> {
     this.logger.info({ event: `Get pool memebers` })
     var entries = await api.query.nominationPools.poolMembers.entries()
     this.logger.info({ event: `Process pool memebers` })
-    var members = entries.reduce((all: any, [{ args: [accountId] }, optMember]) => {
+    var members = entries.reduce(
+      (
+        all: any,
+        [
+          {
+            args: [accountId],
+          },
+          optMember,
+        ],
+      ) => {
+        if (optMember.isSome) {
+          const member = optMember.unwrap()
+          const poolId = member.poolId.toString()
+          this.logger.info({ event: `Process pool members with id: ${poolId}`, poolId })
 
-      if (optMember.isSome) {
-        const member = optMember.unwrap();
-        const poolId = member.poolId.toString();
-        this.logger.info({ event: `Process pool members with id: ${poolId}`, poolId })
+          if (!all[poolId]) {
+            all[poolId] = []
+          }
 
-        if (!all[poolId]) {
-          all[poolId] = [];
+          const data: any = member.toJSON()
+          if (data?.points && typeof data?.points === 'string' && data?.points?.match(/^0x/i)) {
+            data.points = BigInt(data.points)
+          }
+          data.lastRecordedRewardCounter = data.lastRecordedRewardCounter
+
+          all[poolId].push({ account: accountId.toString(), data })
         }
 
-        const data: any = member.toJSON();
-        if (data?.points && typeof (data?.points) === 'string' && data?.points?.match(/^0x/i)) {
-          data.points = BigInt(data.points);
-        }
-        data.lastRecordedRewardCounter = data.lastRecordedRewardCounter
-
-        all[poolId].push({ account: accountId.toString(), data });
-      }
-
-      return all;
-    }, {})
+        return all
+      },
+      {},
+    )
     this.logger.info({ event: `Pool memebers count: ${Object.keys(members).length}` })
-    return members;
+    return members
   }
-
 
   getPoolRewardsAccount(api: ApiPromise, pool_id: number) {
     const pallet_id = api.consts.nominationPools.palletId.toU8a()
 
-    return api.registry.createType('AccountId32', u8aConcat(
-      stringToU8a('modl'),
-      pallet_id,
-      new Uint8Array([1]),
-      bnToU8a(new BN(pool_id), { bitLength: 32, isLe: true }),
-      new Uint8Array(32)
-    )).toString()
+    return api.registry
+      .createType(
+        'AccountId32',
+        u8aConcat(
+          stringToU8a('modl'),
+          pallet_id,
+          new Uint8Array([1]),
+          bnToU8a(new BN(pool_id), { bitLength: 32, isLe: true }),
+          new Uint8Array(32),
+        ),
+      )
+      .toString()
   }
 
   async getPoolName(api: ApiPromise, pool_id: number) {
@@ -126,22 +135,21 @@ export class NominationPoolsProcessorPolkadotHelper {
   }
 
   hexToString(str1: string) {
-    const hex = str1.toString();
-    let str = '';
+    const hex = str1.toString()
+    let str = ''
     for (var n = 0; n < hex.length; n += 2) {
-      str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
+      str += String.fromCharCode(parseInt(hex.substr(n, 2), 16))
     }
-    return str;
+    return str
   }
 
   hexToInt(hex: string): number {
     if (hex.startsWith('0x')) {
-      hex = hex.slice(2);
+      hex = hex.slice(2)
     }
 
-    return parseBigInt(hex, 16);
+    return parseBigInt(hex, 16)
   }
-
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
     return this.polkadotApi.rpc.chain.getBlockHash(height)
@@ -163,5 +171,4 @@ export class NominationPoolsProcessorPolkadotHelper {
     return balance;
   }
   */
-
 }

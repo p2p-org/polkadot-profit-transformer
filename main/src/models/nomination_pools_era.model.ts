@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 export type NominationPoolsEraModel = {
   network_id?: number
   pool_id?: number
-  era_id?: number,
+  era_id?: number
   state?: string
   members?: number
   points?: number

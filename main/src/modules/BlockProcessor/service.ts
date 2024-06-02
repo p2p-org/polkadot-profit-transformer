@@ -30,7 +30,7 @@ export class BlocksProcessorService {
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly identityDatabaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   async processTaskMessage(
     trx: Knex.Transaction,

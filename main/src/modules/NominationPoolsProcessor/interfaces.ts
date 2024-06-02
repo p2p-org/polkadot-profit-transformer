@@ -25,69 +25,67 @@ export type PayoutEvent = {
   blockHash: TBlockHash
 }
 
-
 export type PoolMemberData = {
-  account: string;
+  account: string
   data: {
-    poolId: number;
-    points: number;
-    lastRecordedRewardCounter: string;
-    unbondingEras: any;
-  };
-};
+    poolId: number
+    points: number
+    lastRecordedRewardCounter: string
+    unbondingEras: any
+  }
+}
 
 export type PoolMembers = {
-  [poolId: string]: PoolMemberData;
-};
-
+  [poolId: string]: PoolMemberData
+}
 
 type BondedPoolRoles = {
-  depositor: string;
-  root: string;
-  nominator: string;
-  stateToggler: string;
-  rewardAccount: string;
-};
+  depositor: string
+  root: string
+  nominator: string
+  stateToggler: string
+  rewardAccount: string
+}
 
 type BondedPool = {
-  id: number;
-  points: number;
-  state: string;
-  memberCounter: number;
-  roles: BondedPoolRoles;
-};
+  id: number
+  points: number
+  state: string
+  memberCounter: number
+  roles: BondedPoolRoles
+}
 
 type RewardPools = {
-  lastRecordedRewardCounter: string;
-  lastRecordedTotalPayouts: number;
-  totalRewardsClaimed: number;
-};
+  lastRecordedRewardCounter: string
+  lastRecordedTotalPayouts: number
+  totalRewardsClaimed: number
+}
 
 type MembersBond = {
-  poolId: number;
-  points: number;
-  lastRecordedRewardCounter: string;
-  unbondingEras: Record<string, any>;
-};
+  poolId: number
+  points: number
+  lastRecordedRewardCounter: string
+  unbondingEras: Record<string, any>
+}
 
 type SubPoolStorage = {
-  noEra: Record<string, any>;
-  withEra: Record<string, any>;
-};
+  noEra: Record<string, any>
+  withEra: Record<string, any>
+}
 
 export type PoolData = {
-  id: number;
-  points: number;
-  state: string;
-  memberCounter: number;
-  roles: BondedPoolRoles;
-  name: string;
-  rewardPools: RewardPools;
-  membersBond?: MembersBond;
-  members: PoolMembers;
-  subPoolStorage: SubPoolStorage;
-};
+  id: number
+  points: number
+  state: string
+  memberCounter: number
+  roles: BondedPoolRoles
+  name: string
+  rewardPools: RewardPools
+  membersBond?: MembersBond
+  members: PoolMembers
+  subPoolStorage: SubPoolStorage
+}
 
 export type Pools = {
-  [poolId: string]: PoolData | undefined;
+  [poolId: string]: PoolData | undefined
 }

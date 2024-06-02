@@ -28,18 +28,18 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
           value: Date.now() - startProcessingTime,
         })
       } catch (e) {
-        logger.error(e);
+        logger.error(e)
       }
     }, 30 * 1000)
   }
 
   const attemptReconnect = async () => {
     try {
-      await provider.connect();
-      logger.info('Reconnection successful');
+      await provider.connect()
+      logger.info('Reconnection successful')
     } catch (error) {
-      console.error('Reconnection attempt failed:', error);
-      setTimeout(() => attemptReconnect(), 5000);
+      console.error('Reconnection attempt failed:', error)
+      setTimeout(() => attemptReconnect(), 5000)
     }
   }
 
@@ -61,8 +61,6 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     provider,
     typesBundle,
   })
-
-
 
   Promise.all([
     api.rpc.system.chain(),

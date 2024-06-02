@@ -21,7 +21,7 @@ export class NominationPoolsProcessorService {
 
     private readonly polkadotHelper: NominationPoolsProcessorPolkadotHelper,
     private readonly databaseHelper: NominationPoolsProcessorDatabaseHelper,
-  ) { }
+  ) {}
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: eraId, collect_uid } = taskRecord
@@ -58,7 +58,7 @@ export class NominationPoolsProcessorService {
     const poolsData = await this.polkadotHelper.getNominationPools({ blockHash: payoutBlockHash, eraId })
 
     for (let poolId in poolsData) {
-      const pool = poolsData[poolId];
+      const pool = poolsData[poolId]
 
       const poolMetadata: NominationPoolsIdentitiesModel = {
         pool_id: pool?.id,
@@ -83,7 +83,7 @@ export class NominationPoolsProcessorService {
       await this.databaseHelper.saveEraPoolData(trx, eraPoolData)
 
       for (let i = 0; i <= Object.keys(pool?.members).length; i++) {
-        const member = pool?.members[i];
+        const member = pool?.members[i]
         if (member?.account) {
           const eraPoolMember: NominationPoolsMembersModel = {
             pool_id: pool?.id,
@@ -101,7 +101,9 @@ export class NominationPoolsProcessorService {
     }
 
     this.logger.info({
-      event: `Nomination pools for era ${eraId.toString()} processing finished in ${(Date.now() - startProcessingTime) / 1000} seconds.`,
+      event: `Nomination pools for era ${eraId.toString()} processing finished in ${
+        (Date.now() - startProcessingTime) / 1000
+      } seconds.`,
       metadata,
       eraId,
     })
@@ -112,7 +114,5 @@ export class NominationPoolsProcessorService {
       name: 'preprocess_time_ms',
       value: Date.now() - startProcessingTime,
     })
-
   }
-
 }

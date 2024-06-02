@@ -25,7 +25,7 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
