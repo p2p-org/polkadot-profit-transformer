@@ -24,7 +24,6 @@ export default (): void => {
   if (environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
     serviceInstance.preload()
   }
-  //await workerInstance.preloadOneBlock(1858800)
 
   const logger: Logger = Container.get('logger')
   logger.info('✌️ BlockListener module initialized')

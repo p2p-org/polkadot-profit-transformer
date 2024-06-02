@@ -25,7 +25,7 @@ export class BlockListenerService {
     private readonly polkadotHelper: BlockListenerPolkadotHelper,
     private readonly databaseHelper: BlockListenerDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   public async preload(): Promise<void> {
     this.logger.debug({ event: 'BlocksListener.preload' })
@@ -316,6 +316,11 @@ export class BlockListenerService {
       })
     } else if (entity === ENTITY.ROUND) {
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+        entity_id: record.entity_id,
+        collect_uid: record.collect_uid,
+      })
+    } else if (entity === ENTITY.NOMINATION_POOLS_ERA) {
+      await rabbitMQ.send<QUEUES.NominationPools>(QUEUES.NominationPools, {
         entity_id: record.entity_id,
         collect_uid: record.collect_uid,
       })

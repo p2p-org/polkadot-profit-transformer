@@ -12,6 +12,7 @@ export enum QUEUES {
   Balances = 'process_balances',
   BlocksMetadata = 'process_metadata',
   Staking = 'process_staking',
+  NominationPools = 'process_nomination_pools',
 }
 
 export type TaskMessage<T> = {
@@ -66,6 +67,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Blocks),
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Balances),
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.BlocksMetadata),
+        channel.assertQueue(environment.NETWORK + ':' + QUEUES.NominationPools),
         channel.prefetch(1),
       ])
     },

@@ -72,6 +72,11 @@ export class BlockListenerController {
       res.send('restarted unprocessed round')
     })
 
+    this.expressApp.get('/restart-nomination-pools/:eraId', (req, res) => {
+      this.listnerService.restartUnprocessedTask(ENTITY.NOMINATION_POOLS_ERA, Number(req.params.eraId))
+      res.send('restarted unprocessed nomination pools era')
+    })
+
     this.expressApp.get('/restart-balances', (req, res) => {
       this.listnerService.restartUnprocessedTasks(ENTITY.BLOCK_BALANCE)
       res.send('restarted unprocessed balances')

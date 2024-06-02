@@ -89,6 +89,22 @@ services:
     volumes:
       - ./main:/usr/src/app
 
+  mbelt_nominationpools_processor:
+    container_name: mbelt_nominationpools_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3003:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: NOMINATIONPOOLS_PROCESSOR
+    volumes:
+      - ./main:/usr/src/app
+
+
   mbelt_balances_processor:
     container_name: mbelt_balances_processor
     build:

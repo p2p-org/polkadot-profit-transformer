@@ -18,15 +18,29 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
   const sliMetrics: SliMetrics = Container.get('sliMetrics')
   const startGatheringRpcMetrics = () => {
     setInterval(async () => {
-      const startProcessingTime = Date.now()
-      const lastHeader = await api.rpc.chain.getHeader()
-      await sliMetrics.add({
-        entity: 'rpc',
-        entity_id: parseInt(lastHeader.number.toString()),
-        name: 'rpc_response_time_ms',
-        value: Date.now() - startProcessingTime,
-      })
+      try {
+        const startProcessingTime = Date.now()
+        const lastHeader = await api.rpc.chain.getHeader()
+        await sliMetrics.add({
+          entity: 'rpc',
+          entity_id: parseInt(lastHeader.number.toString()),
+          name: 'rpc_response_time_ms',
+          value: Date.now() - startProcessingTime,
+        })
+      } catch (e) {
+        logger.error(e);
+      }
     }, 30 * 1000)
+  }
+
+  const attemptReconnect = async () => {
+    try {
+      await provider.connect();
+      logger.info('Reconnection successful');
+    } catch (error) {
+      console.error('Reconnection attempt failed:', error);
+      setTimeout(() => attemptReconnect(), 5000);
+    }
   }
 
   provider.on('connected', () => {
@@ -34,8 +48,9 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     startGatheringRpcMetrics()
   })
   provider.on('disconnected', () => {
+    attemptReconnect()
     logger.error('PolkadotAPI error: disconnected')
-    process.exit(1)
+    //process.exit(1)
   })
   provider.on('error', (error) => {
     logger.error('PolkadotAPI error: ' + error.message)
@@ -46,6 +61,8 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     provider,
     typesBundle,
   })
+
+
 
   Promise.all([
     api.rpc.system.chain(),
