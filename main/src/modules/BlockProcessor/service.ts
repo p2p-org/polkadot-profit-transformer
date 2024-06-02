@@ -287,7 +287,7 @@ export class BlocksProcessorService {
     return events.reduce(processEvent, [])
   }
 
-  private async processExtrinsics(input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> {
+  public async processExtrinsics(input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> {
     const { /* eraId, sessionId, */ blockNumber, events, extrinsics } = input
 
     const result = await Promise.all(

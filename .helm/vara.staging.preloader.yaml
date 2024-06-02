@@ -1,0 +1,21 @@
+---
+environment: staging
+chain: vara
+role: preloader
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_vara"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.gear.svc.cluster.local:9944
+  log_level: info
+  network_id: 137
+  mode: LISTENER
+  network: vara
+ingress:
+  enabled: true
+  host: vara-preloader.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

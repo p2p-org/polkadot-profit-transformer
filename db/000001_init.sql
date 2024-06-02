@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS networks (
 
 CREATE TABLE IF NOT EXISTS accounts (
         "network_id" INT,
-        "account_id" varchar(50),
+        "account_id" varchar(150),
         "blake2_hash" varchar(100),
         "created_at_block_id" BIGINT,
         "killed_at_block_id" BIGINT,
@@ -483,3 +483,47 @@ CREATE INDEX idx_signer_block ON extrinsics ("signer", "block_id");
 CREATE INDEX processing_tasks_entity_status_idx ON public.processing_tasks (entity, status);
 
 CREATE INDEX extrinsics_row_time_idx ON public.extrinsics (row_time);
+
+CREATE TABLE IF NOT EXISTS nomination_pools_identities (
+    "network_id" INT,
+    "pool_id" INT,
+    "pool_name" VARCHAR(300),
+    "depositor_id" VARCHAR(150),
+    "root_id" VARCHAR(150),
+    "nominator_id" VARCHAR(150),
+    "toggler_id" VARCHAR(150),
+    "reward_id" VARCHAR(150),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "pool_id")
+);
+
+CREATE TABLE IF NOT EXISTS nomination_pools_era (
+    "network_id" INT,
+    "era_id" INT,
+    "pool_id" INT,
+    "state" VARCHAR(20),
+    "members" INT,
+    "points" BIGINT,
+    "reward_pool" JSONB,
+    "sub_pool_storage" JSONB,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "era_id", "pool_id")
+);
+
+CREATE TABLE IF NOT EXISTS nomination_pools_members (
+    "network_id" INT,
+    "era_id" INT,
+    "pool_id" INT,
+    "account_id" VARCHAR(150),
+    "points" BIGINT,
+    "last_recorded_reward_counter" VARCHAR(50),
+    "unbonding_eras" JSONB,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "era_id", "pool_id", "account_id")
+);

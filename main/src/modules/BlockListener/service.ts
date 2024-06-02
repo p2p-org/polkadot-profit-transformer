@@ -319,6 +319,11 @@ export class BlockListenerService {
         entity_id: record.entity_id,
         collect_uid: record.collect_uid,
       })
+    } else if (entity === ENTITY.NOMINATION_POOLS_ERA) {
+      await rabbitMQ.send<QUEUES.NominationPools>(QUEUES.NominationPools, {
+        entity_id: record.entity_id,
+        collect_uid: record.collect_uid,
+      })
     } else if (entity === ENTITY.BLOCK) {
       await rabbitMQ.send<QUEUES.Blocks>(QUEUES.Blocks, {
         entity_id: record.entity_id,

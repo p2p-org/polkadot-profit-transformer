@@ -9,7 +9,7 @@ metadata:
     chain: {{ .Values.chain }}
     role: {{ .Values.role }}
 spec:
-  replicas: {{ .Values.replicas }}
+  replicas: {{ template "app.replicas" $ }}
   strategy:
     type: Recreate
   selector:

@@ -6,6 +6,7 @@ import MoonbeamStakingProcessor from './MoonbeamStakingProcessor'
 //import MoonbeamStakingProcessorRecalc from './MoonbeamStakingProcessorRecalc'
 import PolkadotStakingProcessor from './PolkadotStakingProcessor'
 import IdentityProcessor from './IdentityProcessor'
+import NominationPoolsProcessor from './NominationPoolsProcessor'
 import GearSmartContractsProcessor from './GearSmartcontractsProcessor'
 import BalancesProcessor from './BalancesProcessor'
 import Monitoring from './Monitoring'
@@ -28,6 +29,9 @@ export const ModulesLoader = async (): Promise<void> => {
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
     if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'vara') {
       PolkadotStakingProcessor()
+      if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
+        NominationPoolsProcessor()
+      }
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
       MoonbeamStakingProcessor()
       //MoonbeamStakingProcessorRecalc()
@@ -36,6 +40,10 @@ export const ModulesLoader = async (): Promise<void> => {
 
   if (environment.MODE === MODE.IDENTITY_PROCESSOR) {
     IdentityProcessor()
+  }
+
+  if (environment.MODE === MODE.NOMINATIONPOOLS_PROCESSOR) {
+    NominationPoolsProcessor()
   }
 
   if (environment.MODE === MODE.BALANCES_PROCESSOR) {
