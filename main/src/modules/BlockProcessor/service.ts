@@ -30,7 +30,7 @@ export class BlocksProcessorService {
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly identityDatabaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) {}
+  ) { }
 
   async processTaskMessage(
     trx: Knex.Transaction,
@@ -94,6 +94,11 @@ export class BlocksProcessorService {
 
       if (task.entity === ENTITY.ERA) {
         await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+          entity_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
+      } else if (task.entity === ENTITY.NOMINATION_POOLS_ERA) {
+        await rabbitMQ.send<QUEUES.NominationPools>(QUEUES.NominationPools, {
           entity_id: task.entity_id,
           collect_uid: task.collect_uid,
         })
@@ -234,6 +239,19 @@ export class BlocksProcessorService {
           },
         }
         newTasks.push(newStakingProcessingTask)
+
+        const newNominationPoolsProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
+          entity: ENTITY.NOMINATION_POOLS_ERA,
+          entity_id: parseInt(event.event.data[0].toString()),
+          status: PROCESSING_STATUS.NOT_PROCESSED,
+          collect_uid: uuidv4(),
+          start_timestamp: new Date(),
+          attempts: 0,
+          data: {
+            payout_block_id: blockId,
+          },
+        }
+        newTasks.push(newNominationPoolsProcessingTask)
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
