@@ -10,10 +10,14 @@ const network = { network_id: environment.NETWORK_ID }
 
 @Service()
 export class NominationPoolsProcessorDatabaseHelper {
-  constructor(@Inject('knex') private readonly knex: Knex) {}
+  constructor(@Inject('knex') private readonly knex: Knex) { }
 
   async savePoolIdentity(trx: Knex.Transaction<any, any[]>, data: NominationPoolsIdentitiesModel): Promise<void> {
-    data.pool_name = data.pool_name?.replace(/\x00/g, '')
+    data.pool_name = data.pool_name?.replace(/[^a-zA-Z0-9\s.,'\-]/g, '').trim();
+    if (!data?.pool_name?.length) {
+      data.pool_name = 'NA';
+    }
+
     //console.log(data);
     await NominationPoolsIdentitiesModel(this.knex)
       .transacting(trx)
