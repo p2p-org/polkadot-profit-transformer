@@ -240,18 +240,23 @@ export class BlocksProcessorService {
         }
         newTasks.push(newStakingProcessingTask)
 
-        const newNominationPoolsProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
-          entity: ENTITY.NOMINATION_POOLS_ERA,
-          entity_id: parseInt(event.event.data[0].toString()),
-          status: PROCESSING_STATUS.NOT_PROCESSED,
-          collect_uid: uuidv4(),
-          start_timestamp: new Date(),
-          attempts: 0,
-          data: {
-            payout_block_id: blockId,
-          },
+        if (
+          environment.NETWORK === 'polkadot' ||
+          environment.NETWORK === 'kusama'
+        ) {
+          const newNominationPoolsProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
+            entity: ENTITY.NOMINATION_POOLS_ERA,
+            entity_id: parseInt(event.event.data[0].toString()),
+            status: PROCESSING_STATUS.NOT_PROCESSED,
+            collect_uid: uuidv4(),
+            start_timestamp: new Date(),
+            attempts: 0,
+            data: {
+              payout_block_id: blockId,
+            },
+          }
+          newTasks.push(newNominationPoolsProcessingTask)
         }
-        newTasks.push(newNominationPoolsProcessingTask)
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
