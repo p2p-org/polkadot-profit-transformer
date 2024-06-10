@@ -45,6 +45,7 @@ type BondedPoolRoles = {
   nominator: string
   stateToggler: string
   rewardAccount: string
+  stashAccount: string
 }
 
 type BondedPool = {
@@ -84,6 +85,7 @@ export type PoolData = {
   membersBond?: MembersBond
   members: PoolMembers
   subPoolStorage: SubPoolStorage
+  commission: Record<string, any>
 }
 
 export type Pools = {

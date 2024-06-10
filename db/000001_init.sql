@@ -495,6 +495,8 @@ CREATE TABLE IF NOT EXISTS nomination_pools_identities (
     "reward_id" VARCHAR(150),
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
+    "stash_id" varchar(150) NULL,
+    "commission" jsonb NULL,
     PRIMARY KEY ("row_id"),
     UNIQUE ("network_id", "pool_id")
 );

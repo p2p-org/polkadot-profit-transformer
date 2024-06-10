@@ -54,7 +54,6 @@ export class NominationPoolsProcessorService {
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
-
     const poolsData = await this.polkadotHelper.getNominationPools({ blockHash: payoutBlockHash, eraId })
 
     for (let poolId in poolsData) {
@@ -68,6 +67,8 @@ export class NominationPoolsProcessorService {
         nominator_id: pool?.roles.nominator,
         toggler_id: pool?.roles.stateToggler,
         reward_id: pool?.roles.rewardAccount,
+        stash_id: pool?.roles.stashAccount,
+        commission: pool?.commission,
       }
       await this.databaseHelper.savePoolIdentity(trx, poolMetadata)
 

@@ -18,7 +18,8 @@ export class NominationPoolsProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  ) {
+  }
 
   async getNominationPools({ eraId, blockHash }: IBlockEraParams): Promise<Pools> {
     this.logger.info({ event: `Get pools data for era: ${eraId}`, eraId })
@@ -51,7 +52,7 @@ export class NominationPoolsProcessorPolkadotHelper {
       pool.rewardPools = await api.query.nominationPools.rewardPools(poolId)
       pool.rewardPools = pool.rewardPools.toJSON()
 
-      const membersBond = await api.query.nominationPools.poolMembers(pool.roles.root)
+      const membersBond = await api.query.nominationPools.poolMembers(pool?.roles?.root)
       if (membersBond) {
         pool.membersBond = membersBond.toJSON()
       }
@@ -64,7 +65,9 @@ export class NominationPoolsProcessorPolkadotHelper {
         pool.points = BigInt(pool.points)
       }
 
-      pool.roles.rewardAccount = this.getPoolRewardsAccount(api, poolId)
+      pool.roles.stashAccount = this.getPoolAccount(api, poolId, 0)
+      pool.roles.rewardAccount = this.getPoolAccount(api, poolId, 1)
+
       return pool
     } catch (e) {
       console.error(e)
@@ -112,7 +115,7 @@ export class NominationPoolsProcessorPolkadotHelper {
     return members
   }
 
-  getPoolRewardsAccount(api: ApiPromise, pool_id: number) {
+  getPoolAccount(api: ApiPromise, poolId: number, typeId: number) {
     const pallet_id = api.consts.nominationPools.palletId.toU8a()
 
     return api.registry
@@ -121,8 +124,8 @@ export class NominationPoolsProcessorPolkadotHelper {
         u8aConcat(
           stringToU8a('modl'),
           pallet_id,
-          new Uint8Array([1]),
-          bnToU8a(new BN(pool_id), { bitLength: 32, isLe: true }),
+          new Uint8Array([typeId]),
+          bnToU8a(new BN(poolId), { bitLength: 32, isLe: true }),
           new Uint8Array(32),
         ),
       )
@@ -131,7 +134,7 @@ export class NominationPoolsProcessorPolkadotHelper {
 
   async getPoolName(api: ApiPromise, pool_id: number) {
     const name = await api.query.nominationPools.metadata(pool_id)
-    return this.hexToString(name.toString())
+    return this.hexToString(name.toString()).replace(/[^a-zA-Z0-9\s.,'\-]/g, '').trim();
   }
 
   hexToString(str1: string) {

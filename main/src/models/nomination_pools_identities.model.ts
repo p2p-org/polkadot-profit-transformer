@@ -9,7 +9,9 @@ export type NominationPoolsIdentitiesModel = {
   nominator_id?: string
   toggler_id?: string
   reward_id?: string
+  stash_id?: string
   row_id?: number
+  commission?: any
   row_time?: Date
 }
 
