@@ -12,6 +12,7 @@ import { NominationPoolsProcessorDatabaseHelper } from './helpers/database'
 import { NominationPoolsProcessorPolkadotHelper } from './helpers/polkadot'
 import { SliMetrics } from '@/loaders/sli_metrics'
 import { BN } from '@polkadot/util'
+import { environment } from '@/environment'
 
 @Service()
 export class NominationPoolsProcessorService {
@@ -53,7 +54,16 @@ export class NominationPoolsProcessorService {
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
 
-    const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
+    let blockId: number = payout_block_id;
+    if (environment.NETWORK === 'polkadot') {
+      blockId = payout_block_id - 10 * 60 * 6; // - 6 hours
+    }
+    if (environment.NETWORK === 'kusama') {
+      blockId = payout_block_id - 10 * 60 * 2; // - 2 hours
+    }
+    this.logger.info({ event: `Payout block is: ${payout_block_id}, but we extract from ${blockId}`, metadata, eraId })
+
+    const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
     const poolsData = await this.polkadotHelper.getNominationPools({ blockHash: payoutBlockHash, eraId })
 
     for (let poolId in poolsData) {
