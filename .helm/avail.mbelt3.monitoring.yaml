@@ -1,0 +1,21 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: avail
+role: monitoring
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_avail"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.avail.svc.cluster.local:9944
+  restart_blocks_uri: http://mbelt-mbelt3-prod-avail-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
+  restart_eras_uri: http://mbelt-mbelt3-prod-avail-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-eras
+  restart_balances_uri: http://mbelt-mbelt3-prod-avail-preloader.mbelt3.svc.cluster.local:80/restart-balances
+  log_level: info
+  network_id: 42
+  mode: MONITORING
+  network: avail
+ingress:
+  enabled: false

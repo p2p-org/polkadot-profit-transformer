@@ -48,3 +48,8 @@ replicasByName:
   manta/identity-processor/staging: 0
   manta/preloader/staging: 0
   manta/staking-processor/staging: 0
+  avail/balances-processor/staging: 0
+  avail/block-processor/staging: 0
+  avail/identity-processor/staging: 0
+  avail/preloader/staging: 0
+  avail/staking-processor/staging: 0
