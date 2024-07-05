@@ -10,11 +10,11 @@ vault:
   role: "mbelt-staging"
   secret: "secret/mbelt/staging_manta"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.manta.svc.cluster.local:9934
+  substrate_uri: wss://calamari.systems/
   log_level: info
-  network_id: 77
+  network_id: 78
   mode: LISTENER
-  network: manta
+  network: calamari
 ingress:
   enabled: true
   host: manta-preloader.mbelt-staging.polka.p2p.world

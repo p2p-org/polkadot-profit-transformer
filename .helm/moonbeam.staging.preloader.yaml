@@ -8,11 +8,11 @@ vault:
   role: "mbelt-staging"
   secret: "secret/mbelt/staging_moonbeam"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+  substrate_uri: wss://moonbase-alpha.public.blastapi.io
   log_level: info
-  network_id: 1284
+  network_id: 1287
   mode: LISTENER
-  network: moonbeam
+  network: moonbase
 ingress:
   enabled: true
   host: moonbeam-preloader.mbelt-staging.polka.p2p.world

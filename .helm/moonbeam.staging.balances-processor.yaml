@@ -11,11 +11,11 @@ vault:
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+  substrate_uri: wss://moonbase-alpha.public.blastapi.io
   log_level: info
-  network_id: 1284
+  network_id: 1287
   mode: BALANCES_PROCESSOR
-  network: moonbeam
+  network: moonbase
 ingress:
   enabled: true
   host: moonbeam-balances.mbelt-staging.polka.p2p.world
