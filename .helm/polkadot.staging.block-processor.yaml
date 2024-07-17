@@ -2,6 +2,7 @@
 environment: staging
 chain: polkadot
 role: block-processor
+replicas: 1
 limits: {cpu: 250m, memory: 1000Mi}
 requests: {cpu: 150m, memory: 1000Mi}
 

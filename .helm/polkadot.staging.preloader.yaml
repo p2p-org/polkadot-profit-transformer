@@ -2,7 +2,7 @@
 environment: staging
 chain: polkadot
 role: preloader
-
+replicas: 1
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
 vault:
