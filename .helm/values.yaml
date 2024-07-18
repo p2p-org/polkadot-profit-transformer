@@ -23,10 +23,10 @@ tolerations:
 # <chain>/<role>/<staging|mbelt3-prod>
 replicasByName:
   polkadot/balances-processor/staging: 0
-  polkadot/block-processor/staging: 0
+  polkadot/block-processor/staging: 1
   polkadot/identity-processor/staging: 0
-  polkadot/preloader/staging: 0
-  polkadot/staking-processor/staging: 0
+  polkadot/preloader/staging: 1
+  polkadot/staking-processor/staging: 1
   kusama/balances-processor/staging: 0
   kusama/block-processor/staging: 0
   kusama/identity-processor/staging: 0
