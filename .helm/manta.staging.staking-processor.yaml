@@ -12,11 +12,11 @@ vault:
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.manta.svc.cluster.local:9934
+  substrate_uri: wss://calamari.systems/
   log_level: info
-  network_id: 77
+  network_id: 78
   mode: STAKING_PROCESSOR
-  network: manta
+  network: calamari
 ingress:
   enabled: true
   host: manta-staking.mbelt-staging.polka.p2p.world
