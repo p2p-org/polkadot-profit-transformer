@@ -3,7 +3,7 @@ environment: dev
 additional_args: []
 metrics:
   enabled: true
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 6907cd2acdfc1362bf4439a46304e0e1820aea73}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 1faca6b0af7d171d2c3df25083d170150c04392d}
 replicas: 1
 port: 3000
 migrations:
@@ -23,10 +23,10 @@ tolerations:
 # <chain>/<role>/<staging|mbelt3-prod>
 replicasByName:
   polkadot/balances-processor/staging: 0
-  polkadot/block-processor/staging: 0
+  polkadot/block-processor/staging: 1
   polkadot/identity-processor/staging: 0
-  polkadot/preloader/staging: 0
-  polkadot/staking-processor/staging: 0
+  polkadot/preloader/staging: 1
+  polkadot/staking-processor/staging: 1
   kusama/balances-processor/staging: 0
   kusama/block-processor/staging: 0
   kusama/identity-processor/staging: 0
@@ -48,3 +48,8 @@ replicasByName:
   manta/identity-processor/staging: 0
   manta/preloader/staging: 0
   manta/staking-processor/staging: 0
+  avail/balances-processor/staging: 0
+  avail/block-processor/staging: 0
+  avail/identity-processor/staging: 0
+  avail/preloader/staging: 0
+  avail/staking-processor/staging: 0
