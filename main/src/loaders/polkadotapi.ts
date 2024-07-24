@@ -1,12 +1,16 @@
 import { environment } from '@/environment'
 import { Container, Inject, Service } from 'typedi'
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api'
+import { packageInfo } from '@polkadot/api/packageInfo.js';
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
 import { logger } from '@/loaders/logger'
 import process from 'node:process'
 import { SliMetrics } from '@/loaders/sli_metrics'
 
+
 export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> => {
+  logger.info(`✌️ ${packageInfo.name} version: ${packageInfo.version}`);
+  
   const provider = new WsProvider(nodeUrl, 2500, {}, 300 * 1000)
 
   let typesBundle = {}
@@ -61,6 +65,7 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     provider,
     typesBundle,
   })
+
 
   Promise.all([
     api.rpc.system.chain(),

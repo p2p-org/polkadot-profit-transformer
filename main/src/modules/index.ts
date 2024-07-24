@@ -27,15 +27,13 @@ export const ModulesLoader = async (): Promise<void> => {
   }
 
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
-    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'vara') {
+    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'vara' || environment.NETWORK === 'avail') {
       PolkadotStakingProcessor()
       if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
-        //console.log(process.env);
         NominationPoolsProcessor()
       }
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
       MoonbeamStakingProcessor()
-      //MoonbeamStakingProcessorRecalc()
     }
   }
 
