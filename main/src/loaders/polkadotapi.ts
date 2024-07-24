@@ -9,7 +9,6 @@ import { SliMetrics } from '@/loaders/sli_metrics'
 
 
 export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> => {
-  logger.info(`✌️ ${packageInfo.name} version: ${packageInfo.version}`);
   
   const provider = new WsProvider(nodeUrl, 2500, {}, 300 * 1000)
 
@@ -54,12 +53,15 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
   provider.on('disconnected', () => {
     attemptReconnect()
     logger.error('PolkadotAPI error: disconnected')
+    logger.info(`${packageInfo.name} version: ${packageInfo.version}`);
     //process.exit(1)
   })
   provider.on('error', (error) => {
     logger.error('PolkadotAPI error: ' + error.message)
+    logger.info(`${packageInfo.name} version: ${packageInfo.version}`);
     process.exit(2)
   })
+
 
   const api = await ApiPromise.create({
     provider,
