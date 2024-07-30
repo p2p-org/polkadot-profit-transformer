@@ -336,7 +336,7 @@ CREATE TABLE IF NOT EXISTS rewards_eras (
     "network_id" INT,
     "era_id" INT,
     "payout_block_id" INT,
-    "total_reward" BIGINT,
+    "total_reward" numeric(35),
     "total_reward_points" INT,
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
