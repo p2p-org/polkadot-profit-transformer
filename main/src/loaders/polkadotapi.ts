@@ -3,7 +3,7 @@ import { Container, Inject, Service } from 'typedi'
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api'
 import { packageInfo } from '@polkadot/api/packageInfo.js';
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
-import { availTypesBundle  } from '@/libs/availTypesBundle.ts';
+import { availTypesBundle  } from '@/libs/availTypesBundle';
 import { logger } from '@/loaders/logger'
 import process from 'node:process'
 import { SliMetrics } from '@/loaders/sli_metrics'
