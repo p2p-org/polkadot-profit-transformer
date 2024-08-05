@@ -22,7 +22,7 @@ export class NominationPoolsProcessorService {
 
     private readonly polkadotHelper: NominationPoolsProcessorPolkadotHelper,
     private readonly databaseHelper: NominationPoolsProcessorDatabaseHelper,
-  ) { }
+  ) {}
 
   async processTaskMessage(trx: Knex.Transaction, taskRecord: ProcessingTaskModel<ENTITY>): Promise<{ status: boolean }> {
     const { entity_id: eraId, collect_uid } = taskRecord
@@ -54,12 +54,12 @@ export class NominationPoolsProcessorService {
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
 
-    let blockId: number = payout_block_id;
+    let blockId: number = payout_block_id
     if (environment.NETWORK === 'polkadot') {
-      blockId = payout_block_id - 10 * 60 * 6; // - 6 hours
+      blockId = payout_block_id - 10 * 60 * 6 // - 6 hours
     }
     if (environment.NETWORK === 'kusama') {
-      blockId = payout_block_id - 10 * 60 * 2; // - 2 hours
+      blockId = payout_block_id - 10 * 60 * 2 // - 2 hours
     }
     this.logger.info({ event: `Payout block is: ${payout_block_id}, but we extract from ${blockId}`, metadata, eraId })
 
@@ -112,8 +112,9 @@ export class NominationPoolsProcessorService {
     }
 
     this.logger.info({
-      event: `Nomination pools for era ${eraId.toString()} processing finished in ${(Date.now() - startProcessingTime) / 1000
-        } seconds.`,
+      event: `Nomination pools for era ${eraId.toString()} processing finished in ${
+        (Date.now() - startProcessingTime) / 1000
+      } seconds.`,
       metadata,
       eraId,
     })

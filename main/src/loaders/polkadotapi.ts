@@ -1,16 +1,14 @@
 import { environment } from '@/environment'
 import { Container, Inject, Service } from 'typedi'
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api'
-import { packageInfo } from '@polkadot/api/packageInfo.js';
+import { packageInfo } from '@polkadot/api/packageInfo.js'
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
-import { availTypesBundle  } from '@/libs/availTypesBundle';
+import { availTypesBundle } from '@/libs/availTypesBundle'
 import { logger } from '@/loaders/logger'
 import process from 'node:process'
 import { SliMetrics } from '@/loaders/sli_metrics'
 
-
 export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> => {
-  
   const provider = new WsProvider(nodeUrl, 2500, {}, 300 * 1000)
 
   let typesBundle = {}
@@ -18,7 +16,7 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
   if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
     typesBundle = typesBundlePre900
   } else if (environment.NETWORK === 'avail') {
-    typesBundle = availTypesBundle;
+    typesBundle = availTypesBundle
   }
 
   const sliMetrics: SliMetrics = Container.get('sliMetrics')
@@ -56,21 +54,19 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
   provider.on('disconnected', () => {
     attemptReconnect()
     logger.error('PolkadotAPI error: disconnected')
-    logger.info(`${packageInfo.name} version: ${packageInfo.version}`);
+    logger.info(`${packageInfo.name} version: ${packageInfo.version}`)
     //process.exit(1)
   })
   provider.on('error', (error) => {
     logger.error('PolkadotAPI error: ' + error.message)
-    logger.info(`${packageInfo.name} version: ${packageInfo.version}`);
+    logger.info(`${packageInfo.name} version: ${packageInfo.version}`)
     process.exit(2)
   })
-
 
   const api = await ApiPromise.create({
     provider,
     typesBundle,
   })
-
 
   Promise.all([
     api.rpc.system.chain(),

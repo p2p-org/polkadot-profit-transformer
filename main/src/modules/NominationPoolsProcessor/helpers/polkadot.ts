@@ -18,8 +18,7 @@ export class NominationPoolsProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) {
-  }
+  ) {}
 
   async getNominationPools({ eraId, blockHash }: IBlockEraParams): Promise<Pools> {
     this.logger.info({ event: `Get pools data for era: ${eraId}`, eraId })
@@ -134,7 +133,9 @@ export class NominationPoolsProcessorPolkadotHelper {
 
   async getPoolName(api: ApiPromise, pool_id: number) {
     const name = await api.query.nominationPools.metadata(pool_id)
-    return this.hexToString(name.toString()).replace(/[^a-zA-Z0-9\s.,'\-]/g, '').trim();
+    return this.hexToString(name.toString())
+      .replace(/[^a-zA-Z0-9\s.,'\-]/g, '')
+      .trim()
   }
 
   hexToString(str1: string) {
