@@ -30,7 +30,7 @@ export class BlocksProcessorService {
     private readonly databaseHelper: BlockProcessorDatabaseHelper,
     private readonly identityDatabaseHelper: IdentityDatabaseHelper,
     private readonly tasksRepository: TasksRepository,
-  ) { }
+  ) {}
 
   async processTaskMessage(
     trx: Knex.Transaction,
@@ -240,10 +240,7 @@ export class BlocksProcessorService {
         }
         newTasks.push(newStakingProcessingTask)
 
-        if (
-          environment.NETWORK === 'polkadot' ||
-          environment.NETWORK === 'kusama'
-        ) {
+        if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama') {
           const newNominationPoolsProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
             entity: ENTITY.NOMINATION_POOLS_ERA,
             entity_id: parseInt(event.event.data[0].toString()),
