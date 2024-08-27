@@ -1,3 +1,4 @@
+import { environment } from '@/environment'
 import { Inject, Service } from 'typedi'
 import { Logger } from 'pino'
 import { ApiPromise } from '@polkadot/api'
@@ -17,7 +18,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) {}
+  ) { }
 
   async getValidatorsAndNominatorsStake(args: {
     eraId: number
@@ -202,9 +203,11 @@ export class PolkadotStakingProcessorPolkadotHelper {
   ): Promise<[any, Exposure, ValidatorPrefs]> {
     const apiAtBlock = await this.polkadotApi.at(blockHash)
     const runtime: any = await apiAtBlock.query.system.lastRuntimeUpgrade()
-    if (runtime.unwrap().specVersion.toNumber() >= 1002000) {
+    if (runtime.unwrap().specVersion.toNumber() >= 1002000 || environment.NETWORK === 'avail') {
+      this.logger.info(`Era: ${eraId}. getStakersInfoNew`)
       return this.getStakersInfoNew(apiAtBlock, eraId, validatorAccountId)
     } else {
+      this.logger.info(`Era: ${eraId}. getStakersInfoOld`)
       return this.getStakersInfoOld(apiAtBlock, eraId, validatorAccountId)
     }
   }
@@ -217,6 +220,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     ])
 
     const overview: any = _overview.toJSON()
+
     const others: any = []
     for (let page = 0; page <= overview?.pageCount; page++) {
       const _staking: any = await apiAtBlock.query.staking.erasStakersPaged(eraId, validatorAccountId, page)
