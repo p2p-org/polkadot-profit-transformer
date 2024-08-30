@@ -203,7 +203,10 @@ export class PolkadotStakingProcessorPolkadotHelper {
   ): Promise<[any, Exposure, ValidatorPrefs]> {
     const apiAtBlock = await this.polkadotApi.at(blockHash)
     const runtime: any = await apiAtBlock.query.system.lastRuntimeUpgrade()
-    if (runtime.unwrap().specVersion.toNumber() >= 1002000 || environment.NETWORK === 'avail') {
+    if (runtime.unwrap().specVersion.toNumber() >= 1002000 ||
+      (environment.NETWORK === 'vara' && runtime.unwrap().specVersion.toNumber() >= 1500) ||
+      environment.NETWORK === 'avail'
+    ) {
       this.logger.info(`Era: ${eraId}. getStakersInfoNew`)
       return this.getStakersInfoNew(apiAtBlock, eraId, validatorAccountId)
     } else {
