@@ -34,7 +34,7 @@ export const ModulesLoader = async (): Promise<void> => {
       environment.NETWORK === 'avail'
     ) {
       PolkadotStakingProcessor()
-      if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' | environment.NETWORK === 'avail') {
+      if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'avail') {
         NominationPoolsProcessor()
       }
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
