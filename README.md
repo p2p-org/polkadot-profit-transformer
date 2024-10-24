@@ -240,7 +240,6 @@ It is used as entrypoint SQL when Postgres started by ./db/Dockerfile from ./doc
   - To reduce tables amount, we store this data slighlty denormalized, e.g. for proposals we store events such as `proposed`, `approved`, `executed` as well as `Votes` records from 'vote' extrinsics.
 
 
-
 ## Mbelt architecture diagram
 
 ![MBELT3 architecture diagram](./docs/arch3.png)
