@@ -54,6 +54,12 @@ export class BalancesProcessorService {
       )
     } catch (e) {
       console.error(`Unable to fetch traceBlock: ${e}`)
+      console.error(`Call: await this.polkadotApi.rpc.state.traceBlock(
+        '${block.hash}',
+        'state',
+        '26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9',
+        'Put',
+      )`);
       throw e
     }
     //console.log('After get block  trace from RPC', Date.now())
