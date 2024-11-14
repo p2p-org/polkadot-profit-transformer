@@ -70,7 +70,9 @@ export class BlockListenerService {
       }
 
       for (const record of records) {
-        await this.sendTaskToToRabbit(entity, record)
+	if (record.attempts < 10 ) {
+          await this.sendTaskToToRabbit(entity, record)
+	}
         lastEntityId = record.entity_id || 0
       }
 
@@ -163,7 +165,9 @@ export class BlockListenerService {
       })
       return
     }
-    await this.sendTaskToToRabbit(entity, record)
+    if (record.attempts < 10 ) {
+      await this.sendTaskToToRabbit(entity, record)
+    }
 
     this.logger.info({
       event: 'BlocksListener.restartUnprocessedTask',
