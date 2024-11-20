@@ -3,8 +3,8 @@ environment: mbelt3-prod
 replicas: 1
 chain: avail
 role: block-processor
-limits: {cpu: 350m, memory: 1000Mi}
-requests: {cpu: 250m, memory: 1000Mi}
+limits: {cpu: 350m, memory: 10000Mi}
+requests: {cpu: 250m, memory: 10000Mi}
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_avail"
