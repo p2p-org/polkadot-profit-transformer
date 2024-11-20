@@ -36,7 +36,17 @@ export class BlocksProcessorService {
     trx: Knex.Transaction,
     taskRecord: ProcessingTaskModel<ENTITY>,
   ): Promise<{ status: boolean; callback?: any }> {
-    const { entity_id: blockId, collect_uid } = taskRecord
+    const { entity_id: blockId, collect_uid, attempts } = taskRecord
+
+    if (attempts > 10) {
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: `Block ${blockId} processing attempts > 10. Skip this block.`,
+      })
+
+      return { status: true }
+    }
 
     //check that block wasn't processed already
     if (await this.databaseHelper.getBlockById(blockId)) {
