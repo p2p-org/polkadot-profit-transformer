@@ -137,6 +137,12 @@ export class BlocksProcessorService {
       blockHash,
     )
 
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Info for block processing fetched ${blockId}`,
+    })
+
     const extrinsicsData: ExtrinsicsProcessorInput = {
       // eraId: activeEra,
       // epochId: epoch,
@@ -145,9 +151,18 @@ export class BlocksProcessorService {
       extrinsics: signedBlock.block.extrinsics,
     }
     const extractedExtrinsics = await this.processExtrinsics(extrinsicsData)
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Extrinsics for block processed: ${blockId}`,
+    })
 
     const processedEvents = this.processEvents(signedBlock.block.header.number.toNumber(), events)
-
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Events for block processed: ${blockId}`,
+    })
     // const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
     const block: BlockModel = {
@@ -188,15 +203,30 @@ export class BlocksProcessorService {
         })
       }
     }
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Exitrinsics transaction prepared: ${blockId}`,
+    })
 
     // console.log(blockId + ': extrinsics saved')
     for (const event of processedEvents) {
       await this.databaseHelper.saveEvent(trx, event)
     }
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Events transaction prepared: ${blockId}`,
+    })
 
     // console.log(blockId + ': events saved')
 
     await this.databaseHelper.saveBlock(trx, block)
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Block transaction prepared: ${blockId}`,
+    })
 
     await this.databaseHelper.saveTotalIssuance(trx, block.block_id, totalIssuance.toString(10))
 
