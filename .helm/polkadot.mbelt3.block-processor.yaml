@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 30
+replicas: 20
 chain: polkadot
 role: block-processor
 limits: {cpu: 250m, memory: 4096Mi}
