@@ -1,10 +1,10 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 2
 chain: kusama
 role: block-processor
-limits: {cpu: 350m, memory: 1024Mi}
-requests: {cpu: 250m, memory: 1024Mi}
+limits: {cpu: 350m, memory: 10240Mi}
+requests: {cpu: 250m, memory: 10240Mi}
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
