@@ -1,10 +1,10 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 2
 chain: polkadot
 role: block-processor
-limits: {cpu: 250m, memory: 1024Mi}
-requests: {cpu: 150m, memory: 1024Mi}
+limits: {cpu: 250m, memory: 10240Mi}
+requests: {cpu: 150m, memory: 10240Mi}
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3"
