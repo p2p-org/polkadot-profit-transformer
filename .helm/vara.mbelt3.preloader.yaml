@@ -10,7 +10,7 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_vara"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.gear.svc.cluster.local:9944
+  substrate_uri: ws://51.158.239.28:9934
   log_level: info
   network_id: 137
   mode: LISTENER
