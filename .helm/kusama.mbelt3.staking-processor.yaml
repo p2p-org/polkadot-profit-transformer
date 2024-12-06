@@ -3,15 +3,15 @@ environment: mbelt3-prod
 chain: kusama
 role: staking-processor
 replicas: 1
-limits: {cpu: 450m, memory: 10096Mi}
-requests: {cpu: 350m, memory: 10096Mi}
+limits: {cpu: 450m, memory: 4096Mi}
+requests: {cpu: 350m, memory: 4096Mi}
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
 additional_args:
   - "--max_old_space_size=4096"
 env:
-  substrate_uri: ws://10.51.15.3:9934
+  substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
   log_level: info
   network_id: 2
   mode: STAKING_PROCESSOR
