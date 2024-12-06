@@ -290,7 +290,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }: IBlockEraParams): Promise<
     Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>
   > {
-    this.logger.debug({ getEraData: { eraId, blockHash } })
+    this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`);
     const [totalStake, sessionStart] = await Promise.all([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
       this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
@@ -325,6 +325,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
+    this.logger.info(`this.polkadotApi.rpc.chain.getBlockHash(${height})`);
     return this.polkadotApi.rpc.chain.getBlockHash(height)
   }
 
