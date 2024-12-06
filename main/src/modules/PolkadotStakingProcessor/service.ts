@@ -41,7 +41,7 @@ export class PolkadotStakingProcessorService {
     trx: Knex.Transaction<any, any[]>,
   ): Promise<void> {
     const startProcessingTime = Date.now()
-    this.logger.info({ event: `Process staking data for next era: ${eraId}`, metadata, eraId })
+    this.logger.info({ event: `Process staking data for next era: ${eraId}`, metadata, eraId, payout_block_id, collect_uid })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
     this.logger.info({ event: `payoutBlockHash is ${payoutBlockHash}`});
