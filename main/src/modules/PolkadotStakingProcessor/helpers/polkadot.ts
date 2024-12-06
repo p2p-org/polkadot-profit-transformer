@@ -325,8 +325,9 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
-    this.logger.info(`this.polkadotApi.rpc.chain.getBlockHash(${height})`);
-    return this.polkadotApi.rpc.chain.getBlockHash(height)
+    const hash = this.polkadotApi.rpc.chain.getBlockHash(height);
+    this.logger.info(`getBlockHashByHeight: this.polkadotApi.rpc.chain.getBlockHash(${height}): ${hash}`);
+    return hash;
   }
 
   async getBlockTime(blockHash: TBlockHash): Promise<number> {
