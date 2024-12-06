@@ -46,7 +46,7 @@ export class PolkadotStakingProcessorService {
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
     this.logger.info({ event: `payoutBlockHash is ${payoutBlockHash}`});
     const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
-    this.logger.info({ event: `payoutBlockTim is ${payoutBlockTime}`});
+    this.logger.info({ event: `payoutBlockTime is ${payoutBlockTime}`});
 
     try {
       const eraData = await this.polkadotHelper.getEraDataStake({ blockHash: payoutBlockHash, eraId })
