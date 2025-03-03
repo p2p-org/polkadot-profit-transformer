@@ -93,6 +93,7 @@ export class MonitoringDatabaseHelper {
         AND start_timestamp < NOW() - INTERVAL '1 DAY'
         AND entity != 'block_balances'
       LIMIT 10`
+
     const missedTasksRows = await this.knex.raw(missedTasksSQL)
     return missedTasksRows.rows
   }
