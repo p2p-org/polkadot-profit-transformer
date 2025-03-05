@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+chain: bittensor
+role: staking-processor
+replicas: 1
+limits: {cpu: 450m, memory: 4096Mi}
+requests: {cpu: 350m, memory: 4096Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_bittensor"
+additional_args:
+  - "--max_old_space_size=4096"
+env:
+  substrate_uri: wss://archive.chain.opentensor.ai:443
+  log_level: info
+  network_id: 42
+  mode: STAKING_PROCESSOR
+  network: bittensor
+ingress:
+  enabled: true
+  host: mbelt3-bittensor-staking-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-bittensor-staking-processor-polka-p2p-world
