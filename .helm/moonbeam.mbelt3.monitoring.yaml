@@ -11,8 +11,7 @@ vault:
 env:
   substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
   restart_blocks_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
-  restart_rounds_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
-  restart_balances_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-balances
+  restart_rounds_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds  
   log_level: info
   network_id: 1284
   mode: MONITORING
