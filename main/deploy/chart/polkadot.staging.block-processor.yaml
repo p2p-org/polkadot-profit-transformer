@@ -1,0 +1,24 @@
+---
+environment: staging
+chain: polkadot
+role: block-processor
+replicas: 1
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_polkadot"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.westend.svc.cluster.local:9944
+  log_level: info
+  network_id: 42
+  mode: BLOCK_PROCESSOR
+  network: westend
+ingress:
+  enabled: true
+  host: polkadot-block.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

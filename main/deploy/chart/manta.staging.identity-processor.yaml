@@ -1,0 +1,23 @@
+---
+environment: staging
+chain: manta
+role: identity-processor
+limits: {cpu: 250m, memory: 200Mi}
+requests: {cpu: 150m, memory: 200Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_manta"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: wss://calamari.systems/
+  log_level: info
+  network_id: 78
+  mode: IDENTITY_PROCESSOR
+  network: calamari
+ingress:
+  enabled: true
+  host: manta-identity.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

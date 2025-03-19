@@ -1,0 +1,24 @@
+---
+environment: mbelt3-prod
+chain: vara
+role: gear-smartcontracts-processor
+replicas: 0
+limits: {cpu: 450m, memory: 4096Mi}
+requests: {cpu: 350m, memory: 4096Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_vara"
+additional_args:
+  - "--max_old_space_size=4096"
+env:
+  substrate_uri: ws://10.51.15.3:9934
+  log_level: info
+  network_id: 137
+  mode: GEAR_SMARTCONTRACTS_PROCESSOR
+  network: vara
+ingress:
+  enabled: true
+  host: mbelt3-vara-gear-smartcontracts-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-vara-gear-smartcontracts-processor-polka-p2p-world
+

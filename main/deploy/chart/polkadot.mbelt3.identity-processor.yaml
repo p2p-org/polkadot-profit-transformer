@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: polkadot
+role: identity-processor
+limits: {cpu: 250m, memory: 200Mi}
+requests: {cpu: 150m, memory: 200Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 0
+  mode: IDENTITY_PROCESSOR
+  network: polkadot
+ingress:
+  enabled: true
+  host: mbelt3-identity-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-identity-processor-polka-p2p-world

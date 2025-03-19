@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: polkadot
+role: balances-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 0
+  mode: BALANCES_PROCESSOR
+  network: polkadot
+ingress:
+  enabled: true
+  host: mbelt3-balances-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-balances-processor-polka-p2p-world

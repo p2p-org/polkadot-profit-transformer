@@ -1,0 +1,22 @@
+---
+environment: mbelt3-prod
+chain: moonriver
+role: monitoring
+replicas: 1
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_moonriver"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.moonriver.svc.cluster.local:9945
+  restart_blocks_uri: http://mbelt-mbelt3-prod-moonriver-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
+  restart_rounds_uri: http://mbelt-mbelt3-prod-moonriver-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds
+  restart_balances_uri: http://mbelt-mbelt3-prod-moonriver-preloader.mbelt3.svc.cluster.local:80/restart-balances
+  log_level: info
+  network_id: 1285
+  mode: MONITORING
+  network: moonriver
+ingress:
+  enabled: false

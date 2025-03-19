@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "app.fullname" $ }}
+  labels:
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
+spec:
+  replicas: {{ template "app.replicas" $ }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      env: {{ .Values.environment }}
+      chain: {{ .Values.chain }}
+      role: {{ .Values.role }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+        env: {{ .Values.environment }}
+        chain: {{ .Values.chain }}
+        role: {{ .Values.role }}
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        vault.hashicorp.com/role: {{ .Values.vault.role | quote }}
+        vault.hashicorp.com/agent-inject-secret-config: {{ .Values.vault.secret | quote }}
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{"{{"}} with secret {{ .Values.vault.secret | quote }} {{"-}}"}}
+          {{"{{"}}- range $key, $value := .Data.data {{"}}"}}
+          export {{"{{"}} $key {{"}}"}}={{"{{"}} $value {{"}}"}}
+          {{"{{"}}- end {{"}}"}}
+          {{"{{-"}} end {{"}}"}}
+    spec:
+      serviceAccountName: {{ template "app.fullname" $ }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: streamer
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        ports: [ containerPort: {{ .Values.port }} ]
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+        command:
+        - sh
+        - -c
+        - |
+          source /vault/secrets/config;
+          node \
+          --require=./tsconfig-paths-bootstrap.js \
+          {{- range .Values.additional_args }}
+          {{ . }} \
+          {{- end }}
+          ./dist/index.js
+        {{- with .Values.env }}
+        env:
+
+        - { name: RESTART_BLOCKS_URI,   value: {{ quote .restart_blocks_uri }} }
+        - { name: RESTART_ERAS_URI,     value: {{ quote .restart_eras_uri }} }
+        - { name: RESTART_ROUNDS_URI,   value: {{ quote .restart_rounds_uri }} }
+        - { name: RESTART_BALANCES_URI, value: {{ quote .restart_balances_uri }} }
+        - { name: SUBSTRATE_URI, value: {{ quote .substrate_uri }} }
+        - { name: LOG_LEVEL,     value: {{ quote .log_level }} }
+        - { name: NETWORK_ID,    value: {{ quote .network_id }} }
+        - { name: MODE,          value: {{ quote .mode }} }
+        - { name: NETWORK,       value: {{ quote .network }} }
+        - { name: SUBSCRIBE,     value: {{ quote .subscribe }} }
+        - { name: PRELOAD,       value: {{ quote .preload }} }
+        {{- end }}
+        - { name: REST_API_PORT, value: {{ quote .Values.port }} }
+        - { name: BASIC_AUTH,    value: "false" }
+        - { name: NODE_ENV,      value: "production" }
+        resources:
+          limits: { cpu: {{ .Values.limits.cpu }}, memory: {{ .Values.limits.memory }} }
+          requests: { cpu: {{ .Values.requests.cpu }}, memory: {{ .Values.requests.memory }} }

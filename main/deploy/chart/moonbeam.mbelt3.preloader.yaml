@@ -1,0 +1,22 @@
+---
+environment: mbelt3-prod
+chain: moonbeam
+role: preloader
+replicas: 1
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_moonbeam"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+  log_level: info
+  network_id: 1284
+  mode: LISTENER
+  network: moonbeam
+ingress:
+  enabled: true
+  host: mbelt3-moonbeam-preloader.polka.p2p.world
+  tls:
+    secret: mbelt3-moonbeam-preloader-polka-p2p-world

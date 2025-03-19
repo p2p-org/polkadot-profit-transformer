@@ -1,0 +1,55 @@
+---
+environment: dev
+additional_args: []
+metrics:
+  enabled: true
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 9228ebcaeb811dcf8fde4d0d50e4ef3c6379f79d}
+replicas: 1
+port: 3000
+migrations:
+  enabled: false
+ingress:
+  enabled: false
+  class: nginx-external
+  tls:
+    cluster_issuer: cloudflare-prod
+    ssl_redirect: true
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
+# instance count
+# <chain>/<role>/<staging|mbelt3-prod>
+replicasByName:
+  polkadot/balances-processor/staging: 0
+  polkadot/block-processor/staging: 1
+  polkadot/identity-processor/staging: 0
+  polkadot/preloader/staging: 1
+  polkadot/staking-processor/staging: 1
+  kusama/balances-processor/staging: 0
+  kusama/block-processor/staging: 0
+  kusama/identity-processor/staging: 0
+  kusama/preloader/staging: 0
+  kusama/staking-processor/staging: 0
+  moonbeam/balances-processor/staging: 0
+  moonbeam/block-processor/staging: 0
+  moonbeam/identity-processor/staging: 0
+  moonbeam/preloader/staging: 0
+  moonbeam/staking-processor/staging: 0
+  vara/balances-processor/staging: 0
+  vara/block-processor/staging: 0
+  vara/gear-smartcontracts-processor/staging: 0
+  vara/identity-processor/staging: 0
+  vara/preloader/staging: 0
+  vara/staking-processor/staging: 0
+  manta/balances-processor/staging: 0
+  manta/block-processor/staging: 0
+  manta/identity-processor/staging: 0
+  manta/preloader/staging: 0
+  manta/staking-processor/staging: 0
+  avail/balances-processor/staging: 0
+  avail/block-processor/staging: 0
+  avail/identity-processor/staging: 0
+  avail/preloader/staging: 0
+  avail/staking-processor/staging: 0

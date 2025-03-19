@@ -1,0 +1,24 @@
+---
+environment: staging
+chain: manta
+role: staking-processor
+replicas: 1
+limits: {cpu: 450m, memory: 1000Mi}
+requests: {cpu: 350m, memory: 1000Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_manta"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: wss://calamari.systems/
+  log_level: info
+  network_id: 78
+  mode: STAKING_PROCESSOR
+  network: calamari
+ingress:
+  enabled: true
+  host: manta-staking.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

@@ -1,0 +1,22 @@
+---
+environment: staging
+chain: manta
+role: preloader
+replicas: 1
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_manta"
+env:
+  substrate_uri: wss://calamari.systems/
+  log_level: info
+  network_id: 78
+  mode: LISTENER
+  network: calamari
+ingress:
+  enabled: true
+  host: manta-preloader.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

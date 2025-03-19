@@ -1,0 +1,43 @@
+name: Test mbelt3 with manifets pipelines
+
+on:
+  push:
+    branches: ['mbelt3-maifesto']
+
+jobs:
+  deploy:
+    runs-on: small
+    container:
+      image: p2p/node22:latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.2
+
+      - name: Generate Helm templates
+        run: |
+          cd main
+          mkdir -p manifests
+          helm template mbelt3-avail-block-processor -f ./deploy/chart/avail.mbelt3.block-processor.yaml ./deploy/chart \
+            --set image.tag=${{ github.sha }} \
+            > main/manifests/rendered-manifests.yaml
+
+      - name: install manifesto
+        uses: p2p-org/manifesto-actions/setup@v1
+        with:
+          github-app-id: ${{ secrets.P2P_REPOSITORY_READER_APP_ID }}
+          github-app-private-key: ${{ secrets.P2P_REPOSITORY_READER_APP_PRIVATE_KEY }}
+          server-address: 'manifesto.infra.p2p.org'
+
+      - name: push manifests
+        uses: p2p-org/manifesto-actions/push@v1
+        with:
+          environment: 'production'
+          working-directory: 'main/deploy'  # Must contain .manifesto.yaml
+          manifests-path: 'main/manifests/rendered-manifests.yaml'
+          debug: true

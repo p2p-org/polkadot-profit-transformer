@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: kusama
+role: block-processor
+limits: {cpu: 350m, memory: 1024Mi}
+requests: {cpu: 250m, memory: 1024Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_kusama"
+additional_args:
+  - "--max_old_space_size=8192"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.kusama.svc.cluster.local:9944
+  log_level: info
+  network_id: 2
+  mode: BLOCK_PROCESSOR
+  network: kusama
+ingress:
+  enabled: true
+  host: mbelt3-kusama-block-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-kusama-block-processor-polka-p2p-world

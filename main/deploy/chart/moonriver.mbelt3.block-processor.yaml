@@ -1,0 +1,24 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: moonriver
+role: block-processor
+limits: {cpu: 450m, memory: 1000Mi}
+requests: {cpu: 450m, memory: 1000Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_moonriver"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.moonriver.svc.cluster.local:9945
+  log_level: info
+  network_id: 1285
+  mode: BLOCK_PROCESSOR
+  network: moonriver
+ingress:
+  enabled: true
+  host: mbelt3-moonriver-block-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-moonriver-block-processor-polka-p2p-world

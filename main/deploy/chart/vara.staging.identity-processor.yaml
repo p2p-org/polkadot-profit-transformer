@@ -1,0 +1,23 @@
+---
+environment: staging
+chain: vara
+role: identity-processor
+limits: {cpu: 250m, memory: 200Mi}
+requests: {cpu: 150m, memory: 200Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_vara"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: wss://testnet.vara.network/
+  log_level: info
+  network_id: 137
+  mode: IDENTITY_PROCESSOR
+  network: vara
+ingress:
+  enabled: true
+  host: vara-identity.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world
