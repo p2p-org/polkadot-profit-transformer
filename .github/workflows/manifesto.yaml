@@ -6,7 +6,9 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: small
+    container:
+      image: p2p/node22:latest
     permissions:
       contents: write
       id-token: write
