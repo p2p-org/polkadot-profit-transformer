@@ -38,6 +38,6 @@ jobs:
         uses: p2p-org/manifesto-actions/push@v1
         with:
           environment: 'production'
-          working-directory: 'main/deploy'  # Must contain .manifesto.yaml
+          working-directory: 'main/deploy'  # Must contain .manifesto.yaml 
           manifests-path: 'main/manifests/rendered-manifests.yaml'
           debug: true
