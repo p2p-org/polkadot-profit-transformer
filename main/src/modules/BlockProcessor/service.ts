@@ -376,6 +376,7 @@ export class BlocksProcessorService {
               extrinsic,
               [...indexes, index].join('-'),
               referencedEventsIds,
+	      extrinsic.hash.toHex(),
             ),
           )
           return extrinsicModels
@@ -388,6 +389,7 @@ export class BlocksProcessorService {
             extrinsic,
             index.toString(),
             referencedEventsIds,
+            extrinsic.hash.toHex(),
           )
 
           return [failedExtrinsicModel]
@@ -407,11 +409,13 @@ export class BlocksProcessorService {
     extrinsic: GenericExtrinsic<AnyTuple>,
     index: string,
     referencedEventsIds: string[],
+    exHash: string,
   ): ExtrinsicModel {
     const extrinsicModel: ExtrinsicModel = {
       extrinsic_id: `${blockNumber}-${index}`,
       success: isSuccess,
       block_id: blockNumber.toNumber(),
+      hash: exHash,
       // session_id: sessionId,
       // era: eraId,
       section: call.section,

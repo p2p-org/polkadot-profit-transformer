@@ -3,6 +3,7 @@ import { Knex } from 'knex'
 export type ExtrinsicModel = {
   extrinsic_id: string
   block_id: number
+  hash: string
   parent_id?: string
   success: boolean
   // session_id: number

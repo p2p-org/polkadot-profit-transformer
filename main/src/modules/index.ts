@@ -30,11 +30,12 @@ export const ModulesLoader = async (): Promise<void> => {
     if (
       environment.NETWORK === 'polkadot' ||
       environment.NETWORK === 'kusama' ||
+      environment.NETWORK === 'bittensor' ||
       environment.NETWORK === 'vara' ||
       environment.NETWORK === 'avail'
     ) {
       PolkadotStakingProcessor()
-      if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'avail') {
+      if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'avail' || environment.NETWORK === 'bittensor') {
         NominationPoolsProcessor()
       }
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
