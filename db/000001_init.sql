@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS extrinsics (
     "network_id" INT,
     "extrinsic_id" VARCHAR(150),
     "block_id" BIGINT NOT NULL,
+    "hash" VARCHAR(66),
     "success" BOOL,
     "parent_id" VARCHAR(150),
     "section" VARCHAR(50),
