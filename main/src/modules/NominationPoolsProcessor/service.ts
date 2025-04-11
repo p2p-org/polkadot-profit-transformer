@@ -54,7 +54,7 @@ export class NominationPoolsProcessorService {
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
 
-    let blockId: number = payout_block_id
+    let blockId: number = payout_block_id - 1;
     //if (environment.NETWORK === 'polkadot') {
     //  blockId = payout_block_id;
     //}
