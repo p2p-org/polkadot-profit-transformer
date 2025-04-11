@@ -55,12 +55,12 @@ export class NominationPoolsProcessorService {
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
 
     let blockId: number = payout_block_id
-    if (environment.NETWORK === 'polkadot') {
-      blockId = payout_block_id - 10 * 60 * 6 // - 6 hours
-    }
-    if (environment.NETWORK === 'kusama') {
-      blockId = payout_block_id - 10 * 60 * 2 // - 2 hours
-    }
+    //if (environment.NETWORK === 'polkadot') {
+    //  blockId = payout_block_id;
+    //}
+    //if (environment.NETWORK === 'kusama') {
+    //  blockId = payout_block_id;
+    //}
     this.logger.info({ event: `Payout block is: ${payout_block_id}, but we extract from ${blockId}`, metadata, eraId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
