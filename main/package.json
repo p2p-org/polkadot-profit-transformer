@@ -44,6 +44,7 @@
     "pg": "^8.7.3",
     "pino": "^8.1.0",
     "pino-pretty": "^8.1.0",
+    "pm2": "^5.4.3",
     "prom-client": "^14.0.1",
     "reflect-metadata": "^0.1.13",
     "scale-codec": "^0.10.1",

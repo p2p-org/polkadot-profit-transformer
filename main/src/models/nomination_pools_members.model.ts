@@ -7,6 +7,7 @@ export type NominationPoolsMembersModel = {
   account_id?: string
   points?: number
   last_recorded_reward_counter: string
+  pending_rewards: number
   unbonding_eras?: any
   row_id?: number
   row_time?: Date

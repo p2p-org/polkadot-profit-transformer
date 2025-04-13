@@ -20,7 +20,7 @@ export class NominationPoolsProcessorPolkadotHelper {
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
   ) {}
 
-  async getNominationPools({ eraId, blockHash }: IBlockEraParams): Promise<Pools> {
+  async getNominationPools({ eraId, blockHash, pendingBlockHash }: IBlockEraParams): Promise<Pools> {
     this.logger.info({ event: `Get pools data for era: ${eraId}`, eraId })
     const apiAtBlock: any = await this.polkadotApi.at(blockHash)
 
@@ -31,9 +31,34 @@ export class NominationPoolsProcessorPolkadotHelper {
       const poolId = poolsEntries[key][0].toHuman()[0]
       pools[poolId] = await this.getPoolData(apiAtBlock, poolId, members, poolsEntries[key][1].toJSON())
     }
+
+    if (pendingBlockHash) {
+      this.logger.info({ event: `Get pending rewards for pools` });
+      const apiAtPendingBlock = await this.polkadotApi.at(pendingBlockHash);
+    
+      for (const poolId in pools) {
+        this.logger.info({ event: `Get pending rewards for pool ${poolId}`, poolId });
+        const pool = pools[poolId];
+        if (!pool || !pool.members) {
+          continue;
+        }
+
+        const memberIndices = Object.keys(pool.members);
+        for (let i = 0; i < memberIndices.length; i++) {
+          const member = pool.members[i];
+          if (!member || !member.account) {
+            continue;
+          }
+          member.data.pendingRewards =
+            await apiAtPendingBlock.call.nominationPoolsApi.pendingRewards(member.account);
+        }
+      }
+    }
+  
     this.logger.info({ event: `Count of collected pools: ${Object.keys(pools).length}` })
     return pools
   }
+
 
   async getPoolData(api: ApiPromise, poolId: number, members: any, bondedPool: any): Promise<PoolData | undefined> {
     this.logger.info({ event: `Get pool with id: ${poolId}`, poolId })

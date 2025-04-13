@@ -33,6 +33,7 @@ export class NominationPoolsProcessorService {
     }
 
     try {
+      await this.sleep(600000); //we need to wait while payout rewards will be calculated (skip 100 blocks).
       await this.processNominationPool(metadata, eraId + 1, taskRecord.data.payout_block_id, collect_uid, trx)
     } catch (error: any) {
       this.logger.warn({
@@ -54,7 +55,8 @@ export class NominationPoolsProcessorService {
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
 
-    let blockId: number = payout_block_id - 1;
+    let blockId: number = payout_block_id;
+    let pendingBlockId: number = payout_block_id+100;
     //if (environment.NETWORK === 'polkadot') {
     //  blockId = payout_block_id;
     //}
@@ -64,7 +66,8 @@ export class NominationPoolsProcessorService {
     this.logger.info({ event: `Payout block is: ${payout_block_id}, but we extract from ${blockId}`, metadata, eraId })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(blockId)
-    const poolsData = await this.polkadotHelper.getNominationPools({ blockHash: payoutBlockHash, eraId })
+    const pendingBlockHash = await this.polkadotHelper.getBlockHashByHeight(pendingBlockId)
+    const poolsData = await this.polkadotHelper.getNominationPools({ blockHash: payoutBlockHash, pendingBlockHash, eraId })
 
     for (let poolId in poolsData) {
       const pool = poolsData[poolId]
@@ -102,6 +105,7 @@ export class NominationPoolsProcessorService {
             account_id: member?.account,
             points: member?.data?.points,
             last_recorded_reward_counter: member?.data?.lastRecordedRewardCounter,
+	    pending_rewards: member?.data?.pendingRewards,
             unbonding_eras: member?.data?.unbondingEras,
           }
           await this.databaseHelper.saveEraPoolMember(trx, eraPoolMember)
@@ -125,5 +129,9 @@ export class NominationPoolsProcessorService {
       name: 'preprocess_time_ms',
       value: Date.now() - startProcessingTime,
     })
+  }
+
+  sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
