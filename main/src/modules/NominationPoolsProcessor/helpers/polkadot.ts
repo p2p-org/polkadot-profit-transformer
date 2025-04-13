@@ -135,7 +135,7 @@ export class NominationPoolsProcessorPolkadotHelper {
       },
       {},
     )
-    this.logger.info({ event: `Pool memebers processes. Count: ${Object.keys(members).length}` })
+    this.logger.info({ event: `Pool memebers processed. Count: ${Object.keys(members).length}` })
     return members
   }
 
