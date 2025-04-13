@@ -33,7 +33,6 @@ export class NominationPoolsProcessorService {
     }
 
     try {
-      await this.sleep(600000); //we need to wait while payout rewards will be calculated (skip 100 blocks).
       await this.processNominationPool(metadata, eraId + 1, taskRecord.data.payout_block_id, collect_uid, trx)
     } catch (error: any) {
       this.logger.warn({
@@ -54,6 +53,11 @@ export class NominationPoolsProcessorService {
   ): Promise<void> {
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
+
+    this.logger.info({ event: `Sleep for 10 minutes`});
+//    await this.sleep(600000); //we need to wait while payout rewards will be calculated (skip 100 blocks).
+    await this.sleep(6000); //we need to wait while payout rewards will be calculated (skip 100 blocks).
+    this.logger.info({ event: `Start processing nomination pools data for next era: ${eraId}`, metadata, eraId })
 
     let blockId: number = payout_block_id;
     let pendingBlockId: number = payout_block_id+100;
