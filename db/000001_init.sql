@@ -469,9 +469,9 @@ create index nominators_era_id_idx on nominators (era_id);
 CREATE INDEX blocks_block_id_idx ON public.blocks (block_id);
 
 CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
---new. need to produce evrywhere
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
+CREATE INDEX extrinsics_hash_idx ON public.extrinsics (hash);
 
 INSERT INTO networks VALUES(0, 'polkadot', 10);
 INSERT INTO networks VALUES(2, 'Kusama', 12);
@@ -524,6 +524,7 @@ CREATE TABLE IF NOT EXISTS nomination_pools_members (
     "account_id" VARCHAR(150),
     "points" BIGINT,
     "last_recorded_reward_counter" VARCHAR(50),
+    "pending_rewards" BIGINT,
     "unbonding_eras" JSONB,
     "row_id" SERIAL,
     "row_time" TIMESTAMP,

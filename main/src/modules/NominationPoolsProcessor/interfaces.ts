@@ -8,11 +8,13 @@ export type TBlockEra = number | string | EraIndex | Uint8Array
 export interface IProcessEraPayload {
   eraId: string
   blockHash: TBlockHash
+  pendingBlockHash?: TBlockHash
 }
 
 export interface IBlockEraParams {
   eraId: number
   blockHash: TBlockHash
+  pendingBlockHash?: TBlockHash
 }
 
 export interface IGetValidatorsNominatorsResult {
@@ -31,6 +33,7 @@ export type PoolMemberData = {
     poolId: number
     points: number
     lastRecordedRewardCounter: string
+    pendingRewards: number
     unbondingEras: any
   }
 }
@@ -66,6 +69,7 @@ type MembersBond = {
   poolId: number
   points: number
   lastRecordedRewardCounter: string
+  pendingRewards: number
   unbondingEras: Record<string, any>
 }
 
