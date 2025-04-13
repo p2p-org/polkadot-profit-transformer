@@ -116,7 +116,7 @@ export class NominationPoolsProcessorPolkadotHelper {
         if (optMember.isSome) {
           const member = optMember.unwrap()
           const poolId = member.poolId.toString()
-          this.logger.info({ event: `Process pool members with id: ${poolId}`, poolId })
+//          this.logger.info({ event: `Process pool members with id: ${poolId}`, poolId })
 
           if (!all[poolId]) {
             all[poolId] = []
@@ -135,7 +135,7 @@ export class NominationPoolsProcessorPolkadotHelper {
       },
       {},
     )
-    this.logger.info({ event: `Pool memebers count: ${Object.keys(members).length}` })
+    this.logger.info({ event: `Pool memebers processes. Count: ${Object.keys(members).length}` })
     return members
   }
 
