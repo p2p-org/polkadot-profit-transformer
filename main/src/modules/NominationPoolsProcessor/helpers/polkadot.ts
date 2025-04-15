@@ -32,7 +32,7 @@ export class NominationPoolsProcessorPolkadotHelper {
       pools[poolId] = await this.getPoolData(apiAtBlock, poolId, members, poolsEntries[key][1].toJSON())
     }
 
-    if (pendingBlockHash) {
+    if (pendingBlockHash && (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama')) {
       this.logger.info({ event: `Get pending rewards for pools` });
       const apiAtPendingBlock = await this.polkadotApi.at(pendingBlockHash);
     
