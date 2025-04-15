@@ -8,6 +8,7 @@ import { RewardEraModel } from '@/models/reward_era.model'
 import { IBlockEraParams, PoolData, PoolMembers, Pools } from '../interfaces'
 import { NominatorModel } from '@/models/nominator.model'
 import { ValidatorModel } from '@/models/validator.model'
+import { environment } from '@/environment'
 import { IndividualExposure } from '@polkadot/types/interfaces'
 import { Vec } from '@polkadot/types'
 import Queue from 'better-queue'
@@ -32,7 +33,7 @@ export class NominationPoolsProcessorPolkadotHelper {
       pools[poolId] = await this.getPoolData(apiAtBlock, poolId, members, poolsEntries[key][1].toJSON())
     }
 
-    if (pendingBlockHash) {
+    if (pendingBlockHash && (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama')) {
       this.logger.info({ event: `Get pending rewards for pools` });
       const apiAtPendingBlock = await this.polkadotApi.at(pendingBlockHash);
     
