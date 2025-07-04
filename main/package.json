@@ -1,7 +1,7 @@
 {
   "name": "mbelt",
   "version": "3.0.0",
-  "description": "Stream polkadot blocks and events to Kafka",
+  "description": "Stream polkadot blocks and events",
   "main": "src/main.ts",
   "repository": "",
   "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika & Maxim Manylov & Ivan Sidorov",
