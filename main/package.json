@@ -1,7 +1,7 @@
 {
   "name": "mbelt",
   "version": "3.0.0",
-  "description": "Stream polkadot blocks and events to Kafka",
+  "description": "Stream polkadot blocks and events",
   "main": "src/main.ts",
   "repository": "",
   "author": "Vasiliy Shapovalov & Mikhail Mozhaev & Dmitry Mandrika & Maxim Manylov & Ivan Sidorov",
@@ -25,7 +25,7 @@
     "migrations:list": "./node_modules/.bin/knex --knexfile ./migrations.ts migrate:list"
   },
   "dependencies": {
-    "@polkadot/api": "^14.3.1",
+    "@polkadot/api": "^16.3.1",
     "@types/knex": "^0.16.1",
     "amqp-connection-manager": "^4.1.6",
     "amqplib": "^0.10.0",

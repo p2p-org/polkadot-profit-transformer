@@ -3,7 +3,7 @@ environment: dev
 additional_args: []
 metrics:
   enabled: true
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: ba9858d677228762dd60b22539f6e0c0aa63f11e}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: ade186d114cb89e777b6e73ff3cf5390fcee050c}
 replicas: 1
 port: 3000
 migrations:

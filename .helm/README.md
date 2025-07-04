@@ -75,6 +75,7 @@ helm diff upgrade --install moonriver-block-processor .helm -f .helm/moonriver.s
 ### Staking processor
 helm diff upgrade --install moonriver-staking-processor .helm -f .helm/moonriver.staging.staking-processor.yaml -n mbelt-staging
 
+
 # Manta
 helm diff upgrade --install manta-balances-processor .helm -f .helm/manta.mbelt3.balances-processor.yaml -n mbelt3
 helm diff upgrade --install manta-block-processor .helm -f .helm/manta.mbelt3.block-processor.yaml -n mbelt3
