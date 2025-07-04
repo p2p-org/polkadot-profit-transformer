@@ -21,3 +21,4 @@ ingress:
   host: mbelt3-kusama-staking-processor.polka.p2p.world
   tls:
     secret: mbelt3-kusama-staking-processor-polka-p2p-world
+
