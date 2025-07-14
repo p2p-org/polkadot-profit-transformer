@@ -1,10 +1,11 @@
 ---
 environment: staging
 chain: kusama
-replicas: 1
 role: preloader
+replicas: 1
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
+
 vault:
   role: "mbelt-staging"
   secret: "secret/mbelt/staging_kusama"
@@ -19,3 +20,4 @@ ingress:
   host: kusama-preloader.mbelt-staging.polka.p2p.world
   tls:
     secret: wildcard.mbelt-staging.polka.p2p.world
+
