@@ -376,7 +376,7 @@ export class BlocksProcessorService {
               extrinsic,
               [...indexes, index].join('-'),
               referencedEventsIds,
-	      extrinsic.hash.toHex(),
+              extrinsic.hash.toHex(),
             ),
           )
           return extrinsicModels

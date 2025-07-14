@@ -43,7 +43,7 @@ export class IdentityDatabaseHelper {
   public async getUnprocessedEvents(row_id?: number): Promise<Array<EventModel>> {
     const records = EventModel(this.knex)
       .select()
-      .where({section: 'system', ...network})
+      .where({ section: 'system', ...network })
       .whereIn('method', ['NewAccount', 'KilledAccount'])
       .orderBy('row_id', 'asc')
       .limit(environment.BATCH_INSERT_CHUNK_SIZE)
@@ -107,7 +107,7 @@ export class IdentityDatabaseHelper {
       const records = AccountModel(this.knex)
         .select()
         .whereNull('blake2_hash')
-	.andWhere(network)
+        .andWhere(network)
         .orderBy('row_id', 'asc')
         .offset(offset)
         .limit(environment.BATCH_INSERT_CHUNK_SIZE)
@@ -147,7 +147,7 @@ export class IdentityDatabaseHelper {
       const balanceChunk = await this.knex('balances')
         .whereNull('account_id')
         .whereNotNull('blake2_hash')
-	.andWhere(network)
+        .andWhere(network)
         .offset(offset)
         .limit(environment.BATCH_INSERT_CHUNK_SIZE)
 
@@ -158,7 +158,9 @@ export class IdentityDatabaseHelper {
       for (const balance of balanceChunk) {
         const account = await this.getAccountByBlake2Hash(balance.blake2_hash)
         if (account) {
-          await this.knex('balances').where({ row_id: balance.row_id, ...network }).update({ account_id: account.account_id })
+          await this.knex('balances')
+            .where({ row_id: balance.row_id, ...network })
+            .update({ account_id: account.account_id })
         }
       }
 
@@ -185,7 +187,11 @@ export class IdentityDatabaseHelper {
       return str.replace(/[^a-zA-Z0-9_\-\. ]/g, '').trim()
     }
 
-    const records = await IdentityModel(this.knex).select(['row_id', 'display']).where(network).orderBy('row_id', 'asc').limit(50000)
+    const records = await IdentityModel(this.knex)
+      .select(['row_id', 'display'])
+      .where(network)
+      .orderBy('row_id', 'asc')
+      .limit(50000)
 
     for (const record of records) {
       let newDisplay = ''
@@ -196,7 +202,9 @@ export class IdentityDatabaseHelper {
       }
       if (record.display !== newDisplay && newDisplay !== '') {
         //console.log(record.display + ':' + newDisplay)
-        await IdentityModel(this.knex).update({ display: newDisplay }).where({ row_id: record.row_id, ...network })
+        await IdentityModel(this.knex)
+          .update({ display: newDisplay })
+          .where({ row_id: record.row_id, ...network })
       }
     }
   }
@@ -217,7 +225,7 @@ export class IdentityDatabaseHelper {
   public async getUnprocessedExtrinsics(row_id?: number): Promise<Array<ExtrinsicModel>> {
     const records = ExtrinsicModel(this.knex)
       .select()
-      .where({section: 'identity', ...network})
+      .where({ section: 'identity', ...network })
       .whereIn('method', [
         'clearIdentity',
         'killIdentity',
