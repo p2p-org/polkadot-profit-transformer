@@ -1,0 +1,24 @@
+---
+environment: mbelt3-prod
+chain: kusama
+role: people-chain
+replicas: 1
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_kusama"
+env:
+  substrate_uri: ws://kusama-people-proxy.polka.p2p.world
+  log_level: info
+  network_id: 20002
+  mode: HYBRID
+  network: kusama-people-chain
+ingress:
+  enabled: true
+  host: mbelt3-kusama-people-chain.polka.p2p.world
+  tls:
+    secret: mbelt3-kusama-people-chain-polka-p2p-world
+
+

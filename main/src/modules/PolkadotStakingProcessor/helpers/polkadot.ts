@@ -18,6 +18,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
+    @Inject('assetHubApi') private readonly assetHubApi: ApiPromise,
   ) { }
 
   async getValidatorsAndNominatorsStake(args: {
@@ -184,7 +185,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     return eraRewardPointsMap
   }
 
-  async getDistinctValidatorsAccountsByEra(blockId: number): Promise<Set<string>> {
+  async getDistinctValidatorsAccountsByEraOld(blockId: number): Promise<Set<string>> {
     const blockHash = await this.getBlockHashByHeight(blockId)
     const distinctValidators: Set<string> = new Set()
     const validators = await this.polkadotApi.query.session.validators.at(blockHash)
@@ -194,6 +195,19 @@ export class PolkadotStakingProcessorPolkadotHelper {
     })
 
     return distinctValidators
+  }
+
+  async getDistinctValidatorsAccountsByEra(height: number): Promise<Set<string>> {
+    const eraId = await this.assetHubApi.query.staking.activeEra().then(e => e.value.index.toNumber());
+    const overview = await this.assetHubApi.query.staking.erasStakersOverview(eraId);
+    const pages = overview.pageCount.toNumber();
+    const validators = new Set<string>();
+ 
+    for (let p = 0; p <= pages; p++) {
+      const keys = await this.assetHubApi.query.staking.erasStakersPaged.keys(eraId, null, p);
+      keys.forEach(k => validators.add(k.args[1].toString()));
+    }
+    return validators;
   }
 
   async getStakersInfo(
@@ -284,7 +298,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     }
   }
 
-  async getEraDataStake({
+  async getEraDataStakeOld({
     eraId,
     blockHash,
   }: IBlockEraParams): Promise<
@@ -303,6 +317,27 @@ export class PolkadotStakingProcessorPolkadotHelper {
       total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
       session_start: sessionStart.unwrap().toNumber(),
     }
+  }
+
+  async getEraDataStake({ eraId, blockHash }: IBlockEraParams): Promise<
+    Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>
+  > {
+    this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`);
+
+    const [totalStake, bonded] = await Promise.all([
+      this.assetHubApi.query.staking.erasTotalStake.at(blockHash, eraId),
+      this.assetHubApi.query.staking.bondedEras.at(blockHash),
+    ]);
+    const startSession = bonded.find(([e]) => e.eq(eraId))?.[1].toNumber() ?? 0;
+
+    const result = { 
+      era_id: eraId, 
+      total_stake: totalStake.toString(), 
+      session_start: startSession 
+    };
+    this.logger.debug(result);
+
+    return result
   }
 
   async getEraDataRewards({

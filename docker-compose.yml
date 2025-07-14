@@ -44,6 +44,22 @@ services:
     volumes:
       - ./main:/usr/src/app
 
+  mbelt_hybrid:
+    container_name: mbelt_hybrid
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3010:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: HYBRID
+    volumes:
+      - ./main:/usr/src/app
+
+
   mbelt_block_processor:
     container_name: mbelt_block_processor
     build:
