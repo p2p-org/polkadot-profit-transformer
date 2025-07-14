@@ -28,10 +28,10 @@ replicasByName:
   polkadot/preloader/staging: 1
   polkadot/staking-processor/staging: 1
   kusama/balances-processor/staging: 0
-  kusama/block-processor/staging: 0
+  kusama/block-processor/staging: 1
   kusama/identity-processor/staging: 0
-  kusama/preloader/staging: 0
-  kusama/peoplechain/staging: 0
+  kusama/preloader/staging: 1
+  kusama/peoplechain/staging: 1
   kusama/staking-processor/staging: 0
   moonbeam/balances-processor/staging: 0
   moonbeam/block-processor/staging: 0
