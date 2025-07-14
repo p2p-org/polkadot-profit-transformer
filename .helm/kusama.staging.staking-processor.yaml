@@ -1,6 +1,7 @@
 ---
 environment: staging
 chain: kusama
+replicas: 0
 role: staking-processor
 limits: {cpu: 450m, memory: 4096Mi}
 requests: {cpu: 350m, memory: 4096Mi}
