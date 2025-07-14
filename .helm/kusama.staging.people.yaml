@@ -1,7 +1,7 @@
 ---
 environment: staging
 chain: kusama
-role: people-chain
+role: people
 replicas: 1
 limits: {cpu: 200m, memory: 100Mi}
 requests: {cpu: 100m, memory: 100Mi}
@@ -12,9 +12,9 @@ vault:
 env:
   substrate_uri: ws://kusama-people-proxy.polka.p2p.world
   log_level: info
-  network_id: 20002
+  network_id: 20001
   mode: HYBRID
-  network: kusama-people-chain
+  network: kusama
 ingress:
   enabled: true
   host: kusama-people.mbelt-staging.polka.p2p.world
