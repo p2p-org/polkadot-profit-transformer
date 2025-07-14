@@ -62,4 +62,11 @@ export const ModulesLoader = async (): Promise<void> => {
   if (environment.MODE === MODE.MONITORING && environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
     Monitoring()
   }
+
+  if (environment.MODE === MODE.HYBRID ) {
+    BlockListener()
+    BlockProcessor()
+    IdentityProcessor()
+    Monitoring()
+  }
 }

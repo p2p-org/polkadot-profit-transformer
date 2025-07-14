@@ -1,6 +1,7 @@
 ---
 environment: staging
 chain: kusama
+replicas: 1
 role: preloader
 limits: {cpu: 450m, memory: 200Mi}
 requests: {cpu: 400m, memory: 200Mi}
