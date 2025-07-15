@@ -70,9 +70,9 @@ export class BlockListenerService {
       }
 
       for (const record of records) {
-	if (record.attempts < 10 ) {
+        if (record.attempts < 10) {
           await this.sendTaskToToRabbit(entity, record)
-	}
+        }
         lastEntityId = record.entity_id || 0
       }
 
@@ -165,7 +165,7 @@ export class BlockListenerService {
       })
       return
     }
-    if (record.attempts < 10 ) {
+    if (record.attempts < 10) {
       await this.sendTaskToToRabbit(entity, record)
     }
 

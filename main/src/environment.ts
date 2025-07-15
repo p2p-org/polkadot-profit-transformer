@@ -98,4 +98,3 @@ const parseModeEnum = (env: typeof preEnv) => {
 }
 
 export const environment: Environment = parseModeEnum(preEnv)
-

@@ -54,12 +54,12 @@ export class NominationPoolsProcessorService {
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process nomination pools data for next era: ${eraId}`, metadata, eraId })
 
-    this.logger.info({ event: `Sleep for 10 minutes`});
-    await this.sleep(6*200*1000); //we need to wait while payout rewards will be calculated (skip 200 blocks).
+    this.logger.info({ event: `Sleep for 10 minutes` })
+    await this.sleep(6 * 200 * 1000) //we need to wait while payout rewards will be calculated (skip 200 blocks).
     this.logger.info({ event: `Start processing nomination pools data for next era: ${eraId}`, metadata, eraId })
 
-    let blockId: number = payout_block_id;
-    let pendingBlockId: number = payout_block_id+100;
+    let blockId: number = payout_block_id
+    let pendingBlockId: number = payout_block_id + 100
     //if (environment.NETWORK === 'polkadot') {
     //  blockId = payout_block_id;
     //}
@@ -108,7 +108,7 @@ export class NominationPoolsProcessorService {
             account_id: member?.account,
             points: member?.data?.points,
             last_recorded_reward_counter: member?.data?.lastRecordedRewardCounter,
-	    pending_rewards: member?.data?.pendingRewards,
+            pending_rewards: member?.data?.pendingRewards,
             unbonding_eras: member?.data?.unbondingEras,
           }
           await this.databaseHelper.saveEraPoolMember(trx, eraPoolMember)
@@ -135,6 +135,6 @@ export class NominationPoolsProcessorService {
   }
 
   sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

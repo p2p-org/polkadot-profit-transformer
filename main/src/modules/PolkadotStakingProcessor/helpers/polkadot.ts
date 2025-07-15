@@ -18,7 +18,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('polkadotApi') private readonly polkadotApi: ApiPromise,
-  ) { }
+  ) {}
 
   async getValidatorsAndNominatorsStake(args: {
     eraId: number
@@ -203,7 +203,8 @@ export class PolkadotStakingProcessorPolkadotHelper {
   ): Promise<[any, Exposure, ValidatorPrefs]> {
     const apiAtBlock = await this.polkadotApi.at(blockHash)
     const runtime: any = await apiAtBlock.query.system.lastRuntimeUpgrade()
-    if (runtime.unwrap().specVersion.toNumber() >= 1002000 ||
+    if (
+      runtime.unwrap().specVersion.toNumber() >= 1002000 ||
       (environment.NETWORK === 'vara' && runtime.unwrap().specVersion.toNumber() >= 1500) ||
       environment.NETWORK === 'avail'
     ) {
@@ -290,7 +291,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }: IBlockEraParams): Promise<
     Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>
   > {
-    this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`);
+    this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`)
     const [totalStake, sessionStart] = await Promise.all([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
       this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
@@ -325,9 +326,9 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
-    const hash = this.polkadotApi.rpc.chain.getBlockHash(height);
-    this.logger.info(`getBlockHashByHeight: this.polkadotApi.rpc.chain.getBlockHash(${height}): ${hash}`);
-    return hash;
+    const hash = this.polkadotApi.rpc.chain.getBlockHash(height)
+    this.logger.info(`getBlockHashByHeight: this.polkadotApi.rpc.chain.getBlockHash(${height}): ${hash}`)
+    return hash
   }
 
   async getBlockTime(blockHash: TBlockHash): Promise<number> {

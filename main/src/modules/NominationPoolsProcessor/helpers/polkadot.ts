@@ -34,32 +34,30 @@ export class NominationPoolsProcessorPolkadotHelper {
     }
 
     if (pendingBlockHash && (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama')) {
-      this.logger.info({ event: `Get pending rewards for pools` });
-      const apiAtPendingBlock = await this.polkadotApi.at(pendingBlockHash);
-    
+      this.logger.info({ event: `Get pending rewards for pools` })
+      const apiAtPendingBlock = await this.polkadotApi.at(pendingBlockHash)
+
       for (const poolId in pools) {
-        this.logger.info({ event: `Get pending rewards for pool ${poolId}`, poolId });
-        const pool = pools[poolId];
+        this.logger.info({ event: `Get pending rewards for pool ${poolId}`, poolId })
+        const pool = pools[poolId]
         if (!pool || !pool.members) {
-          continue;
+          continue
         }
 
-        const memberIndices = Object.keys(pool.members);
+        const memberIndices = Object.keys(pool.members)
         for (let i = 0; i < memberIndices.length; i++) {
-          const member = pool.members[i];
+          const member = pool.members[i]
           if (!member || !member.account) {
-            continue;
+            continue
           }
-          member.data.pendingRewards =
-            await apiAtPendingBlock.call.nominationPoolsApi.pendingRewards(member.account);
+          member.data.pendingRewards = await apiAtPendingBlock.call.nominationPoolsApi.pendingRewards(member.account)
         }
       }
     }
-  
+
     this.logger.info({ event: `Count of collected pools: ${Object.keys(pools).length}` })
     return pools
   }
-
 
   async getPoolData(api: ApiPromise, poolId: number, members: any, bondedPool: any): Promise<PoolData | undefined> {
     this.logger.info({ event: `Get pool with id: ${poolId}`, poolId })
@@ -117,7 +115,7 @@ export class NominationPoolsProcessorPolkadotHelper {
         if (optMember.isSome) {
           const member = optMember.unwrap()
           const poolId = member.poolId.toString()
-//          this.logger.info({ event: `Process pool members with id: ${poolId}`, poolId })
+          //          this.logger.info({ event: `Process pool members with id: ${poolId}`, poolId })
 
           if (!all[poolId]) {
             all[poolId] = []

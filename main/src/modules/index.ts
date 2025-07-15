@@ -35,7 +35,12 @@ export const ModulesLoader = async (): Promise<void> => {
       environment.NETWORK === 'avail'
     ) {
       PolkadotStakingProcessor()
-      if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'avail' || environment.NETWORK === 'bittensor') {
+      if (
+        environment.NETWORK === 'polkadot' ||
+        environment.NETWORK === 'kusama' ||
+        environment.NETWORK === 'avail' ||
+        environment.NETWORK === 'bittensor'
+      ) {
         NominationPoolsProcessor()
       }
     } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
@@ -63,7 +68,7 @@ export const ModulesLoader = async (): Promise<void> => {
     Monitoring()
   }
 
-  if (environment.MODE === MODE.HYBRID ) {
+  if (environment.MODE === MODE.HYBRID) {
     BlockListener()
     BlockProcessor()
     IdentityProcessor()
