@@ -31,7 +31,7 @@ replicasByName:
   kusama/block-processor/staging: 30
   kusama/identity-processor/staging: 0
   kusama/preloader/staging: 1
-  kusama/people/staging: 0
+  kusama/people/staging: 1
   kusama/staking-processor/staging: 0
   moonbeam/balances-processor/staging: 0
   moonbeam/block-processor/staging: 0
