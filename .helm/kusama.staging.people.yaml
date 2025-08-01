@@ -14,7 +14,7 @@ env:
   log_level: info
   network_id: 20001
   mode: HYBRID
-  network: kusama
+  network: kusama-people
 ingress:
   enabled: true
   host: kusama-people.mbelt-staging.polka.p2p.world
