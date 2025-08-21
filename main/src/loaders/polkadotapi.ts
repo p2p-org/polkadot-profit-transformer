@@ -54,12 +54,12 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
   provider.on('disconnected', () => {
     attemptReconnect()
     logger.error('PolkadotAPI error: disconnected')
-    logger.info(`${packageInfo.name} version: ${packageInfo.version}`)
+    logger.info(`${packageInfo.name} Version: ${packageInfo.version}`)
     //process.exit(1)
   })
   provider.on('error', (error) => {
     logger.error('PolkadotAPI error: ' + error.message)
-    logger.info(`${packageInfo.name} version: ${packageInfo.version}`)
+    logger.info(`${packageInfo.name} Version: ${packageInfo.version}`)
     process.exit(2)
   })
 
