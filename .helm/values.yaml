@@ -3,7 +3,7 @@ environment: dev
 additional_args: []
 metrics:
   enabled: true
-image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 8ad3ae8ac888b30e69494ca0a61ba2a7a1a1ccab}
+image: {repository: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader, tag: 6f119c0b1dc937be2753898ad832419619d77f8c}
 replicas: 1
 port: 3000
 migrations:
@@ -32,7 +32,7 @@ replicasByName:
   kusama/identity-processor/staging: 0
   kusama/preloader/staging: 1
   kusama/people/staging: 1
-  kusama/staking-processor/staging: 0
+  kusama/staking-processor/staging: 1
   moonbeam/balances-processor/staging: 0
   moonbeam/block-processor/staging: 0
   moonbeam/identity-processor/staging: 0
