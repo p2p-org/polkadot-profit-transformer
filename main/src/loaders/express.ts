@@ -34,20 +34,19 @@ export const ExpressLoader = async (polkadotApi: any): Promise<express.Applicati
     res.json({ status: 'live' })
   })
 
-
-  let latestUpdated = null;
-  polkadotApi.rpc.chain.subscribeFinalizedHeads(()=>{
+  let latestUpdated = null
+  polkadotApi.rpc.chain.subscribeFinalizedHeads(() => {
     latestUpdated = new Date()
-  });
+  })
   app.get('/healthcheck', (req, res) => {
-    const connected = polkadotApi.isConnected ?? true  // Assuming you want to use this
+    const connected = polkadotApi.isConnected ?? true // Assuming you want to use this
     const lastUpdate = polkadotApi.latestUpdated
     const lastUpdateDiff = lastUpdate ? new Date().getTime() - lastUpdate.getTime() : null
 
     res.json({
       connected,
-      lastUpdateDiff,  // Unix timestamp in ms
-      healthy: lastUpdateDiff !== null && lastUpdateDiff < 60000,  // healthy if last update within 1 minute
+      lastUpdateDiff, // Unix timestamp in ms
+      healthy: lastUpdateDiff !== null && lastUpdateDiff < 60000, // healthy if last update within 1 minute
     })
   })
 

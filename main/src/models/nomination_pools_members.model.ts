@@ -1,4 +1,4 @@
-import { environment } from '@/environment';
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type NominationPoolsMembersModel = {
@@ -14,4 +14,5 @@ export type NominationPoolsMembersModel = {
   row_time?: Date
 }
 
-export const NominationPoolsMembersModel = (knex: Knex) => knex<NominationPoolsMembersModel>(`${environment.PG_TABLE_PREFIX}nomination_pools_members`)
+export const NominationPoolsMembersModel = (knex: Knex) =>
+  knex<NominationPoolsMembersModel>(`${environment.PG_TABLE_PREFIX}nomination_pools_members`)

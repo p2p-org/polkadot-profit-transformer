@@ -1,4 +1,4 @@
-import { environment } from '@/environment';
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export enum ENTITY {
@@ -13,4 +13,5 @@ export type ProcessingStateModel<T> = {
   row_id?: number
 }
 
-export const ProcessingStateModel = (knex: Knex) => knex<ProcessingStateModel<ENTITY>>(`${environment.PG_TABLE_PREFIX}processing_state`)
+export const ProcessingStateModel = (knex: Knex) =>
+  knex<ProcessingStateModel<ENTITY>>(`${environment.PG_TABLE_PREFIX}processing_state`)

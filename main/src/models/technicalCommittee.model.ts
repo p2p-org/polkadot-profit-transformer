@@ -1,4 +1,4 @@
-import { environment } from '@/environment';
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type TechnicalCommiteeProposalModel = {
@@ -11,4 +11,5 @@ export type TechnicalCommiteeProposalModel = {
   data: any
 }
 
-export const TechnicalCommiteeProposalModel = (knex: Knex) => knex<TechnicalCommiteeProposalModel>(`${environment.PG_TABLE_PREFIX}technical_committee_proposal`)
+export const TechnicalCommiteeProposalModel = (knex: Knex) =>
+  knex<TechnicalCommiteeProposalModel>(`${environment.PG_TABLE_PREFIX}technical_committee_proposal`)

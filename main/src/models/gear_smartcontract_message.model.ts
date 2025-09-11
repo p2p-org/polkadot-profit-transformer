@@ -1,4 +1,4 @@
-import { environment } from '@/environment';
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type GearSmartcontractMessageModel = {
@@ -13,4 +13,5 @@ export type GearSmartcontractMessageModel = {
   row_time?: Date
 }
 
-export const GearSmartcontractMessageModel = (knex: Knex) => knex<GearSmartcontractMessageModel>(`${environment.PG_TABLE_PREFIX}gear_smartcontracts_messages`)
+export const GearSmartcontractMessageModel = (knex: Knex) =>
+  knex<GearSmartcontractMessageModel>(`${environment.PG_TABLE_PREFIX}gear_smartcontracts_messages`)
