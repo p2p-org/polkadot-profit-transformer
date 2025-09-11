@@ -5,7 +5,7 @@ import { environment } from '@/environment'
 import { logger } from './logger'
 import { ApiPromise } from '@polkadot/api'
 
-export const ExpressLoader = async (polkadotApi: ApiPromise): Promise<express.Application> => {
+export const ExpressLoader = async (polkadotApi: any): Promise<express.Application> => {
   const app = express()
 
   if (!app) {
@@ -34,6 +34,11 @@ export const ExpressLoader = async (polkadotApi: ApiPromise): Promise<express.Ap
     res.json({ status: 'live' })
   })
 
+
+  let latestUpdated = null;
+  polkadotApi.rpc.chain.subscribeFinalizedHeads(()=>{
+    latestUpdated = new Date()
+  });
   app.get('/healthcheck', (req, res) => {
     const connected = polkadotApi.isConnected ?? true  // Assuming you want to use this
     const lastUpdate = polkadotApi.latestUpdated

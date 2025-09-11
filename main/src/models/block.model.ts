@@ -1,6 +1,5 @@
 import { environment } from '@/environment';
 import { Knex } from 'knex'
-import { environment } from '@/environment'
 
 export type BlockMetadata = {
   round_id?: number
