@@ -51,7 +51,7 @@ export default async (): Promise<void> => {
     logger.info('✌️ AssetHubAPI loaded')
   }
 
-  const expressApp = await ExpressLoader()
+  const expressApp = await ExpressLoader(polkadotApi)
   Container.set('expressApp', expressApp)
   logger.info('✌️ Express loaded')
 

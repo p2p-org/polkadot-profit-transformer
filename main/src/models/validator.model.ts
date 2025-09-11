@@ -1,3 +1,4 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
 
 export type ValidatorModel = {
@@ -14,4 +15,4 @@ export type ValidatorModel = {
   row_time?: Date
 }
 
-export const ValidatorModel = (knex: Knex) => knex<ValidatorModel>('validators')
+export const ValidatorModel = (knex: Knex) => knex<ValidatorModel>(`${environment.PG_TABLE_PREFIX}validators`)

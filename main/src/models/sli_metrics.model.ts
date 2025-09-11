@@ -1,3 +1,4 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
 
 export type SliMetricsModel = {
@@ -9,4 +10,4 @@ export type SliMetricsModel = {
   row_time?: Date
 }
 
-export const SliMetricsModel = (knex: Knex) => knex<SliMetricsModel>('sli_metrics')
+export const SliMetricsModel = (knex: Knex) => knex<SliMetricsModel>(`${environment.PG_TABLE_PREFIX}sli_metrics`)

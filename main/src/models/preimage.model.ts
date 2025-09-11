@@ -1,3 +1,4 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
 
 export type PreimageModel = {
@@ -9,4 +10,4 @@ export type PreimageModel = {
   data: any
 }
 
-export const PreimageModel = (knex: Knex) => knex<PreimageModel>('preimage')
+export const PreimageModel = (knex: Knex) => knex<PreimageModel>(`${environment.PG_TABLE_PREFIX}preimage`)

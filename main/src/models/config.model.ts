@@ -1,3 +1,4 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
 
 export type NetworkModel = {
@@ -5,4 +6,4 @@ export type NetworkModel = {
   name: string
 }
 
-export const NetworkModel = (knex: Knex) => knex<NetworkModel>('networks')
+export const NetworkModel = (knex: Knex) => knex<NetworkModel>(`${environment.PG_TABLE_PREFIX}networks`)

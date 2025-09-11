@@ -1,3 +1,4 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
 
 export type AccountModel = {
@@ -12,4 +13,4 @@ export type AccountModel = {
   is_modified?: number
 }
 
-export const AccountModel = (knex: Knex) => knex<AccountModel>('accounts')
+export const AccountModel = (knex: Knex) => knex<AccountModel>(`${environment.PG_TABLE_PREFIX}accounts`)

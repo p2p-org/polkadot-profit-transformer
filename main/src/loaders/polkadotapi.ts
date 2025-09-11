@@ -92,5 +92,10 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     }
   })
 
+  api.latestUpdated = null;
+  api.rpc.chain.subscribeFinalizedHeads(()=>{
+    api.latestUpdated = new Date()
+  });
+
   return api
 }

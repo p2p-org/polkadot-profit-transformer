@@ -1,3 +1,4 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
 
 export type RewardEraModel = {
@@ -8,4 +9,4 @@ export type RewardEraModel = {
   row_time?: Date
 }
 
-export const RewardEraModel = (knex: Knex) => knex<RewardEraModel>('rewards_eras')
+export const RewardEraModel = (knex: Knex) => knex<RewardEraModel>(`${environment.PG_TABLE_PREFIX}rewards_eras`)

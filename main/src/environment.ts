@@ -54,6 +54,8 @@ export type Environment = {
   NETWORK_ID: number
   BATCH_INSERT_CHUNK_SIZE: number
   MAX_ATTEMPTS: number
+  PG_TABLE_PREFIX?: string
+  PG_RAW_TABLE_PREFIX?: string
 }
 
 const preEnv = cleanEnv(process.env, {
@@ -89,6 +91,8 @@ const preEnv = cleanEnv(process.env, {
   PG_USER: str({ default: 'postgres' }),
   PG_PASSWORD: str({ default: 'postgres' }),
   PG_DATABASE: str({ default: 'postgres' }),
+  PG_TABLE_PREFIX: str({ default: '' }),
+  PG_RAW_TABLE_PREFIX: str({ default: '' }),
 })
 
 const parseModeEnum = (env: typeof preEnv) => {

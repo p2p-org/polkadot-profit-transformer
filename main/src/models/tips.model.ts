@@ -1,3 +1,4 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
 
 export type TipsModel = {
@@ -9,4 +10,4 @@ export type TipsModel = {
   data: any
 }
 
-export const TipsModel = (knex: Knex) => knex<TipsModel>('tips')
+export const TipsModel = (knex: Knex) => knex<TipsModel>(`${environment.PG_TABLE_PREFIX}tips`)

@@ -1,4 +1,6 @@
+import { environment } from '@/environment';
 import { Knex } from 'knex'
+import { environment } from '@/environment'
 
 export type BlockMetadata = {
   round_id?: number
@@ -22,5 +24,5 @@ export type BlockModel = {
   row_id?: number
 }
 
-export const blocksTableName = 'blocks'
+export const blocksTableName = `${environment.PG_TABLE_PREFIX}${environment.PG_RAW_TABLE_PREFIX}blocks`
 export const BlockModel = (knex: Knex) => knex<BlockModel>(blocksTableName)
