@@ -1,3 +1,4 @@
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type StakeRoundModel = {
@@ -10,4 +11,4 @@ export type StakeRoundModel = {
   row_time?: Date
 }
 
-export const StakeRoundModel = (knex: Knex) => knex<StakeRoundModel>('stake_rounds')
+export const StakeRoundModel = (knex: Knex) => knex<StakeRoundModel>(`${environment.PG_TABLE_PREFIX}stake_rounds`)

@@ -1,3 +1,4 @@
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type IdentityModel = {
@@ -14,4 +15,4 @@ export type IdentityModel = {
   row_time?: Date
 }
 
-export const IdentityModel = (knex: Knex) => knex<IdentityModel>('identities')
+export const IdentityModel = (knex: Knex) => knex<IdentityModel>(`${environment.PG_TABLE_PREFIX}identities`)

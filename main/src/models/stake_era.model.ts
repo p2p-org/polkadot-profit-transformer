@@ -1,3 +1,4 @@
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type StakeEraModel = {
@@ -9,4 +10,4 @@ export type StakeEraModel = {
   row_time?: Date
 }
 
-export const StakeEraModel = (knex: Knex) => knex<StakeEraModel>('stake_eras')
+export const StakeEraModel = (knex: Knex) => knex<StakeEraModel>(`${environment.PG_TABLE_PREFIX}stake_eras`)

@@ -14,11 +14,11 @@ env:
   log_level: info
   network_id: 20001
   mode: HYBRID
-  network: kusama
+  network: kusama-people
 ingress:
   enabled: true
-  host: mbelt3-kusama-people-chain.polka.p2p.world
+  host: mbelt3-kusama-people.polka.p2p.world
   tls:
-    secret: mbelt3-kusama-people-chain-polka-p2p-world
+    secret: mbelt3-kusama-people-polka-p2p-world
 
 
