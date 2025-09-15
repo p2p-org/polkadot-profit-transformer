@@ -14,6 +14,7 @@ env:
   log_level: info
   network_id: 20001
   mode: HYBRID
+  pg_rw_table_prefix: people_
   network: kusama-people
 ingress:
   enabled: true
