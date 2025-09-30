@@ -75,3 +75,17 @@ helm diff upgrade --install mbelt-stage-moonriver-block-processor .helm -f .helm
 ### Staking processor
 helm diff upgrade --install mbelt-stage-moonriver-staking-processor .helm -f .helm/moonriver.stage.staking-processor.yaml -n mbelt-stage
 ```
+
+
+## OCI deploy
+```
+## test
+### Listener
+helm diff upgrade --install mbelt3-oci-listener .helm -f .helm/oci.mbelt3.listener.yaml -n mbelt3-test
+### Block processor
+helm diff upgrade --install mbelt3-oci-block-processor .helm -f .helm/oci.mbelt3.block-processor.yaml -n mbelt3-test
+### Staking processor
+helm diff upgrade --install mbelt3-oci-staking-processor .helm -f .helm/oci.mbelt3.staking-processor.yaml -n mbelt3-test
+### Identity processor
+helm diff upgrade --install mbelt3-oci-monitoring .helm -f .helm/oci.mbelt3.monitoring.yaml -n mbelt3-test
+```

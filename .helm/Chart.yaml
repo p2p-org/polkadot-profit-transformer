@@ -2,7 +2,7 @@
 apiVersion: v2
 name: mbelt
 description: Mbelt helm chart
-version: 1.0.0
+version: 1.0.1
 appVersion: 1.0.0
 maintainers:
 - name: Artem Nurmatov

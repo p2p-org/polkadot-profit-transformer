@@ -54,13 +54,7 @@ spec:
         - sh
         - -c
         - |
-          source /vault/secrets/config;
-          node \
-          --require=./tsconfig-paths-bootstrap.js \
-          {{- range .Values.additional_args }}
-          {{ . }} \
-          {{- end }}
-          ./dist/index.js
+          sleep inifinty
         {{- with .Values.env }}
         env:
 
