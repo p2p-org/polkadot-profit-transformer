@@ -1,0 +1,6 @@
+dependencies:
+- name: rabbitmq-tenant
+  repository: oci://europe-west4-docker.pkg.dev/iaas-383414/iaas/helm
+  version: v0.3.1
+digest: sha256:c7af6f507461e232e883042e0a6d09ac38c425094373580112ae481d11badf12
+generated: "2025-09-30T18:10:45.107492+02:00"

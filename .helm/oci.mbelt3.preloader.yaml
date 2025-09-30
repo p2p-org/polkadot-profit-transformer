@@ -31,3 +31,6 @@ tolerations:
     operator: Equal
     value: "true"
     effect: NoSchedule
+
+rabbitmq:
+  enabled: true
