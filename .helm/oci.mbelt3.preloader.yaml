@@ -1,5 +1,5 @@
 ---
-environment: mbelt3-prod
+environment: oci-prod
 chain: polkadot
 role: preloader
 replicas: 1
