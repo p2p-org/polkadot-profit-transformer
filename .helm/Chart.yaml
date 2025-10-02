@@ -8,9 +8,8 @@ maintainers:
 - name: Artem Nurmatov
   email: artem.n@p2p.org
 dependencies:
-  # installes rabbitmq vhost, users and permissions
-  - name: rabbitmq-tenant
-    repository: oci://europe-west4-docker.pkg.dev/iaas-383414/iaas/helm
-    version: v0.3.1
-    alias: rabbitmq
-    condition: rabbitmq.enabled
+- name: rabbitmq
+  repository: "file://rabbitmq"
+  version: 1.2.0
+  alias: rabbitmq
+  condition: rabbitmq.enabled
