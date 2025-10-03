@@ -1,0 +1,33 @@
+---
+environment: stage
+chain: polkadot
+role: preloader
+replicas: 0
+image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4ac9f3c46dc0b60f27b92e0710134d705db82b72}
+limits: {cpu: 450m, memory: 200Mi}
+requests: {cpu: 400m, memory: 200Mi}
+port: 3000
+metrics:
+  enabled: true
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/stage"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 0
+  mode: LISTENER
+  network: polkadot
+ingress:
+  enabled: true
+  class: nginx-external
+  host: mbelt-stage-preloader.polka.p2p.world
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt-stage-preloader-polka-p2p-world
+    ssl_redirect: true
+tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
