@@ -54,8 +54,13 @@ spec:
         - sh
         - -c
         - |
-          sleep inifinty
-        {{- with .Values.env }}
+          source /vault/secrets/config;
+          node \
+          --require=./tsconfig-paths-bootstrap.js \
+          {{- range .Values.additional_args }}
+          {{ . }} \
+          {{- end }}
+          ./dist/index.js        {{- with .Values.env }}
         env:
 
         - { name: RESTART_BLOCKS_URI,   value: {{ quote .restart_blocks_uri }} }
