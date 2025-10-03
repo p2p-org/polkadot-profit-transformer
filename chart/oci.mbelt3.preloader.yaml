@@ -36,6 +36,7 @@ tolerations:
 
 rabbitmq:
   enabled: true
+  replicas: 1
   http_route:
     enabled: true
     host: rabbitmq-mbelt3.dev-p2p.org
@@ -82,3 +83,14 @@ rabbitmq:
   vault:
     enabled: false
 
+  override:
+    statefulSet:
+      spec:
+        template:
+          spec:
+            nodeSelector:
+              team: dwh
+          metadata:
+            labels:
+              app.kubernetes.io/instance: rabbitmq
+              team: dwh
