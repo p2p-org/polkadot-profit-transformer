@@ -60,7 +60,8 @@ spec:
           {{- range .Values.additional_args }}
           {{ . }} \
           {{- end }}
-          ./dist/index.js        {{- with .Values.env }}
+          ./dist/index.js
+        {{- with .Values.env }}
         env:
 
         - { name: RESTART_BLOCKS_URI,   value: {{ quote .restart_blocks_uri }} }
