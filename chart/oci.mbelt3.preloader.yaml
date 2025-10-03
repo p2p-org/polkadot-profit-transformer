@@ -74,7 +74,6 @@ rabbitmq:
 
   secretBackend:
     vault:
-      enable: true
       role: cluster-app
       defaultUserPath: dwh/kv/default/kratos-oke/kubernetes/us-chicago-1-prod-1/rabbitmq-mbelt3/dwh-mbelt3/creds
     externalSecret:
