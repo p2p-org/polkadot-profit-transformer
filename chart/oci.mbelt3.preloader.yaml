@@ -82,11 +82,3 @@ rabbitmq:
   vault:
     enabled: false
 
-  override:
-    statefulSet:
-      spec:
-        template:
-          metadata:
-            labels:
-              app.kubernetes.io/instance: rabbitmq
-              team: dwh
