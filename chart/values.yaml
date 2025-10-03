@@ -24,3 +24,8 @@ rabbitmq:
   enabled: false
   http_route:
     enabled: false
+  tolerations:
+    - key: "team"
+      operator: "Equal"
+      value: "dwh"
+      effect: "NoSchedule"

@@ -87,6 +87,9 @@ rabbitmq:
     statefulSet:
       spec:
         template:
+          spec:
+            nodeSelector:
+              team: dwh
           metadata:
             labels:
               app.kubernetes.io/instance: rabbitmq
