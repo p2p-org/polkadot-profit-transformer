@@ -37,8 +37,8 @@ tolerations:
 rabbitmq:
   enabled: true
   replicas: 1
-  http_route:
-    enabled: true
+  virtual_service:
+    enabled: false
     host: rabbitmq-mbelt3.dev-p2p.org
 
   persistence:
