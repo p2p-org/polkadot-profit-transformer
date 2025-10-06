@@ -99,3 +99,4 @@ rabbitmq:
             labels:
               app.kubernetes.io/instance: rabbitmq
               team: dwh
+              service: mbelt3
