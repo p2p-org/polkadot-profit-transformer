@@ -19,8 +19,3 @@ streamers:
 
 migrations:
   enabled: false
-
-rabbitmq:
-  enabled: false
-  http_route:
-    enabled: false
