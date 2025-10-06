@@ -53,23 +53,15 @@ rabbitmq:
     limits: { cpu: 2, memory: 2Gi }
     requests: { cpu: 1, memory: 2Gi }
 
-  affinity: {}
-  #  nodeAffinity:
-  #    requiredDuringSchedulingIgnoredDuringExecution:
-  #      nodeSelectorTerms:
-  #      - matchExpressions:
-  #        - key: service
-  #          operator: In
-  #          values:
-  #          - mbelt3
-  #  podAntiAffinity:
-  #    preferredDuringSchedulingIgnoredDuringExecution:
-  #    - podAffinityTerm:
-  #        labelSelector:
-  #          matchLabels:
-  #            app.kubernetes.io/name: rabbitmq
-  #        topologyKey: kubernetes.io/hostname
-  #      weight: 1
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: rabbitmq
+          topologyKey: kubernetes.io/hostname
+        weight: 1
 
   # list of namespaces from where it's allowed to reference this cluster (create vhost/user/permissions)
   topologyAllowedNamespaces:
