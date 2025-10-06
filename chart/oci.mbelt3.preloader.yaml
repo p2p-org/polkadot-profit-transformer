@@ -35,9 +35,9 @@ tolerations:
     effect: NoSchedule
 
 rabbitmq:
-  environment: test1
-  chain: test2
-  role: test3
+  environment: oci
+  chain: tbd
+  role: preloader
   #env: mbelt3
   enabled: true
   replicas: 1
@@ -91,4 +91,3 @@ rabbitmq:
             labels:
               app.kubernetes.io/instance: rabbitmq
               team: dwh
-              service: mbelt3
