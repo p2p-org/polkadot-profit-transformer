@@ -76,7 +76,8 @@ rabbitmq:
       enable: false
       secretName: "rabbitmq-mbelt3-default-user"
   vault:
-    enabled: false
+    enabled: true
+    connectionRef: vault/sec-vault
 
   override:
     statefulSet:
