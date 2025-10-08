@@ -11,7 +11,7 @@ vault:
   secret: "secret/mbelt/mbelt3_kusama"
 env:
 #  substrate_uri: wss://kusama-assethub-proxy.polka.p2p.world
-  substrate_uri: wss://asset-hub-kusama-rpc.n.dwellir.com/
+  substrate_uri: wss://asset-hub-kusama-rpc.n.dwellir.com
   log_level: info
   network_id: 20002
   mode: BLOCK_PROCESSOR

@@ -187,6 +187,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
       await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, message)
     },
     process: async (queue: QUEUES, entity: ENTITY, processor: QueueProcessor) => {
+      console.log('Connected to RabbitMQ queue:', queue, 'Entity:', entity)
       const consumer = async (msg: ConsumeMessage | null): Promise<void> => {
         if (msg) {
           logger.debug({

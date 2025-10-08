@@ -185,6 +185,15 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getDistinctValidatorsAccountsByEra(blockId: number): Promise<Set<string>> {
+    if (environment.NETWORK === 'kusama-assethub') {
+      const list = await this._getDistinctValidatorsAccountsByEra_AH(blockId)
+      return list
+    } else {
+      return await this._getDistinctValidatorsAccountsByEra(blockId)
+    }
+  }
+
+  async _getDistinctValidatorsAccountsByEra(blockId: number): Promise<Set<string>> {
     const blockHash = await this.getBlockHashByHeight(blockId)
     const distinctValidators: Set<string> = new Set()
     const validators = await this.polkadotApi.query.session.validators.at(blockHash)
@@ -194,6 +203,21 @@ export class PolkadotStakingProcessorPolkadotHelper {
     })
 
     return distinctValidators
+  }
+
+  async _getDistinctValidatorsAccountsByEra_AH(blockId: number): Promise<Set<string>> {
+    const blockHash = await this.getBlockHashByHeight(blockId)
+    const apiAt = await this.polkadotApi.at(blockHash)
+    const eraId = (await apiAt.query.staking.currentEra()).unwrap().toNumber()
+    // 1) Preferred: list validators by their prefs keys for this era
+    let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any)
+    // 2) Fallback: overview keys (same key tuple: [era, validatorId])
+    if (!keys.length && apiAt.query.staking.erasStakersOverview?.keys) {
+      keys = await apiAt.query.staking.erasStakersOverview.keys(eraId as any)
+    }
+    const ids = keys.map((k) => k.args[1].toString()) // [EraIndex, AccountId]
+    console.log(ids)
+    return new Set(ids)
   }
 
   async getStakersInfo(
@@ -241,7 +265,6 @@ export class PolkadotStakingProcessorPolkadotHelper {
         })
       }
     }
-
     return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
   }
 
@@ -285,6 +308,17 @@ export class PolkadotStakingProcessorPolkadotHelper {
     }
   }
 
+  /*
+  async getEraDataStake_AH({ eraId, blockHash }: IBlockEraParams) {
+    const [totalStake, bonded] = await Promise.all([
+      api.query.staking.erasTotalStake.at(blockHash, eraId),
+      api.query.staking.bondedEras.at(blockHash),
+    ]);
+    const startSession = bonded.find(([e]) => e.eq(eraId))?.[1].toNumber() ?? 0;
+    return { era_id: eraId, total_stake: totalStake.toString(), session_start: startSession };
+  }
+  */
+
   async getEraDataStake({
     eraId,
     blockHash,
@@ -292,9 +326,11 @@ export class PolkadotStakingProcessorPolkadotHelper {
     Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>
   > {
     this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`)
-    const [totalStake, sessionStart] = await Promise.all([
+    const [totalStake, sessionStart] = await Promise.all<[any, any]>([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
-      this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
+      environment.NETWORK === 'kusama-assethub'
+        ? this.polkadotApi.query.session.currentIndex()
+        : this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
     ])
 
     this.logger.debug({ sessionStart: sessionStart.toHuman() })
@@ -302,7 +338,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     return {
       era_id: eraId,
       total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
-      session_start: sessionStart.unwrap().toNumber(),
+      session_start: environment.NETWORK === 'kusama-assethub' ? sessionStart.toNumber() : sessionStart.unwrap().toNumber(),
     }
   }
 
