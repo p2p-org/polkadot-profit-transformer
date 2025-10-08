@@ -11,6 +11,8 @@ metadata:
     {{- include "app.commonLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
+  nodeSelector:
+    {{- toYaml .Values.nodeSelector | nindent 4 }}
   strategy:
     type: Recreate
   selector:

@@ -33,6 +33,9 @@ tolerations:
     operator: Equal
     value: "true"
     effect: NoSchedule
+nodeSelector:
+  team: dwh
+
 
 rabbitmq:
   environment: oci
