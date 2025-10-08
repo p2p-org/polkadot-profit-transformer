@@ -3,8 +3,8 @@ environment: mbelt3-prod
 replicas: 1
 chain: kusama
 role: assethub-staking-processor
-limits: {cpu: 200m, memory: 1000Mi}
-requests: {cpu: 100m, memory: 1000Mi}
+limits: {cpu: 200m, memory: 3000Mi}
+requests: {cpu: 100m, memory: 3000Mi}
 
 vault:
   role: "mbelt"
