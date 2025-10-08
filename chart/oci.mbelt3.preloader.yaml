@@ -29,10 +29,10 @@ ingress:
     secret: mbelt3-preloader-polka-p2p-world
     ssl_redirect: true
 tolerations:
-  - key: cloud.google.com/gke-spot
-    operator: Equal
-    value: "true"
-    effect: NoSchedule
+  - key: "team"
+    operator: "Equal"
+    value: "dwh"
+    effect: "NoSchedule"
 nodeSelector:
   team: dwh
 
