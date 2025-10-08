@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 0
 chain: kusama
 role: identity-processor
 limits: {cpu: 250m, memory: 200Mi}
