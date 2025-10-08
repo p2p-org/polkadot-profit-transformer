@@ -59,7 +59,7 @@ spec:
         - sh
         - -c
         - |
-          sleep inifinty
+          sleep 86400
         {{- with .Values.env }}
         env:
 
