@@ -327,7 +327,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     Omit<StakeEraModel, 'payout_block_id' | 'total_reward_points' | 'total_reward' | 'start_block_id'>
   > {
     this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`)
-    const [totalStake, sessionStart] = await Promise.all([
+    const [totalStake, sessionStart] = await Promise.all<[any, any]>([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
       environment.NETWORK === 'kusama-assethub' ? this.polkadotApi.query.session.currentIndex() : this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
     ])
