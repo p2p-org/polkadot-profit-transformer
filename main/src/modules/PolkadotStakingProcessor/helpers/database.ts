@@ -77,12 +77,10 @@ export class PolkadotStakingProcessorDatabaseHelper {
     }
     //kusama-assethub
     if (environment.NETWORK_ID === 20002 && eraId === 8662) {
-      return 11152291; // 8662
-                       // 11152292 - 8663
-                       // 11153382 - payout blockid for 8662
+      return 11152291 // 8662
+      // 11152292 - 8663
+      // 11153382 - payout blockid for 8662
     }
-
-
 
     /* 
       we are trying to find prev. era payout record to 

@@ -87,7 +87,7 @@ export class PolkadotStakingProcessorService {
       this.logger.warn({
         event: `error in processing era staking: ${error.message}`,
       })
-      console.error(error);
+      console.error(error)
       throw error
     }
   }

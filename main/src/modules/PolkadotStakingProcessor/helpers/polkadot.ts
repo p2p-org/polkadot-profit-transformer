@@ -185,11 +185,11 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getDistinctValidatorsAccountsByEra(blockId: number): Promise<Set<string>> {
-    if ( environment.NETWORK === 'kusama-assethub' ) {
-      const list = await this._getDistinctValidatorsAccountsByEra_AH(blockId);
-      return list;
+    if (environment.NETWORK === 'kusama-assethub') {
+      const list = await this._getDistinctValidatorsAccountsByEra_AH(blockId)
+      return list
     } else {
-      return await this._getDistinctValidatorsAccountsByEra(blockId);
+      return await this._getDistinctValidatorsAccountsByEra(blockId)
     }
   }
 
@@ -205,20 +205,19 @@ export class PolkadotStakingProcessorPolkadotHelper {
     return distinctValidators
   }
 
-
   async _getDistinctValidatorsAccountsByEra_AH(blockId: number): Promise<Set<string>> {
-    const blockHash = await this.getBlockHashByHeight(blockId);
-    const apiAt = await this.polkadotApi.at(blockHash);
-    const eraId = (await apiAt.query.staking.currentEra()).unwrap().toNumber();
+    const blockHash = await this.getBlockHashByHeight(blockId)
+    const apiAt = await this.polkadotApi.at(blockHash)
+    const eraId = (await apiAt.query.staking.currentEra()).unwrap().toNumber()
     // 1) Preferred: list validators by their prefs keys for this era
-    let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any);
+    let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any)
     // 2) Fallback: overview keys (same key tuple: [era, validatorId])
     if (!keys.length && apiAt.query.staking.erasStakersOverview?.keys) {
-      keys = await apiAt.query.staking.erasStakersOverview.keys(eraId as any);
+      keys = await apiAt.query.staking.erasStakersOverview.keys(eraId as any)
     }
-    const ids = keys.map(k => k.args[1].toString()); // [EraIndex, AccountId]
+    const ids = keys.map((k) => k.args[1].toString()) // [EraIndex, AccountId]
     console.log(ids)
-    return new Set(ids);
+    return new Set(ids)
   }
 
   async getStakersInfo(
@@ -329,7 +328,9 @@ export class PolkadotStakingProcessorPolkadotHelper {
     this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`)
     const [totalStake, sessionStart] = await Promise.all<[any, any]>([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
-      environment.NETWORK === 'kusama-assethub' ? this.polkadotApi.query.session.currentIndex() : this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
+      environment.NETWORK === 'kusama-assethub'
+        ? this.polkadotApi.query.session.currentIndex()
+        : this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
     ])
 
     this.logger.debug({ sessionStart: sessionStart.toHuman() })
