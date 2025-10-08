@@ -29,7 +29,9 @@ export const ModulesLoader = async (): Promise<void> => {
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
     if (
       environment.NETWORK === 'polkadot' ||
+      environment.NETWORK === 'polkadot-assethub' ||
       environment.NETWORK === 'kusama' ||
+      environment.NETWORK === 'kusama-assethub' ||
       environment.NETWORK === 'bittensor' ||
       environment.NETWORK === 'vara' ||
       environment.NETWORK === 'avail'
