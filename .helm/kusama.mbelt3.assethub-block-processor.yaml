@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 15
+replicas: 1
 chain: kusama
 role: assethub-block-processor
 limits: {cpu: 200m, memory: 1000Mi}
