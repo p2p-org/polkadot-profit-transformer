@@ -11,8 +11,6 @@ metadata:
     {{- include "app.commonLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
-  nodeSelector:
-    {{- toYaml .Values.nodeSelector | nindent 4 }}
   strategy:
     type: Recreate
   selector:
@@ -42,6 +40,8 @@ spec:
           {{"{{"}}- end {{"}}"}}
           {{"{{-"}} end {{"}}"}}
     spec:
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
       serviceAccountName: {{ template "app.fullname" $ }}
       {{- if .Values.tolerations }}
       tolerations:
