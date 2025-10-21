@@ -74,6 +74,6 @@ export const ModulesLoader = async (): Promise<void> => {
     BlockListener()
     BlockProcessor()
     IdentityProcessor()
-    Monitoring()
+//    Monitoring()
   }
 }
