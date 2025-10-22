@@ -1,10 +1,10 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 3
 chain: kusama
 role: assethub-block-processor
-limits: {cpu: 200m, memory: 1000Mi}
-requests: {cpu: 100m, memory: 1000Mi}
+limits: {cpu: 350m, memory: 1024Mi}
+requests: {cpu: 250m, memory: 1024Mi}
 
 vault:
   role: "mbelt"
