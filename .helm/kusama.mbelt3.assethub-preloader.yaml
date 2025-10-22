@@ -10,8 +10,8 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_kusama"
 env:
-  # substrate_uri: wss://kusama-asset-hub-rpc.polkadot.io
-  substrate_uri: ws://kusama-assethub-archive.polka.p2p.world
+  substrate_uri: wss://kusama-asset-hub-rpc.polkadot.io
+  # substrate_uri: ws://kusama-assethub-archive.polka.p2p.world
   log_level: info
   network_id: 20002
   mode: LISTENER
