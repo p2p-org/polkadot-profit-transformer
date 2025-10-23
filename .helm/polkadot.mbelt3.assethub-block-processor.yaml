@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 3
+replicas: 0
 chain: polkadot
 role: assethub-block-processor
 limits: {cpu: 350m, memory: 1024Mi}
@@ -15,7 +15,7 @@ env:
   #  substrate_uri: wss://polkadot-asset-hub-rpc.polkadot.io
   substrate_uri: ws://polkadot-assethub-archive.polka.p2p.world
   log_level: info
-  network_id: 20002
+  network_id: 10002
   mode: BLOCK_PROCESSOR
   pg_rw_table_prefix: assethub_
   network: polkadot-assethub
