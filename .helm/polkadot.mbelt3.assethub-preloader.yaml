@@ -1,0 +1,29 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: polkadot
+role: assethub-preloader
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3"
+additional_args:
+  - "--max_old_space_size=8192"
+
+env:
+  # substrate_uri: wss://polkadot-asset-hub-rpc.polkadot.io
+  substrate_uri: ws://polkadot-assethub-archive.polka.p2p.world
+  log_level: info
+  network_id: 20002
+  mode: LISTENER
+  pg_rw_table_prefix: assethub_
+  network: polkadot-assethub
+ingress:
+  enabled: true
+  host: mbelt3-polkadot-assethub-preloader.polka.p2p.world
+  tls:
+    secret: mbelt3-polkadot-assethub-preloader-polka-p2p-world
+
+
