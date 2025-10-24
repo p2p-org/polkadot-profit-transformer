@@ -119,7 +119,7 @@ export class MonitoringService {
   public async checkBlocksSync(): Promise<void> {
     const lastDBBlock = await this.databaseHelper.getLastBlock()
     const lastNodeBlockId = await this.polkadotHelper.getFinBlockNumber()
-    if (lastDBBlock.block_id < lastNodeBlockId - 10) {
+    if (lastDBBlock.block_id < lastNodeBlockId - 100) {
       this.slackHelper.sendMessage(
         `Sync problem. Last RPC-node blockId: ${lastNodeBlockId}. Last DB blockId: ${lastDBBlock.block_id}`,
       )
