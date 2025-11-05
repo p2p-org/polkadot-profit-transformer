@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 0
+replicas: 20
 chain: polkadot
 role: assethub-block-processor
 limits: {cpu: 350m, memory: 1024Mi}
