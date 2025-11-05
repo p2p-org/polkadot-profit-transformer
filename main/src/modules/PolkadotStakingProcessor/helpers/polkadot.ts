@@ -265,12 +265,12 @@ export class PolkadotStakingProcessorPolkadotHelper {
         })
       }
     }
-    if (overview) {
+//    if (overview) {
       return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
-    } else {
-      this.logger.error("ERROR! Overview is null");
-      return [{ total: 0, own: 0, others:0 }, { others: null }, prefs]
-    }
+//    } else {
+//      this.logger.error("ERROR! Overview is null");
+//      return [{ total: 0, own: 0, others:0 }, { others: null }, prefs]
+//    }
   }
 
   async getStakersInfoOld(
