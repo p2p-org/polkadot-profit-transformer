@@ -185,7 +185,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getDistinctValidatorsAccountsByEra(blockId: number): Promise<Set<string>> {
-    if (environment.NETWORK === 'kusama-assethub') {
+    if (environment.NETWORK === 'kusama-assethub' || environment.NETWORK === 'polkadot-assethub') {
       const list = await this._getDistinctValidatorsAccountsByEra_AH(blockId)
       return list
     } else {
@@ -265,7 +265,12 @@ export class PolkadotStakingProcessorPolkadotHelper {
         })
       }
     }
-    return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
+    if (overview) {
+      return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
+    } else {
+      this.logger.error("ERROR! Overview is null");
+      return [{ total: 0, own: 0, others:0 }, { others: null }, prefs]
+    }
   }
 
   async getStakersInfoOld(
@@ -328,7 +333,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     this.logger.info(`getEraDataStake. eraId: ${eraId}; blockHash: ${blockHash};`)
     const [totalStake, sessionStart] = await Promise.all<[any, any]>([
       this.polkadotApi.query.staking.erasTotalStake.at(blockHash, eraId),
-      environment.NETWORK === 'kusama-assethub'
+      environment.NETWORK === 'kusama-assethub' || environment.NETWORK === 'polkadot-assethub'
         ? this.polkadotApi.query.session.currentIndex()
         : this.polkadotApi.query.staking.erasStartSessionIndex.at(blockHash, eraId),
     ])
@@ -338,7 +343,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     return {
       era_id: eraId,
       total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
-      session_start: environment.NETWORK === 'kusama-assethub' ? sessionStart.toNumber() : sessionStart.unwrap().toNumber(),
+      session_start: environment.NETWORK === 'kusama-assethub' ||  environment.NETWORK === 'polkadot-assethub' ? sessionStart.toNumber() : sessionStart.unwrap().toNumber(),
     }
   }
 

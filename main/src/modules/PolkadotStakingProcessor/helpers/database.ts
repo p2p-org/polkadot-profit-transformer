@@ -82,6 +82,13 @@ export class PolkadotStakingProcessorDatabaseHelper {
       // 11153382 - payout blockid for 8662
     }
 
+    //polkadot-assethub
+    if (environment.NETWORK_ID === 10002 && eraId === 1981) {
+      return 10265699-1091;
+      // 10265699 - payout blockid for 1981
+    }
+
+
     /* 
       we are trying to find prev. era payout record to 
       determine current paid era start block id
