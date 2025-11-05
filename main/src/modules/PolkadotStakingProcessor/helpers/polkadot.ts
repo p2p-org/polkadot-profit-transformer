@@ -265,12 +265,12 @@ export class PolkadotStakingProcessorPolkadotHelper {
         })
       }
     }
-    if (overview) {
-      return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
-    } else {
-      this.logger.error("ERROR! Overview is null");
-      return [{ total: 0, own: 0, others:0 }, { others: null }, prefs]
-    }
+    //    if (overview) {
+    return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
+    //    } else {
+    //      this.logger.error("ERROR! Overview is null");
+    //      return [{ total: 0, own: 0, others:0 }, { others: null }, prefs]
+    //    }
   }
 
   async getStakersInfoOld(
@@ -343,7 +343,10 @@ export class PolkadotStakingProcessorPolkadotHelper {
     return {
       era_id: eraId,
       total_stake: totalStake.isEmpty ? '0' : totalStake.toString(),
-      session_start: environment.NETWORK === 'kusama-assethub' ||  environment.NETWORK === 'polkadot-assethub' ? sessionStart.toNumber() : sessionStart.unwrap().toNumber(),
+      session_start:
+        environment.NETWORK === 'kusama-assethub' || environment.NETWORK === 'polkadot-assethub'
+          ? sessionStart.toNumber()
+          : sessionStart.unwrap().toNumber(),
     }
   }
 
