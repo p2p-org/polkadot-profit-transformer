@@ -84,7 +84,7 @@ export class PolkadotStakingProcessorService {
         value: Date.now() - startProcessingTime,
       })
 
-      return true;
+      return true
     } catch (error: any) {
       this.logger.warn({
         event: `error in processing era staking: ${error.message}`,
@@ -92,7 +92,7 @@ export class PolkadotStakingProcessorService {
       console.error(error)
       throw error
     }
-    return false;
+    return false
   }
 
   async processRewardsEra(
@@ -123,7 +123,7 @@ export class PolkadotStakingProcessorService {
         reprocessingTask,
       })
 
-      return false;
+      return false
     }
 
     // logger.info({ eraStartBlockId })
@@ -210,13 +210,13 @@ export class PolkadotStakingProcessorService {
       const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
       await this.sliMetrics.add({ entity: 'era', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
 
-      return true;
+      return true
     } catch (error: any) {
       this.logger.warn({
         event: `error in processing era rewards: ${error.message}`,
       })
       throw error
     }
-    return false;
+    return false
   }
 }
