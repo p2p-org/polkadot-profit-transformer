@@ -84,7 +84,8 @@ export class PolkadotStakingProcessorDatabaseHelper {
 
     //polkadot-assethub
     if (environment.NETWORK_ID === 10002 && eraId === 1981) {
-      return 10265699-1;
+      return 10258444;
+      //return 10265699-1;
       // 10265699 - payout blockid for 1981
     }
 
