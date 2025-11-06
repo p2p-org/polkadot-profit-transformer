@@ -280,7 +280,13 @@ export class BlocksProcessorService {
         }
         newTasks.push(newStakingProcessingTask)
 
-        if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'avail') {
+        if (
+          environment.NETWORK === 'polkadot' ||
+          environment.NETWORK === 'polkadot-assethub' ||
+          environment.NETWORK === 'kusama' ||
+          environment.NETWORK === 'kusama-assethub' ||
+          environment.NETWORK === 'avail'
+        ) {
           const newNominationPoolsProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
             entity: ENTITY.NOMINATION_POOLS_ERA,
             entity_id: parseInt(event.event.data[0].toString()),
