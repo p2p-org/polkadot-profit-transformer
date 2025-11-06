@@ -40,6 +40,8 @@ export const ModulesLoader = async (): Promise<void> => {
       if (
         environment.NETWORK === 'polkadot' ||
         environment.NETWORK === 'kusama' ||
+        environment.NETWORK === 'polkadot-assethub' ||
+        environment.NETWORK === 'kusama-assethub' ||
         environment.NETWORK === 'avail' ||
         environment.NETWORK === 'bittensor'
       ) {
