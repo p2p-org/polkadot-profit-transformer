@@ -56,9 +56,9 @@ export const ModulesLoader = async (): Promise<void> => {
     IdentityProcessor()
   }
 
-  if (environment.MODE === MODE.NOMINATIONPOOLS_PROCESSOR) {
-    NominationPoolsProcessor()
-  }
+//  if (environment.MODE === MODE.NOMINATIONPOOLS_PROCESSOR) {
+//    NominationPoolsProcessor()
+//  }
 
   if (environment.MODE === MODE.BALANCES_PROCESSOR) {
     BalancesProcessor()
