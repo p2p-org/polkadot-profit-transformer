@@ -78,11 +78,11 @@ rabbitmq:
     externalSecret:
       enable: false
       secretName: "rabbitmq-mbelt3-default-user"
-  vault:
-    connectionRef: vault/sec-vault
-    auth_backend: iaas/kratos-oke/kubernetes/us-chicago-1-prod-1
-    role: cluster-app
-    kv_mount: dwh/kv/default
+  #vault:
+  #  connectionRef: vault/sec-vault
+  #  auth_backend: iaas/kratos-oke/kubernetes/us-chicago-1-prod-1
+  #  role: cluster-app
+  #  kv_mount: dwh/kv/default
 
   override:
     statefulSet:
@@ -97,3 +97,39 @@ rabbitmq:
             labels:
               app.kubernetes.io/instance: rabbitmq
               team: dwh
+
+rabbitmq-tenant:
+  enabled: true
+
+  cluster:
+    name: rabbitmq
+
+  serviceAccount:
+    create: true
+
+  vault:
+    connectionRef: vault/sec-vault
+    kv: dwh/kv/default
+    kubernetes:
+      backendName: iaas/kratos-oke/kubernetes/us-chicago-1-prod-1
+      backendRole: cluster-app
+      serviceAccount: mbelt3-rmq-tenants
+
+    secrets:
+      userPath: kubernetes/cluster/{{ .Release.Namespace }}/mbelt3-rmq-tenants/{{ .user.name }}
+
+  vhosts:
+    - name: mbelt3-vhost
+      defaultQueueType: quorum
+      tags: []
+      tracing: false
+
+  users:
+    - name: mbelt3-user
+      permissions:
+      - vhost: mbelt3-vhost
+        permissions:
+          write: ".*"
+          configure: ".*"
+          read: ".*"
+        tags: []

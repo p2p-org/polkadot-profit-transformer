@@ -2,5 +2,8 @@ dependencies:
 - name: rabbitmq
   repository: file://rabbitmq
   version: 1.2.0
-digest: sha256:7502fa876a452a638fcbda36ed8c991b5f4cb9f146a6f84f45bbb32d4cf3017a
-generated: "2025-10-02T15:17:28.16702+02:00"
+- name: rabbitmq-tenant
+  repository: oci://kcr.infra.p2p.org/iaas/helm
+  version: v0.3.1
+digest: sha256:cb95f158076c429f284cd41185c955f2195566023d6c49ac5b578938ed2fcb16
+generated: "2025-11-17T20:08:31.070189+01:00"

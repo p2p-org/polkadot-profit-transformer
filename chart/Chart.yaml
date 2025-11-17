@@ -13,3 +13,6 @@ dependencies:
   version: 1.2.0
   alias: rabbitmq
   condition: rabbitmq.enabled
+- name: rabbitmq-tenant
+  repository: oci://kcr.infra.p2p.org/iaas/helm
+  version: v0.3.1
