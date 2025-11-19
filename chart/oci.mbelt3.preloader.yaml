@@ -78,11 +78,11 @@ rabbitmq:
     externalSecret:
       enable: false
       secretName: "rabbitmq-mbelt3-default-user"
-  #vault:
-  #  connectionRef: vault/sec-vault
-  #  auth_backend: iaas/kratos-oke/kubernetes/us-chicago-1-prod-1
-  #  role: cluster-app
-  #  kv_mount: dwh/kv/default
+  vault:
+    connectionRef: vault/sec-vault
+    auth_backend: iaas/kratos-oke/kubernetes/us-chicago-1-prod-1
+    role: cluster-app
+    kv_mount: dwh/kv/default
 
   override:
     statefulSet:
