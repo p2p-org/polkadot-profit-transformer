@@ -102,7 +102,7 @@ rabbitmq-tenant:
   enabled: true
 
   cluster:
-    name: rabbitmq
+    name: rabbitmq-oci-tbd-preloader
 
   serviceAccount:
     create: true
