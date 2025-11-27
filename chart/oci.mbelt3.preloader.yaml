@@ -13,7 +13,7 @@ metrics:
   enabled: false
 vault:
   role: "cluster-app"
-  secret: "dwh/kv/default/kratos-oke/kubernetes/us-chicago-1-prod-1/{{ .Release.Namespace }}/mbelt-oci-prod-polkadot-preloader/config"
+  secret: "dwh/kv/default/kratos-oke/kubernetes/us-chicago-1-prod-1/dwh-mbelt3/mbelt-oci-prod-polkadot-preloader/config"
 env:
   substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
   log_level: info
