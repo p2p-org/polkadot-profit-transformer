@@ -17,7 +17,7 @@ services:
 
   mbelt_rabbitmq:
     container_name: mbelt_rabbitmq
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:3-management
     hostname: mbelt_rabbitmq
     ports:
       - 5672:5672

@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:18-alpine as building
+FROM --platform=linux/amd64 node:18 as building
 
 WORKDIR /usr/src/app
 
@@ -15,7 +15,7 @@ RUN npm run build
 RUN npm prune --production
 RUN apk del .build-deps
 
-FROM --platform=linux/amd64 node:18-alpine
+FROM --platform=linux/amd64 node:18
 
 WORKDIR /usr/src/app
 
