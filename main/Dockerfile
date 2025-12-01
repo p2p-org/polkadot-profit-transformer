@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64  node:18 AS building
+FROM --platform=linux/amd64 node:18 as building
 
 WORKDIR /usr/src/app
 
@@ -19,7 +19,7 @@ RUN apt-get update \
  && apt-get autoremove -y \
  && rm -rf /var/lib/apt/lists/*
 
-FROM node:18
+FROM --platform=linux/amd64 node:18
 
 WORKDIR /usr/src/app
 
