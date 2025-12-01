@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:18-alpine as building
+FROM --platform=linux/amd64  node:18 AS building
 
 WORKDIR /usr/src/app
 
@@ -9,13 +9,17 @@ COPY ./src ./src
 COPY ./migrations ./migrations
 COPY ./migrations.ts ./migrations.ts
 
-RUN apk add --no-cache --virtual .build-deps python3 make gcc g++
-RUN npm ci
-RUN npm run build
-RUN npm prune --production
-RUN apk del .build-deps
+# Install build dependencies (Debian)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && npm ci \
+ && npm run build \
+ && npm prune --production \
+ && apt-get purge -y python3 make g++ \
+ && apt-get autoremove -y \
+ && rm -rf /var/lib/apt/lists/*
 
-FROM --platform=linux/amd64 node:18-alpine
+FROM node:18
 
 WORKDIR /usr/src/app
 
@@ -28,8 +32,5 @@ COPY --from=building /usr/src/app/migrations ./migrations
 COPY --from=building /usr/src/app/migrations.ts ./migrations.ts
 
 EXPOSE 8080
-
-#RUN npm run migrations:list
-#RUN npm run migrations:up
 
 CMD ["node", "--require=./tsconfig-paths-bootstrap.js", "./dist/index.js"]
