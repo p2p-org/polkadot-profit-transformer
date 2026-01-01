@@ -211,12 +211,16 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const eraId = (await apiAt.query.staking.currentEra()).unwrap().toNumber()
     // 1) Preferred: list validators by their prefs keys for this era
     let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any)
-    // 2) Fallback: overview keys (same key tuple: [era, validatorId])
-    if (!keys.length && apiAt.query.staking.erasStakersOverview?.keys) {
-      keys = await apiAt.query.staking.erasStakersOverview.keys(eraId as any)
+
+    const ids = [];
+    const entries = await apiAt.query.staking.validators.entries();
+    for (const [key, prefs] of entries) {
+      const validator = key.args[0].toString();
+      ids.push (validator);
     }
-    const ids = keys.map((k) => k.args[1].toString()) // [EraIndex, AccountId]
-    console.log(ids)
+
+    console.log("IDS", ids)
+
     return new Set(ids)
   }
 
