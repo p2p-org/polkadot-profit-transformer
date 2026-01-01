@@ -75,7 +75,6 @@ export class PolkadotStakingProcessorPolkadotHelper {
       }
 
       const queue = new Queue(processValidator, { concurrent: 5 })
-
       for (const validator of Array.from(validatorsAccountIdSet)) {
         queue.push(validator)
       }
@@ -211,11 +210,15 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const eraId = (await apiAt.query.staking.currentEra()).unwrap().toNumber()
     // 1) Preferred: list validators by their prefs keys for this era
     let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any)
-    // 2) Fallback: overview keys (same key tuple: [era, validatorId])
-    if (!keys.length && apiAt.query.staking.erasStakersOverview?.keys) {
-      keys = await apiAt.query.staking.erasStakersOverview.keys(eraId as any)
+
+    //new way
+    const ids = [];
+    const entries = await apiAt.query.staking.validators.entries();
+    for (const [key, prefs] of entries) {
+      const validator = key.args[0].toString();
+      ids.push (validator);
     }
-    const ids = keys.map((k) => k.args[1].toString()) // [EraIndex, AccountId]
+
     console.log(ids)
     return new Set(ids)
   }
@@ -240,11 +243,106 @@ export class PolkadotStakingProcessorPolkadotHelper {
     }
   }
 
-  async getStakersInfoNew(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, any, ValidatorPrefs]> {
+
+  async getStakersInfoNew(
+    apiAtBlock: any,
+    eraId: number,
+    validatorAccountId: string
+  ): Promise<[any, any, ValidatorPrefs]> {
+    const prefs = await apiAtBlock.query.staking.validators(validatorAccountId);
+
+    // 1) Find existing pages for this (era, validator)
+    // keys() returns StorageKey[] where args = [era, validator, page]
+    const pageKeys: any[] = await apiAtBlock.query.staking.erasStakersPaged.keys(
+      eraId,
+      validatorAccountId
+    );
+
+    if (!pageKeys || pageKeys.length === 0) {
+      // No exposure stored for this validator in this era
+      return [{ total: 0n, own: 0n, others: [] }, { others: null }, prefs];
+    }
+
+    const pages: number[] = pageKeys
+      .map((k: any) => {
+        const pageArg = k?.args?.[2];
+        if (pageArg?.toNumber) return pageArg.toNumber();
+        return Number(pageArg?.toString?.() ?? pageArg);
+      })
+      .filter((p: any) => Number.isFinite(p))
+      .sort((a, b) => a - b);
+
+    // 2) Read each page and accumulate `others`
+    const others: Array<{ who: string; value: bigint }> = [];
+
+    // Some runtimes include total/own in the page object; we’ll take them from the first page we can unwrap
+    let total = 0n;
+    let own = 0n;
+    let totalsInitialized = false;
+
+    for (const page of pages) {
+      const stakingOpt = await apiAtBlock.query.staking.erasStakersPaged(
+        eraId,
+        validatorAccountId,
+        page
+      );
+
+      // erasStakersPaged is typically Option<ExposurePage>
+      if (stakingOpt?.isNone) continue;
+
+      const staking = stakingOpt?.unwrap ? stakingOpt.unwrap() : stakingOpt;
+
+      // Initialize total/own once, if present on the staking page
+      if (!totalsInitialized) {
+        // Prefer strongly-typed values if available, fallback to JSON
+        const stakingJson = staking?.toJSON ? staking.toJSON() : null;
+
+        const totalStr =
+          staking?.total?.toString?.() ?? stakingJson?.total ?? null;
+        const ownStr = staking?.own?.toString?.() ?? stakingJson?.own ?? null;
+
+        if (totalStr !== null && ownStr !== null) {
+          total = BigInt(totalStr);
+          own = BigInt(ownStr);
+          totalsInitialized = true;
+        }
+      }
+
+      // Read others from typed values if available; fallback to JSON
+      if (staking?.others && Array.isArray(staking.others)) {
+        for (const o of staking.others) {
+          others.push({
+            who: o.who?.toString?.() ?? String(o.who),
+            value: BigInt(o.value?.toString?.() ?? String(o.value)),
+          });
+        }
+      } else if (staking?.toJSON) {
+        const stakingJson = staking.toJSON();
+        if (stakingJson?.others?.length) {
+          for (const item of stakingJson.others) {
+            others.push({
+              who: String(item.who),
+              value: BigInt(item.value),
+            });
+          }
+        }
+      }
+    }
+
+    const result: [any, any, ValidatorPrefs] = [
+      { total, own, others },
+      { others: null },
+      prefs,
+    ];
+
+    return result;
+  }
+
+
+  async getStakersInfoNewOld(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, any, ValidatorPrefs]> {
     const [_overview, prefs] = await Promise.all([
       apiAtBlock.query.staking.erasStakersOverview(eraId, validatorAccountId),
-      //apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
-      apiAtBlock.query.staking.erasValidatorPrefs(eraId, validatorAccountId),
+      apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
     ])
 
     const overview: any = _overview.toJSON()
@@ -252,8 +350,6 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const others: any = []
     for (let page = 0; page <= overview?.pageCount; page++) {
       const _staking: any = await apiAtBlock.query.staking.erasStakersPaged(eraId, validatorAccountId, page)
-      //const _rewards: any = await apiAtBlock.query.staking.claimedRewards(eraId, validatorAccountId)
-      //console.log(_rewards.toJSON());
 
       const staking = _staking.toJSON()
       if (staking && staking.others && staking.others.length) {
@@ -265,12 +361,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
         })
       }
     }
-    //    if (overview) {
     return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
-    //    } else {
-    //      this.logger.error("ERROR! Overview is null");
-    //      return [{ total: 0, own: 0, others:0 }, { others: null }, prefs]
-    //    }
   }
 
   async getStakersInfoOld(
@@ -370,7 +461,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
-    const hash = this.polkadotApi.rpc.chain.getBlockHash(height)
+    const hash = await this.polkadotApi.rpc.chain.getBlockHash(height)
     this.logger.info(`getBlockHashByHeight: this.polkadotApi.rpc.chain.getBlockHash(${height}): ${hash}`)
     return hash
   }
