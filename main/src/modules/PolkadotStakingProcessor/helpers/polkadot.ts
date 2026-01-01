@@ -243,109 +243,17 @@ export class PolkadotStakingProcessorPolkadotHelper {
     }
   }
 
-
-  async getStakersInfoNew(
-    apiAtBlock: any,
-    eraId: number,
-    validatorAccountId: string
-  ): Promise<[any, any, ValidatorPrefs]> {
-    const prefs = await apiAtBlock.query.staking.validators(validatorAccountId);
-
-    // 1) Find existing pages for this (era, validator)
-    // keys() returns StorageKey[] where args = [era, validator, page]
-    const pageKeys: any[] = await apiAtBlock.query.staking.erasStakersPaged.keys(
-      eraId,
-      validatorAccountId
-    );
-
-    if (!pageKeys || pageKeys.length === 0) {
-      // No exposure stored for this validator in this era
-      return [{ total: BigInt(0), own: BigInt(0), others: [] }, { others: null }, prefs];
-    }
-
-    const pages: number[] = pageKeys
-      .map((k: any) => {
-        const pageArg = k?.args?.[2];
-        if (pageArg?.toNumber) return pageArg.toNumber();
-        return Number(pageArg?.toString?.() ?? pageArg);
-      })
-      .filter((p: any) => Number.isFinite(p))
-      .sort((a, b) => a - b);
-
-    // 2) Read each page and accumulate `others`
-    const others: Array<{ who: string; value: bigint }> = [];
-
-    // Some runtimes include total/own in the page object; we’ll take them from the first page we can unwrap
-    let total = BigInt(0);
-    let own = BigInt(0);
-    let totalsInitialized = false;
-
-    for (const page of pages) {
-      const stakingOpt = await apiAtBlock.query.staking.erasStakersPaged(
-        eraId,
-        validatorAccountId,
-        page
-      );
-
-      // erasStakersPaged is typically Option<ExposurePage>
-      if (stakingOpt?.isNone) continue;
-
-      const staking = stakingOpt?.unwrap ? stakingOpt.unwrap() : stakingOpt;
-
-      // Initialize total/own once, if present on the staking page
-      if (!totalsInitialized) {
-        // Prefer strongly-typed values if available, fallback to JSON
-        const stakingJson = staking?.toJSON ? staking.toJSON() : null;
-
-        const totalStr =
-          staking?.total?.toString?.() ?? stakingJson?.total ?? null;
-        const ownStr = staking?.own?.toString?.() ?? stakingJson?.own ?? null;
-
-        if (totalStr !== null && ownStr !== null) {
-          total = BigInt(totalStr);
-          own = BigInt(ownStr);
-          totalsInitialized = true;
-        }
-      }
-
-      // Read others from typed values if available; fallback to JSON
-      if (staking?.others && Array.isArray(staking.others)) {
-        for (const o of staking.others) {
-          others.push({
-            who: o.who?.toString?.() ?? String(o.who),
-            value: BigInt(o.value?.toString?.() ?? String(o.value)),
-          });
-        }
-      } else if (staking?.toJSON) {
-        const stakingJson = staking.toJSON();
-        if (stakingJson?.others?.length) {
-          for (const item of stakingJson.others) {
-            others.push({
-              who: String(item.who),
-              value: BigInt(item.value),
-            });
-          }
-        }
-      }
-    }
-
-    const result: [any, any, ValidatorPrefs] = [
-      { total, own, others },
-      { others: null },
-      prefs,
-    ];
-
-    return result;
-  }
-
-
-  async getStakersInfoNewOld(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, any, ValidatorPrefs]> {
+  async getStakersInfoNew(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, any, ValidatorPrefs]> {
     const [_overview, prefs] = await Promise.all([
       apiAtBlock.query.staking.erasStakersOverview(eraId, validatorAccountId),
-      apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
+      apiAtBlock.query.staking.erasValidatorPrefs(eraId, validatorAccountId),
     ])
 
+    if (_overview.isNone) {
+      return [{ total: BigInt(0), own: BigInt(0), others: [] }, { others: null }, prefs];
+    }
     const overview: any = _overview.toJSON()
+//    console.log("OVERVIEW", overview);
 
     const others: any = []
     for (let page = 0; page <= overview?.pageCount; page++) {
