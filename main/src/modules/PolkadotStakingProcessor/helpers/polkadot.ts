@@ -212,15 +212,15 @@ export class PolkadotStakingProcessorPolkadotHelper {
     let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any)
 
 
-    //new way
-    const ids = [];
-    const entries = await apiAt.query.staking.validators.entries();
-    for (const [key, prefs] of entries) {
-      const validator = key.args[0].toString();
-      ids.push (validator);
-    }
+     //new way
+     const ids = [];
+     const entries = await apiAt.query.staking.validators.entries();
+     for (const [key, prefs] of entries) {
+       const validator = key.args[0].toString();
+       ids.push (validator);
+     }
 
-    console.log("IDS", ids)
+     console.log("IDS", ids)
     return new Set(ids)
   }
 
