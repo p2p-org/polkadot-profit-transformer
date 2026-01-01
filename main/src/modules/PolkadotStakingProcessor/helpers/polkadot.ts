@@ -75,6 +75,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
       }
 
       const queue = new Queue(processValidator, { concurrent: 5 })
+
       for (const validator of Array.from(validatorsAccountIdSet)) {
         queue.push(validator)
       }
@@ -210,15 +211,11 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const eraId = (await apiAt.query.staking.currentEra()).unwrap().toNumber()
     // 1) Preferred: list validators by their prefs keys for this era
     let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any)
-
-    //new way
-    const ids = [];
-    const entries = await apiAt.query.staking.validators.entries();
-    for (const [key, prefs] of entries) {
-      const validator = key.args[0].toString();
-      ids.push (validator);
+    // 2) Fallback: overview keys (same key tuple: [era, validatorId])
+    if (!keys.length && apiAt.query.staking.erasStakersOverview?.keys) {
+      keys = await apiAt.query.staking.erasStakersOverview.keys(eraId as any)
     }
-
+    const ids = keys.map((k) => k.args[1].toString()) // [EraIndex, AccountId]
     console.log(ids)
     return new Set(ids)
   }
@@ -258,6 +255,8 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const others: any = []
     for (let page = 0; page <= overview?.pageCount; page++) {
       const _staking: any = await apiAtBlock.query.staking.erasStakersPaged(eraId, validatorAccountId, page)
+      //const _rewards: any = await apiAtBlock.query.staking.claimedRewards(eraId, validatorAccountId)
+      //console.log(_rewards.toJSON());
 
       const staking = _staking.toJSON()
       if (staking && staking.others && staking.others.length) {
@@ -269,7 +268,12 @@ export class PolkadotStakingProcessorPolkadotHelper {
         })
       }
     }
+    //    if (overview) {
     return [{ total: BigInt(overview.total), own: BigInt(overview.own), others }, { others: null }, prefs]
+    //    } else {
+    //      this.logger.error("ERROR! Overview is null");
+    //      return [{ total: 0, own: 0, others:0 }, { others: null }, prefs]
+    //    }
   }
 
   async getStakersInfoOld(
@@ -369,7 +373,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
   }
 
   async getBlockHashByHeight(height: number): Promise<BlockHash> {
-    const hash = await this.polkadotApi.rpc.chain.getBlockHash(height)
+    const hash = this.polkadotApi.rpc.chain.getBlockHash(height)
     this.logger.info(`getBlockHashByHeight: this.polkadotApi.rpc.chain.getBlockHash(${height}): ${hash}`)
     return hash
   }
