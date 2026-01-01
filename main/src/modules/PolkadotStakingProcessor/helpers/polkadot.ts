@@ -243,11 +243,14 @@ export class PolkadotStakingProcessorPolkadotHelper {
   async getStakersInfoNew(apiAtBlock: any, eraId: number, validatorAccountId: string): Promise<[any, any, ValidatorPrefs]> {
     const [_overview, prefs] = await Promise.all([
       apiAtBlock.query.staking.erasStakersOverview(eraId, validatorAccountId),
-      //apiAtBlock.query.staking.erasStakersClipped(eraId, validatorAccountId),
       apiAtBlock.query.staking.erasValidatorPrefs(eraId, validatorAccountId),
     ])
 
+    if (_overview.isNone) {
+      return [{ total: BigInt(0), own: BigInt(0), others: [] }, { others: null }, prefs];
+    }
     const overview: any = _overview.toJSON()
+//    console.log("OVERVIEW", overview);
 
     const others: any = []
     for (let page = 0; page <= overview?.pageCount; page++) {
