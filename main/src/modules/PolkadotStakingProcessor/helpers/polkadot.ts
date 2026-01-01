@@ -260,7 +260,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
 
     if (!pageKeys || pageKeys.length === 0) {
       // No exposure stored for this validator in this era
-      return [{ total: 0n, own: 0n, others: [] }, { others: null }, prefs];
+      return [{ total: BigInt(0), own: BigInt(0), others: [] }, { others: null }, prefs];
     }
 
     const pages: number[] = pageKeys
@@ -276,8 +276,8 @@ export class PolkadotStakingProcessorPolkadotHelper {
     const others: Array<{ who: string; value: bigint }> = [];
 
     // Some runtimes include total/own in the page object; we’ll take them from the first page we can unwrap
-    let total = 0n;
-    let own = 0n;
+    let total = BigInt(0);
+    let own = BigInt(0);
     let totalsInitialized = false;
 
     for (const page of pages) {
