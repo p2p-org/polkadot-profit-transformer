@@ -211,6 +211,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
     // 1) Preferred: list validators by their prefs keys for this era
     let keys = await apiAt.query.staking.erasValidatorPrefs.keys(eraId as any)
 
+
     //new way
     const ids = [];
     const entries = await apiAt.query.staking.validators.entries();
@@ -219,7 +220,7 @@ export class PolkadotStakingProcessorPolkadotHelper {
       ids.push (validator);
     }
 
-    console.log(ids)
+    console.log("IDS", ids)
     return new Set(ids)
   }
 
