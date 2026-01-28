@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 0
 chain: moonbeam
 role: block-processor
 limits: {cpu: 450m, memory: 1000Mi}
