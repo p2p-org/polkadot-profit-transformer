@@ -10,7 +10,8 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonbeam"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+#  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+  substrate_uri: wss://wss.api.moonbeam.network
   log_level: info
   network_id: 1284
   mode: LISTENER
