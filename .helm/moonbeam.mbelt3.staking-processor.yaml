@@ -11,7 +11,8 @@ vault:
 additional_args:
   - "--max_old_space_size=1000"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+#  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+  substrate_uri: wss://wss.api.moonbeam.network
   log_level: info
   network_id: 1284
   mode: STAKING_PROCESSOR
