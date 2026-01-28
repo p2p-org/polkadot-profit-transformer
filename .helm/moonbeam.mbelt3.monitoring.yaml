@@ -9,7 +9,8 @@ vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonbeam"
 env:
-  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+#  substrate_uri: ws://substrate-ws-proxy-prod.moonbeam.svc.cluster.local:9945
+  substrate_uri: wss://wss.api.moonbeam.network
   restart_blocks_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-blocks
   restart_rounds_uri: http://mbelt-mbelt3-prod-moonbeam-preloader.mbelt3.svc.cluster.local:80/restart-unprocessed-rounds  
   log_level: info
