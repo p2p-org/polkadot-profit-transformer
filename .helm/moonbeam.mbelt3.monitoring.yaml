@@ -1,6 +1,6 @@
 ---
 environment: mbelt3-prod
-replicas: 1
+replicas: 0
 chain: moonbeam
 role: monitoring
 limits: {cpu: 200m, memory: 100Mi}
