@@ -1,0 +1,71 @@
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "app.fullname" $ }}
+  labels:
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.tls.ssl_redirect | quote }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.cluster_issuer | quote }}
+spec:
+  ingressClassName: {{ .Values.ingress.class }}
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend: { service: { name: {{ template "app.fullname" $ }}, port: { number: 80 } } }
+  tls:
+  - hosts: [ {{ .Values.ingress.host }} ]
+    secretName: {{ .Values.ingress.tls.secret }}
+{{- end }}
+
+
+##### avoid breaking the current deployment path
+#apiVersion: gateway.networking.k8s.io/v1
+#kind: HTTPRoute
+#metadata:
+#  name: {{ template "app.fullname" $ }}
+#  labels:
+#    app: {{ .Chart.Name }}
+#    env: {{ .Values.environment }}
+#    chain: {{ .Values.chain }}
+#    role: {{ .Values.role }}
+#spec:
+#  parentRefs:
+#  - name: {{ template "app.fullname" $ }}-gw
+#  hostnames:
+#  - {{ .Values.ingress.host | quote }}
+#  rules:
+#  - matches:
+#    - path:
+#        type: PathPrefix
+#        value: /
+#    backendRefs:
+#    - name: {{ template "app.fullname" $ }}
+#      port: 80
+#{{- if .Values.ingress.tls.secret }}
+#---
+#apiVersion: cert-manager.io/v1
+#kind: Certificate
+#metadata:
+#  name: {{ template "app.fullname" $ }}
+#  labels:
+#    app: {{ .Chart.Name }}
+#    env: {{ .Values.environment }}
+#    chain: {{ .Values.chain }}
+#    role: {{ .Values.role }}
+#spec:
+#  secretName: {{ .Values.ingress.tls.secret }}
+#  dnsNames:
+#  - {{ .Values.ingress.host | quote }}
+#  issuerRef:
+#    kind: ClusterIssuer
+#    name: {{ .Values.ingress.tls.cluster_issuer }}
+#{{- end }}
