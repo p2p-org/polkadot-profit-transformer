@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.GCR_JSON_KEY }}
 
       - name: Build and push
-        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6 # v3
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           push: true
           context: ./main
