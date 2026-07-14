@@ -12,7 +12,7 @@ jobs:
       working-directory: ./main
     
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Install modules
         working-directory: ${{env.working-directory}}
@@ -37,7 +37,7 @@ jobs:
       working-directory: ./main
 
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       
       - name: Install modules
         working-directory: ${{env.working-directory}}
