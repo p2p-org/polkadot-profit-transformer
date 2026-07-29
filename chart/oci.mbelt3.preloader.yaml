@@ -1,0 +1,137 @@
+---
+environment: oci-prod
+commonLabels:
+  team: dwh
+chain: polkadot
+role: preloader
+replicas: 1
+image: {repository: busybox, tag: latest}
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+port: 3000
+metrics:
+  enabled: false
+vault:
+  role: "cluster-app"
+  secret: "dwh/kv/default/kratos-oke/kubernetes/us-chicago-1-prod-1/dwh-mbelt3/mbelt-oci-prod-polkadot-preloader/config"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.polkadot.svc.cluster.local:9944
+  log_level: info
+  network_id: 0
+  mode: LISTENER
+  network: polkadot
+ingress:
+  enabled: false
+  class: nginx-external
+  host: mbelt3-preloader.placeholder.com
+  tls:
+    cluster_issuer: cloudflare-prod
+    secret: mbelt3-preloader-polka-p2p-world
+    ssl_redirect: true
+tolerations:
+  - key: "team"
+    operator: "Equal"
+    value: "dwh"
+    effect: "NoSchedule"
+nodeSelector:
+  team: dwh
+
+
+rabbitmq:
+  environment: oci
+  chain: tbd
+  role: preloader
+  #env: mbelt3
+  enabled: true
+  replicas: 1
+  virtual_service:
+    enabled: false
+    host: rabbitmq-mbelt3.dev-p2p.org
+
+  persistence:
+    storage: 50Gi
+    storageClassName: uhp-40-rwo-xfs
+
+  resources:
+    limits: { cpu: 2, memory: 2Gi }
+    requests: { cpu: 1, memory: 2Gi }
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: rabbitmq
+          topologyKey: kubernetes.io/hostname
+        weight: 1
+
+  # list of namespaces from where it's allowed to reference this cluster (create vhost/user/permissions)
+  topologyAllowedNamespaces:
+  - dwh-mbelt3
+  - iaas-system
+
+
+  secretBackend:
+    vault:
+      defaultUserPath: dwh/kv/default/kratos-oke/kubernetes/us-chicago-1-prod-1/dwh-mbelt3/rabbitmq-oci-tbd-preloader-server/config
+      role: cluster-app
+    externalSecret:
+      enable: false
+      secretName: "rabbitmq-mbelt3-default-user"
+  vault:
+    connectionRef: vault/sec-vault
+    auth_backend: iaas/kratos-oke/kubernetes/us-chicago-1-prod-1
+    role: rabbitmq-messaging-topology-operator
+    kv_mount: dwh/kv/default
+
+  override:
+    statefulSet:
+      spec:
+        template:
+          spec:
+            containers:
+              - name: rabbitmq
+            nodeSelector:
+              team: dwh
+          metadata:
+            labels:
+              app.kubernetes.io/instance: rabbitmq
+              team: dwh
+
+rabbitmq-tenant:
+  enabled: true
+
+  cluster:
+    name: rabbitmq
+    clusterRefName: rabbitmq-oci-tbd-preloader
+
+  serviceAccount:
+    create: true
+
+  vault:
+    connectionRef: vault/sec-vault
+    kv: dwh/kv/default
+    kubernetes:
+      backendName: iaas/kratos-oke/kubernetes/us-chicago-1-prod-1
+      backendRole: rabbitmq-allow-users-read
+      serviceAccount: mbelt3-rmq-tenants
+
+    secrets:
+      userPath: kratos-oke/kubernetes/us-chicago-1-prod-1/rabbitmq/{{ .Release.Namespace }}/mbelt3-rmq-tenants/{{ .user.name }}
+
+  vhosts:
+    - name: mbelt3-vhost
+      defaultQueueType: quorum
+      tags: []
+      tracing: false
+
+  users:
+    - name: mbelt3-user
+      permissions:
+      - vhost: mbelt3-vhost
+        permissions:
+          write: ".*"
+          configure: ".*"
+          read: ".*"
+        tags: []
