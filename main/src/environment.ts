@@ -12,15 +12,18 @@ export enum NODE_ENV {
 export enum MODE {
   LISTENER = 'LISTENER',
   BLOCK_PROCESSOR = 'BLOCK_PROCESSOR',
+  NOMINATIONPOOLS_PROCESSOR = 'NOMINATIONPOOLS_PROCESSOR',
   STAKING_PROCESSOR = 'STAKING_PROCESSOR',
   IDENTITY_PROCESSOR = 'IDENTITY_PROCESSOR',
   BALANCES_PROCESSOR = 'BALANCES_PROCESSOR',
   GEAR_SMARTCONTRACTS_PROCESSOR = 'GEAR_SMARTCONTRACTS_PROCESSOR',
   MONITORING = 'MONITORING',
+  HYBRID = 'HYBRID',
 }
 
 export type Environment = {
   SLACK_WEBHOOK?: string
+  OPSGENIE_KEY?: string
   PG_CONNECTION_STRING?: string
   PG_HOST?: string
   PG_PORT?: number
@@ -35,6 +38,7 @@ export type Environment = {
   GOOGLE_BIGQUERY_DATASET?: string
   LOG_LEVEL: string
   SUBSTRATE_URI: string
+  ASSET_HUB_URI?: string
   RESTART_BALANCES_URI?: string
   RESTART_BLOCKS_URI?: string
   RESTART_ROUNDS_URI?: string
@@ -50,15 +54,19 @@ export type Environment = {
   NETWORK_ID: number
   BATCH_INSERT_CHUNK_SIZE: number
   MAX_ATTEMPTS: number
+  PG_TABLE_PREFIX?: string
+  PG_RAW_TABLE_PREFIX?: string
 }
 
 const preEnv = cleanEnv(process.env, {
   SLACK_WEBHOOK: url({ default: '' }),
+  OPSGENIE_KEY: str({ default: '' }),
   PG_CONNECTION_STRING: url({ default: '' }),
   PG_SSL_ENABLED: bool({ default: true }),
   GOOGLE_BIGQUERY_DATASET: str({ default: '' }),
   LOG_LEVEL: str({ default: 'info', choices: ['info', 'debug', 'trace', 'error'] }),
   SUBSTRATE_URI: url(),
+  ASSET_HUB_URI: url({ default: '' }),
   RESTART_BALANCES_URI: str({ default: '' }),
   RESTART_BLOCKS_URI: str({ default: '' }),
   RESTART_ROUNDS_URI: str({ default: '' }),
@@ -73,7 +81,7 @@ const preEnv = cleanEnv(process.env, {
   NETWORK_ID: num(),
   MODE: str({ choices: Object.values(MODE) }),
   BATCH_INSERT_CHUNK_SIZE: num({ default: 1000 }),
-  MAX_ATTEMPTS: num({ default: 200 }),
+  MAX_ATTEMPTS: num({ default: 100 }),
   PG_SSL_CA_PATH: str({ default: '' }),
   PG_SSL_KEY_PATH: str({ default: '' }),
   PG_SSL_CERT_PATH: str({ default: '' }),
@@ -83,11 +91,12 @@ const preEnv = cleanEnv(process.env, {
   PG_USER: str({ default: 'postgres' }),
   PG_PASSWORD: str({ default: 'postgres' }),
   PG_DATABASE: str({ default: 'postgres' }),
+  PG_TABLE_PREFIX: str({ default: '' }),
+  PG_RAW_TABLE_PREFIX: str({ default: '' }),
 })
 
 const parseModeEnum = (env: typeof preEnv) => {
   const mode: MODE = env.MODE
-  //env.MODE === 'BLOCK_PROCESSOR' ? MODE.BLOCK_PROCESSOR : env.MODE === 'LISTENER' ? MODE.LISTENER : MODE.STAKING_PROCESSOR
   const nodeEnv: NODE_ENV = env.NODE_ENV === 'development' ? NODE_ENV.DEVELOPMENT : NODE_ENV.PRODUCTION
   return { ...env, MODE: mode, NODE_ENV: nodeEnv }
 }

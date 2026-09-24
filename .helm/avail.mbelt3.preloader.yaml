@@ -1,0 +1,24 @@
+---
+environment: mbelt3-prod
+chain: avail
+role: preloader
+replicas: 1
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_avail"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.avail.svc.cluster.local:9944
+  log_level: info
+  network_id: 42
+  mode: LISTENER
+  network: avail
+ingress:
+  enabled: true
+  host: mbelt3-avail-preloader.polka.p2p.world
+  tls:
+    secret: mbelt3-avail-preloader-polka-p2p-world
+
+

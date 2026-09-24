@@ -17,7 +17,7 @@ services:
 
   mbelt_rabbitmq:
     container_name: mbelt_rabbitmq
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:3-management
     hostname: mbelt_rabbitmq
     ports:
       - 5672:5672
@@ -33,7 +33,7 @@ services:
     container_name: mbelt_listener
     build:
       context: ./main
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     restart: always
     ports:
       - 3000:3000
@@ -44,11 +44,27 @@ services:
     volumes:
       - ./main:/usr/src/app
 
+  mbelt_hybrid:
+    container_name: mbelt_hybrid
+    build:
+      context: ./main
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 3010:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: HYBRID
+    volumes:
+      - ./main:/usr/src/app
+
+
   mbelt_block_processor:
     container_name: mbelt_block_processor
     build:
       context: ./main
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     restart: always
     ports:
       - 3001:3000
@@ -63,7 +79,7 @@ services:
     container_name: mbelt_staking_processor
     build:
       context: ./main
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     restart: always
     ports:
       - 3002:3000
@@ -78,7 +94,7 @@ services:
     container_name: mbelt_identity_processor
     build:
       context: ./main
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     restart: always
     ports:
       - 3003:3000
@@ -89,11 +105,27 @@ services:
     volumes:
       - ./main:/usr/src/app
 
+  mbelt_nominationpools_processor:
+    container_name: mbelt_nominationpools_processor
+    build:
+      context: ./main
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 3003:3000
+    depends_on:
+      - mbelt_db
+    environment:
+      MODE: NOMINATIONPOOLS_PROCESSOR
+    volumes:
+      - ./main:/usr/src/app
+
+
   mbelt_balances_processor:
     container_name: mbelt_balances_processor
     build:
       context: ./main
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     restart: always
     ports:
       - 3005:3000
@@ -108,7 +140,7 @@ services:
 #    container_name: mbelt_gear_smartcontracts_processor
 #    build:
 #      context: ./main
-#      dockerfile: Dockerfile.dev
+#      dockerfile: Dockerfile
 #    restart: always
 #    ports:
 #      - 3006:3000
@@ -123,7 +155,7 @@ services:
     container_name: mbelt_monitoring
     build:
       context: ./main
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     restart: always
     ports:
       - 3004:3000

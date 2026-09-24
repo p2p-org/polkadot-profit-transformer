@@ -3,8 +3,9 @@ import bodyParser from 'body-parser'
 import prom from 'prom-client'
 import { environment } from '@/environment'
 import { logger } from './logger'
+import { ApiPromise } from '@polkadot/api'
 
-export const ExpressLoader = async (): Promise<express.Application> => {
+export const ExpressLoader = async (polkadotApi: any): Promise<express.Application> => {
   const app = express()
 
   if (!app) {
@@ -31,6 +32,22 @@ export const ExpressLoader = async (): Promise<express.Application> => {
 
   app.get('/health', (req, res) => {
     res.json({ status: 'live' })
+  })
+
+  let latestUpdated = null
+  polkadotApi.rpc.chain.subscribeFinalizedHeads(() => {
+    latestUpdated = new Date()
+  })
+  app.get('/healthcheck', (req, res) => {
+    const connected = polkadotApi.isConnected ?? true // Assuming you want to use this
+    const lastUpdate = polkadotApi.latestUpdated
+    const lastUpdateDiff = lastUpdate ? new Date().getTime() - lastUpdate.getTime() : null
+
+    res.json({
+      connected,
+      lastUpdateDiff, // Unix timestamp in ms
+      healthy: lastUpdateDiff !== null && lastUpdateDiff < 60000, // healthy if last update within 1 minute
+    })
   })
 
   const port = environment.REST_API_PORT

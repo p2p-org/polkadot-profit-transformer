@@ -36,7 +36,17 @@ export class BlocksProcessorService {
     trx: Knex.Transaction,
     taskRecord: ProcessingTaskModel<ENTITY>,
   ): Promise<{ status: boolean; callback?: any }> {
-    const { entity_id: blockId, collect_uid } = taskRecord
+    const { entity_id: blockId, collect_uid, attempts } = taskRecord
+
+    if (attempts > 10) {
+      this.logger.info({
+        event: 'BlockProcessor.processTaskMessage',
+        blockId,
+        message: `Block ${blockId} processing attempts > 10. Skip this block.`,
+      })
+
+      return { status: true }
+    }
 
     //check that block wasn't processed already
     if (await this.databaseHelper.getBlockById(blockId)) {
@@ -97,6 +107,11 @@ export class BlocksProcessorService {
           entity_id: task.entity_id,
           collect_uid: task.collect_uid,
         })
+      } else if (task.entity === ENTITY.NOMINATION_POOLS_ERA) {
+        await rabbitMQ.send<QUEUES.NominationPools>(QUEUES.NominationPools, {
+          entity_id: task.entity_id,
+          collect_uid: task.collect_uid,
+        })
       } else if (task.entity === ENTITY.ROUND) {
         await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
           entity_id: task.entity_id,
@@ -122,6 +137,12 @@ export class BlocksProcessorService {
       blockHash,
     )
 
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Info for block processing fetched ${blockId}`,
+    })
+
     const extrinsicsData: ExtrinsicsProcessorInput = {
       // eraId: activeEra,
       // epochId: epoch,
@@ -130,9 +151,18 @@ export class BlocksProcessorService {
       extrinsics: signedBlock.block.extrinsics,
     }
     const extractedExtrinsics = await this.processExtrinsics(extrinsicsData)
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Extrinsics for block processed: ${blockId}`,
+    })
 
     const processedEvents = this.processEvents(signedBlock.block.header.number.toNumber(), events)
-
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Events for block processed: ${blockId}`,
+    })
     // const lastDigestLogEntryIndex = signedBlock.block.header.digest.logs.length - 1
 
     const block: BlockModel = {
@@ -173,15 +203,30 @@ export class BlocksProcessorService {
         })
       }
     }
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Exitrinsics transaction prepared: ${blockId}`,
+    })
 
     // console.log(blockId + ': extrinsics saved')
     for (const event of processedEvents) {
       await this.databaseHelper.saveEvent(trx, event)
     }
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Events transaction prepared: ${blockId}`,
+    })
 
     // console.log(blockId + ': events saved')
 
     await this.databaseHelper.saveBlock(trx, block)
+    this.logger.info({
+      event: 'BlockProcessor.processBlock',
+      blockId,
+      message: `Block transaction prepared: ${blockId}`,
+    })
 
     await this.databaseHelper.saveTotalIssuance(trx, block.block_id, totalIssuance.toString(10))
 
@@ -201,18 +246,23 @@ export class BlocksProcessorService {
     const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
     await this.sliMetrics.add({ entity: 'block', entity_id: blockId, name: 'memory_usage_mb', value: memorySize })
 
-    // console.log(blockId + ': block saved')
-
-    const newBalancesProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
-      entity: ENTITY.BLOCK_BALANCE,
-      entity_id: blockId,
-      status: PROCESSING_STATUS.NOT_PROCESSED,
-      collect_uid: uuidv4(),
-      start_timestamp: new Date(),
-      attempts: 0,
-      data: {},
+    if (
+      environment.NETWORK === 'polkadot' ||
+      environment.NETWORK === 'kusama' ||
+      environment.NETWORK === 'moonbeam' ||
+      environment.NETWORK === 'moonriver'
+    ) {
+      const newBalancesProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
+        entity: ENTITY.BLOCK_BALANCE,
+        entity_id: blockId,
+        status: PROCESSING_STATUS.NOT_PROCESSED,
+        collect_uid: uuidv4(),
+        start_timestamp: new Date(),
+        attempts: 0,
+        data: {},
+      }
+      newTasks.push(newBalancesProcessingTask)
     }
-    newTasks.push(newBalancesProcessingTask)
 
     for (const event of processedEvents) {
       // polkadot, kusama
@@ -229,6 +279,27 @@ export class BlocksProcessorService {
           },
         }
         newTasks.push(newStakingProcessingTask)
+
+        if (
+          environment.NETWORK === 'polkadot' ||
+          environment.NETWORK === 'polkadot-assethub' ||
+          environment.NETWORK === 'kusama' ||
+          environment.NETWORK === 'kusama-assethub' ||
+          environment.NETWORK === 'avail'
+        ) {
+          const newNominationPoolsProcessingTask: ProcessingTaskModel<ENTITY.BLOCK> = {
+            entity: ENTITY.NOMINATION_POOLS_ERA,
+            entity_id: parseInt(event.event.data[0].toString()),
+            status: PROCESSING_STATUS.NOT_PROCESSED,
+            collect_uid: uuidv4(),
+            start_timestamp: new Date(),
+            attempts: 0,
+            data: {
+              payout_block_id: blockId,
+            },
+          }
+          newTasks.push(newNominationPoolsProcessingTask)
+        }
 
         this.logger.debug({
           event: 'BlockProcessor.onNewBlock',
@@ -282,7 +353,7 @@ export class BlocksProcessorService {
     return events.reduce(processEvent, [])
   }
 
-  private async processExtrinsics(input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> {
+  public async processExtrinsics(input: ExtrinsicsProcessorInput): Promise<ExtrinsicModel[]> {
     const { /* eraId, sessionId, */ blockNumber, events, extrinsics } = input
 
     const result = await Promise.all(
@@ -311,6 +382,7 @@ export class BlocksProcessorService {
               extrinsic,
               [...indexes, index].join('-'),
               referencedEventsIds,
+              extrinsic.hash.toHex(),
             ),
           )
           return extrinsicModels
@@ -323,6 +395,7 @@ export class BlocksProcessorService {
             extrinsic,
             index.toString(),
             referencedEventsIds,
+            extrinsic.hash.toHex(),
           )
 
           return [failedExtrinsicModel]
@@ -342,11 +415,13 @@ export class BlocksProcessorService {
     extrinsic: GenericExtrinsic<AnyTuple>,
     index: string,
     referencedEventsIds: string[],
+    exHash: string,
   ): ExtrinsicModel {
     const extrinsicModel: ExtrinsicModel = {
       extrinsic_id: `${blockNumber}-${index}`,
       success: isSuccess,
       block_id: blockNumber.toNumber(),
+      hash: exHash,
       // session_id: sessionId,
       // era: eraId,
       section: call.section,

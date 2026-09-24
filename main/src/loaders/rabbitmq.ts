@@ -1,6 +1,5 @@
 import { ConfirmChannel, ConsumeMessage } from 'amqplib'
 import AmqpConnectionManager from 'amqp-connection-manager'
-//import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/esm/AmqpConnectionManager'
 import { environment } from '@/environment'
 import { logger } from '@/loaders/logger'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
@@ -13,6 +12,7 @@ export enum QUEUES {
   Balances = 'process_balances',
   BlocksMetadata = 'process_metadata',
   Staking = 'process_staking',
+  NominationPools = 'process_nomination_pools',
 }
 
 export type TaskMessage<T> = {
@@ -67,6 +67,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Blocks),
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.Balances),
         channel.assertQueue(environment.NETWORK + ':' + QUEUES.BlocksMetadata),
+        channel.assertQueue(environment.NETWORK + ':' + QUEUES.NominationPools),
         channel.prefetch(1),
       ])
     },
@@ -186,6 +187,7 @@ export const RabbitMQ = async (connectionString: string): Promise<Rabbit> => {
       await channelWrapper.sendToQueue(environment.NETWORK + ':' + queue, message)
     },
     process: async (queue: QUEUES, entity: ENTITY, processor: QueueProcessor) => {
+      console.log('Connected to RabbitMQ queue:', queue, 'Entity:', entity)
       const consumer = async (msg: ConsumeMessage | null): Promise<void> => {
         if (msg) {
           logger.debug({

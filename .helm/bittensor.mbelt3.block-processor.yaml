@@ -1,0 +1,24 @@
+---
+environment: mbelt3-prod
+replicas: 0
+chain: bittensor
+role: block-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_bittensor"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: wss://archive.chain.opentensor.ai:443
+  log_level: info
+  network_id: 42
+  mode: BLOCK_PROCESSOR
+  network: bittensor
+ingress:
+  enabled: true
+  host: mbelt3-bittensor-block-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-bittensor-block-processor-polka-p2p-world
+

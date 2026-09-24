@@ -50,7 +50,7 @@ export type RoundValue = {
   // totalCollatorCommissionRewarded: BN,
   // totalRewardedAmount: BN,
   totalPoints: BN
-  totalStaked: BN
+  //totalStaked: BN
   //totalBondRewarded: BN
   // specVersion: number,
   // totalBondRewardedLoss,

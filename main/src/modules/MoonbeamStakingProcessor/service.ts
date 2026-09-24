@@ -2,6 +2,7 @@ import { Container, Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { v4 } from 'uuid'
 import { ApiPromise } from '@polkadot/api'
+import { BN } from '@polkadot/util'
 //import { PolkadotRepository } from '@/apps/common/infra/polkadotapi/polkadot.repository'
 import { logger } from '@/loaders/logger'
 import { QUEUES, Rabbit, TaskMessage } from '@/loaders/rabbitmq'
@@ -16,9 +17,10 @@ import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/process
 /**
  * Please check this repo
  * https://github.com/PureStake/moonbeam.git
- * 
+ *
  * and test scripts like:
  * test/suites/smoke/test-staking-round-cleanup.ts
+ * test/suites/smoke/test-staking-rewards.ts
  */
 @Service()
 export class MoonbeamStakingProcessorService {
@@ -96,24 +98,16 @@ export class MoonbeamStakingProcessorService {
         round_id: parseInt(round.id.toString(10), 10),
         start_block_id: round.startBlockId,
         start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
-        total_stake: round.totalStaked.toString(),
+        //total_stake: round.totalStaked.toString(),
         collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
         runtime: roundPayoutProcessor.specVersion,
       })
 
-      await this.databaseHelper.saveStakeRound(trx, {
-        round_id: parseInt(round.id.toString(10), 10),
-        start_block_id: round.startBlockId,
-        start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
-        total_stake: round.totalStaked.toString(),
-        collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
-        runtime: roundPayoutProcessor.specVersion,
-      })
-
+      let totalStaked = BigInt(0)
       for (const collator of Object.values(roundPayoutProcessor.stakedValue) as any) {
-        let collator_stake = BigInt(0)
+        let collatorStake = BigInt(0)
         for (const delegator of Object.values(collator.delegators) as any) {
-          collator_stake += delegator.amount.toBigInt()
+          collatorStake += delegator.amount.toBigInt()
           await this.databaseHelper.saveStakeDelegators(trx, {
             round_id: parseInt(round.id.toString(10), 10),
             account_id: delegator.id,
@@ -125,15 +119,26 @@ export class MoonbeamStakingProcessorService {
         await this.databaseHelper.saveStakeCollators(trx, {
           round_id: parseInt(round.id.toString(10), 10),
           account_id: collator.id,
-          total_stake: collator.bond.toBigInt() + collator_stake,
+          total_stake: collator.bond.toBigInt() + collatorStake,
           own_stake: collator.bond.toBigInt(),
           delegators_count: Object.keys(collator.delegators).length,
         })
+        totalStaked += collator.bond.toBigInt() + collatorStake
       }
 
+      await this.databaseHelper.saveStakeRound(trx, {
+        round_id: parseInt(round.id.toString(10), 10),
+        start_block_id: round.startBlockId,
+        start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
+        total_stake: totalStaked,
+        collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
+        runtime: roundPayoutProcessor.specVersion,
+      })
+
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
-          } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${
+          (Date.now() - startProcessingTime) / 1000
+        } seconds.`,
       })
 
       await this.sliMetrics.add({
@@ -190,12 +195,13 @@ export class MoonbeamStakingProcessorService {
         start_block_id: round.startBlockId,
         start_block_time: new Date(parseInt(round.startBlockTime.toString(10), 10)),
         total_reward: roundPayoutProcessor.totalRewardedAmount.toString(10),
-        total_stake: round.totalStaked.toString(),
+        //total_stake: round.totalStaked.toString(),
         total_reward_points: parseInt(round.totalPoints.toString(), 10),
         collators_count: Object.keys(roundPayoutProcessor.stakedValue).length,
         runtime: roundPayoutProcessor.specVersion,
       })
 
+      /*
       await this.databaseHelper.saveRound(trx, {
         round_id: parseInt(round.id.toString(10), 10),
         payout_block_id: round.payoutBlockId,
@@ -239,6 +245,7 @@ export class MoonbeamStakingProcessorService {
           payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
         })
       }
+      */
 
       //rewards only
       await this.databaseHelper.saveRewardsRound(trx, {
@@ -259,6 +266,7 @@ export class MoonbeamStakingProcessorService {
             round_id: parseInt(round.id.toString(10), 10),
             account_id: delegator.id,
             collator_id: collator.id,
+            final_amount: delegator.final_amount.toString(10),
             reward: delegator.reward.toString(10),
             payout_block_id: collator.payoutBlockId ? parseInt(collator.payoutBlockId, 10) : undefined,
             payout_block_time: collator.payoutBlockTime ? new Date(collator.payoutBlockTime) : undefined,
@@ -279,8 +287,9 @@ export class MoonbeamStakingProcessorService {
       }
 
       logger.info({
-        event: `Round ${round.id.toString(10)} staking processing finished in ${(Date.now() - startProcessingTime) / 1000
-          } seconds.`,
+        event: `Round ${round.id.toString(10)} staking processing finished in ${
+          (Date.now() - startProcessingTime) / 1000
+        } seconds.`,
       })
 
       await this.sliMetrics.add({

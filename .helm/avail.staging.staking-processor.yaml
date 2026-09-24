@@ -1,0 +1,23 @@
+---
+environment: staging
+chain: avail
+role: staking-processor
+limits: {cpu: 450m, memory: 1024Mi}
+requests: {cpu: 350m, memory: 1024Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_avail"
+additional_args:
+  - "--max_old_space_size=1024"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.turing.svc.cluster.local:9944
+  log_level: info
+  network_id: 42
+  mode: STAKING_PROCESSOR
+  network: avail
+ingress:
+  enabled: true
+  host: avail-staking.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

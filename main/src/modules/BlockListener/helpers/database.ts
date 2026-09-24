@@ -39,7 +39,7 @@ export class BlockListenerDatabaseHelper {
   }
 
   public async getUnprocessedBlocksMetadata(block_id?: number): Promise<Array<BlockModel>> {
-    const whereFilter = { metadata: null }
+    const whereFilter = { metadata: null, ...network }
 
     const blocksRecords = BlockModel(this.knex)
       .select()

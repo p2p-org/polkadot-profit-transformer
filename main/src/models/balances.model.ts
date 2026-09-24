@@ -1,3 +1,4 @@
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type BalancesModel = {
@@ -17,4 +18,4 @@ export type BalancesModel = {
   is_modified?: number
 }
 
-export const BalancesModel = (knex: Knex) => knex<BalancesModel>('balances')
+export const BalancesModel = (knex: Knex) => knex<BalancesModel>(`${environment.PG_TABLE_PREFIX}balances`)

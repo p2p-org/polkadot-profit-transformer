@@ -11,6 +11,7 @@ import needle from 'needle'
 
 @Service()
 export class MonitoringService {
+  private latestRunime: number | undefined = 0
   constructor(
     @Inject('logger') private readonly logger: Logger,
     @Inject('sliMetrics') private readonly sliMetrics: SliMetrics,
@@ -28,6 +29,9 @@ export class MonitoringService {
     })
     cron.schedule('*/5 * * * *', async () => {
       this.checkBlocksSync()
+    })
+    cron.schedule('*/5 * * * *', async () => {
+      this.checkRuntime()
     })
     cron.schedule('0 * * * *', async () => {
       this.checkMissingRounds()
@@ -95,10 +99,27 @@ export class MonitoringService {
     }
   }
 
+  public async checkRuntime(): Promise<void> {
+    const lastDBBlock = await this.databaseHelper.getLastBlock()
+    const currentRuntime = lastDBBlock?.metadata?.runtime
+
+    this.logger.info({
+      event: 'MonitoringService.checkRuntime',
+      message: `Runtime has been changed. Previous Runtime ${this.latestRunime}. Current runtime ${currentRuntime}`,
+    })
+
+    if (this.latestRunime !== 0 && this.latestRunime !== currentRuntime) {
+      this.slackHelper.sendMessage(
+        `Runtime has been changed. Previous Runtime ${this.latestRunime}. Current runtime ${currentRuntime}`,
+      )
+    }
+    this.latestRunime = currentRuntime
+  }
+
   public async checkBlocksSync(): Promise<void> {
     const lastDBBlock = await this.databaseHelper.getLastBlock()
     const lastNodeBlockId = await this.polkadotHelper.getFinBlockNumber()
-    if (lastDBBlock.block_id < lastNodeBlockId - 10) {
+    if (lastDBBlock.block_id < lastNodeBlockId - 1500) {
       this.slackHelper.sendMessage(
         `Sync problem. Last RPC-node blockId: ${lastNodeBlockId}. Last DB blockId: ${lastDBBlock.block_id}`,
       )
@@ -152,7 +173,7 @@ export class MonitoringService {
       })
       return
     }
-    if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
+    if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
       const missedRounds = await this.databaseHelper.getMissedRounds(lastDBBlock.metadata.round_id)
       if (missedRounds && missedRounds.length) {
         this.slackHelper.sendMessage(`Detected missed rounds: ${JSON.stringify(missedRounds)}`)
@@ -208,11 +229,6 @@ export class MonitoringService {
       this.slackHelper.sendMessage(`Detected not processed tasks: ${JSON.stringify(missedTasks)}`)
 
       await this.sliMetrics.add({ entity: 'queue', name: 'not_processed_count', value: missedTasks.length })
-
-      console.log('environment.RESTART_BLOCKS_URI', environment.RESTART_BLOCKS_URI)
-      console.log('environment.RESTART_ROUNDS_URI', environment.RESTART_ROUNDS_URI)
-      console.log('environment.RESTART_ERAS_URI', environment.RESTART_ERAS_URI)
-      console.log('environment.RESTART_BALANCES_URI', environment.RESTART_BALANCES_URI)
 
       try {
         if (environment.RESTART_BLOCKS_URI) await needle('get', environment.RESTART_BLOCKS_URI)

@@ -45,10 +45,16 @@ export default async (): Promise<void> => {
   Container.set('polkadotApi', polkadotApi)
   logger.info('✌️ PolkadotAPI loaded')
 
-  const expressApp = await ExpressLoader()
+  if (environment.ASSET_HUB_URI && environment.ASSET_HUB_URI !== '') {
+    const assetHubApi = await PolkadotApi(environment.ASSET_HUB_URI)()
+    Container.set('assetHubApi', assetHubApi)
+    logger.info('✌️ AssetHubAPI loaded')
+  }
+
+  const expressApp = await ExpressLoader(polkadotApi)
   Container.set('expressApp', expressApp)
   logger.info('✌️ Express loaded')
 
   ModulesLoader()
-  logger.info('✌️ Modules loaded')
+  logger.info('✌️ Modules loaded!')
 }

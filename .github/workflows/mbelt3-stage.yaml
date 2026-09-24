@@ -15,7 +15,7 @@ jobs:
       - name: Login to GCR
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
         with:
-          registry: https://eu.gcr.io
+          registry: https://europe-docker.pkg.dev
           username: _json_key
           password: ${{ secrets.GCR_JSON_KEY }}
 
@@ -24,64 +24,14 @@ jobs:
         with:
           push: true
           context: ./main
-          tags: eu.gcr.io/substrate-infra/mbelt3_preloader:${{ github.sha }}
+          tags: europe-docker.pkg.dev/substrate-infra/images/mbelt3_preloader:${{ github.sha }}
 
       - name: Update Image Version
         id: imgupd
         uses: mikefarah/yq@e2f1d5ccf73239195bf92280cd47596751492449 # master
         with:
           cmd: |
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.stage.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.stage.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.stage.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.monitoring.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.mbelt3.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.monitoring.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/kusama.mbelt3.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.monitoring.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonbeam.mbelt3.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.staking-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.monitoring.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/moonriver.mbelt3.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.balances-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.block-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.gear-smartcontracts-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.identity-processor.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.monitoring.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.preloader.yaml
-            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/vara.mbelt3.staking-processor.yaml
+            yq eval '.image.tag = "${{ github.sha }}"' -i .helm/values.yaml
 
       - name: Commit image changes
         uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7

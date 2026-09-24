@@ -52,10 +52,11 @@ export class MoonbeamStakingProcessorRoundPayout {
     const originalRound: any = await apiAtOriginal.query.parachainStaking.round()
     const originalRoundNumber = originalRound.current
     const runtime: any = await apiAtOriginal.query.system.lastRuntimeUpgrade()
-    this.specVersion = runtime.unwrap().specVersion.toNumber()
+    const specVersion: any = runtime.unwrap().specVersion.toNumber()
+    this.specVersion = specVersion
 
     logger.info({
-      event: `Round Stake ${originalRoundNumber.toString(10)} runtime version is ${this.specVersion}.`,
+      event: `Round Stake ${originalRoundNumber.toString(10)} runtime version is ${specVersion}.`,
     })
 
     await this.getCollatorsAndDelegators(apiAtOriginal, apiAtOriginal, /*apiAtPriorRewarded, */ originalRoundNumber)
@@ -66,7 +67,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     })
 
     // calculate reward amounts
-    const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
+    //const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
 
     return {
       round: {
@@ -75,7 +76,7 @@ export class MoonbeamStakingProcessorRoundPayout {
         payoutBlockTime: originalRoundBlockTime,
         startBlockId: originalRoundBlock.toNumber(),
         startBlockTime: originalRoundBlockTime,
-        totalStaked,
+        //totalStaked,
         totalPoints: new BN(0),
       },
     }
@@ -95,7 +96,8 @@ export class MoonbeamStakingProcessorRoundPayout {
     const rewardDelay = apiAtRewarded.consts.parachainStaking?.rewardPaymentDelay || new BN(2)
     const priorRewardedBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(nowRoundFirstBlock.subn(1))
     const runtime: any = await apiAtRewarded.query.system.lastRuntimeUpgrade()
-    this.specVersion = runtime.unwrap().specVersion.toNumber()
+    const specVersion: any = runtime.unwrap().specVersion.toNumber()
+    this.specVersion = specVersion
 
     // obtain data from original round
     const rewardRound: any = await apiAtRewarded.query.parachainStaking.round()
@@ -112,7 +114,7 @@ export class MoonbeamStakingProcessorRoundPayout {
     }
 
     logger.info({
-      event: `Round ${originalRoundNumber.toString(10)} runtime version is ${this.specVersion}.`,
+      event: `Round ${originalRoundNumber.toString(10)} runtime version is ${specVersion}.`,
     })
 
     if (originalRoundBlock.toNumber() === 0) {
@@ -151,24 +153,24 @@ export class MoonbeamStakingProcessorRoundPayout {
     })
 
     // calculate reward amounts
-    const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
+    //const totalStaked: any = await apiAtOriginal.query.parachainStaking.staked(originalRoundNumber)
     const totalPoints: any = await apiAtPriorRewarded.query.parachainStaking.points(originalRoundNumber)
 
     // get the collators to be awarded via `awardedPts` storage
     const awardedCollators = (await apiAtPriorRewarded.query.parachainStaking.awardedPts.keys(originalRoundNumber)).map(
-      (awarded: any) => awarded.args[1].toHex(),
+      (awarded: any) => this.getAccountFormatted(awarded.args[1]),
     )
     const awardedCollatorCount = awardedCollators.length
 
     // compute max rounds respecting the current block number and the number of awarded collators
     let maxRoundChecks = 1
-    if (this.specVersion > 1002) {
+    if (specVersion > 1002) {
       if (awardedCollatorCount > latestBlockNumber - nowBlockNumber + 1) {
         await sleep(1000 * awardedCollatorCount * 15)
       }
       maxRoundChecks = awardedCollatorCount
     }
-    if (this.specVersion >= 2000 && maxRoundChecks === 68) {
+    if (specVersion >= 2000 && maxRoundChecks === 68) {
       maxRoundChecks = 72
     }
 
@@ -191,7 +193,7 @@ export class MoonbeamStakingProcessorRoundPayout {
         startBlockId: originalRoundBlock.toNumber(),
         startBlockTime: originalRoundBlockTime,
         totalPoints,
-        totalStaked,
+        //totalStaked,
       },
     }
   }
@@ -202,17 +204,31 @@ export class MoonbeamStakingProcessorRoundPayout {
     //apiAtPriorRewarded: ApiPromise,
     roundNumber: number,
   ): Promise<void> {
+    const specVersion: any = (await apiAtOriginal.query.system.lastRuntimeUpgrade()).unwrap().specVersion.toNumber()
+
     const atStake: any = await apiAtOriginal.query.parachainStaking.atStake.entries(roundNumber)
 
+    console.log('getCollatorsAndDelegators AFTER')
     for (const [
       {
         args: [_, accountId],
       },
       value,
     ] of atStake) {
-      const { bond, total, delegations, nominators } = this.specVersion < 2600 ? value : value.unwrap()
+      try {
+        //console.log("VALUE unwrap", value.unwrap)
+      } catch (e) {
+        //console.log("VALUE", value)
+      }
+      console.log('specVersion', specVersion)
+      const { bond, total, delegations, nominators } =
+        specVersion >= 2600 && environment.NETWORK !== 'manta' ? value.unwrap() : value
+      console.log('BOND', bond)
+      console.log('total', total)
+      console.log('delegations', delegations.length)
+      //console.log("nominators", nominators.length)
 
-      const collatorId = accountId.toHex()
+      const collatorId = this.getAccountFormatted(accountId)
       this.collators.add(collatorId)
       const points: u32 = (await apiAtOriginal.query.parachainStaking.awardedPts(roundNumber, accountId)) as u32
 
@@ -233,16 +249,19 @@ export class MoonbeamStakingProcessorRoundPayout {
 
         if (topDelegations) {
           for (const d of topDelegations) {
-            topDelegationsSet.add(d.owner.toHex())
+            topDelegationsSet.add(this.getAccountFormatted(d.owner))
           }
         }
       }
       if (delegations) {
         for (const { owner, amount } of delegations) {
-          if (apiAtOriginalPrior.query.parachainStaking.topDelegations && !topDelegationsSet.has(owner.toHex())) {
+          if (
+            apiAtOriginalPrior.query.parachainStaking.topDelegations &&
+            !topDelegationsSet.has(this.getAccountFormatted(owner))
+          ) {
             continue
           }
-          const id = owner.toHex()
+          const id = this.getAccountFormatted(owner)
           this.delegators.add(id)
           collatorInfo.delegators[id] = {
             id,
@@ -254,7 +273,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       }
       if (nominators) {
         for (const { owner, amount } of nominators) {
-          const id = owner.toHex()
+          const id = this.getAccountFormatted(owner)
           this.delegators.add(id)
           collatorInfo.delegators[id] = {
             id,
@@ -286,7 +305,7 @@ export class MoonbeamStakingProcessorRoundPayout {
       const processDelegators = async (delegatorId: string, cb: any): Promise<void> => {
         const zeroDelegator: any = await apiAtOriginalPrior.query.parachainStaking.delegatorState(delegatorId)
         zeroDelegator.unwrap().delegations.forEach((delegation: any) => {
-          const collatorId = delegation.owner.toHex()
+          const collatorId = this.getAccountFormatted(delegation.owner)
           if (this.stakedValue[collatorId] && this.stakedValue[collatorId].delegators[delegatorId]) {
             this.stakedValue[collatorId].delegators[delegatorId].amount = delegation.amount
           }
@@ -313,11 +332,20 @@ export class MoonbeamStakingProcessorRoundPayout {
     })
   }
 
+  getAccountFormatted(account: any): string {
+    if (environment.NETWORK === 'manta') {
+      return account.toString()
+    } else {
+      return account.toHex()
+    }
+  }
+
   async getRewardedFromEventsAtBlock(rewardedBlockNumber: BN): Promise<void> {
     const nowRoundRewardBlockHash: BlockHash = await this.api.rpc.chain.getBlockHash(rewardedBlockNumber)
     const apiAtBlock = await this.api.at(nowRoundRewardBlockHash)
     const apiAtPreviousBlock = await this.api.at(await this.api.rpc.chain.getBlockHash(rewardedBlockNumber.toNumber() - 1))
     const round: any = await apiAtBlock.query.parachainStaking.round()
+    const specVersion: any = (await apiAtBlock.query.system.lastRuntimeUpgrade()).unwrap().specVersion.toNumber()
 
     logger.info({
       event: 'RoundPayoutProcessor.getRewardedFromEventsAtBlock',
@@ -334,13 +362,13 @@ export class MoonbeamStakingProcessorRoundPayout {
         continue
       }
 
-      if (!rewards[event.data[0].toHex()]) {
-        rewards[event.data[0].toHex()] = []
+      if (!rewards[this.getAccountFormatted(event.data[0])]) {
+        rewards[this.getAccountFormatted(event.data[0])] = []
       }
 
       if (phase.isInitialization && apiAtBlock.events.parachainStaking.Rewarded.is(event)) {
-        rewards[event.data[0].toHex()].push({
-          account: event.data[0].toHex(),
+        rewards[this.getAccountFormatted(event.data[0])].push({
+          account: this.getAccountFormatted(event.data[0]),
           amount: event.data[1] as u128,
         })
       }
@@ -351,14 +379,14 @@ export class MoonbeamStakingProcessorRoundPayout {
         apiAtBlock.events.parachainStaking.DelegatorDueReward &&
         apiAtBlock.events.parachainStaking.DelegatorDueReward.is(event)
       ) {
-        rewards[event.data[0].toHex()].push({
-          account: event.data[0].toHex(),
-          collator_id: event.data[1].toHex(),
+        rewards[this.getAccountFormatted(event.data[0])].push({
+          account: this.getAccountFormatted(event.data[0]),
+          collator_id: this.getAccountFormatted(event.data[1]),
           amount: event.data[2] as u128,
         })
       }
 
-      if (this.specVersion >= 2000) {
+      if (specVersion >= 2000 && environment.NETWORK !== 'manta') {
         // Now orbiters have their own event. To replicate previous behavior,
         // we take the collator associated and mark rewards as if they were
         // to the collator
@@ -416,14 +444,14 @@ export class MoonbeamStakingProcessorRoundPayout {
             return
           }
 
-          if (this.specVersion === 1001 || this.specVersion === 1002) {
+          if (specVersion === 1001 || specVersion === 1002) {
             if (reward.collator_id) {
               //runtime 1001, otherwise it should be defined in previous step.
               collatorInfo = this.stakedValue[reward.collator_id]
             } else {
               return
             }
-          } else if (this.specVersion <= 900) {
+          } else if (specVersion <= 900) {
             for (const collator of Object.values(this.stakedValue)) {
               if (
                 !collator.rewardCollator.isZero() &&

@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: avail
+role: block-processor
+limits: {cpu: 350m, memory: 1000Mi}
+requests: {cpu: 250m, memory: 1000Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_avail"
+additional_args:
+  - "--max_old_space_size=8192"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.avail.svc.cluster.local:9944
+  log_level: info
+  network_id: 42
+  mode: BLOCK_PROCESSOR
+  network: avail
+ingress:
+  enabled: true
+  host: mbelt3-avail-block-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-avail-block-processor-polka-p2p-world

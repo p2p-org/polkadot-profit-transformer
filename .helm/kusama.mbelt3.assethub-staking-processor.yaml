@@ -1,0 +1,26 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: kusama
+role: assethub-staking-processor
+limits: {cpu: 450m, memory: 4096Mi}
+requests: {cpu: 350m, memory: 4096Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_kusama"
+env:
+  #  substrate_uri: wss://kusama-asset-hub-rpc.polkadot.io
+  substrate_uri: ws://kusama-assethub-archive.polka.p2p.world
+  log_level: info
+  network_id: 20002
+  mode: STAKING_PROCESSOR
+  pg_rw_table_prefix: assethub_
+  network: kusama-assethub
+ingress:
+  enabled: true
+  host: mbelt3-kusama-assethub-staking-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-kusama-assethub-staking-processor-polka-p2p-world
+
+
