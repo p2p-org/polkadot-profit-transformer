@@ -3,7 +3,7 @@ environment: mbelt3-prod
 replicas: 0
 chain: kusama
 role: balances-processor
-limits: {cpu: 250m, memory: 200Mi}
+limits: {cpu: 250m, memory: 400Mi}
 requests: {cpu: 150m, memory: 200Mi}
 vault:
   role: "mbelt"
