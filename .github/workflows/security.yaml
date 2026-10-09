@@ -7,8 +7,8 @@ on:
 
 jobs:
   sast:
-    uses: p2p-org/security-workflows/.github/workflows/sast.yaml@cd0e44fdbe2be93f46f368713f298774ac580a2f # main
+    uses: p2p-org/security-workflows/.github/workflows/sast.yaml@af967ff16dd0b2a12e96d7f0bb045f5b6827ecc8 # main
     secrets: inherit
   sca:
-    uses: p2p-org/security-workflows/.github/workflows/sca.yaml@cd0e44fdbe2be93f46f368713f298774ac580a2f # main
+    uses: p2p-org/security-workflows/.github/workflows/sca.yaml@af967ff16dd0b2a12e96d7f0bb045f5b6827ecc8 # main
     secrets: inherit
