@@ -4,6 +4,9 @@ on:
   push:
     branches: ['mbelt3/stage']
 
+permissions:
+  contents: write # auto-commit
+
 jobs:
   docker:
     name: Build & update docker image
