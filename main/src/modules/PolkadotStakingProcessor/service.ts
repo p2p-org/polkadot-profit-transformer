@@ -4,7 +4,6 @@ import { v4 } from 'uuid'
 import { QUEUES } from '@/loaders/rabbitmq'
 import { ENTITY, ProcessingTaskModel, PROCESSING_STATUS } from '@/models/processing_task.model'
 import { Logger } from 'pino'
-import { EraModel } from '@/models/era.model'
 import { PolkadotStakingProcessorDatabaseHelper } from './helpers/database'
 import { PolkadotStakingProcessorPolkadotHelper } from './helpers/polkadot'
 import { SliMetrics } from '@/loaders/sli_metrics'
@@ -27,11 +26,11 @@ export class PolkadotStakingProcessorService {
       processing_timestamp: new Date(),
     }
 
-    await this.processStakeEra(metadata, eraId + 1, taskRecord.data.payout_block_id, collect_uid, trx)
+    const stakeStatus = await this.processStakeEra(metadata, eraId + 1, taskRecord.data.payout_block_id, collect_uid, trx)
 
-    await this.processRewardsEra(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
+    const rewardsStatus = await this.processRewardsEra(metadata, eraId, taskRecord.data.payout_block_id, collect_uid, trx)
 
-    return { status: true }
+    return { status: stakeStatus && rewardsStatus }
   }
 
   async processStakeEra(
@@ -40,15 +39,18 @@ export class PolkadotStakingProcessorService {
     payout_block_id: number,
     collect_uid: string,
     trx: Knex.Transaction<any, any[]>,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const startProcessingTime = Date.now()
-    this.logger.info({ event: `Process staking data for next era: ${eraId}`, metadata, eraId })
+    this.logger.info({ event: `Process staking data for next era: ${eraId}`, metadata, eraId, payout_block_id, collect_uid })
 
     const payoutBlockHash = await this.polkadotHelper.getBlockHashByHeight(payout_block_id)
+    this.logger.info({ event: `payoutBlockHash is ${payoutBlockHash}` })
     const payoutBlockTime = await this.polkadotHelper.getBlockTime(payoutBlockHash)
+    this.logger.info({ event: `payoutBlockTime is ${payoutBlockTime}` })
 
     try {
       const eraData = await this.polkadotHelper.getEraDataStake({ blockHash: payoutBlockHash, eraId })
+      this.logger.info({ event: `fetched era data` })
 
       const { validators, nominators } = await this.polkadotHelper.getValidatorsAndNominatorsStake({
         eraId: eraId,
@@ -81,12 +83,16 @@ export class PolkadotStakingProcessorService {
         name: 'preprocess_time_ms',
         value: Date.now() - startProcessingTime,
       })
+
+      return true
     } catch (error: any) {
       this.logger.warn({
         event: `error in processing era staking: ${error.message}`,
       })
+      console.error(error)
       throw error
     }
+    return false
   }
 
   async processRewardsEra(
@@ -95,7 +101,7 @@ export class PolkadotStakingProcessorService {
     payout_block_id: number,
     collect_uid: string,
     trx: Knex.Transaction<any, any[]>,
-  ): Promise<ProcessingTaskModel<ENTITY.ERA> | undefined> {
+  ): Promise<boolean> {
     const startProcessingTime = Date.now()
     this.logger.info({ event: `Process rewards for era: ${eraId}`, metadata, eraId })
 
@@ -117,7 +123,7 @@ export class PolkadotStakingProcessorService {
         reprocessingTask,
       })
 
-      return
+      return false
     }
 
     // logger.info({ eraStartBlockId })
@@ -145,8 +151,8 @@ export class PolkadotStakingProcessorService {
         payoutBlockTime,
       })
 
-      await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
-
+      //await this.databaseHelper.saveEra(trx, { ...eraData, payout_block_id: payout_block_id })
+      /*
       for (const validator of validators) {
         await this.databaseHelper.saveValidators(trx, { ...validator, block_time: new Date(payoutBlockTime) })
       }
@@ -154,6 +160,7 @@ export class PolkadotStakingProcessorService {
       for (const nominator of nominators) {
         await this.databaseHelper.saveNominators(trx, { ...nominator, block_time: new Date(payoutBlockTime) })
       }
+      */
 
       //rewards only
       await this.databaseHelper.saveRewardEra(trx, {
@@ -202,11 +209,14 @@ export class PolkadotStakingProcessorService {
 
       const memorySize = Math.ceil(process.memoryUsage().heapUsed / (1024 * 1024))
       await this.sliMetrics.add({ entity: 'era', entity_id: eraId, name: 'memory_usage_mb', value: memorySize })
+
+      return true
     } catch (error: any) {
       this.logger.warn({
         event: `error in processing era rewards: ${error.message}`,
       })
       throw error
     }
+    return false
   }
 }

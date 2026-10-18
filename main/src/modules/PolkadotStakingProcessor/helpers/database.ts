@@ -2,7 +2,6 @@ import { Inject, Service } from 'typedi'
 import { Knex } from 'knex'
 import { environment } from '@/environment'
 
-import { EraModel } from '@/models/era.model'
 import { ValidatorModel } from '@/models/validator.model'
 import { NominatorModel } from '@/models/nominator.model'
 
@@ -30,12 +29,6 @@ export class PolkadotStakingProcessorDatabaseHelper {
     await NominatorModel(this.knex)
       .transacting(trx)
       .insert({ ...nominator, ...network, row_time: new Date() })
-  }
-
-  async saveEra(trx: Knex.Transaction<any, any[]>, era: EraModel): Promise<void> {
-    await EraModel(this.knex)
-      .transacting(trx)
-      .insert({ ...era, ...network, row_time: new Date() })
   }
 
   async saveStakeValidators(trx: Knex.Transaction<any, any[]>, validator: StakeValidatorModel): Promise<void> {
@@ -81,6 +74,19 @@ export class PolkadotStakingProcessorDatabaseHelper {
     //kusama
     if (environment.NETWORK_ID === 2 && eraId === 760) {
       return 2204132
+    }
+    //kusama-assethub
+    if (environment.NETWORK_ID === 20002 && eraId === 8662) {
+      return 11152291 // 8662
+      // 11152292 - 8663
+      // 11153382 - payout blockid for 8662
+    }
+
+    //polkadot-assethub
+    if (environment.NETWORK_ID === 10002 && eraId === 1981) {
+      return 10258444
+      //return 10265699-1;
+      // 10265699 - payout blockid for 1981
     }
 
     /* 

@@ -1,0 +1,23 @@
+---
+environment: mbelt3-prod
+replicas: 1
+chain: manta
+role: identity-processor
+limits: {cpu: 250m, memory: 200Mi}
+requests: {cpu: 150m, memory: 200Mi}
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_manta"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.manta.svc.cluster.local:9934
+  log_level: info
+  network_id: 77
+  mode: IDENTITY_PROCESSOR
+  network: manta
+ingress:
+  enabled: true
+  host: mbelt3-manta-identity-processor.polka.p2p.world
+  tls:
+    secret: mbelt3-manta-identity-processor-polka-p2p-world

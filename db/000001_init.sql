@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS extrinsics (
     "network_id" INT,
     "extrinsic_id" VARCHAR(150),
     "block_id" BIGINT NOT NULL,
+    "hash" VARCHAR(66),
     "success" BOOL,
     "parent_id" VARCHAR(150),
     "section" VARCHAR(50),
@@ -184,7 +185,7 @@ CREATE TABLE IF NOT EXISTS networks (
 
 CREATE TABLE IF NOT EXISTS accounts (
         "network_id" INT,
-        "account_id" varchar(50),
+        "account_id" varchar(150),
         "blake2_hash" varchar(100),
         "created_at_block_id" BIGINT,
         "killed_at_block_id" BIGINT,
@@ -221,8 +222,8 @@ CREATE TABLE IF NOT EXISTS balances (
 
 CREATE TABLE IF NOT EXISTS identities (
     "network_id" INT,
-    "account_id" varchar(50),
-    "parent_account_id" varchar(50),
+    "account_id" varchar(150),
+    "parent_account_id" varchar(150),
     "display" varchar(256),
     "legal" varchar(256),
     "web" varchar(256),
@@ -336,7 +337,7 @@ CREATE TABLE IF NOT EXISTS rewards_eras (
     "network_id" INT,
     "era_id" INT,
     "payout_block_id" INT,
-    "total_reward" BIGINT,
+    "total_reward" numeric(35),
     "total_reward_points" INT,
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
@@ -350,7 +351,7 @@ CREATE TABLE IF NOT EXISTS rewards_validators (
     "active" BOOL,
     "nominators_count" INT,
     "reward_points" INT,
-    "reward_dest" VARCHAR (50),
+    "reward_dest" VARCHAR (150),
     "reward_account_id" VARCHAR (150),
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
@@ -363,7 +364,7 @@ CREATE TABLE IF NOT EXISTS rewards_nominators (
     "account_id" VARCHAR(150),
     "validator" VARCHAR (150),
     "is_clipped" BOOL,
-    "reward_dest" VARCHAR (50),
+    "reward_dest" VARCHAR (150),
     "reward_account_id" VARCHAR (150),
     "row_id" SERIAL,
     "row_time" TIMESTAMP,
@@ -468,9 +469,9 @@ create index nominators_era_id_idx on nominators (era_id);
 CREATE INDEX blocks_block_id_idx ON public.blocks (block_id);
 
 CREATE INDEX extrinsics_signer_idx ON public.extrinsics (signer);
---new. need to produce evrywhere
 CREATE INDEX extrinsics_section_idx ON public.extrinsics ("section","method");
 CREATE INDEX events_section_idx ON public.events ("section","method");
+CREATE INDEX extrinsics_hash_idx ON public.extrinsics (hash);
 
 INSERT INTO networks VALUES(0, 'polkadot', 10);
 INSERT INTO networks VALUES(2, 'Kusama', 12);
@@ -483,3 +484,50 @@ CREATE INDEX idx_signer_block ON extrinsics ("signer", "block_id");
 CREATE INDEX processing_tasks_entity_status_idx ON public.processing_tasks (entity, status);
 
 CREATE INDEX extrinsics_row_time_idx ON public.extrinsics (row_time);
+
+CREATE TABLE IF NOT EXISTS nomination_pools_identities (
+    "network_id" INT,
+    "pool_id" INT,
+    "pool_name" VARCHAR(300),
+    "depositor_id" VARCHAR(150),
+    "root_id" VARCHAR(150),
+    "nominator_id" VARCHAR(150),
+    "toggler_id" VARCHAR(150),
+    "reward_id" VARCHAR(150),
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    "stash_id" varchar(150) NULL,
+    "commission" jsonb NULL,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "pool_id")
+);
+
+CREATE TABLE IF NOT EXISTS nomination_pools_era (
+    "network_id" INT,
+    "era_id" INT,
+    "pool_id" INT,
+    "state" VARCHAR(20),
+    "members" INT,
+    "points" BIGINT,
+    "reward_pool" JSONB,
+    "sub_pool_storage" JSONB,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "era_id", "pool_id")
+);
+
+CREATE TABLE IF NOT EXISTS nomination_pools_members (
+    "network_id" INT,
+    "era_id" INT,
+    "pool_id" INT,
+    "account_id" VARCHAR(150),
+    "points" BIGINT,
+    "last_recorded_reward_counter" VARCHAR(50),
+    "pending_rewards" BIGINT,
+    "unbonding_eras" JSONB,
+    "row_id" SERIAL,
+    "row_time" TIMESTAMP,
+    PRIMARY KEY ("row_id"),
+    UNIQUE ("network_id", "era_id", "pool_id", "account_id")
+);

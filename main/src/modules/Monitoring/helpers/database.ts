@@ -61,7 +61,7 @@ export class MonitoringDatabaseHelper {
     if (!lastRoundId) return []
     const missedRoundsSQL = `
       SELECT generate_series(3, ${lastRoundId - 3}) as missing_round except 
-      SELECT round_id FROM rounds WHERE network_id=${environment.NETWORK_ID}
+      SELECT round_id FROM rewards_rounds WHERE network_id=${environment.NETWORK_ID}
       ORDER BY missing_round
       LIMIT 10`
     const missedRoundsRows = await this.knex.raw(missedRoundsSQL)
@@ -74,7 +74,7 @@ export class MonitoringDatabaseHelper {
     const missedErasSQL = `
       SELECT generate_series(${startEra}, ${lastEraId - 2}) as missing_era 
       EXCEPT
-        SELECT era_id FROM eras WHERE network_id=${environment.NETWORK_ID} 
+        SELECT era_id FROM rewards_eras WHERE network_id=${environment.NETWORK_ID} 
       ORDER BY missing_era
       LIMIT 10`
     const missedErasRows = await this.knex.raw(missedErasSQL)
@@ -89,8 +89,11 @@ export class MonitoringDatabaseHelper {
         network_id=${environment.NETWORK_ID}
         AND status='not_processed' 
         AND finish_timestamp is null 
+        AND attempts < 10
         AND start_timestamp < NOW() - INTERVAL '1 DAY'
+        AND entity != 'block_balances'
       LIMIT 10`
+
     const missedTasksRows = await this.knex.raw(missedTasksSQL)
     return missedTasksRows.rows
   }

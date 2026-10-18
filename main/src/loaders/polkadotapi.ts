@@ -1,7 +1,9 @@
 import { environment } from '@/environment'
 import { Container, Inject, Service } from 'typedi'
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api'
+import { packageInfo } from '@polkadot/api/packageInfo.js'
 import { typesBundlePre900 } from 'moonbeam-types-bundle'
+import { availTypesBundle } from '@/libs/availTypesBundle'
 import { logger } from '@/loaders/logger'
 import process from 'node:process'
 import { SliMetrics } from '@/loaders/sli_metrics'
@@ -11,22 +13,38 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
 
   let typesBundle = {}
   // extra types for moonbeam/moonriver
-  if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
+  if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
     typesBundle = typesBundlePre900
+  } else if (environment.NETWORK === 'avail') {
+    typesBundle = availTypesBundle
   }
 
   const sliMetrics: SliMetrics = Container.get('sliMetrics')
   const startGatheringRpcMetrics = () => {
     setInterval(async () => {
-      const startProcessingTime = Date.now()
-      const lastHeader = await api.rpc.chain.getHeader()
-      await sliMetrics.add({
-        entity: 'rpc',
-        entity_id: parseInt(lastHeader.number.toString()),
-        name: 'rpc_response_time_ms',
-        value: Date.now() - startProcessingTime,
-      })
+      try {
+        const startProcessingTime = Date.now()
+        const lastHeader = await api.rpc.chain.getHeader()
+        await sliMetrics.add({
+          entity: 'rpc',
+          entity_id: parseInt(lastHeader.number.toString()),
+          name: 'rpc_response_time_ms',
+          value: Date.now() - startProcessingTime,
+        })
+      } catch (e) {
+        logger.error(e)
+      }
     }, 30 * 1000)
+  }
+
+  const attemptReconnect = async () => {
+    try {
+      await provider.connect()
+      logger.info('Reconnection successful')
+    } catch (error) {
+      console.error('Reconnection attempt failed:', error)
+      setTimeout(() => attemptReconnect(), 5000)
+    }
   }
 
   provider.on('connected', () => {
@@ -34,11 +52,14 @@ export const PolkadotApi = (nodeUrl: string) => async (): Promise<ApiPromise> =>
     startGatheringRpcMetrics()
   })
   provider.on('disconnected', () => {
+    attemptReconnect()
     logger.error('PolkadotAPI error: disconnected')
-    process.exit(1)
+    logger.info(`${packageInfo.name} Version: ${packageInfo.version}`)
+    //process.exit(1)
   })
   provider.on('error', (error) => {
     logger.error('PolkadotAPI error: ' + error.message)
+    logger.info(`${packageInfo.name} Version: ${packageInfo.version}`)
     process.exit(2)
   })
 

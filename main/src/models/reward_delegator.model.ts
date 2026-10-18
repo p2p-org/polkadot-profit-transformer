@@ -1,3 +1,4 @@
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type RewardDelegatorModel = {
@@ -5,9 +6,10 @@ export type RewardDelegatorModel = {
   account_id: string
   collator_id: string
   reward: string
+  final_amount: string
   payout_block_id?: number
   payout_block_time?: Date
   row_time?: Date
 }
 
-export const RewardDelegatorModel = (knex: Knex) => knex<RewardDelegatorModel>('rewards_delegators')
+export const RewardDelegatorModel = (knex: Knex) => knex<RewardDelegatorModel>(`${environment.PG_TABLE_PREFIX}rewards_delegators`)

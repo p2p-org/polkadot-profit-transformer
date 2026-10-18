@@ -5,10 +5,7 @@ chain: moonriver
 role: block-processor
 limits: {cpu: 450m, memory: 1000Mi}
 requests: {cpu: 450m, memory: 1000Mi}
-image: {repository: eu.gcr.io/substrate-infra/mbelt3_preloader, tag: 4ac9f3c46dc0b60f27b92e0710134d705db82b72}
-port: 3000
-metrics:
-  enabled: true
+
 vault:
   role: "mbelt"
   secret: "secret/mbelt/mbelt3_moonriver"
@@ -22,14 +19,6 @@ env:
   network: moonriver
 ingress:
   enabled: true
-  class: nginx-external
   host: mbelt3-moonriver-block-processor.polka.p2p.world
   tls:
-    cluster_issuer: cloudflare-prod
     secret: mbelt3-moonriver-block-processor-polka-p2p-world
-    ssl_redirect: true
-tolerations:
-  - key: cloud.google.com/gke-spot
-    operator: Equal
-    value: "true"
-    effect: NoSchedule

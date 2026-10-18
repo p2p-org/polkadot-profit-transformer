@@ -1,0 +1,23 @@
+---
+environment: staging
+chain: polkadot
+role: identity-processor
+limits: {cpu: 250m, memory: 1000Mi}
+requests: {cpu: 150m, memory: 1000Mi}
+
+vault:
+  role: "mbelt-staging"
+  secret: "secret/mbelt/staging_polkadot"
+additional_args:
+  - "--max_old_space_size=1000"
+env:
+  substrate_uri: ws://substrate-ws-proxy-prod.westend.svc.cluster.local:9944
+  log_level: info
+  network_id: 42
+  mode: IDENTITY_PROCESSOR
+  network: polkadot
+ingress:
+  enabled: true
+  host: polkadot-identity.mbelt-staging.polka.p2p.world
+  tls:
+    secret: wildcard.mbelt-staging.polka.p2p.world

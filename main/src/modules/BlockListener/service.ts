@@ -70,7 +70,9 @@ export class BlockListenerService {
       }
 
       for (const record of records) {
-        await this.sendTaskToToRabbit(entity, record)
+        if (record.attempts < 10) {
+          await this.sendTaskToToRabbit(entity, record)
+        }
         lastEntityId = record.entity_id || 0
       }
 
@@ -163,7 +165,9 @@ export class BlockListenerService {
       })
       return
     }
-    await this.sendTaskToToRabbit(entity, record)
+    if (record.attempts < 10) {
+      await this.sendTaskToToRabbit(entity, record)
+    }
 
     this.logger.info({
       event: 'BlocksListener.restartUnprocessedTask',
@@ -316,6 +320,11 @@ export class BlockListenerService {
       })
     } else if (entity === ENTITY.ROUND) {
       await rabbitMQ.send<QUEUES.Staking>(QUEUES.Staking, {
+        entity_id: record.entity_id,
+        collect_uid: record.collect_uid,
+      })
+    } else if (entity === ENTITY.NOMINATION_POOLS_ERA) {
+      await rabbitMQ.send<QUEUES.NominationPools>(QUEUES.NominationPools, {
         entity_id: record.entity_id,
         collect_uid: record.collect_uid,
       })

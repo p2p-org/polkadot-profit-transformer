@@ -6,11 +6,15 @@ import MoonbeamStakingProcessor from './MoonbeamStakingProcessor'
 //import MoonbeamStakingProcessorRecalc from './MoonbeamStakingProcessorRecalc'
 import PolkadotStakingProcessor from './PolkadotStakingProcessor'
 import IdentityProcessor from './IdentityProcessor'
+import NominationPoolsProcessor from './NominationPoolsProcessor'
 import GearSmartContractsProcessor from './GearSmartcontractsProcessor'
 import BalancesProcessor from './BalancesProcessor'
 import Monitoring from './Monitoring'
 
 export const ModulesLoader = async (): Promise<void> => {
+  console.log('Mode: ', environment.MODE)
+  console.log('Network: ', environment.NETWORK)
+
   if (environment.MODE === MODE.LISTENER) {
     BlockListener()
   }
@@ -23,17 +27,38 @@ export const ModulesLoader = async (): Promise<void> => {
   }
 
   if (environment.MODE === MODE.STAKING_PROCESSOR) {
-    if (environment.NETWORK === 'polkadot' || environment.NETWORK === 'kusama' || environment.NETWORK === 'vara') {
+    if (
+      environment.NETWORK === 'polkadot' ||
+      environment.NETWORK === 'polkadot-assethub' ||
+      environment.NETWORK === 'kusama' ||
+      environment.NETWORK === 'kusama-assethub' ||
+      environment.NETWORK === 'bittensor' ||
+      environment.NETWORK === 'vara' ||
+      environment.NETWORK === 'avail'
+    ) {
       PolkadotStakingProcessor()
-    } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver') {
+      if (
+        environment.NETWORK === 'polkadot' ||
+        environment.NETWORK === 'kusama' ||
+        environment.NETWORK === 'polkadot-assethub' ||
+        environment.NETWORK === 'kusama-assethub' ||
+        environment.NETWORK === 'avail' ||
+        environment.NETWORK === 'bittensor'
+      ) {
+        NominationPoolsProcessor()
+      }
+    } else if (environment.NETWORK === 'moonbeam' || environment.NETWORK === 'moonriver' || environment.NETWORK === 'manta') {
       MoonbeamStakingProcessor()
-      //MoonbeamStakingProcessorRecalc()
     }
   }
 
   if (environment.MODE === MODE.IDENTITY_PROCESSOR) {
     IdentityProcessor()
   }
+
+//  if (environment.MODE === MODE.NOMINATIONPOOLS_PROCESSOR) {
+//    NominationPoolsProcessor()
+//  }
 
   if (environment.MODE === MODE.BALANCES_PROCESSOR) {
     BalancesProcessor()
@@ -45,5 +70,12 @@ export const ModulesLoader = async (): Promise<void> => {
 
   if (environment.MODE === MODE.MONITORING && environment.NODE_ENV !== NODE_ENV.DEVELOPMENT) {
     Monitoring()
+  }
+
+  if (environment.MODE === MODE.HYBRID) {
+    BlockListener()
+    BlockProcessor()
+    IdentityProcessor()
+    //    Monitoring()
   }
 }

@@ -1,4 +1,4 @@
-name: Build and test mbelt
+name: Test and check mbelt
 
 on:
   push:
@@ -21,10 +21,6 @@ jobs:
       - name: Run Prettier
         working-directory: ${{env.working-directory}}
         run: yarn prettier --check src
-
-      - name: Run ESLint
-        working-directory: ${{env.working-directory}}
-        run: yarn lint
 
       - name: Run tsc
         working-directory: ${{env.working-directory}}

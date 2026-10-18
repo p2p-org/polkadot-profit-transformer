@@ -1,3 +1,4 @@
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export type RewardNominatorModel = {
@@ -10,4 +11,4 @@ export type RewardNominatorModel = {
   row_time?: Date
 }
 
-export const RewardNominatorModel = (knex: Knex) => knex<RewardNominatorModel>('rewards_nominators')
+export const RewardNominatorModel = (knex: Knex) => knex<RewardNominatorModel>(`${environment.PG_TABLE_PREFIX}rewards_nominators`)

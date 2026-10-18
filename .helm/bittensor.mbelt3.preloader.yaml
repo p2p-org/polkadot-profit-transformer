@@ -1,0 +1,22 @@
+---
+environment: mbelt3-prod
+chain: bittensor
+role: preloader
+replicas: 0
+limits: {cpu: 200m, memory: 100Mi}
+requests: {cpu: 100m, memory: 100Mi}
+
+vault:
+  role: "mbelt"
+  secret: "secret/mbelt/mbelt3_bittensor"
+env:
+  substrate_uri: wss://archive.chain.opentensor.ai:443
+  log_level: info
+  network_id: 42
+  mode: LISTENER
+  network: bittensor
+ingress:
+  enabled: true
+  host: mbelt3-bittensor-preloader.polka.p2p.world
+  tls:
+    secret: mbelt3-bittensor-preloader-polka-p2p-world

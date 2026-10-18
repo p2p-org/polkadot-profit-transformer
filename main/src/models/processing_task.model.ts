@@ -1,14 +1,18 @@
+import { environment } from '@/environment'
 import { Knex } from 'knex'
 
 export enum ENTITY {
   BLOCK = 'block',
   BLOCK_METADATA = 'block_metadata',
   ERA = 'era',
+  NOMINATION_POOLS_ERA = 'nomination_pools_era',
   ROUND = 'round',
   IDENTITY_EXTRINSIC = 'identity_extrinsic',
   IDENTITY_EVENT = 'identity_event',
   GEAR_EXTRINSIC = 'gear_extrinsic',
   GEAR_EVENT = 'gear_event',
+  NOMINATIONPOOLS_EXTRINSIC = 'nominationpool_extrinsic',
+  NOMINATIONPOOLS_EVENT = 'nominationpool_event',
   BLOCK_BALANCE = 'block_balances',
 }
 
@@ -57,4 +61,5 @@ export type ProcessingTaskModel<T> = T extends ENTITY.BLOCK
       row_id?: number
     }
 
-export const ProcessingTaskModel = (knex: Knex) => knex<ProcessingTaskModel<ENTITY>>('processing_tasks')
+export const ProcessingTaskModel = (knex: Knex) =>
+  knex<ProcessingTaskModel<ENTITY>>(`${environment.PG_TABLE_PREFIX}processing_tasks`)
