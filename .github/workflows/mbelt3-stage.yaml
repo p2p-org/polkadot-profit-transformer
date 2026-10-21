@@ -31,7 +31,7 @@ jobs:
 
       - name: Update Image Version
         id: imgupd
-        uses: mikefarah/yq@e2f1d5ccf73239195bf92280cd47596751492449 # master
+        uses: mikefarah/yq@c2a5da47eac34382dfceb032521b2b08ca8d543e # master
         with:
           cmd: |
             yq eval '.image.tag = "${{ github.sha }}"' -i .helm/polkadot.stage.block-processor.yaml
