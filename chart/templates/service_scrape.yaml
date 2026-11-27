@@ -1,0 +1,23 @@
+{{- if .Values.metrics.enabled }}
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: {{ template "app.fullname" $ }}
+  labels:
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      env: {{ .Values.environment }}
+      chain: {{ .Values.chain }}
+      role: {{ .Values.role }}
+  endpoints:
+  - port: http
+    scrape_interval: 10s
+    scrapeTimeout: 10s
+{{- end }}

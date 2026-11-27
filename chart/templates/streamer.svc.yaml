@@ -1,0 +1,25 @@
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "app.fullname" $ }}
+  labels:
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
+    {{- include "app.commonLabels" . | nindent 4 }}
+spec:
+  ports:
+  - port: 80
+    targetPort: {{ .Values.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Chart.Name }}
+    env: {{ .Values.environment }}
+    chain: {{ .Values.chain }}
+    role: {{ .Values.role }}
+    {{- include "app.commonLabels" . | nindent 4 }}
+{{- end }}
